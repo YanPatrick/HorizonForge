@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>⚔️ Batalha Fantasia</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── RESPONSIVE SCALE ── driven by JS ResizeObserver writing --s to :root */
+:root{
+  --s:1;            /* scale factor, set by JS */
+  --gap:calc(4px * var(--s));
+  --r:calc(10px * var(--s));
+}
+
+html,body{height:100%;overflow:hidden}
+body{
+  background:linear-gradient(160deg,#04040f,#0b0824,#060618);
+  color:#dde2ff;
+  font-family:'Segoe UI',system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(6px * var(--s)) calc(10px * var(--s));
+  height:100dvh;
+  overflow:hidden;
+}
+body::before{content:'';position:fixed;inset:0;background-image:
+  radial-gradient(1px 1px at 8% 15%,rgba(255,255,255,.5) 0%,transparent 100%),
+  radial-gradient(1px 1px at 25% 73%,rgba(200,180,255,.4) 0%,transparent 100%),
+  radial-gradient(1px 1px at 47% 37%,rgba(255,255,255,.4) 0%,transparent 100%),
+  radial-gradient(1px 1px at 84% 9%,rgba(255,255,255,.45) 0%,transparent 100%),
+  radial-gradient(1px 1px at 14% 54%,rgba(220,180,255,.35) 0%,transparent 100%),
+  radial-gradient(1px 1px at 79% 63%,rgba(255,230,180,.25) 0%,transparent 100%);
+  pointer-events:none;z-index:0}
+
+/* START SCREEN */
+#startscreen{position:fixed;inset:0;background:linear-gradient(160deg,#04040f,#0b0824,#060618);display:flex;align-items:center;justify-content:center;z-index:300}
+#ss-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 40px;max-width:480px;width:95%;text-align:center}
+.ss-title{font-size:26px;font-weight:900;background:linear-gradient(90deg,#ff88cc,#bb88ff,#88ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.ss-sub{font-size:12px;color:rgba(255,255,255,.45);margin-bottom:28px;line-height:1.6}
+.ss-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:12px}
+.format-btns{display:flex;gap:12px;justify-content:center}
+.fmtbtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 24px;border-radius:14px;border:2px solid;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.04);min-width:140px}
+.fmtbtn:hover{transform:translateY(-4px);filter:brightness(1.2)}
+.fmtbtn.bo3{border-color:rgba(136,204,255,.4);color:#88ccff}.fmtbtn.bo3:hover{background:rgba(136,204,255,.1);box-shadow:0 8px 24px rgba(136,204,255,.2)}
+.fmtbtn.bo5{border-color:rgba(255,200,50,.4);color:#ffcc44}.fmtbtn.bo5:hover{background:rgba(255,200,50,.1);box-shadow:0 8px 24px rgba(255,200,50,.2)}
+.fmtbtn-ico{font-size:28px}.fmtbtn-title{font-size:14px;font-weight:800}.fmtbtn-desc{font-size:10px;opacity:.6}
+
+/* ── GAME WRAPPER: fills remaining height ── */
+#game{
+  display:none;flex-direction:column;align-items:center;
+  width:100%;height:100%;
+  gap:var(--gap);
+}
+
+/* HEADER */
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;
+  padding:calc(5px * var(--s)) calc(14px * var(--s));
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--r);
+  position:relative;z-index:1;
+  flex-shrink:0;
+}
+.htitle{font-size:calc(13px * var(--s));font-weight:800;background:linear-gradient(90deg,#ff88cc,#bb88ff,#88ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hstats{display:flex;gap:calc(5px * var(--s));font-size:calc(10px * var(--s));flex-wrap:wrap;align-items:center}
+.sb{padding:calc(2px * var(--s)) calc(8px * var(--s));border-radius:20px;font-weight:700}
+.sr{background:rgba(136,204,255,.12);color:#88ccff;border:1px solid rgba(136,204,255,.28)}
+.sw{background:rgba(100,220,100,.12);color:#88ee88;border:1px solid rgba(100,220,100,.28)}
+.sl{background:rgba(255,100,100,.12);color:#ff8888;border:1px solid rgba(255,100,100,.28)}
+.sg{background:rgba(255,200,50,.15);color:#ffdd55;border:1px solid rgba(255,200,50,.35)}
+.sfmt{background:rgba(180,150,255,.12);color:#bb99ff;border:1px solid rgba(180,150,255,.28)}
+.htp-btn{padding:calc(2px * var(--s)) calc(9px * var(--s));border-radius:20px;font-weight:700;font-size:calc(10px * var(--s));background:rgba(180,150,255,.12);color:#bb99ff;border:1px solid rgba(180,150,255,.28);cursor:pointer;transition:all .2s}
+.htp-btn:hover{background:rgba(180,150,255,.25)}
+
+/* DUEL BAR */
+#duelbar{
+  display:flex;align-items:center;justify-content:center;
+  gap:calc(10px * var(--s));
+  width:100%;
+  padding:calc(4px * var(--s)) calc(14px * var(--s));
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:var(--r);
+  position:relative;z-index:1;
+  font-size:calc(10px * var(--s));flex-wrap:wrap;
+  flex-shrink:0;
+}
+.dscore{display:flex;align-items:center;gap:calc(3px * var(--s))}
+.dscore-label{font-size:calc(9px * var(--s));color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px}
+.dot{width:calc(11px * var(--s));height:calc(11px * var(--s));border-radius:50%;border:2px solid;transition:all .3s}
+.dot-e{border-color:rgba(255,255,255,.2);background:transparent}
+.dot-w{border-color:#88ff88;background:#44cc44;box-shadow:0 0 7px rgba(100,220,100,.55)}
+.dot-l{border-color:#ff8888;background:#cc4444;box-shadow:0 0 7px rgba(220,100,100,.55)}
+.duel-vs{font-size:calc(15px * var(--s));font-weight:900;background:linear-gradient(180deg,#ffcc44,#ff8844);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 4px rgba(255,200,100,.4));padding:0 4px}
+.battle-tag{font-size:calc(9px * var(--s));font-weight:600;padding:calc(2px * var(--s)) calc(8px * var(--s));border-radius:6px;background:rgba(136,204,255,.1);color:#88ccff;border:1px solid rgba(136,204,255,.22)}
+
+/* BANNER */
+#banner{
+  width:100%;
+  text-align:center;font-size:calc(11px * var(--s));font-weight:600;
+  padding:calc(3px * var(--s));border-radius:calc(7px * var(--s));
+  position:relative;z-index:1;
+  flex-shrink:0;
+}
+.bshop{background:rgba(100,180,255,.09);color:#88ccff;border:1px solid rgba(100,180,255,.23)}
+.bbattle{background:rgba(255,100,60,.09);color:#ff9977;border:1px solid rgba(255,100,60,.23);animation:pb 1.1s ease-in-out infinite}
+.bwin{background:rgba(80,220,80,.11);color:#88ff88;border:1px solid rgba(80,220,80,.26)}
+.blose{background:rgba(255,80,80,.11);color:#ff8888;border:1px solid rgba(255,80,80,.26)}
+@keyframes pb{0%,100%{opacity:1}50%{opacity:.65}}
+
+/* ARENA */
+#arena{
+  display:flex;align-items:stretch;
+  gap:calc(6px * var(--s));
+  width:100%;
+  position:relative;z-index:1;
+  flex:1 1 0;         /* takes all remaining space */
+  min-height:0;
+}
+.fwrap{flex:1;display:flex;flex-direction:column;gap:calc(3px * var(--s));min-height:0}
+.flbl{font-size:calc(8px * var(--s));text-transform:uppercase;letter-spacing:.9px;opacity:.38;text-align:center;flex-shrink:0}
+.field{
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);
+  gap:calc(4px * var(--s));padding:calc(7px * var(--s));
+  border-radius:calc(12px * var(--s));
+  flex:1;min-height:0;
+}
+.pf{background:rgba(80,130,255,.04);border:1px solid rgba(80,130,255,.2)}
+.ef{background:rgba(255,80,80,.04);border:1px solid rgba(255,80,80,.2)}
+.cell{
+  border-radius:calc(8px * var(--s));border:1px dashed rgba(255,255,255,.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .2s;position:relative;
+}
+.cell:hover:not(.occ){border-color:rgba(136,204,255,.42);background:rgba(136,204,255,.07)}
+.cell.dr{border-color:rgba(136,204,255,.58);background:rgba(136,204,255,.09);animation:pc .9s infinite}
+@keyframes pc{0%,100%{box-shadow:0 0 0 0 rgba(136,204,255,.35)}50%{box-shadow:0 0 0 5px rgba(136,204,255,.07)}}
+#vs{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:calc(28px * var(--s));position:relative;flex-shrink:0}
+#vs::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:linear-gradient(to bottom,transparent,rgba(255,200,100,.45),transparent)}
+.vstxt{font-size:calc(16px * var(--s));font-weight:900;background:linear-gradient(180deg,#ffcc44,#ff8844);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 5px rgba(255,200,100,.45));z-index:1}
+
+/* UNIT ON FIELD */
+.unit{width:100%;height:100%;border-radius:calc(6px * var(--s));display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(3px * var(--s));border:2px solid;position:relative;overflow:hidden;transition:transform .15s;cursor:grab}
+.unit:hover{transform:scale(1.07);z-index:5}
+.uico{font-size:calc(18px * var(--s));line-height:1;margin-bottom:calc(1px * var(--s))}
+.unm{font-size:calc(7px * var(--s));font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.3px}
+.uhb{width:100%;height:calc(3px * var(--s));background:rgba(0,0,0,.5);border-radius:2px;margin-top:calc(2px * var(--s));overflow:hidden}
+.uhf{height:100%;border-radius:2px;transition:width .35s}
+.uhf.hi{background:linear-gradient(90deg,#44ff88,#88ff44)}.uhf.mid{background:linear-gradient(90deg,#ffaa33,#ffdd33)}.uhf.lo{background:linear-gradient(90deg,#ff3333,#ff7733)}
+.ulvl{position:absolute;top:2px;right:2px;font-size:calc(7px * var(--s));font-weight:900;color:rgba(255,255,255,.9)}
+.uabi{position:absolute;bottom:2px;left:2px;font-size:calc(9px * var(--s));line-height:1}
+.urmv{position:absolute;top:2px;left:2px;font-size:calc(7px * var(--s));color:rgba(255,100,100,.7);cursor:pointer;display:none;background:rgba(0,0,0,.55);border-radius:2px;padding:0 2px;line-height:1.3}
+.cell:hover .urmv{display:block}
+.l1{border-color:#445566}.l2{border-color:#44aa44;box-shadow:0 0 6px rgba(68,170,68,.38)}.l3{border-color:#4488ff;box-shadow:0 0 9px rgba(68,136,255,.5)}.l4{border-color:#aa44ff;box-shadow:0 0 11px rgba(170,68,255,.6)}.l5{border-color:#ffaa00;animation:gg 1.5s ease-in-out infinite}
+@keyframes gg{0%,100%{box-shadow:0 0 8px rgba(255,170,0,.45)}50%{box-shadow:0 0 20px rgba(255,220,0,.75)}}
+.unit.hit{animation:hf .28s}
+@keyframes hf{0%{filter:brightness(1)}40%{filter:brightness(3) saturate(0)}100%{filter:brightness(1)}}
+.unit.dead{opacity:0;transform:scale(.3);transition:all .4s}
+.unit.mg{animation:mf .55s}
+@keyframes mf{0%{transform:scale(1)}50%{transform:scale(1.4);filter:brightness(2.8)}100%{transform:scale(1)}}
+.lfx{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:13px;animation:fu 1s forwards;pointer-events:none;z-index:20}
+@keyframes fu{0%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-30px)}}
+
+/* SHOP & BENCH WRAPPERS */
+#shopwrap,#benchwrap{
+  width:100%;position:relative;z-index:1;
+  flex-shrink:0;
+}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:calc(3px * var(--s))}
+.sec-title{font-size:calc(9px * var(--s));text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.38)}
+.combo-hint{font-size:calc(9px * var(--s));padding:calc(2px * var(--s)) calc(7px * var(--s));background:rgba(100,220,100,.1);border:1px solid rgba(100,220,100,.25);border-radius:10px;color:#88ee88}
+#shoprow,#benchrow{display:flex;gap:calc(5px * var(--s));justify-content:center;flex-wrap:wrap;min-height:20px}
+
+/* SHOP CARDS */
+.scard{
+  width:calc(82px * var(--s));border-radius:calc(10px * var(--s));border:2px solid;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(6px * var(--s)) calc(5px * var(--s)) calc(4px * var(--s));
+  gap:calc(2px * var(--s));position:relative;transition:all .2s;
+}
+.scard.buyable{cursor:pointer}.scard.buyable:hover{transform:translateY(-5px)}
+.scard.sold{opacity:.22;pointer-events:none}.scard.broke{opacity:.45;filter:grayscale(.5)}
+.scard.combo-card{border-color:#44aa44!important;box-shadow:0 0 10px rgba(68,200,68,.28)}
+.sprice{position:absolute;top:3px;left:4px;font-size:calc(8px * var(--s));font-weight:800;background:rgba(0,0,0,.5);border-radius:4px;padding:0 3px}
+.pnew{color:#ffdd55}.pcombo{color:#88ff88}
+.scnt{position:absolute;top:3px;right:4px;font-size:calc(7px * var(--s));font-weight:800;border-radius:4px;padding:0 3px}
+.cnew{color:rgba(255,255,255,.4)}.ccombo{color:#88ff88;background:rgba(68,200,68,.15)}
+.cico{font-size:calc(24px * var(--s));margin-top:calc(6px * var(--s))}
+.cnm{font-size:calc(8px * var(--s));font-weight:700;text-align:center}
+.crole{font-size:calc(6px * var(--s));color:rgba(255,255,255,.4)}
+.csts{display:flex;gap:calc(4px * var(--s));margin-top:calc(1px * var(--s))}
+.cst{display:flex;flex-direction:column;align-items:center}
+.cstv{font-weight:700;color:rgba(255,255,255,.85);font-size:calc(7px * var(--s))}.cstl{font-size:calc(5px * var(--s));color:rgba(255,255,255,.35)}
+.cabi{font-size:calc(6px * var(--s));background:rgba(255,200,50,.1);border:1px solid rgba(255,200,50,.28);border-radius:4px;padding:1px 4px;color:rgba(255,220,100,.9);text-align:center;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:help;margin-top:2px}
+.caction{font-size:calc(7px * var(--s));font-weight:700;text-align:center;width:100%;height:13px;line-height:13px;border-radius:4px;opacity:0;transition:opacity .2s;margin-top:1px;pointer-events:none}
+.scard.buyable:hover .caction{opacity:1;color:#ffdd55}
+.scard.combo-card.buyable:hover .caction{color:#88ff88}
+.rrbtn{font-size:calc(9px * var(--s));padding:calc(3px * var(--s)) calc(9px * var(--s));border-radius:8px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);cursor:pointer;transition:all .2s}
+.rrbtn:hover{background:rgba(255,255,255,.12)}.rrbtn:disabled{opacity:.35;cursor:not-allowed}
+
+/* BENCH CARDS */
+.bcard{
+  width:calc(82px * var(--s));border-radius:calc(10px * var(--s));border:2px solid;
+  display:flex;flex-direction:column;align-items:center;
+  padding:calc(6px * var(--s)) calc(5px * var(--s)) calc(5px * var(--s));
+  gap:calc(2px * var(--s));position:relative;cursor:pointer;transition:all .2s;
+}
+.bcard:hover{transform:translateY(-5px)}
+.bcard.bsel{transform:translateY(-9px)!important;border-color:#88ccff!important;box-shadow:0 8px 20px rgba(136,204,255,.5)!important}
+.bcard.dragging{opacity:.35;transform:scale(.95)}
+.cell.dnd-over{border-color:rgba(136,204,255,.8)!important;background:rgba(136,204,255,.14)!important;box-shadow:0 0 0 2px rgba(136,204,255,.35);animation:none}
+.cell.field-sel{border-color:rgba(255,200,80,.9)!important;background:rgba(255,200,80,.12)!important;box-shadow:0 0 0 2px rgba(255,200,80,.4);animation:fsel .7s ease-in-out infinite}
+@keyframes fsel{0%,100%{box-shadow:0 0 0 2px rgba(255,200,80,.4)}50%{box-shadow:0 0 0 5px rgba(255,200,80,.15)}}
+.unit.dragging{opacity:.3;transform:scale(.92)}
+.bcard.cnt2::before,.bcard.cnt2::after{content:'';position:absolute;inset:0;border-radius:10px;border:2px solid;border-color:inherit;z-index:-1}
+.bcard.cnt2::before{transform:translate(3px,3px);opacity:.35}
+.bcard.cnt2::after{display:none}
+.bprog{display:flex;gap:3px;justify-content:center;margin-top:3px;align-items:center}
+.blvl{position:absolute;top:3px;right:4px;font-size:calc(8px * var(--s));font-weight:900;color:rgba(255,255,255,.85)}
+.bprog-dot{width:calc(6px * var(--s));height:calc(6px * var(--s));border-radius:50%;border:1.5px solid;transition:all .25s}
+.bprog-dot.filled{background:currentColor}
+.bprog-dot.empty{background:transparent;opacity:.35}
+.bprog-label{font-size:calc(7px * var(--s));font-weight:700;margin-left:2px;opacity:.7}
+.bsell-hint{font-size:calc(7px * var(--s));font-weight:700;text-align:center;width:100%;height:12px;line-height:12px;border-radius:4px;opacity:0;transition:opacity .2s;margin-top:1px;pointer-events:none;color:#ff8888}
+.bcard:hover .bsell-hint{opacity:1;pointer-events:auto;cursor:pointer}
+.bcard.new-copy{animation:copyadd .5s}
+@keyframes copyadd{0%{transform:translateY(-4px) scale(1.05);filter:brightness(1.8)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+.bcard.just-merged{animation:mergepop .6s}
+@keyframes mergepop{0%{transform:scale(1)}40%{transform:scale(1.18);filter:brightness(2.4)}100%{transform:scale(1)}}
+.bench-msg{color:rgba(255,255,255,.25);font-size:calc(10px * var(--s));align-self:center;padding:8px}
+.bcard-empty{width:calc(82px * var(--s));height:calc(110px * var(--s));border:2px dashed rgba(255,255,255,.1);border-radius:calc(10px * var(--s));opacity:.18}
+
+/* CTRL + LOG */
+#ctrl{display:flex;gap:calc(6px * var(--s));position:relative;z-index:1;flex-wrap:wrap;justify-content:center;flex-shrink:0}
+.btn{padding:calc(7px * var(--s)) calc(18px * var(--s));border-radius:calc(9px * var(--s));border:none;cursor:pointer;font-size:calc(11px * var(--s));font-weight:700;letter-spacing:.3px;transition:all .2s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.15)}.btn:active{transform:translateY(0)}.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.bbtn{background:linear-gradient(135deg,#cc3333,#ff5533);color:#fff;box-shadow:0 4px 14px rgba(255,80,40,.38)}
+.nbtn{background:linear-gradient(135deg,#3355cc,#5577ff);color:#fff;box-shadow:0 4px 14px rgba(80,120,255,.38)}
+.gnbtn{background:linear-gradient(135deg,#228833,#44bb55);color:#fff;box-shadow:0 4px 14px rgba(50,200,80,.38)}
+#log{
+  width:100%;
+  flex:0 0 calc(90px * var(--s));   /* fixed height that scales */
+  overflow-y:auto;
+  background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.09);
+  border-radius:calc(9px * var(--s));
+  padding:calc(4px * var(--s)) calc(10px * var(--s));
+  position:relative;z-index:1;
+  font-size:calc(9.5px * var(--s));line-height:1.7;
+}
+.le{border-bottom:1px solid rgba(255,255,255,.03);padding:1px 0}
+.la{color:#ffaa88}.lk{color:#ff6666}.lh{color:#88ff88}.ll{color:#ffcc44}.lr{color:#88ccff;font-weight:600}.lab{color:#ffbbff;font-weight:600}
+.latk{color:rgba(255,255,255,.52)}.lcrit{color:#ffee44;font-weight:700}.lkill{color:#ff4444;font-weight:700}.lheal{color:#44dd88}.ldmg{color:rgba(255,180,80,.9);font-weight:600}.lside-p{color:#7aadff}.lside-e{color:#ff8080}
+
+/* DUEL RESULT */
+#duel-result{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;overflow-y:auto;padding:16px;justify-content:center;align-items:flex-start}
+#duel-result.open{display:flex}
+#dr-box{background:linear-gradient(160deg,#0d0b2a,#0a0820);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px;max-width:560px;width:100%;margin:auto;position:relative}
+.dr-title{text-align:center;font-size:22px;font-weight:900;margin-bottom:4px}
+.dr-title.win{background:linear-gradient(90deg,#88ff88,#44ee88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.dr-title.loss{background:linear-gradient(90deg,#ff8888,#ee4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.dr-score{text-align:center;font-size:36px;font-weight:900;letter-spacing:6px;margin:8px 0}
+.dr-battles{display:flex;gap:6px;justify-content:center;margin:10px 0}
+.dr-bat{padding:3px 12px;border-radius:8px;font-size:11px;font-weight:700}
+.dr-bat.w{background:rgba(68,220,68,.15);color:#88ff88;border:1px solid rgba(68,220,68,.3)}
+.dr-bat.l{background:rgba(220,68,68,.15);color:#ff8888;border:1px solid rgba(220,68,68,.3)}
+.dr-divider{width:100%;height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+.dr-stats-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.dr-stat-row{display:contents}
+.dr-val{font-size:16px;font-weight:800;text-align:center;padding:4px 6px;border-radius:8px}
+.dr-val.p{color:#88ccff;background:rgba(136,204,255,.1)}.dr-val.e{color:#ff8888;background:rgba(255,100,100,.1)}
+.dr-stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.4);text-align:center}
+.dr-teams{display:flex;gap:10px;justify-content:center;margin-top:10px}
+.dr-team{flex:1;background:rgba(255,255,255,.03);border-radius:10px;padding:8px}
+.dr-team-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.4;margin-bottom:5px;text-align:center}
+.dr-team-units{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.dr-unit{display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(255,255,255,.05);border-radius:6px;padding:3px 4px;font-size:10px;min-width:32px;border:1px solid rgba(255,255,255,.08)}
+.dr-unit.alive{border-color:rgba(68,220,68,.3);background:rgba(68,220,68,.06)}
+.dr-unit.dead{opacity:.4;filter:grayscale(.6)}
+.dr-unit-lbl{font-size:6.5px;color:rgba(255,255,255,.4);font-weight:600;text-transform:uppercase}
+.dr-cta{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+
+/* HOW TO PLAY */
+#howto{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:250;overflow-y:auto;padding:16px;justify-content:center;align-items:flex-start}
+#howto.open{display:flex}
+#htp-box{background:linear-gradient(160deg,#0d0b2a,#0a0820);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px 24px;max-width:680px;width:100%;position:relative;margin:auto}
+#htp-close{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:8px;color:rgba(255,255,255,.7);font-size:13px;padding:2px 10px;cursor:pointer}
+#htp-close:hover{background:rgba(255,80,80,.25);color:#ff8888}
+.htp-h1{font-size:18px;font-weight:800;background:linear-gradient(90deg,#ff88cc,#bb88ff,#88ccff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;text-align:center}
+.htp-h2{font-size:13px;font-weight:700;color:#bbccff;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.08)}
+.htp-p{font-size:11.5px;color:rgba(255,255,255,.72);line-height:1.7;margin-bottom:6px}
+.htp-hl{color:#ffdd88;font-weight:700}
+.htp-table{width:100%;border-collapse:collapse;font-size:10.5px;margin-top:6px}
+.htp-table th{text-align:left;color:rgba(255,255,255,.4);font-weight:600;font-size:9.5px;text-transform:uppercase;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.08)}
+.htp-table td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05)}
+.htp-tips{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.htp-tip{display:flex;gap:8px;align-items:flex-start;background:rgba(255,255,255,.03);border-radius:8px;padding:7px 10px;font-size:11px;color:rgba(255,255,255,.7);line-height:1.6}
+.htp-tip-ico{font-size:16px;flex-shrink:0;margin-top:1px}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.17);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="startscreen">
+  <div id="ss-box">
+    <div class="ss-title">⚔️ Batalha Fantasia</div>
+    <div class="ss-sub">Auto Battler de fantasia anime — monte seu exército,<br>faça fusões e vença duelos épicos!</div>
+    <div class="ss-label">Escolha o formato dos duelos</div>
+    <div class="format-btns">
+      <button class="fmtbtn bo3" onclick="startGame(3)"><span class="fmtbtn-ico">⚔️</span><span class="fmtbtn-title">Melhor de 3</span><span class="fmtbtn-desc">Vença 2 batalhas</span></button>
+      <button class="fmtbtn bo5" onclick="startGame(5)"><span class="fmtbtn-ico">🏆</span><span class="fmtbtn-title">Melhor de 5</span><span class="fmtbtn-desc">Vença 3 batalhas</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="game" style="display:none;flex-direction:column;align-items:center;width:100%">
+<div id="hdr">
+  <span class="htitle">⚔️ Batalha Fantasia</span>
+  <div class="hstats">
+    <span class="sb sr" id="h-duel">Duelo 1</span>
+    <span class="sb sw" id="h-dw">🏆 0</span>
+    <span class="sb sl" id="h-dl">💔 0</span>
+    <span class="sb sg" id="h-gold">💰 7</span>
+    <span class="sb sfmt" id="h-fmt">BO3</span>
+    <button class="htp-btn" onclick="openHowTo()">📖 Como Jogar</button>
+  </div>
+</div>
+<div id="duelbar">
+  <span class="dscore-label">Você</span><div class="dscore" id="dots-p"></div>
+  <span class="duel-vs">⚔</span>
+  <div class="dscore" id="dots-e"></div><span class="dscore-label">Inimigo</span>
+  <span class="battle-tag" id="btag">Batalha 1</span>
+</div>
+<div id="banner" class="bshop">🛍️ Analise o inimigo, compre cartas e monte seu exército!</div>
+<div id="arena">
+  <div class="fwrap"><div class="flbl" style="color:#88aaff">⚔ Seu Exército</div><div class="field pf" id="pfield"></div></div>
+  <div id="vs"><span class="vstxt">VS</span></div>
+  <div class="fwrap"><div class="flbl" style="color:#ff8888">☠ Adversário (fixo no duelo)</div><div class="field ef" id="efield"></div></div>
+</div>
+<div id="shopwrap">
+  <div class="sec-hdr">
+    <span class="sec-title">🛍️ Loja — sempre nível ★</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰</span>
+      <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 Reembaralhar (2💰)</button>
+    </div>
+  </div>
+  <div id="shoprow"></div>
+</div>
+<div id="benchwrap">
+  <div class="sec-hdr">
+    <span class="sec-title">🎒 Banco — 1 carta por personagem · 3 cópias = fusão automática</span>
+    <span class="sec-title" id="bcount"></span>
+  </div>
+  <div id="benchrow"></div>
+</div>
+<div id="ctrl"><button class="btn bbtn" id="bfight" onclick="startBattle()">⚔️ Batalhar!</button></div>
+<div id="log"></div>
+</div>
+
+<!-- DUEL RESULT -->
+<div id="duel-result"><div id="dr-box">
+  <div class="dr-title" id="dr-title">🏆 DUELO VENCIDO!</div>
+  <div class="dr-score" id="dr-score"></div>
+  <div class="dr-battles" id="dr-battles"></div>
+  <div class="dr-divider"></div>
+  <div class="dr-stats-grid">
+    <div class="dr-stat-row"><div class="dr-val p" id="drs-dmgP">0</div><div class="dr-stat-lbl">⚔️ Dano Total</div><div class="dr-val e" id="drs-dmgE">0</div></div>
+    <div class="dr-stat-row"><div class="dr-val p" id="drs-killsP">0</div><div class="dr-stat-lbl">💀 Abates</div><div class="dr-val e" id="drs-killsE">0</div></div>
+    <div class="dr-stat-row"><div class="dr-val p" id="drs-merges">0</div><div class="dr-stat-lbl">✨ Fusões</div><div class="dr-val e">—</div></div>
+  </div>
+  <div class="dr-divider"></div>
+  <div class="dr-teams">
+    <div class="dr-team"><div class="dr-team-lbl" style="color:rgba(136,170,255,.6)">Seu Exército Final</div><div class="dr-team-units" id="drt-p"></div></div>
+    <div class="dr-team"><div class="dr-team-lbl" style="color:rgba(255,100,100,.6)">Exército Inimigo</div><div class="dr-team-units" id="drt-e"></div></div>
+  </div>
+  <div class="dr-cta">
+    <button class="btn gnbtn" id="dr-next-btn">🌟 Próximo Duelo</button>
+    <button class="btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.6)" onclick="document.getElementById('duel-result').classList.remove('open')">✕ Ver Campo</button>
+  </div>
+</div></div>
+
+<!-- HOW TO PLAY -->
+<div id="howto"><div id="htp-box">
+  <button id="htp-close" onclick="closeHowTo()">✕ Fechar</button>
+  <div class="htp-h1">📖 Como Jogar — Batalha Fantasia</div>
+
+  <div class="htp-h2">🎯 Objetivo</div>
+  <p class="htp-p">Vença a maioria das batalhas de um duelo para avançar. No formato <span class="htp-hl">Melhor de 3</span>, vença 2 batalhas. No <span class="htp-hl">Melhor de 5</span>, vença 3. O adversário mantém o mesmo exército durante todo o duelo — analise-o antes de montar o seu.</p>
+
+  <div class="htp-h2">💰 Ouro</div>
+  <div class="htp-tips">
+    <div class="htp-tip"><span class="htp-tip-ico">🏁</span><div>Cada duelo começa com <b style="color:#ffdd55">7💰</b>.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">⚔️</span><div>Entre batalhas você recebe ouro automaticamente — <b style="color:#88ff88">um bônus extra</b> se venceu a batalha anterior.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🔄</span><div>Reembaralhar a loja custa <b style="color:#ffdd55">2💰</b>.</div></div>
+  </div>
+
+  <div class="htp-h2">🛒 Loja & Banco</div>
+  <div class="htp-tips">
+    <div class="htp-tip"><span class="htp-tip-ico">🆕</span><div>Comprar um personagem que você ainda não possui custa <b style="color:#ffdd55">3💰</b>. Ele vai direto para o banco.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🔗</span><div>Comprar um personagem que você já tem custa <b style="color:#88ff88">2💰</b> e empilha na mesma carta — cada personagem ocupa apenas <b>1 slot</b> no banco.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🖱️</span><div><b>Arraste</b> uma carta do banco para um slot do campo, ou clique nela e depois no slot desejado.</div></div>
+  </div>
+
+  <div class="htp-h2">✨ Fusão de Cartas</div>
+  <div class="htp-tips">
+    <div class="htp-tip"><span class="htp-tip-ico">⭐</span><div>Acumule <b>3 cópias</b> do mesmo personagem para fundir automaticamente — ele sobe de nível (<b style="color:#ffcc44">★ → ★★ → ★★★...</b>) e fica muito mais poderoso.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">⚠️</span><div>Ao vender uma carta, você recebe ouro de acordo com o nível dela. Cópias ainda não fundidas são perdidas.</div></div>
+  </div>
+
+  <div class="htp-h2">🧙 Personagens</div>
+  <table class="htp-table">
+    <tr><th>Personagem</th><th>Habilidade</th><th>Efeito</th></tr>
+    <tr><td>⚔️ Cavaleiro</td><td>🛡️ Defesa de Ferro</td><td>Reduz parte do dano recebido. Quanto maior o nível, maior a redução.</td></tr>
+    <tr><td>🔮 Mago</td><td>🔥 Bola de Fogo</td><td>Atinge o alvo principal e causa dano em área nos inimigos ao redor.</td></tr>
+    <tr><td>🏹 Arqueiro</td><td>🎯 Tiro Certeiro</td><td>Possui chance de acerto crítico que multiplica o dano causado.</td></tr>
+    <tr><td>💚 Curandeira</td><td>💫 Cura Dupla</td><td>A cada turno, cura os dois aliados com menos vida antes de atacar.</td></tr>
+    <tr><td>🗡️ Assassino</td><td>⚡ Golpe Furtivo</td><td>O primeiro ataque causa dano amplificado. Sempre mira o inimigo mais fraco.</td></tr>
+    <tr><td>🛡️ Paladino</td><td>✨ Aura Sagrada</td><td>No início da batalha, aumenta o HP máximo dos aliados adjacentes.</td></tr>
+    <tr><td>🌟 Arquimago</td><td>⛓️ Raio em Cadeia</td><td>O ataque encadeia para inimigos adicionais, causando dano em múltiplos alvos.</td></tr>
+    <tr><td>🪓 Bárbaro</td><td>😡 Fúria</td><td>Ao ficar com pouca vida, ganha um bônus permanente de ataque pelo resto da batalha.</td></tr>
+  </table>
+</div></div>
+
+<script>
+// ===== CONFIG =====
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000'
+  : ''; // same origin in production
+
+// ===== DATA — populated from API =====
+let C = {};   // keyed by cid
+let CK = [];  // array of cid strings
+const LS = ['','★','★★','★★★','★★★★','★★★★★'];
+const SELL = [0,1,2,4], BENCH_SLOTS=7, START_GOLD=7;
+
+// ── Loading screen ─────────────────────────────────────
+function showLoader(msg='Loading characters...'){
+  document.getElementById('startscreen').innerHTML=`
+    <div style="text-align:center;color:rgba(255,255,255,.6);font-size:14px">
+      <div style="font-size:36px;margin-bottom:12px">⚔️</div>
+      <div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#ff88cc,#bb88ff,#88ccff);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">
+        Horizon Forge</div>
+      <div>${msg}</div>
+    </div>`;
+}
+function showStartScreen(){
+  document.getElementById('startscreen').innerHTML=`
+    <div id="ss-box">
+      <div class="ss-title">⚔️ Horizon Forge</div>
+      <div class="ss-sub">Fantasy Auto Battler — build your army,<br>forge merges and win epic duels!</div>
+      <div class="ss-label">Choose duel format</div>
+      <div class="format-btns">
+        <button class="fmtbtn bo3" onclick="startGame(3)">
+          <span class="fmtbtn-ico">⚔️</span><span class="fmtbtn-title">Best of 3</span><span class="fmtbtn-desc">Win 2 battles</span>
+        </button>
+        <button class="fmtbtn bo5" onclick="startGame(5)">
+          <span class="fmtbtn-ico">🏆</span><span class="fmtbtn-title">Best of 5</span><span class="fmtbtn-desc">Win 3 battles</span>
+        </button>
+      </div>
+    </div>`;
+}
+function showError(msg){
+  document.getElementById('startscreen').innerHTML=`
+    <div style="text-align:center;color:#ff8888;font-size:13px;max-width:400px;padding:24px">
+      <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+      <b>Could not connect to the server</b><br><br>
+      ${msg}<br><br>
+      <small style="opacity:.6">Make sure the API server is running and DATABASE_URL is set.</small>
+    </div>`;
+}
+
+// ── Bootstrap: fetch characters from DB then show start screen ──
+async function initGame(){
+  showLoader();
+  try {
+    const res  = await fetch(`${API_BASE}/api/characters`);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error);
+
+    // Build C map from API response
+    C  = {};
+    for(const char of data.characters){
+      C[char.cid] = {
+        id:         char.cid,
+        name:       char.name,
+        ico:        char.icon,
+        col:        char.color_hex,
+        bg:         char.bg_gradient,
+        role:       char.role,
+        tp:         char.target_type,
+        levels:     char.levels,   // {1:{max_hp,atk,atk_speed,crit_chance,crit_rate,skill_power}, ...}
+        abi: {
+          ico:  skillIcon(char.skill.key),
+          name: char.skill.name,
+          desc: char.skill.description,
+          type: char.skill.type,
+          key:  char.skill.key,
+        },
+      };
+    }
+    CK = Object.keys(C);
+    showStartScreen();
+  } catch(err){
+    console.error(err);
+    showError(err.message);
+  }
+}
+
+function skillIcon(key){
+  const icons={
+    iron_defense:'🛡️', fireball:'🔥', precise_shot:'🎯',
+    healing:'💚', sneak_strike:'⚡', sacred_aura:'✨',
+    chain_lightning:'⛓️', fury:'😡',
+  };
+  return icons[key]||'✨';
+}
+
+// ===== UNIT FACTORY =====
+// Uses exact per-level stats from DB — no multiplier math in JS
+function mkUnit(cid, lv=1){
+  const c = C[cid];
+  const st = c.levels[lv];
+  return {
+    cid, lv,
+    id:         'u'+(++_uid),
+    name:       c.name,
+    ico:        c.ico,
+    role:       c.role,
+    tp:         c.tp,
+    maxHp:      st.max_hp,
+    hp:         st.max_hp,
+    atk:        Math.round(st.atk),
+    spd:        st.atk_speed,
+    critChance: st.crit_chance,
+    critRate:   st.crit_rate,
+    skillPower: st.skill_power,
+    stack:      1,
+  };
+}
+// Upgrade an existing unit to a new level (after merge)
+function upgradeUnit(u){
+  const c  = C[u.cid];
+  const st = c.levels[u.lv];
+  u.maxHp     = st.max_hp;
+  u.hp        = st.max_hp;
+  u.atk       = Math.round(st.atk);
+  u.spd       = st.atk_speed;
+  u.critChance= st.crit_chance;
+  u.critRate  = st.crit_rate;
+  u.skillPower= st.skill_power;
+  u.id        = 'u'+(++_uid);
+  return u;
+}
+
+// ===== STATE =====
+// G.bsel = cid string or null
+let G={
+  format:3,winsNeeded:2,
+  phase:'shop',duelNum:1,battleNum:1,
+  duelScore:{p:0,e:0},duelsWon:0,duelsLost:0,
+  gold:START_GOLD,shop:[],bench:[],
+  board:Array(12).fill(null),
+  duelEnemy:Array(12).fill(null),enemy:Array(12).fill(null),
+  bsel:null,fieldSel:null,fieldDrag:null,
+  lastBattleResult:null,
+  duelStats:{dmgP:0,dmgE:0,killsP:0,killsE:0,mergesP:0,battles:[]},
+  lastBoardSnap:[],
+};
+let _uid=0;
+function rnd(n){return Math.floor(Math.random()*n)}
+function randCid(){return CK[rnd(CK.length)]}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function adjacentSlots(slot){
+  const col=slot%4,row=Math.floor(slot/4),adj=[];
+  if(row>0)adj.push(slot-4);if(row<2)adj.push(slot+4);
+  if(col>0)adj.push(slot-1);if(col<3)adj.push(slot+1);
+  return adj;
+}
+
+// ===== BENCH HELPERS (1 carta por personagem) =====
+function cardCost(cid){
+  return(G.bench.some(u=>u.cid===cid)||G.board.some(u=>u&&u.cid===cid))?2:3;
+}
+function totalOwned(cid){
+  return(G.bench.some(u=>u.cid===cid)?1:0)+G.board.filter(u=>u&&u.cid===cid).length;
+}
+// Merge stacks within a bench unit (called after incrementing stack)
+function applyMerge(u){
+  while(u.stack>=3&&u.lv<5){
+    u.stack=u.stack-3+1;u.lv++;
+    upgradeUnit(u);
+    G.duelStats.mergesP++;
+    log(`✨ ${C[u.cid].name} merged to ${LS[u.lv]}!`,'ll');
+  }
+  if(u.stack>3)u.stack=3;
+  return u;
+}
+
+// ===== START =====
+function startGame(fmt){
+  G.format=fmt;G.winsNeeded=Math.ceil(fmt/2);
+  document.getElementById('startscreen').style.display='none';
+  document.getElementById('game').style.display='flex';
+  document.getElementById('h-fmt').textContent=`BO${fmt}`;
+  botInitDuel();
+  G.duelEnemy=BOT.board.map(u=>u?{...u}:null);
+  genShop();render();
+  log(`⚔️ Format BO${fmt} | AI Opponent | Win ${G.winsNeeded} battles to claim the duel. You have ${START_GOLD}💰.`,'lr');
+}
+
+// ===== PRICING =====
+function cardCost(cid){return totalOwned(cid)>0?2:3}
+
+
+// ===== ECONOMY =====
+function genShop(){G.shop=Array.from({length:5},()=>mkUnit(randCid(),1));}
+function rerollShop(){
+  if(G.phase!=='shop'||G.gold<2){log(G.gold<2?'❌ Precisa de 2💰!':'','lk');return}
+  G.gold-=2;genShop();render();log('🔄 Loja reembaralhada (−2💰)','lr');
+}
+function buyCard(idx){
+  if(G.phase!=='shop')return;
+  const card=G.shop[idx];if(!card)return;
+  const cost=cardCost(card.cid);
+  if(G.gold<cost){log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`,'lk');return}
+  const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
+  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){log('❌ Banco cheio! Posicione ou venda uma carta.','lk');return}
+  G.gold-=cost;G.shop[idx]=null;
+  if(existingIdx>=0){
+    const ex=G.bench[existingIdx];
+    ex.stack=(ex.stack||1)+1;
+    const prevLv=ex.lv;
+    applyMerge(ex);
+    if(ex.lv>prevLv){
+      setTimeout(()=>{const cards=document.querySelectorAll('#benchrow .bcard');cards.forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('just-merged');setTimeout(()=>bc.classList.remove('just-merged'),700);}});},40);
+    }else{
+      log(`🔗 ${card.name} empilhado! (${ex.stack}/3 → ${LS[ex.lv+1]||'MAX'})${cost===2?' −2💰':' −3💰'}`,'ll');
+      setTimeout(()=>{const cards=document.querySelectorAll('#benchrow .bcard');cards.forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('new-copy');setTimeout(()=>bc.classList.remove('new-copy'),500);}});},40);
+    }
+  }else{
+    const newUnit=mkUnit(card.cid,1);newUnit.stack=1;
+    G.bench.push(newUnit);
+    log(`🛒 Comprou ${card.name} por ${cost}💰 (1/3 para ${LS[2]})`,'ll');
+  }
+  render();
+}
+function sellBench(cid){
+  if(G.phase!=='shop')return;
+  const idx=G.bench.findIndex(u=>u.cid===cid);if(idx<0)return;
+  const u=G.bench[idx];const val=SELL[u.lv];
+  const warn=u.stack>1?` ⚠️ (${u.stack-1} cópia(s) perdida(s))`:' ';
+  G.gold+=val;G.bench.splice(idx,1);
+  if(G.bsel===cid)G.bsel=null;
+  render();log(`💸 Vendeu ${u.name} ${LS[u.lv]} por ${val}💰${warn}`,'la');
+}
+function betweenIncome(){return(1+G.battleNum)+(G.lastBattleResult==='win'?1:0)}
+
+// ===== BOARD =====
+function maxUnits(){return Math.min(3+G.duelNum,9)}
+function placeUnit(i,cid=null){
+  if(G.phase!=='shop'||G.board[i])return;
+  if(G.board.filter(Boolean).length>=maxUnits()){log(`❌ Máximo de ${maxUnits()} unidades!`,'lk');return}
+  const selCid=cid||G.bsel;if(!selCid)return;
+  const bidx=G.bench.findIndex(u=>u.cid===selCid);if(bidx<0)return;
+  G.board[i]={...G.bench[bidx]};
+  G.bench.splice(bidx,1);
+  G.bsel=null;render();
+}
+function retBench(i){
+  if(G.phase!=='shop')return;
+  const u=G.board[i];if(!u)return;
+  G.board[i]=null;
+  const existingIdx=G.bench.findIndex(b=>b.cid===u.cid);
+  if(existingIdx>=0){
+    const ex=G.bench[existingIdx];
+    ex.stack=(ex.stack||1)+(u.stack||1);
+    applyMerge(ex);
+  }else if(G.bench.length<BENCH_SLOTS){
+    G.bench.push({...u});
+  }else{
+    const val=SELL[u.lv];G.gold+=val;
+    log(`💸 Banco cheio! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
+  }
+  render();
+}
+function returnBoardToBench(){
+  G.board.forEach((u,i)=>{
+    if(!u)return;
+    const existingIdx=G.bench.findIndex(b=>b.cid===u.cid);
+    if(existingIdx>=0){
+      const ex=G.bench[existingIdx];
+      ex.stack=(ex.stack||1)+(u.stack||1);
+      applyMerge(ex);
+    }else if(G.bench.length<BENCH_SLOTS){
+      G.bench.push({...u});
+    }else{
+      const val=SELL[u.lv];G.gold+=val;
+      log(`💸 Banco cheio! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
+    }
+    G.board[i]=null;
+  });
+}
+
+// ===== BOT AI SYSTEM =====
+// Single smart difficulty: strategic reroll, full adaptation, near-zero mistakes
+const BOT_CFG={rerollAt:3, mergeWeight:0.92, adaptRate:0.85, mistakeRate:0.05, label:'🤖 IA'};
+
+// Role priority for positioning: tanks front (cols 3-2), supports mid, dmg back (cols 0-1)
+const FRONT_SLOTS=[3,7,11,2,6,10];
+const MID_SLOTS=[1,5,9];
+const BACK_SLOTS=[0,4,8];
+const ROLE_SLOT={Tanque:FRONT_SLOTS,Paladino:FRONT_SLOTS,Assassino:MID_SLOTS,Suporte:MID_SLOTS,Mago:BACK_SLOTS,Arquimago:BACK_SLOTS,Atirador:BACK_SLOTS};
+
+// Unit base value for decision-making
+const UNIT_SCORE={knight:6,paladin:7,barbarian:6,healer:8,assassin:9,archer:7,mage:8,archmage:10};
+const LM=[0,1.0,1.4,1.8,2.2,2.6];
+
+// Bot state (parallel to player G)
+let BOT={
+  gold:START_GOLD,
+  bench:[],
+  board:Array(12).fill(null),
+  shop:[],
+  lastResult:null,
+  battleNum:1,
+  threatMap:{}, // cid -> total damage dealt to bot by player units
+};
+
+function botCardCost(cid){
+  return(BOT.bench.some(u=>u.cid===cid)||BOT.board.some(u=>u&&u.cid===cid))?2:3;
+}
+function botApplyMerge(u){
+  while(u.stack>=3&&u.lv<5){
+    u.stack=u.stack-3+1;u.lv++;
+    upgradeUnit(u);
+  }
+  if(u.stack>3)u.stack=3;
+  return u;
+}
+function botGenShop(){BOT.shop=Array.from({length:5},()=>mkUnit(randCid(),1));}
+
+// Score a card for the bot to buy
+function botScoreCard(cid){
+  let score=UNIT_SCORE[cid]||5;
+  const owned=BOT.bench.find(u=>u.cid===cid)||BOT.board.find(u=>u&&u.cid===cid);
+  if(owned){
+    score+=BOT_CFG.mergeWeight*8;
+    if(owned.stack===2)score+=7; // one copy away from merge — top priority
+  }
+  // Slight randomness to avoid being fully predictable
+  if(Math.random()<BOT_CFG.mistakeRate)score+=rnd(6)-3;
+  // Counter-pick based on what hurt the bot most
+  const topThreats=Object.keys(BOT.threatMap).sort((a,b)=>BOT.threatMap[b]-BOT.threatMap[a]).slice(0,2);
+  topThreats.forEach(threat=>{
+    const w=BOT_CFG.adaptRate;
+    if(threat==='assassin'&&(cid==='knight'||cid==='paladin'))score+=w*5;
+    if(threat==='archmage'&&(cid==='knight'||cid==='barbarian'))score+=w*4;
+    if(threat==='mage'&&cid==='assassin')score+=w*4;
+    if(threat==='archer'&&(cid==='knight'||cid==='healer'))score+=w*3;
+    if(threat==='barbarian'&&cid==='assassin')score+=w*3;
+    if(threat==='healer'&&cid==='archmage')score+=w*4; // chain kills healer support
+  });
+  return score;
+}
+
+// Bot buy phase — spends gold intelligently
+function botBuyPhase(){
+  let changed=true;
+  while(changed){
+    changed=false;
+    const candidates=BOT.shop
+      .map((card,i)=>card?{i,cid:card.cid,cost:botCardCost(card.cid),score:botScoreCard(card.cid)}:null)
+      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS)
+      .sort((a,b)=>b.score-a.score);
+    if(!candidates.length)break;
+    const pick=candidates[0];
+    BOT.gold-=pick.cost;
+    BOT.shop[pick.i]=null;
+    const existing=BOT.bench.find(u=>u.cid===pick.cid);
+    if(existing){existing.stack=(existing.stack||1)+1;botApplyMerge(existing);}
+    else{const nu=mkUnit(pick.cid,1);nu.stack=1;BOT.bench.push(nu);}
+    changed=true;
+  }
+  // Strategic reroll: if no merge targets and gold is above threshold
+  const hasMergeTarget=BOT.bench.some(u=>BOT.shop.some(s=>s&&s.cid===u.cid));
+  if(!hasMergeTarget&&BOT.gold>=BOT_CFG.rerollAt&&BOT.bench.length<BENCH_SLOTS-1){
+    BOT.gold-=2;botGenShop();
+    // One more buy pass after reroll
+    const c2=BOT.shop
+      .map((card,i)=>card?{i,cid:card.cid,cost:botCardCost(card.cid),score:botScoreCard(card.cid)}:null)
+      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS)
+      .sort((a,b)=>b.score-a.score);
+    if(c2.length){
+      const p=c2[0];BOT.gold-=p.cost;BOT.shop[p.i]=null;
+      const ex=BOT.bench.find(u=>u.cid===p.cid);
+      if(ex){ex.stack=(ex.stack||1)+1;botApplyMerge(ex);}
+      else{const nu=mkUnit(p.cid,1);nu.stack=1;BOT.bench.push(nu);}
+    }
+  }
+}
+
+// Bot positioning — tactical slot assignment by role, highest value units first
+function botPosition(){
+  BOT.board=Array(12).fill(null);
+  const maxSlots=Math.min(3+G.duelNum,9);
+  const pool=[...BOT.bench].sort((a,b)=>(UNIT_SCORE[b.cid]||5)*LM[b.lv]-(UNIT_SCORE[a.cid]||5)*LM[a.lv]);
+  const used=new Set();
+  const placeUnit=(u,preferred)=>{
+    for(const s of preferred){if(!BOT.board[s]){BOT.board[s]={...u};used.add(u.cid);return true;}}
+    for(let s=0;s<12;s++){if(!BOT.board[s]){BOT.board[s]={...u};used.add(u.cid);return true;}}
+    return false;
+  };
+  let placed=0;
+  for(const u of pool){
+    if(placed>=maxSlots)break;
+    if(placeUnit(u,ROLE_SLOT[C[u.cid].role]||MID_SLOTS))placed++;
+  }
+  BOT.bench=BOT.bench.filter(u=>!used.has(u.cid));
+}
+
+// Bot receives income and returns board to bench between battles
+function botNextBattle(playerWon){
+  BOT.lastResult=playerWon?'loss':'win';
+  BOT.battleNum++;
+  const inc=(1+G.battleNum)+(playerWon?0:1); // bot income mirrors player logic
+  BOT.gold+=inc;
+  BOT.board.forEach(u=>{
+    if(!u)return;
+    const ex=BOT.bench.find(b=>b.cid===u.cid);
+    if(ex){ex.stack=(ex.stack||1)+(u.stack||1);botApplyMerge(ex);}
+    else if(BOT.bench.length<BENCH_SLOTS)BOT.bench.push({...u});
+  });
+  BOT.board=Array(12).fill(null);
+}
+
+// Learn which player units did the most damage to adapt strategy
+function botLearnFromBattle(evs,umap){
+  evs.filter(e=>e.type==='atk'||e.type==='kill').forEach(ev=>{
+    const attacker=umap[ev.uid];
+    if(!attacker||attacker.side!=='p')return;
+    BOT.threatMap[attacker.cid]=(BOT.threatMap[attacker.cid]||0)+ev.amt;
+  });
+}
+
+// Full bot turn: generate shop → buy → position
+function botRunTurn(){
+  botGenShop();
+  botBuyPhase();
+  botPosition();
+}
+
+// Initialize bot for a new duel
+function botInitDuel(){
+  BOT.gold=START_GOLD;
+  BOT.bench=[];BOT.board=Array(12).fill(null);BOT.shop=[];
+  BOT.lastResult=null;BOT.battleNum=1;BOT.threatMap={};
+  botRunTurn();
+}
+
+// ===== ENEMY GENERATION (legacy kept for fallback) =====
+function enemyMerge(board){
+  let changed=true;
+  while(changed){changed=false;
+    for(const cid of CK){for(let lv=1;lv<=4;lv++){
+      const idxs=board.map((u,i)=>u&&u.cid===cid&&u.lv===lv?i:-1).filter(i=>i>=0);
+      if(idxs.length>=3){const[k,...r]=idxs;r.slice(0,2).forEach(i=>{board[i]=null});board[k]=mkUnit(cid,lv+1);changed=true;break;}
+    }if(changed)break;}
+  }
+}
+function genDuelEnemy(){
+  // Now just runs the bot and returns its board
+  botInitDuel();
+  return BOT.board.map(u=>u?{...u}:null);
+}
+
+// ===== SIMULATION =====
+function simulate(pb,eb){
+  const ps=pb.map((u,i)=>u?{...u,slot:i,side:'p',charge:rnd(25),alive:true,firstAtk:true,enraged:false}:null).filter(Boolean);
+  const es=eb.map((u,i)=>u?{...u,slot:i,side:'e',charge:rnd(25),alive:true,firstAtk:true,enraged:false}:null).filter(Boolean);
+  const evs=[];let tick=0;
+  const foes=s=>s==='p'?es.filter(u=>u.alive):ps.filter(u=>u.alive);
+  const alliesOf=s=>s==='p'?ps.filter(u=>u.alive):es.filter(u=>u.alive);
+  // Paladin: Sacred Aura — HP buff to adjacent allies at battle start
+  function applyStart(units){
+    units.forEach(u=>{
+      if(u.cid!=='paladin')return;
+      const adj=adjacentSlots(u.slot);
+      units.filter(a=>a.id!==u.id&&adj.includes(a.slot)).forEach(a=>{
+        const b=Math.round(a.maxHp*u.skillPower); // skillPower = % bonus (e.g. 0.11)
+        a.maxHp+=b;a.hp+=b;
+      });
+      evs.push({type:'ability',uid:u.id,abilName:'Sacred Aura',tick:-1});
+    });
+  }
+  applyStart(ps);applyStart(es);
+
+  // Assassin: Sneak Strike — one upfront attack at battle start
+  function applySneak(units,foeSide){
+    units.filter(u=>u.cid==='assassin').forEach(u=>{
+      const targets=foeSide.filter(f=>f.alive);
+      if(!targets.length)return;
+      const t=[...targets].sort((a,b)=>a.hp-b.hp)[0];
+      const dmg=Math.round(u.atk*u.skillPower);
+      dealDmg(u,t,dmg,false);
+      evs.push({type:'ability',uid:u.id,abilName:'Sneak Strike',tick:-1});
+    });
+  }
+  applySneak(ps,es);applySneak(es,ps);
+
+  function pickTarget(unit){
+    const f=foes(unit.side);if(!f.length)return null;
+    if(unit.tp==='lowhp')return[...f].sort((a,b)=>a.hp-b.hp)[0];
+    return f[rnd(f.length)];
+  }
+
+  // Knight: Iron Defense — reduces damage taken by skillPower %
+  function dealDmg(atk,tgt,d,isCrit=false){
+    let dmg=d;
+    if(tgt.cid==='knight') dmg=Math.round(dmg*(1-tgt.skillPower));
+    tgt.hp=Math.max(0,tgt.hp-dmg);
+    if(tgt.hp<=0){tgt.alive=false;evs.push({type:'kill',uid:atk.id,tid:tgt.id,amt:dmg,isCrit,tick});}
+    else evs.push({type:'atk',uid:atk.id,tid:tgt.id,amt:dmg,isCrit,tick});
+  }
+  while(tick<1500){
+    const pa=ps.filter(u=>u.alive),ea=es.filter(u=>u.alive);if(!pa.length||!ea.length)break;
+    [...pa,...ea].forEach(u=>u.charge+=u.spd*8);
+    const acting=[...pa,...ea].filter(u=>u.alive&&u.charge>=100).sort((a,b)=>b.charge-a.charge);
+    for(const unit of acting){
+      if(!unit.alive)continue;unit.charge-=100;
+      // Barbarian: Fury — skillPower % ATK bonus when below 60% HP
+      if(unit.cid==='barbarian'&&!unit.enraged&&unit.hp<unit.maxHp*.6){
+        unit.enraged=true;unit.atk=Math.round(unit.atk*(1+unit.skillPower));
+        evs.push({type:'ability',uid:unit.id,abilName:'Fury',tick});
+      }
+      // Healer: heal lowest HP ally then attack
+      if(unit.cid==='healer'){
+        const al=alliesOf(unit.side).filter(a=>a.id!==unit.id&&a.alive);
+        if(al.length){
+          const target=[...al].sort((a,b)=>(a.hp/a.maxHp)-(b.hp/b.maxHp))[0];
+          const h=Math.round(unit.atk*unit.skillPower);
+          target.hp=Math.min(target.maxHp,target.hp+h);
+          evs.push({type:'heal',uid:unit.id,tid:target.id,amt:h,tick});
+          evs.push({type:'ability',uid:unit.id,abilName:'Healing',tick,silent:true});
+        }
+        const et=pickTarget(unit);if(et&&et.alive)dealDmg(unit,et,unit.atk);
+        continue;
+      }
+      const t=pickTarget(unit);if(!t||!t.alive)continue;
+      // Crit roll using unit's critChance and critRate from DB
+      let dmg=unit.atk;let isCrit=false;
+      // Archer: Precise Shot adds skillPower bonus to crit chance and rate
+      const effCritChance = unit.cid==='archer'
+        ? unit.critChance + unit.skillPower/100
+        : unit.critChance;
+      const effCritRate = unit.cid==='archer'
+        ? unit.critRate + unit.skillPower
+        : unit.critRate;
+      if(Math.random()<effCritChance){isCrit=true;dmg=Math.round(dmg*effCritRate);}
+      dealDmg(unit,t,dmg,isCrit);
+      // Mage: Fireball — skillPower % splash to adjacent targets
+      if(unit.cid==='mage'){
+        const adj=adjacentSlots(t.slot);
+        const splash=foes(unit.side).filter(f=>f.id!==t.id&&f.alive&&adj.includes(f.slot));
+        if(splash.length){
+          splash.forEach(f=>dealDmg(unit,f,Math.round(dmg*unit.skillPower)));
+          evs.push({type:'ability',uid:unit.id,abilName:'Fireball',tick,silent:true});
+        }
+      }
+      // Archmage: Chain Lightning — skillPower % to 2nd, skillPower/2 % to 3rd in line
+      if(unit.cid==='archmage'){
+        const chain=foes(unit.side).filter(f=>f.id!==t.id&&f.alive).sort((a,b)=>a.slot-b.slot);
+        if(chain[0])dealDmg(unit,chain[0],Math.round(dmg*unit.skillPower));
+        if(chain[1])dealDmg(unit,chain[1],Math.round(dmg*unit.skillPower/2));
+        if(chain.length)evs.push({type:'ability',uid:unit.id,abilName:'Chain Lightning',tick});
+      }
+    }
+    tick++;
+  }
+  const pa=ps.filter(u=>u.alive),ea=es.filter(u=>u.alive);
+  let winner;if(pa.length&&!ea.length)winner='p';else if(ea.length&&!pa.length)winner='e';else{const ph=pa.reduce((s,u)=>s+u.hp,0),eh=ea.reduce((s,u)=>s+u.hp,0);winner=ph>=eh?'p':'e';}
+  let dmgP=0,dmgE=0,killsP=0,killsE=0;
+  evs.filter(e=>e.tick>=0&&(e.type==='atk'||e.type==='kill')).forEach(e=>{const u=[...ps,...es].find(x=>x.id===e.uid);if(!u)return;if(u.side==='p'){dmgP+=e.amt;if(e.type==='kill')killsP++;}else{dmgE+=e.amt;if(e.type==='kill')killsE++;}});
+  const umap={};[...ps,...es].forEach(u=>umap[u.id]=u);
+  return{evs,winner,umap,stats:{dmgP,dmgE,killsP,killsE,survP:pa.length,survE:ea.length,boardSnap:[...ps]}};
+}
+
+// ===== PLAYBACK =====
+let btimer=null;
+const ABILOG={
+  'Sacred Aura':      '✨ {n}: Sacred Aura! Adjacent allies gained max HP bonus.',
+  'Sneak Strike':     '⚡ {n}: Sneak Strike! Targeting lowest HP enemy...',
+  'Fury':             '😡 {n}: FURY! Attack permanently increased.',
+  'Fireball':         '🔥 {n}: Fireball! Splash damage to adjacent targets.',
+  'Chain Lightning':  '⛓️ {n}: Chain Lightning! Hitting enemies in line.',
+  'Healing':          '💚 {n}: Healing! Restoring the most wounded ally.',
+};
+function startBattle(){
+  if(!G.board.filter(Boolean).length){log('❌ Posicione ao menos um combatente!','lk');return}
+  G.phase='battle';G.enemy=G.duelEnemy.map(u=>u?{...u}:null);
+  G.fieldSel=null;G.fieldDrag=null;
+  document.getElementById('log').innerHTML='';log('⚔️ A batalha começa!','lr');
+  setBanner(`⚔️ Batalha ${G.battleNum}/${G.format} em andamento...`,'bbattle');render();
+  const res=simulate(G.board,G.enemy);
+  botLearnFromBattle(res.evs,res.umap); // bot learns what hurt it
+  res.evs.filter(e=>e.type==='ability'&&e.tick===-1).forEach(e=>{const u=res.umap[e.uid];log((ABILOG[e.abilName]||'✨ {n}: '+e.abilName).replace('{n}',u?.name||'?'),'lab');});
+  playback(res);
+}
+function playback({evs,winner,umap,stats}){
+  const dHp={};Object.values(umap).forEach(u=>dHp[u.id]=u.maxHp);
+  const tg={};evs.filter(e=>e.tick>=0).forEach(e=>{(tg[e.tick]=tg[e.tick]||[]).push(e)});
+  const tks=Object.keys(tg).map(Number).sort((a,b)=>a-b);let fi=0;
+  function gEl(u){return document.querySelector(`#${u.side==='p'?'p':'e'}field [data-uid="${u.id}"]`);}
+  function updHp(u){const el=gEl(u);if(!el)return;const b=el.querySelector('.uhf');if(!b)return;const r=dHp[u.id]/u.maxHp;b.style.width=`${Math.max(0,r*100)}%`;b.className='uhf '+(r<.3?'lo':r<.6?'mid':'hi');}
+  function frame(){
+    if(fi>=tks.length){endBattle(winner,stats);return}
+    const el=tg[tks[fi++]];const seen=new Set();
+    el.forEach(ev=>{
+      const u=umap[ev.uid],t=ev.tid&&umap[ev.tid];
+      if(ev.type==='ability'&&!ev.silent&&!seen.has(ev.uid+ev.abilName)){
+        seen.add(ev.uid+ev.abilName);
+        log((ABILOG[ev.abilName]||'✨ {n}: '+ev.abilName).replace('{n}',u?.name||'?'),'lab');
+      } else if(ev.type==='heal'&&t){
+        dHp[t.id]=Math.min(t.maxHp,dHp[t.id]+ev.amt);updHp(t);
+        log(`💚 ${u?.name} cura <b>${t.ico} ${t.name}</b> em <span class="lheal">+${ev.amt} HP</span>`,'lheal',true);
+      } else if(ev.type==='atk'&&t){
+        dHp[t.id]=Math.max(0,dHp[t.id]-ev.amt);updHp(t);
+        const e2=gEl(t);if(e2){e2.classList.remove('hit');void e2.offsetWidth;e2.classList.add('hit');}
+        const who=uTag(u);const whom=uTag(t);
+        if(ev.isCrit){
+          log(`${who} → ${whom} &nbsp;${dmgTag(ev.amt,true)}`,'latk',true);
+        } else {
+          log(`${who} → ${whom} &nbsp;<span class="ldmg">−${ev.amt}</span>`,'latk',true);
+        }
+      } else if(ev.type==='kill'&&t){
+        dHp[t.id]=0;updHp(t);
+        const e2=gEl(t);if(e2){e2.classList.remove('hit');void e2.offsetWidth;e2.classList.add('hit');}
+        setTimeout(()=>{const e3=gEl(t);if(e3)e3.classList.add('dead');},200);
+        const who=uTag(u);const whom=uTag(t);
+        log(`${who} <span class="lkill">abateu</span> ${whom} &nbsp;<span class="ldmg">−${ev.amt}</span> 💀`,'lkill',true);
+      }
+    });
+    btimer=setTimeout(frame,360);
+  }
+  frame();
+}
+function endBattle(w,stats){
+  G.phase='result';clearTimeout(btimer);
+  G.duelStats.dmgP+=stats.dmgP;G.duelStats.dmgE+=stats.dmgE;G.duelStats.killsP+=stats.killsP;G.duelStats.killsE+=stats.killsE;
+  G.duelStats.battles.push({winner:w});G.lastBoardSnap=stats.boardSnap||[];
+  if(w==='p'){G.duelScore.p++;G.lastBattleResult='win';log(`🏆 Batalha ${G.battleNum} vencida!`,'lr');}
+  else{G.duelScore.e++;G.lastBattleResult='loss';log(`💔 Batalha ${G.battleNum} perdida!`,'lk');}
+  const over=G.duelScore.p>=G.winsNeeded||G.duelScore.e>=G.winsNeeded||G.battleNum>=G.format;
+  document.getElementById('bfight').style.display='none';
+  const nb=document.createElement('button');nb.id='bnext';
+  if(over){
+    const pw=G.duelScore.p>G.duelScore.e;
+    if(pw){G.duelsWon++;setBanner(`🏆 DUELO VENCIDO! ${G.duelScore.p}–${G.duelScore.e}`,'bwin');}
+    else{G.duelsLost++;setBanner(`💔 DUELO PERDIDO! ${G.duelScore.p}–${G.duelScore.e}`,'blose');}
+    log(`${pw?'🏆':'💔'} Duelo ${G.duelNum} encerrado! Você ${G.duelScore.p} × ${G.duelScore.e}`,'lr');
+    setTimeout(()=>showDuelResult(pw),500);
+    nb.className='btn gnbtn';nb.textContent='🌟 Próximo Duelo';nb.onclick=nextDuel;
+  }else{
+    const inc=betweenIncome();const sc=`${G.duelScore.p}–${G.duelScore.e}`;
+    setBanner(`⚔️ Batalha ${G.battleNum}/${G.format}: ${sc}. ${w==='p'?'Vitória!':'Derrota!'}`,w==='p'?'bwin':'blose');
+    nb.className='btn nbtn';nb.textContent=`▶ Batalha ${G.battleNum+1} (+${inc}💰)`;nb.onclick=nextBattle;
+  }
+  document.getElementById('ctrl').appendChild(nb);updateHdr();renderDuelBar();
+}
+
+// ===== DUEL RESULT =====
+function showDuelResult(pw){
+  document.getElementById('dr-title').textContent=pw?'🏆 DUELO VENCIDO!':'💔 DUELO PERDIDO!';
+  document.getElementById('dr-title').className='dr-title '+(pw?'win':'loss');
+  const sc=G.duelScore;
+  document.getElementById('dr-score').innerHTML=`<span style="color:#88ff88">${sc.p}</span> – <span style="color:#ff8888">${sc.e}</span>`;
+  const bb=document.getElementById('dr-battles');bb.innerHTML='';
+  G.duelStats.battles.forEach((b,i)=>{const d=document.createElement('div');d.className=`dr-bat ${b.winner==='p'?'w':'l'}`;d.textContent=`B${i+1} ${b.winner==='p'?'✓':'✗'}`;bb.appendChild(d);});
+  document.getElementById('drs-dmgP').textContent=G.duelStats.dmgP.toLocaleString();
+  document.getElementById('drs-dmgE').textContent=G.duelStats.dmgE.toLocaleString();
+  document.getElementById('drs-killsP').textContent=G.duelStats.killsP;
+  document.getElementById('drs-killsE').textContent=G.duelStats.killsE;
+  document.getElementById('drs-merges').textContent=G.duelStats.mergesP;
+  function renderTeam(el,units){
+    el.innerHTML='';units.filter(Boolean).forEach(u=>{
+      const alive=u.hp>0;const d=document.createElement('div');d.className=`dr-unit ${alive?'alive':'dead'}`;
+      d.innerHTML=`<span>${u.ico}</span><span style="font-size:7px;color:${alive?'#88ff88':'#ff8888'}">${LS[u.lv]}</span><span class="dr-unit-lbl">${u.name.slice(0,4)}</span>`;
+      el.appendChild(d);
+    });
+    if(!units.filter(Boolean).length)el.innerHTML='<span style="font-size:11px;color:rgba(255,255,255,.25)">—</span>';
+  }
+  renderTeam(document.getElementById('drt-p'),G.lastBoardSnap);
+  renderTeam(document.getElementById('drt-e'),G.duelEnemy);
+  document.getElementById('dr-next-btn').onclick=nextDuel;
+  document.getElementById('duel-result').classList.add('open');
+}
+function nextBattle(){
+  G.battleNum++;returnBoardToBench();const inc=betweenIncome();G.gold+=inc;
+  G.phase='shop';G.bsel=null;G.fieldSel=null;G.fieldDrag=null;genShop();
+  // Bot evolves between battles
+  botNextBattle(G.lastBattleResult==='win'?'loss':'win'); // bot result is inverse of player
+  botRunTurn();
+  G.duelEnemy=BOT.board.map(u=>u?{...u}:null);
+  document.getElementById('bnext')?.remove();document.getElementById('bfight').style.display='';
+  document.getElementById('log').innerHTML='';render();updateHdr();
+  log(`🔄 Batalha ${G.battleNum}/${G.format} | Placar: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | Adversário IA evoluiu!`,'lr');
+}
+function nextDuel(){
+  document.getElementById('duel-result').classList.remove('open');
+  G.duelNum++;G.battleNum=1;G.duelScore={p:0,e:0};G.gold=START_GOLD;G.bench=[];G.board=Array(12).fill(null);
+  G.lastBattleResult=null;G.bsel=null;G.fieldSel=null;G.fieldDrag=null;G.phase='shop';
+  G.duelStats={dmgP:0,dmgE:0,killsP:0,killsE:0,mergesP:0,battles:[]};
+  // New duel: fresh bot
+  botInitDuel();
+  G.duelEnemy=BOT.board.map(u=>u?{...u}:null);
+  G.enemy=Array(12).fill(null);
+  genShop();document.getElementById('bnext')?.remove();document.getElementById('bfight').style.display='';
+  document.getElementById('log').innerHTML='';render();updateHdr();
+  log(`🌟 Duelo ${G.duelNum}! Novo adversário IA com 7💰. Analise e monte!`,'lr');
+}
+
+// ===== LOG =====
+function log(msg,cls='',html=false){const l=document.getElementById('log');const d=document.createElement('div');d.className=`le ${cls}`;if(html)d.innerHTML=msg;else d.textContent=msg;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+function sideTag(side){return side==='p'?`<span class="lside-p">Você</span>`:`<span class="lside-e">Inimigo</span>`;}
+function uTag(u,side){const s=side||u.side;return `<span class="${s==='p'?'lside-p':'lside-e'}">${u.ico||''} ${u.name}</span>`;}
+function dmgTag(amt,isCrit){return isCrit?`<span class="lcrit">💥 ${amt} CRÍTICO</span>`:`<span class="ldmg">${amt}</span>`;}
+
+// ===== MODALS =====
+function openHowTo(){document.getElementById('howto').classList.add('open');}
+function closeHowTo(){document.getElementById('howto').classList.remove('open');}
+document.getElementById('howto').addEventListener('click',e=>{if(e.target===document.getElementById('howto'))closeHowTo();});
+
+// ===== RENDER =====
+function setBanner(t,c){const b=document.getElementById('banner');b.textContent=t;b.className=c;}
+function renderDuelBar(){
+  const dp=document.getElementById('dots-p'),de=document.getElementById('dots-e');dp.innerHTML='';de.innerHTML='';
+  const pp=G.duelScore.p,ee=G.duelScore.e,total=pp+ee;
+  for(let i=0;i<G.format;i++){
+    const pd=document.createElement('div'),ed=document.createElement('div');
+    if(i<total){pd.className=`dot ${i<pp?'dot-w':'dot-l'}`;ed.className=`dot ${i<ee?'dot-w':'dot-l'}`;}
+    else{pd.className='dot dot-e';ed.className='dot dot-e';}
+    dp.appendChild(pd);de.appendChild(ed);
+  }
+  document.getElementById('btag').textContent=`Batalha ${G.battleNum} / ${G.format}`;
+}
+function renderField(fid,board,isP){
+  const f=document.getElementById(fid);f.innerHTML='';
+  for(let i=0;i<12;i++){
+    const cell=document.createElement('div');cell.className='cell';cell.dataset.i=i;
+    const u=board[i];
+    if(u){
+      cell.classList.add('occ');const cc=C[u.cid];
+      const el=document.createElement('div');el.className=`unit l${u.lv}`;el.dataset.uid=u.id;el.style.background=cc.bg;
+      el.title=`${u.name} ${LS[u.lv]}\n${cc.abi.name}: ${cc.abi.desc}`;
+      el.innerHTML=`<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${isP?`<div class="urmv" onclick="event.stopPropagation();retBench(${i})">↩</div>`:''}<div class="uabi" title="${cc.abi.name}: ${cc.abi.desc}">${cc.abi.ico}</div>`;
+
+      if(isP&&G.phase==='shop'){
+        // Drag FROM an occupied slot
+        el.draggable=true;
+        el.addEventListener('dragstart',e=>{
+          e.dataTransfer.setData('fromSlot',String(i));
+          e.dataTransfer.effectAllowed='move';
+          G.fieldDrag=i;
+          setTimeout(()=>el.classList.add('dragging'),0);
+        });
+        el.addEventListener('dragend',()=>{
+          el.classList.remove('dragging');
+          G.fieldDrag=null;
+          render();
+        });
+        // Click on placed unit: select it for repositioning
+        cell.addEventListener('click',e=>{
+          if(e.target.classList.contains('urmv'))return;
+          if(G.fieldSel===i){G.fieldSel=null;}
+          else if(G.fieldSel!==null){
+            // Move from fieldSel to i (swap)
+            const tmp=G.board[G.fieldSel];
+            G.board[G.fieldSel]=G.board[i];
+            G.board[i]=tmp;
+            G.fieldSel=null;
+          } else {
+            G.fieldSel=i;
+            G.bsel=null; // deselect bench
+          }
+          render();
+        });
+      }
+      cell.appendChild(el);
+    } else {
+      // Empty slot
+      if(isP&&G.phase==='shop'&&(G.bsel!==null||G.fieldSel!==null))cell.classList.add('dr');
+
+      if(isP&&G.phase==='shop'){
+        cell.addEventListener('click',()=>{
+          if(G.fieldSel!==null){
+            // Move unit from fieldSel to this empty slot
+            G.board[i]=G.board[G.fieldSel];
+            G.board[G.fieldSel]=null;
+            G.fieldSel=null;
+            render();
+          } else {
+            placeUnit(i);
+          }
+        });
+        // Drop from bench
+        cell.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+        cell.addEventListener('dragenter',e=>{e.preventDefault();cell.classList.add('dnd-over');});
+        cell.addEventListener('dragleave',()=>cell.classList.remove('dnd-over'));
+        cell.addEventListener('drop',e=>{
+          e.preventDefault();cell.classList.remove('dnd-over');
+          const fromSlot=e.dataTransfer.getData('fromSlot');
+          const benchCid=e.dataTransfer.getData('benchCid');
+          if(fromSlot!==''){
+            // Drag from another field slot → move
+            const src=parseInt(fromSlot);
+            G.board[i]=G.board[src];
+            G.board[src]=null;
+            G.fieldDrag=null;
+            render();
+          } else if(benchCid){
+            placeUnit(i,benchCid);
+          }
+        });
+      }
+    }
+
+    // Drop on OCCUPIED slot: swap with dragged unit
+    if(isP&&G.phase==='shop'&&u){
+      cell.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';});
+      cell.addEventListener('dragenter',e=>{e.preventDefault();cell.classList.add('dnd-over');});
+      cell.addEventListener('dragleave',()=>cell.classList.remove('dnd-over'));
+      cell.addEventListener('drop',e=>{
+        e.preventDefault();cell.classList.remove('dnd-over');
+        const fromSlot=e.dataTransfer.getData('fromSlot');
+        if(fromSlot!==''&&fromSlot!==String(i)){
+          const src=parseInt(fromSlot);
+          // Swap
+          const tmp=G.board[src];
+          G.board[src]=G.board[i];
+          G.board[i]=tmp;
+          G.fieldDrag=null;
+          render();
+        }
+      });
+    }
+
+    // Highlight selected field unit
+    if(isP&&G.fieldSel===i)cell.classList.add('field-sel');
+
+    f.appendChild(cell);
+  }
+}
+function renderShop(){
+  const row=document.getElementById('shoprow');row.innerHTML='';const active=G.phase==='shop';
+  G.shop.forEach((u,i)=>{
+    const card=document.createElement('div');
+    if(!u){card.className='scard sold';row.appendChild(card);return;}
+    const cc=C[u.cid];const cost=cardCost(u.cid);const isCombo=cost===2;
+    const canBuy=G.gold>=cost&&active;
+    card.className=`scard${isCombo?' combo-card':''}${canBuy?' buyable':' broke'}`;
+    card.style.cssText=`background:${cc.bg};border-color:${isCombo?'#44aa44':cc.col}`;
+    const owned=G.bench.find(b=>b.cid===u.cid)||G.board.find(b=>b&&b.cid===u.cid);
+    const cntLabel=isCombo&&owned?`🔗${owned.stack||1}/3`:'★';
+    card.innerHTML=`<div class="sprice ${isCombo?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isCombo?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${canBuy?(isCombo?`▶ Empilhar ${cost}💰`:`▶ Comprar ${cost}💰`):''}</div>`;
+    if(canBuy)card.addEventListener('click',()=>buyCard(i));
+    row.appendChild(card);
+  });
+  document.getElementById('breroll').disabled=G.gold<2||G.phase!=='shop';
+}
+function renderBench(){
+  const row=document.getElementById('benchrow');row.innerHTML='';const active=G.phase==='shop';
+  if(!G.bench.length){
+    const m=document.createElement('div');m.className='bench-msg';m.textContent='Banco vazio — arraste cartas da loja para o banco';row.appendChild(m);
+  }else{
+    G.bench.forEach(u=>{
+      const cc=C[u.cid];const isSel=G.bsel===u.cid;
+      const card=document.createElement('div');
+      card.className=`bcard${isSel?' bsel':''}`;
+      card.dataset.cid=u.cid;
+      card.style.cssText=`background:${cc.bg};border-color:${isSel?'#88ccff':cc.col}`;
+      const dotColor=u.lv===1?cc.col:u.lv===2?'#4488ff':u.lv===3?'#aa44ff':'#ffaa00';
+      const nextLbl=u.lv<5?` → ${LS[u.lv+1]}`:'(MAX)';
+      let dotsHtml='<div class="bprog" style="color:'+dotColor+'">';
+      for(let d=0;d<3;d++){dotsHtml+=`<div class="bprog-dot ${d<(u.stack||1)?'filled':'empty'}" style="border-color:${dotColor}"></div>`;}
+      dotsHtml+=`<span class="bprog-label">${u.stack||1}/3${nextLbl}</span></div>`;
+      const sellWarn=u.stack>1?`⚠️ ${u.stack-1} cópia(s) perdida(s) · `:'';
+      card.innerHTML=`<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="${sellWarn}venda = +${SELL[u.lv]}💰">💸 ${u.stack>1?'⚠️ ':''} Vender +${SELL[u.lv]}💰</div>`;
+      if(active){
+        // Click para selecionar (fallback mobile)
+        card.addEventListener('click',()=>{G.bsel=(G.bsel===u.cid)?null:u.cid;render();});
+        // Drag and drop
+        card.draggable=true;
+        card.addEventListener('dragstart',e=>{
+          e.dataTransfer.setData('benchCid',u.cid);
+          e.dataTransfer.effectAllowed='move';
+          G.bsel=u.cid;
+          setTimeout(()=>card.classList.add('dragging'),0);
+        });
+        card.addEventListener('dragend',()=>{card.classList.remove('dragging');G.bsel=null;render();});
+        card.querySelector('.bsell-hint').addEventListener('click',e=>{e.stopPropagation();sellBench(u.cid);});
+      }
+      row.appendChild(card);
+    });
+    for(let i=G.bench.length;i<BENCH_SLOTS;i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
+  }
+  const bc=document.getElementById('bcount');
+  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS} personagens`;
+}
+function updateHdr(){
+  document.getElementById('h-duel').textContent=`Duelo ${G.duelNum}`;
+  document.getElementById('h-dw').textContent=`🏆 ${G.duelsWon}`;
+  document.getElementById('h-dl').textContent=`💔 ${G.duelsLost}`;
+  document.getElementById('h-gold').textContent=`💰 ${G.gold}`;
+}
+function render(){
+  renderField('pfield',G.board,true);
+  renderField('efield',G.phase==='battle'?G.enemy:G.duelEnemy,false);
+  renderShop();renderBench();updateHdr();renderDuelBar();
+  document.getElementById('bfight').disabled=G.phase!=='shop';
+  if(G.phase==='shop'){
+    const n=G.board.filter(Boolean).length,mx=maxUnits();
+    const selUnit=G.bsel?G.bench.find(u=>u.cid===G.bsel):null;
+    const hint=selUnit?` — ${selUnit.name} ${LS[selUnit.lv]} selecionado · clique ou arraste para o campo`:' — Arraste ou selecione uma carta do banco';
+    setBanner(`🛡️ Batalha ${G.battleNum}/${G.format} | ${n}/${mx} no campo${hint}`,'bshop');
+  }
+}
+// Boot: fetch characters from DB, then show start screen
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>
