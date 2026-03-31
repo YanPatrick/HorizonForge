@@ -1,0 +1,21 @@
+{
+  "name": "horizon-forge",
+  "version": "1.0.0",
+  "description": "Horizon Forge — Auto Battler game API",
+  "type": "module",
+  "main": "api/server.js",
+  "scripts": {
+    "dev": "node --watch api/server.js",
+    "start": "node api/server.js",
+    "migrate": "curl -s -X POST http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\"",
+    "seed:game": "node scripts/seedGameDatabase.js"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.19.2",
+    "pg": "^8.20.0"
+  }
+  
+}
