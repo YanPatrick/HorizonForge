@@ -407,8 +407,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
   background:inherit;filter:blur(14px);opacity:.35;z-index:-1;
 }
 .scard.sold{opacity:.18;pointer-events:none}
-.scard.broke{opacity:.42;filter:grayscale(.5);cursor:not-allowed}
-.scard.broke:hover{transform:none !important;filter:grayscale(.5) !important;z-index:auto !important}
+.scard.broke{opacity:.42;filter:grayscale(.5);cursor:not-allowed;pointer-events:none}
 .scard.broke .caction{display:none}
 .scard.combo-card{border-color:#44bb44!important;box-shadow:0 0 14px rgba(68,220,68,.3)}
 .sprice{
@@ -1936,11 +1935,10 @@ function renderShop(){
     el.onclick = canBuy ? (isCombo ? () => buyCombo() : () => buyCard(i)) : null;
 
     // Group hover for combo cards: all rise and fall together
-    el.onmouseenter = isCombo ? () => {
-      row.querySelectorAll('.scard.combo-card').forEach(card => card.classList.add('combo-lift'));
+    el.onmouseenter = (isCombo && canBuy) ? () => {
+      row.querySelectorAll('.scard.combo-card:not(.broke)').forEach(card => card.classList.add('combo-lift'));
     } : null;
-    el.onmouseleave = isCombo ? (e) => {
-      // Only drop if not moving to another combo card
+    el.onmouseleave = (isCombo && canBuy) ? (e) => {
       if(!e.relatedTarget || !e.relatedTarget.classList?.contains('combo-card')){
         row.querySelectorAll('.scard.combo-card').forEach(card => card.classList.remove('combo-lift'));
       }
