@@ -802,7 +802,8 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 let C = {};   // keyed by cid
 let CK = [];  // array of cid strings
 const LS = ['','★','★★','★★★','★★★★','★★★★★'];
-const SELL = [0,1,2,4,7,11], BENCH_SLOTS=7; // idx=lv; lv1=1,lv2=2,lv3=4,lv4=7,lv5=11
+const SELL = [0,1,2,4,7,11]; // idx=lv; lv1=1,lv2=2,lv3=4,lv4=7,lv5=11
+function BENCH_SLOTS(){ return HF.qtd_max_heroes || 5; }
 // HF is populated from /api/config at boot — defaults below are safety fallbacks only
 let HF = {
   initial_gold: 7,
@@ -813,6 +814,7 @@ let HF = {
   value_gold_combo3: 2,
   value_chance_combo2: 0.30,
   value_gold_combo2: 1,
+  qtd_max_heroes: 5,
 };
 // Convenience getter — always reads live HF
 function START_GOLD(){ return HF.initial_gold; }
@@ -878,6 +880,7 @@ async function initGame(){
       HF.value_gold_combo3    = cfg.value_gold_combo3     ?? HF.value_gold_combo3;
       HF.value_chance_combo2  = cfg.value_chance_combo2   ?? HF.value_chance_combo2;
       HF.value_gold_combo2    = cfg.value_gold_combo2     ?? HF.value_gold_combo2;
+      HF.qtd_max_heroes       = cfg.qtd_max_heroes        ?? HF.qtd_max_heroes;
       console.log('✅ Config loaded from DB:', HF);
     } else {
       console.warn('⚠️ Config fetch failed — using defaults:', cfgData.error);
@@ -1066,7 +1069,7 @@ function rerollShop(){
 // Helper: add one unit to bench from shop
 function _addToBench(card, cost, silent){
   const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
-  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){if(!silent)log('❌ Barracks full! Place or sell a card.','lk');return false;}
+  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS()){if(!silent)log('❌ Barracks full! Place or sell a card.','lk');return false;}
   if(existingIdx>=0){
     const ex=G.bench[existingIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
     if(ex.lv>prevLv){
@@ -1106,7 +1109,7 @@ function buyCombo(){
   const cid=combo.cids[0];
   const existingIdx=G.bench.findIndex(u=>u.cid===cid);
   const slotsNeeded=existingIdx<0?1:0;
-  if(G.bench.length+slotsNeeded>BENCH_SLOTS){log('❌ Barracks full!','lk');return}
+  if(G.bench.length+slotsNeeded>BENCH_SLOTS()){log('❌ Barracks full!','lk');return}
   G.gold-=cost;
   // Add all combo cards (they're same cid, stack them)
   for(let k=0;k<combo.type;k++) _addToBench({cid,ico:C[cid].ico,name:C[cid].name},0,k>0);
@@ -1150,7 +1153,7 @@ function retBench(i){
     const ex=G.bench[existingIdx];
     ex.stack=(ex.stack||1)+(u.stack||1);
     applyMerge(ex);
-  }else if(G.bench.length<BENCH_SLOTS){
+  }else if(G.bench.length<BENCH_SLOTS()){
     G.bench.push({...u});
   }else{
     const val=SELL[u.lv];G.gold+=val;
@@ -1166,7 +1169,7 @@ function returnBoardToBench(){
       const ex=G.bench[existingIdx];
       ex.stack=(ex.stack||1)+(u.stack||1);
       applyMerge(ex);
-    }else if(G.bench.length<BENCH_SLOTS){
+    }else if(G.bench.length<BENCH_SLOTS()){
       G.bench.push({...u});
     }else{
       const val=SELL[u.lv];G.gold+=val;
@@ -1245,7 +1248,7 @@ function botBuyPhase(){
     changed=false;
     const candidates=BOT.shop
       .map((card,i)=>card?{i,cid:card.cid,cost:botCardCost(card.cid),score:botScoreCard(card.cid)}:null)
-      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS)
+      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS())
       .sort((a,b)=>b.score-a.score);
     if(!candidates.length)break;
     const pick=candidates[0];
@@ -1258,12 +1261,12 @@ function botBuyPhase(){
   }
   // Strategic reroll: if no merge targets and gold is above threshold
   const hasMergeTarget=BOT.bench.some(u=>BOT.shop.some(s=>s&&s.cid===u.cid));
-  if(!hasMergeTarget&&BOT.gold>=BOT_CFG.rerollAt&&BOT.bench.length<BENCH_SLOTS-1){
+  if(!hasMergeTarget&&BOT.gold>=BOT_CFG.rerollAt&&BOT.bench.length<BENCH_SLOTS()-1){
     BOT.gold-=2;botGenShop();
     // One more buy pass after reroll
     const c2=BOT.shop
       .map((card,i)=>card?{i,cid:card.cid,cost:botCardCost(card.cid),score:botScoreCard(card.cid)}:null)
-      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS)
+      .filter(c=>c&&BOT.gold>=c.cost&&BOT.bench.length<BENCH_SLOTS())
       .sort((a,b)=>b.score-a.score);
     if(c2.length){
       const p=c2[0];BOT.gold-=p.cost;BOT.shop[p.i]=null;
@@ -1303,7 +1306,7 @@ function botNextBattle(playerWon){
     if(!u)return;
     const ex=BOT.bench.find(b=>b.cid===u.cid);
     if(ex){ex.stack=(ex.stack||1)+(u.stack||1);botApplyMerge(ex);}
-    else if(BOT.bench.length<BENCH_SLOTS)BOT.bench.push({...u});
+    else if(BOT.bench.length<BENCH_SLOTS())BOT.bench.push({...u});
   });
   BOT.board=Array(9).fill(null);
 }
@@ -1949,10 +1952,10 @@ function renderBench(){
       }
       row.appendChild(card);
     });
-    for(let i=G.bench.length;i<BENCH_SLOTS;i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
+    for(let i=G.bench.length;i<BENCH_SLOTS();i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
   }
   const bc=document.getElementById('bcount');
-  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS}`;
+  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS()}`;
 
   // Expand barracks when it has cards, collapse when empty
   const bw=document.getElementById('benchwrap');
