@@ -298,15 +298,24 @@ body::before{content:'';position:fixed;inset:0;background-image:
   background:rgba(100,220,100,.08);border:1px solid rgba(100,220,100,.22);
   border-radius:12px;color:#77ee99;font-weight:600;
 }
-#shoprow,#benchrow{display:flex;gap:calc(6px * var(--s));justify-content:center;flex-wrap:wrap;min-height:20px}
+#shoprow{
+  position:relative;
+  width:100%;
+  height:calc(148px * var(--s));
+  overflow:visible;
+}
+#benchrow{display:flex;gap:calc(6px * var(--s));justify-content:center;flex-wrap:wrap;min-height:20px}
 
 /* SHOP CARDS */
 .scard{
   width:calc(92px * var(--s));border-radius:calc(12px * var(--s));border:2px solid;
   display:flex;flex-direction:column;align-items:center;
   padding:calc(7px * var(--s)) calc(6px * var(--s)) calc(5px * var(--s));
-  gap:calc(2px * var(--s));position:relative;transition:all .22s;
+  gap:calc(2px * var(--s));
+  position:absolute;
+  transition:transform .38s cubic-bezier(.22,.68,0,1.2), opacity .28s ease, filter .22s;
   overflow:visible;
+  will-change:transform,opacity;
 }
 .scard::before{
   content:'';position:absolute;inset:0;border-radius:calc(10px * var(--s));
@@ -314,7 +323,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
   pointer-events:none;
 }
 .scard.buyable{cursor:pointer}
-.scard.buyable:hover{transform:translateY(-7px);filter:brightness(1.12)}
+.scard.buyable:hover{transform:translateY(-7px) !important;filter:brightness(1.12);z-index:10}
 .scard.buyable:hover::after{
   content:'';position:absolute;inset:-2px;border-radius:calc(12px * var(--s));
   background:inherit;filter:blur(14px);opacity:.35;z-index:-1;
@@ -1673,44 +1682,105 @@ function renderField(fid,board,isP){
     f.appendChild(cell);
   }
 }
-function renderShop(){
-  const row=document.getElementById('shoprow');row.innerHTML='';const active=G.phase==='shop';
-  const combo=G.shopCombo;
-  const comboIdxSet=combo?new Set(combo.idxs):new Set();
+// ── Shop animation state ──────────────────────────────────
+const SHOP_SLOTS = 5;
+let _shopCardEls = []; // live DOM refs keyed by unit id
 
-  // Combo banner
-  if(combo&&active){
-    const banner=document.createElement('div');
-    banner.className='combo-banner';
-    const lbl=combo.type===3?'⚡ COMBO 3':'🔗 COMBO 2';
-    const cid=combo.cids[0];const cc=C[cid];
-    const canAfford=G.gold>=combo.cost;
-    banner.innerHTML=`<span class="combo-banner-lbl">${lbl} <b>${cc.ico} ${cc.name}</b> ×${combo.type}</span><button class="combo-buy-btn${canAfford?'':' broke'}" onclick="buyCombo()">${canAfford?`▶ Comprar todos por ${combo.cost}💰`:`❌ Falta ouro (${combo.cost}💰)`}</button>`;
-    row.appendChild(banner);
+function _shopSlotX(slotIdx, cardW, gap, containerW){
+  // Centre the group of 5 cards inside the container
+  const totalW = SHOP_SLOTS * cardW + (SHOP_SLOTS - 1) * gap;
+  const startX = (containerW - totalW) / 2;
+  return startX + slotIdx * (cardW + gap);
+}
+
+function renderShop(){
+  const row    = document.getElementById('shoprow');
+  const active = G.phase === 'shop';
+  const combo  = G.shopCombo;
+  const comboIdxSet = combo ? new Set(combo.idxs) : new Set();
+
+  // ── Combo banner (above cards) ──
+  let banner = row.querySelector('.combo-banner');
+  if(combo && active){
+    if(!banner){ banner = document.createElement('div'); banner.className='combo-banner'; row.appendChild(banner); }
+    const lbl = combo.type===3 ? '⚡ COMBO 3' : '🔗 COMBO 2';
+    const cid = combo.cids[0]; const cc = C[cid];
+    const canAfford = G.gold >= combo.cost;
+    banner.innerHTML = `<span class="combo-banner-lbl">${lbl} <b>${cc.ico} ${cc.name}</b> ×${combo.type}</span><button class="combo-buy-btn${canAfford?'':' broke'}" onclick="buyCombo()">${canAfford?`▶ Comprar todos por ${combo.cost}💰`:`❌ Falta ouro (${combo.cost}💰)`}</button>`;
+  } else if(banner){
+    banner.remove();
   }
 
-  const cardsRow=document.createElement('div');
-  cardsRow.style.cssText='display:flex;gap:calc(6px * var(--s));justify-content:center;flex-wrap:wrap;';
-  G.shop.forEach((u,i)=>{
-    const card=document.createElement('div');
-    if(!u){card.className='scard sold';cardsRow.appendChild(card);return;}
-    const cc=C[u.cid];
-    const isOwned=G.bench.find(b=>b.cid===u.cid)||G.board.find(b=>b&&b.cid===u.cid);
-    const cost=isOwned?2:HF.value_buy_card;
-    const isComboCard=comboIdxSet.has(i);
-    const canBuy=G.gold>=cost&&active;
-    let cls=`scard${isComboCard?' combo-card':''}${canBuy?' buyable':' broke'}`;
-    card.className=cls;
-    card.style.cssText=`background:${cc.bg};border-color:${isComboCard?'#55dd55':cc.col}`;
-    if(isComboCard) card.style.boxShadow='0 0 18px rgba(80,220,80,.4)';
-    const cntLabel=isOwned?`🔗${isOwned.stack||1}/3`:'★';
-    const actionLbl=canBuy?(isOwned?`▶ Empilhar ${cost}💰`:`▶ Recrutar ${cost}💰`):'';
-    card.innerHTML=`<div class="sprice ${isOwned?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isOwned?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
-    if(canBuy)card.addEventListener('click',()=>buyCard(i));
-    cardsRow.appendChild(card);
+  // ── Card dimensions (read from CSS vars) ──
+  const s      = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1;
+  const cardW  = Math.round(92 * s);
+  const gap    = Math.round(6  * s);
+  const contW  = row.getBoundingClientRect().width || (cardW * SHOP_SLOTS + gap * (SHOP_SLOTS-1) + 40);
+
+  // Map current DOM cards by unit id
+  const domById = {};
+  row.querySelectorAll('.scard[data-uid]').forEach(el => domById[el.dataset.uid] = el);
+
+  // Track which unit ids are still in shop
+  const keepIds = new Set(G.shop.filter(Boolean).map(u => u.id));
+
+  // Animate out cards that were bought/removed
+  Object.keys(domById).forEach(uid => {
+    if(!keepIds.has(uid)){
+      const el = domById[uid];
+      el.style.transition = 'transform .28s ease-in, opacity .22s ease-in';
+      el.style.transform  = 'translateY(-22px) scale(.85)';
+      el.style.opacity    = '0';
+      el.style.pointerEvents = 'none';
+      setTimeout(() => el.remove(), 300);
+    }
   });
-  row.appendChild(cardsRow);
-  document.getElementById('breroll').disabled=G.gold<HF.value_new_recruitment||G.phase!=='shop';
+
+  // Create or update cards
+  G.shop.forEach((u, i) => {
+    if(!u) return;
+    const targetX = _shopSlotX(i, cardW, gap, contW);
+    const cc      = C[u.cid];
+    const isOwned = G.bench.find(b=>b.cid===u.cid) || G.board.find(b=>b&&b.cid===u.cid);
+    const cost    = isOwned ? 2 : HF.value_buy_card;
+    const isCombo = comboIdxSet.has(i);
+    const canBuy  = G.gold >= cost && active;
+    const cntLabel= isOwned ? `🔗${isOwned.stack||1}/3` : '★';
+    const actionLbl = canBuy ? (isOwned ? `▶ Empilhar ${cost}💰` : `▶ Recrutar ${cost}💰`) : '';
+    const inner   = `<div class="sprice ${isOwned?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isOwned?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
+
+    let el = domById[u.id];
+    const isNew = !el;
+
+    if(isNew){
+      // New card: start off-screen to the right, slide in
+      el = document.createElement('div');
+      el.dataset.uid = u.id;
+      el.style.cssText = `background:${cc.bg};border-color:${isCombo?'#55dd55':cc.col};top:0;left:0;` +
+                         `transform:translate(${contW}px, 0px);opacity:0;`;
+      if(isCombo) el.style.boxShadow = '0 0 18px rgba(80,220,80,.4)';
+      row.appendChild(el);
+      // Force layout before animating
+      el.offsetWidth;
+    }
+
+    // Update classes and content
+    el.className = `scard${isCombo?' combo-card':''}${canBuy?' buyable':' broke'}`;
+    el.innerHTML = inner;
+    el.style.background   = cc.bg;
+    el.style.borderColor  = isCombo ? '#55dd55' : cc.col;
+    el.style.boxShadow    = isCombo ? '0 0 18px rgba(80,220,80,.4)' : '';
+    el.onclick = canBuy ? () => buyCard(i) : null;
+
+    // Animate to target position
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .38s cubic-bezier(.22,.68,0,1.2), opacity .28s ease';
+      el.style.transform  = `translate(${targetX}px, 0px)`;
+      el.style.opacity    = '1';
+    });
+  });
+
+  document.getElementById('breroll').disabled = G.gold < HF.value_new_recruitment || !active;
 }
 function renderBench(){
   const row=document.getElementById('benchrow');row.innerHTML='';const active=G.phase==='shop';
