@@ -4,7 +4,6 @@ import cors from 'cors';
 import { neon } from '@neondatabase/serverless';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { readFileSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -20,29 +19,50 @@ const sql = neon(process.env.DATABASE_URL);
 
 /**
  * GET /api/characters
- * Returns all characters with their stats per level and skill.
- * Shape expected by the game engine:
- * {
- *   cid, name, icon, role, color_hex, bg_gradient, target_type,
- *   skill: { skill_key, name, description, skill_type },
- *   levels: { 1: { max_hp, atk, atk_speed, crit_chance, crit_rate, skill_power }, ... }
- * }
+ * Stats calculados dinamicamente: characters_base × level_scale
+ *
+ * Fórmula por nível:
+ *   max_hp      = base.max_hp      * ls.multiplier
+ *   atk         = base.atk         * ls.multiplier
+ *   atk_speed   = base.atk_speed   (fixo)
+ *   crit_chance = base.crit_chance  (fixo)
+ *   crit_rate   = base.crit_rate    (fixo)
+ *   skill_power = base.skill_power  * ls.skill_power_multiplier
+ *
+ * Retorno (mesmo contrato do frontend):
+ * { cid, name, icon, role, color_hex, bg_gradient, target_type,
+ *   skill: { key, name, description, type },
+ *   levels: { 1: {...}, 2: {...}, 3: {...}, 4: {...}, 5: {...} } }
  */
 app.get('/api/characters', async (_req, res) => {
   try {
     const rows = await sql`
       SELECT
-        c.cid, c.name, c.icon, c.role, c.color_hex, c.bg_gradient, c.target_type,
-        sk.skill_key, sk.name AS skill_name, sk.description AS skill_desc, sk.skill_type,
-        cs.level, cs.max_hp, cs.atk::float AS atk, cs.atk_speed::float,
-        cs.crit_chance::float, cs.crit_rate::float, cs.skill_power::float
+        c.cid,
+        c.name,
+        c.icon,
+        c.role,
+        c.color_hex,
+        c.bg_gradient,
+        c.target_type,
+        sk.skill_key,
+        sk.name        AS skill_name,
+        sk.description AS skill_desc,
+        sk.skill_type,
+        ls.level,
+        ROUND(cb.max_hp * ls.multiplier)::int                          AS max_hp,
+        ROUND((cb.atk * ls.multiplier)::numeric, 1)::float             AS atk,
+        cb.atk_speed::float,
+        cb.crit_chance::float,
+        cb.crit_rate::float,
+        ROUND((cb.skill_power * ls.skill_power_multiplier)::numeric, 4)::float AS skill_power
       FROM characters c
-      JOIN skills sk        ON sk.character_id = c.id
-      JOIN character_stats cs ON cs.character_id = c.id
-      ORDER BY c.id, cs.level
+      JOIN characters_base cb ON cb.character_id = c.id
+      JOIN skills          sk ON sk.character_id = c.id
+      CROSS JOIN level_scale ls
+      ORDER BY c.id, ls.level
     `;
 
-    // Group into character objects
     const map = {};
     for (const r of rows) {
       if (!map[r.cid]) {
@@ -82,7 +102,6 @@ app.get('/api/characters', async (_req, res) => {
 
 /**
  * GET /api/level-scale
- * Returns the 5 level multipliers and labels.
  */
 app.get('/api/level-scale', async (_req, res) => {
   try {
@@ -96,66 +115,63 @@ app.get('/api/level-scale', async (_req, res) => {
 
 /**
  * POST /api/migrate
- * Runs schema.sql against the database (idempotent — safe to re-run).
- * Call once during setup or after schema changes.
+ * Cria as tabelas se não existirem. Seguro para re-executar.
  */
 app.post('/api/migrate', async (_req, res) => {
   try {
-    // TABELAS
     await sql`
       CREATE TABLE IF NOT EXISTS characters (
-        id SERIAL PRIMARY KEY,
-        cid TEXT UNIQUE,
-        name TEXT,
-        icon TEXT,
-        role TEXT,
-        color_hex TEXT,
-        bg_gradient TEXT,
-        target_type TEXT
+        id          SERIAL PRIMARY KEY,
+        cid         TEXT UNIQUE NOT NULL,
+        name        TEXT NOT NULL,
+        icon        TEXT NOT NULL,
+        role        TEXT NOT NULL,
+        color_hex   TEXT NOT NULL,
+        bg_gradient TEXT NOT NULL,
+        target_type TEXT NOT NULL
       )
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS skills (
-        id SERIAL PRIMARY KEY,
-        character_id INT REFERENCES characters(id),
-        skill_key TEXT,
-        name TEXT,
-        description TEXT,
-        skill_type TEXT
-      )
-    `;
-
-    await sql`
-      CREATE TABLE IF NOT EXISTS character_stats (
-        id SERIAL PRIMARY KEY,
-        character_id INT REFERENCES characters(id),
-        level INT,
-        max_hp INT,
-        atk REAL,
-        atk_speed REAL,
-        crit_chance REAL,
-        crit_rate REAL,
-        skill_power REAL,
-        UNIQUE(character_id, level)
+      CREATE TABLE IF NOT EXISTS characters_base (
+        id           SERIAL PRIMARY KEY,
+        character_id INT NOT NULL REFERENCES characters(id) ON DELETE CASCADE UNIQUE,
+        max_hp       INT          NOT NULL,
+        atk          NUMERIC(8,1) NOT NULL,
+        atk_speed    NUMERIC(4,2) NOT NULL,
+        crit_chance  NUMERIC(6,4) NOT NULL,
+        crit_rate    NUMERIC(4,2) NOT NULL,
+        skill_power  NUMERIC(8,4) NOT NULL
       )
     `;
 
     await sql`
       CREATE TABLE IF NOT EXISTS level_scale (
-        level INT PRIMARY KEY,
-        label TEXT,
-        multiplier REAL
+        level                  INT PRIMARY KEY,
+        label                  TEXT         NOT NULL,
+        multiplier             NUMERIC(4,2) NOT NULL,
+        skill_power_multiplier NUMERIC(4,2) NOT NULL
       )
     `;
 
-    // horizon_forge_details: global game config
+    await sql`
+      CREATE TABLE IF NOT EXISTS skills (
+        id           SERIAL PRIMARY KEY,
+        character_id INT NOT NULL REFERENCES characters(id) ON DELETE CASCADE UNIQUE,
+        skill_key    TEXT NOT NULL,
+        name         TEXT NOT NULL,
+        description  TEXT NOT NULL,
+        skill_type   TEXT NOT NULL
+      )
+    `;
+
     await sql`
       CREATE TABLE IF NOT EXISTS horizon_forge_details (
         key   TEXT PRIMARY KEY,
         value TEXT NOT NULL
       )
     `;
+
     await sql`
       INSERT INTO horizon_forge_details (key, value) VALUES
         ('initial_gold',          '7'),
@@ -169,14 +185,14 @@ app.post('/api/migrate', async (_req, res) => {
       ON CONFLICT (key) DO NOTHING
     `;
 
-    res.json({ ok: true, message: 'Migration REAL complete.' });
+    res.json({ ok: true, message: 'Migration complete.' });
   } catch (err) {
-    console.error(err);
+    console.error('[/api/migrate]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-// Serve index.html for any non-API route
+// Serve index.html for qualquer rota não-API
 app.get('*', (_req, res) => {
   res.sendFile(join(__dirname, '../public/index.html'));
 });
