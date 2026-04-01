@@ -295,61 +295,86 @@ body::before{content:'';position:fixed;inset:0;background-image:
 .lfx{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:13px;animation:fu 1s forwards;pointer-events:none;z-index:20}
 @keyframes fu{0%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-32px)}}
 
-/* SHOP & BENCH WRAPPERS */
 /* ── BOTTOM ZONE ── */
 #bottom-zone{
-  display:flex;align-items:flex-start;gap:calc(8px * var(--s));
-  width:100%;position:relative;z-index:1;flex-shrink:0;
+  display:flex;align-items:flex-end;gap:calc(8px * var(--s));
+  width:100%;
+  /* Fixed height = collapsed barracks header + cards row */
+  height:calc(68px * var(--s));
+  position:relative;z-index:2;flex-shrink:0;
+  overflow:visible; /* barracks grows upward outside this box */
 }
+
+/* Barracks: anchored to bottom-left, grows upward */
 #benchwrap{
-  flex:0 0 calc(220px * var(--s));min-width:0;
-  background:linear-gradient(160deg,rgba(80,50,180,.07),rgba(40,20,100,.04));
-  border:1px solid rgba(120,80,255,.18);
+  position:absolute;bottom:0;left:0;
+  width:calc(510px * var(--s)); /* same as shopwrap */
+  background:linear-gradient(160deg,rgba(80,50,180,.09),rgba(40,20,100,.05));
+  border:1px solid rgba(120,80,255,.2);
   border-radius:calc(12px * var(--s));
   padding:calc(7px * var(--s)) calc(8px * var(--s));
-  box-shadow:0 0 20px rgba(80,50,180,.06);
+  box-shadow:0 0 24px rgba(80,50,180,.08);
+  /* Transition: height grows upward via transform-origin */
+  transition:transform .32s cubic-bezier(.22,.68,0,1.1);
+  transform-origin:bottom left;
+  z-index:5;
+  overflow:hidden;
+  /* Collapsed: only show header */
+  max-height:calc(40px * var(--s));
 }
+#benchwrap.expanded{
+  max-height:calc(220px * var(--s));
+  transition:max-height .35s cubic-bezier(.22,.68,0,1.1);
+}
+#benchwrap:not(.expanded){
+  max-height:calc(40px * var(--s));
+  transition:max-height .28s ease-in;
+}
+/* benchrow hidden when collapsed */
+#benchwrap:not(.expanded) #benchrow,
+#benchwrap:not(.expanded) .bench-msg{
+  opacity:0;pointer-events:none;
+  transition:opacity .15s;
+}
+#benchwrap.expanded #benchrow,
+#benchwrap.expanded .bench-msg{
+  opacity:1;
+  transition:opacity .2s .1s;
+}
+
+/* Center col: button + log, centered in bottom-zone */
 #center-col{
-  flex:1;min-width:0;
+  position:absolute;left:50%;transform:translateX(-50%);bottom:0;
   display:flex;flex-direction:column;align-items:center;gap:calc(5px * var(--s));
+  width:calc(380px * var(--s));
+  z-index:3;
 }
+
+/* Shopwrap: anchored to bottom-right, never moves */
 #shopwrap{
-  flex:0 0 calc(510px * var(--s));min-width:0;
-  background:linear-gradient(160deg,rgba(40,80,40,.07),rgba(20,60,20,.04));
-  border:1px solid rgba(80,160,80,.18);
+  position:absolute;bottom:0;right:0;
+  width:calc(510px * var(--s));
+  background:linear-gradient(160deg,rgba(40,80,40,.09),rgba(20,60,20,.05));
+  border:1px solid rgba(80,160,80,.2);
   border-radius:calc(12px * var(--s));
   padding:calc(7px * var(--s)) calc(8px * var(--s));
-  box-shadow:0 0 20px rgba(60,180,60,.06);
+  box-shadow:0 0 24px rgba(60,180,60,.08);
 }
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:calc(5px * var(--s))}
 .sec-title{
   font-size:calc(9px * var(--s));text-transform:uppercase;letter-spacing:1px;
   color:rgba(255,255,255,.32);font-weight:600;
 }
-.barracks-title{color:rgba(160,120,255,.7) !important;}
-.recruit-title{color:rgba(100,220,100,.7) !important;}
-.recruit-controls{display:flex;align-items:center;gap:calc(5px * var(--s));flex-wrap:wrap;}
-.bcount-lbl{font-size:calc(8px * var(--s));color:rgba(255,255,255,.22);}
-.combo-hint{
-  font-size:calc(8px * var(--s));padding:calc(2px * var(--s)) calc(6px * var(--s));
-  background:rgba(100,220,100,.08);border:1px solid rgba(100,220,100,.2);
-  border-radius:10px;color:#77ee99;font-weight:600;white-space:nowrap;
-}
-#benchrow{display:flex;gap:calc(5px * var(--s));justify-content:flex-start;flex-wrap:wrap;min-height:20px}
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:calc(4px * var(--s))}
-.sec-title{
-  font-size:calc(9px * var(--s));text-transform:uppercase;letter-spacing:1px;
-  color:rgba(255,255,255,.32);font-weight:600;
-}
-.combo-hint{
-  font-size:calc(9px * var(--s));padding:calc(2px * var(--s)) calc(8px * var(--s));
-  background:rgba(100,220,100,.08);border:1px solid rgba(100,220,100,.22);
-  border-radius:12px;color:#77ee99;font-weight:600;
-}
+.barracks-title{color:rgba(160,120,255,.75) !important;}
+.recruit-title{color:rgba(100,220,100,.75) !important;}
+.recruit-controls{display:flex;align-items:center;gap:calc(5px * var(--s));}
+.bcount-lbl{font-size:calc(8px * var(--s));color:rgba(255,255,255,.35);margin-left:calc(4px * var(--s));}
+#benchrow{display:flex;gap:calc(5px * var(--s));justify-content:flex-start;flex-wrap:wrap;padding-top:calc(4px * var(--s));min-height:calc(10px * var(--s))}
+
 #shoprow{
   position:relative;
   width:100%;
-  height:calc(148px * var(--s));
+  height:calc(142px * var(--s));
   overflow:visible;
 }
 #benchrow{display:flex;gap:calc(6px * var(--s));justify-content:center;flex-wrap:wrap;min-height:20px}
@@ -695,8 +720,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
     <div class="sec-hdr">
       <span class="sec-title recruit-title">⛺ Recruitment</span>
       <div class="recruit-controls">
-        <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡C3 = 2💰 &nbsp;·&nbsp; 🔗C2 = 1💰</span>
-        <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
+          <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
       </div>
     </div>
     <div id="shoprow"></div>
@@ -1928,7 +1952,11 @@ function renderBench(){
     for(let i=G.bench.length;i<BENCH_SLOTS;i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
   }
   const bc=document.getElementById('bcount');
-  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS} heroes`;
+  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS}`;
+
+  // Expand barracks when it has cards, collapse when empty
+  const bw=document.getElementById('benchwrap');
+  if(bw) bw.classList.toggle('expanded', G.bench.length>0);
 }
 function updateHdr(){
   document.getElementById('h-duel').textContent=`Duelo ${G.duelNum}`;
