@@ -202,7 +202,8 @@ app.post('/api/migrate', async (_req, res) => {
         ('value_chance_combo3',   '0.10'),
         ('value_gold_combo3',     '2'),
         ('value_chance_combo2',   '0.30'),
-        ('value_gold_combo2',     '1')
+        ('value_gold_combo2',     '1'),
+        ('qtd_max_heroes',        '5')
       ON CONFLICT (key) DO NOTHING
     `;
 
