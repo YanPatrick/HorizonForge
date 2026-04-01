@@ -886,25 +886,41 @@ function cardCost(cid){return totalOwned(cid)>0?2:3}
 
 // ===== ECONOMY =====
 function genShop(){
-  // Generate 5 slots with combo chances
   const slots=[];
   const r=Math.random();
   if(r<HF.value_chance_combo3){
-    // Combo 3: positions 0,1,2 same cid
+    // Força Combo 3: posições 0,1,2 iguais
     const cid=randCid();
     slots.push(mkUnit(cid,1),mkUnit(cid,1),mkUnit(cid,1),mkUnit(randCid(),1),mkUnit(randCid(),1));
-    G.shopCombo={type:3,cids:[cid,cid,cid],idxs:[0,1,2],cost:HF.value_gold_combo3};
   } else if(r<HF.value_chance_combo3+HF.value_chance_combo2){
-    // Combo 2: find two consecutive positions
-    const pos=Math.floor(Math.random()*4); // 0-3 so pos+1 is still valid
+    // Força Combo 2: duas posições consecutivas iguais
+    const pos=Math.floor(Math.random()*4);
     const cid=randCid();
     for(let i=0;i<5;i++) slots.push(mkUnit(i===pos||i===pos+1?cid:randCid(),1));
-    G.shopCombo={type:2,cids:[cid,cid],idxs:[pos,pos+1],cost:HF.value_gold_combo2};
   } else {
     for(let i=0;i<5;i++) slots.push(mkUnit(randCid(),1));
-    G.shopCombo=null;
   }
   G.shop=slots;
+  // Detecta combos nos slots gerados — forçados OU coincidência aleatória
+  // Combo 3 tem prioridade
+  G.shopCombo=null;
+  for(let i=0;i<=2;i++){
+    if(slots[i]&&slots[i+1]&&slots[i+2]&&
+       slots[i].cid===slots[i+1].cid&&slots[i].cid===slots[i+2].cid){
+      G.shopCombo={type:3,cids:[slots[i].cid,slots[i].cid,slots[i].cid],
+                   idxs:[i,i+1,i+2],cost:HF.value_gold_combo3};
+      break;
+    }
+  }
+  if(!G.shopCombo){
+    for(let i=0;i<=3;i++){
+      if(slots[i]&&slots[i+1]&&slots[i].cid===slots[i+1].cid){
+        G.shopCombo={type:2,cids:[slots[i].cid,slots[i].cid],
+                     idxs:[i,i+1],cost:HF.value_gold_combo2};
+        break;
+      }
+    }
+  }
 }
 function rerollShop(){
   const cost=HF.value_new_recruitment;
@@ -947,7 +963,6 @@ function buyCard(idx){
   if(!_addToBench(card,cost,false))return;
   G.gold-=cost;
   _slideShop(idx);
-  G.shopCombo=null; // single buy clears combo
   render();
 }
 // Buy combo (2 or 3 cards for special price)
