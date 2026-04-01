@@ -77,6 +77,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 #game{
   display:none;flex-direction:column;align-items:center;
   width:100%;height:100%;gap:var(--gap);
+  overflow:hidden;
 }
 
 /* HEADER */
@@ -156,30 +157,38 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 /* ARENA */
 #arena{
-  display:flex;align-items:stretch;
-  gap:calc(7px * var(--s));width:100%;
+  display:flex;align-items:center;justify-content:center;
+  gap:calc(10px * var(--s));width:100%;
   position:relative;z-index:1;
   flex:1 1 0;min-height:0;
+  padding:0 calc(4px * var(--s));
 }
-.fwrap{flex:1;display:flex;flex-direction:column;gap:calc(4px * var(--s));min-height:0}
+.fwrap{
+  display:flex;flex-direction:column;gap:calc(4px * var(--s));
+  /* Fixed width so fields don't stretch across whole screen */
+  width:calc(260px * var(--s));flex-shrink:0;
+}
 .flbl{
   font-size:calc(8px * var(--s));text-transform:uppercase;letter-spacing:1px;
   opacity:.4;text-align:center;flex-shrink:0;font-weight:700;
 }
 .field{
-  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  display:grid;
+  grid-template-columns:repeat(3,calc(76px * var(--s)));
+  grid-template-rows:repeat(3,calc(68px * var(--s)));
   gap:calc(4px * var(--s));padding:calc(8px * var(--s));
-  border-radius:calc(14px * var(--s));flex:1;min-height:0;
+  border-radius:calc(14px * var(--s));
+  width:fit-content;
 }
 .pf{
-  background:linear-gradient(160deg,rgba(60,100,220,.06),rgba(40,80,160,.03));
-  border:1px solid rgba(80,130,255,.22);
-  box-shadow:inset 0 0 30px rgba(60,100,255,.04);
+  background:linear-gradient(160deg,rgba(60,100,220,.07),rgba(40,80,160,.04));
+  border:1px solid rgba(80,130,255,.25);
+  box-shadow:0 0 40px rgba(60,100,255,.06),inset 0 0 20px rgba(60,100,255,.03);
 }
 .ef{
-  background:linear-gradient(160deg,rgba(180,40,40,.06),rgba(120,20,20,.03));
-  border:1px solid rgba(220,80,80,.22);
-  box-shadow:inset 0 0 30px rgba(200,60,60,.04);
+  background:linear-gradient(160deg,rgba(180,40,40,.07),rgba(120,20,20,.04));
+  border:1px solid rgba(220,80,80,.25);
+  box-shadow:0 0 40px rgba(200,60,60,.06),inset 0 0 20px rgba(200,60,60,.03);
 }
 .cell{
   border-radius:calc(8px * var(--s));border:1px dashed rgba(255,255,255,.08);
@@ -201,7 +210,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 /* TURN ORDER PANEL */
 #turnpanel{
-  width:calc(90px * var(--s));flex-shrink:0;
+  width:calc(82px * var(--s));flex-shrink:0;
   display:flex;flex-direction:column;gap:calc(3px * var(--s));
   overflow:hidden;
 }
@@ -287,7 +296,46 @@ body::before{content:'';position:fixed;inset:0;background-image:
 @keyframes fu{0%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-32px)}}
 
 /* SHOP & BENCH WRAPPERS */
-#shopwrap,#benchwrap{width:100%;position:relative;z-index:1;flex-shrink:0}
+/* ── BOTTOM ZONE ── */
+#bottom-zone{
+  display:flex;align-items:flex-start;gap:calc(8px * var(--s));
+  width:100%;position:relative;z-index:1;flex-shrink:0;
+}
+#benchwrap{
+  flex:0 0 calc(220px * var(--s));min-width:0;
+  background:linear-gradient(160deg,rgba(80,50,180,.07),rgba(40,20,100,.04));
+  border:1px solid rgba(120,80,255,.18);
+  border-radius:calc(12px * var(--s));
+  padding:calc(7px * var(--s)) calc(8px * var(--s));
+  box-shadow:0 0 20px rgba(80,50,180,.06);
+}
+#center-col{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:calc(5px * var(--s));
+}
+#shopwrap{
+  flex:0 0 calc(510px * var(--s));min-width:0;
+  background:linear-gradient(160deg,rgba(40,80,40,.07),rgba(20,60,20,.04));
+  border:1px solid rgba(80,160,80,.18);
+  border-radius:calc(12px * var(--s));
+  padding:calc(7px * var(--s)) calc(8px * var(--s));
+  box-shadow:0 0 20px rgba(60,180,60,.06);
+}
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:calc(5px * var(--s))}
+.sec-title{
+  font-size:calc(9px * var(--s));text-transform:uppercase;letter-spacing:1px;
+  color:rgba(255,255,255,.32);font-weight:600;
+}
+.barracks-title{color:rgba(160,120,255,.7) !important;}
+.recruit-title{color:rgba(100,220,100,.7) !important;}
+.recruit-controls{display:flex;align-items:center;gap:calc(5px * var(--s));flex-wrap:wrap;}
+.bcount-lbl{font-size:calc(8px * var(--s));color:rgba(255,255,255,.22);}
+.combo-hint{
+  font-size:calc(8px * var(--s));padding:calc(2px * var(--s)) calc(6px * var(--s));
+  background:rgba(100,220,100,.08);border:1px solid rgba(100,220,100,.2);
+  border-radius:10px;color:#77ee99;font-weight:600;white-space:nowrap;
+}
+#benchrow{display:flex;gap:calc(5px * var(--s));justify-content:flex-start;flex-wrap:wrap;min-height:20px}
 .sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:calc(4px * var(--s))}
 .sec-title{
   font-size:calc(9px * var(--s));text-transform:uppercase;letter-spacing:1px;
@@ -400,6 +448,17 @@ body::before{content:'';position:fixed;inset:0;background-image:
   animation:comboPulse 1.2s ease-in-out infinite;
   z-index:2;
 }
+/* Sem ouro para o combo: para animação e esmaece igual carta normal */
+.scard.combo-card.broke{
+  animation:none !important;
+  border-color:rgba(68,255,136,.18) !important;
+  box-shadow:none !important;
+  filter:grayscale(.55) brightness(.7);
+}
+.scard.combo-card.broke.combo-lift{
+  transform:none !important;
+  filter:grayscale(.55) brightness(.7) !important;
+}
 /* Group hover: all combo cards rise together */
 .scard.combo-card.combo-lift{
   transform:translateY(-11px) scale(1.03);
@@ -429,7 +488,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 /* BENCH CARDS */
 .bcard{
-  width:calc(90px * var(--s));border-radius:calc(12px * var(--s));border:2px solid;
+  width:calc(82px * var(--s));border-radius:calc(12px * var(--s));border:2px solid;
   display:flex;flex-direction:column;align-items:center;
   padding:calc(6px * var(--s)) calc(5px * var(--s)) calc(5px * var(--s));
   gap:calc(2px * var(--s));position:relative;cursor:pointer;transition:all .22s;
@@ -467,10 +526,10 @@ body::before{content:'';position:fixed;inset:0;background-image:
 .bcard.just-merged{animation:mergepop .6s}
 @keyframes mergepop{0%{transform:scale(1)}40%{transform:scale(1.2);filter:brightness(2.8)}100%{transform:scale(1)}}
 .bench-msg{color:rgba(255,255,255,.22);font-size:calc(10px * var(--s));align-self:center;padding:8px}
-.bcard-empty{width:calc(88px * var(--s));height:calc(116px * var(--s));border:2px dashed rgba(255,255,255,.08);border-radius:calc(11px * var(--s));opacity:.16}
+.bcard-empty{width:calc(80px * var(--s));height:calc(112px * var(--s));border:2px dashed rgba(255,255,255,.08);border-radius:calc(11px * var(--s));opacity:.16}
 
 /* CONTROLS */
-#ctrl{display:flex;gap:calc(7px * var(--s));position:relative;z-index:1;flex-wrap:wrap;justify-content:center;flex-shrink:0}
+#ctrl{display:flex;gap:calc(7px * var(--s));justify-content:center;flex-shrink:0}
 .btn{
   padding:calc(8px * var(--s)) calc(22px * var(--s));
   border-radius:calc(10px * var(--s));border:none;cursor:pointer;
@@ -498,8 +557,8 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 /* BATTLE LOG */
 #log{
-  width:100%;flex:0 0 calc(88px * var(--s));
-  overflow-y:auto;position:relative;z-index:1;
+  width:100%;max-height:calc(85px * var(--s));
+  overflow-y:auto;
   background:linear-gradient(160deg,rgba(4,2,18,.7),rgba(8,4,24,.75));
   border:1px solid rgba(255,255,255,.08);
   border-radius:calc(10px * var(--s));
@@ -615,25 +674,34 @@ body::before{content:'';position:fixed;inset:0;background-image:
   <div id="vs"><span class="vstxt">VS</span></div>
   <div class="fwrap"><div class="flbl" style="color:#ff8888">☠ Adversário (fixo no duelo)</div><div class="field ef" id="efield"></div></div>
 </div>
-<div id="shopwrap">
-  <div class="sec-hdr">
-    <span class="sec-title">⛺ Recruitment</span>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡ Combo3 = 2💰 &nbsp;·&nbsp; 🔗 Combo2 = 1💰</span>
-      <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
+<div id="bottom-zone">
+  <!-- LEFT: Barracks -->
+  <div id="benchwrap">
+    <div class="sec-hdr">
+      <span class="sec-title barracks-title">🪖 Barracks</span>
+      <span class="sec-title bcount-lbl" id="bcount"></span>
     </div>
+    <div id="benchrow"></div>
   </div>
-  <div id="shoprow"></div>
-</div>
-<div id="benchwrap">
-  <div class="sec-hdr">
-    <span class="sec-title">🎒 Banco — 1 carta por personagem · 3 cópias = fusão automática</span>
-    <span class="sec-title" id="bcount"></span>
+
+  <!-- CENTER: Battle button + Log -->
+  <div id="center-col">
+    <div id="ctrl"><button class="btn bbtn" id="bfight" onclick="startBattle()">⚔️ Batalhar!</button></div>
+    <div id="log"></div>
   </div>
-  <div id="benchrow"></div>
+
+  <!-- RIGHT: Recruitment -->
+  <div id="shopwrap">
+    <div class="sec-hdr">
+      <span class="sec-title recruit-title">⛺ Recruitment</span>
+      <div class="recruit-controls">
+        <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡C3 = 2💰 &nbsp;·&nbsp; 🔗C2 = 1💰</span>
+        <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
+      </div>
+    </div>
+    <div id="shoprow"></div>
+  </div>
 </div>
-<div id="ctrl"><button class="btn bbtn" id="bfight" onclick="startBattle()">⚔️ Batalhar!</button></div>
-<div id="log"></div>
 </div>
 
 <!-- DUEL RESULT -->
@@ -675,9 +743,9 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
   <div class="htp-h2">⛺ Recruitment & Bench</div>
   <div class="htp-tips">
-    <div class="htp-tip"><span class="htp-tip-ico">🆕</span><div>Comprar um personagem que você ainda não possui custa <b style="color:#ffdd55">3💰</b>. Ele vai direto para o banco.</div></div>
-    <div class="htp-tip"><span class="htp-tip-ico">🔗</span><div>Comprar um personagem que você já tem custa <b style="color:#88ff88">2💰</b> e empilha na mesma carta — cada personagem ocupa apenas <b>1 slot</b> no banco.</div></div>
-    <div class="htp-tip"><span class="htp-tip-ico">🖱️</span><div><b>Arraste</b> uma carta do banco para um slot do campo, ou clique nela e depois no slot desejado.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🆕</span><div>Comprar um personagem que você ainda não possui custa <b style="color:#ffdd55">3💰</b>. They go straight to the Barracks.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🔗</span><div>Comprar um personagem que você já tem custa <b style="color:#88ff88">2💰</b> e stacks on the same card — each hero uses only <b>1 slot</b> in the Barracks.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🖱️</span><div><b>Drag</b> a card from Barracks to a field slot, or click it then click the slot.</div></div>
   </div>
 
   <div class="htp-h2">✨ Fusão de Cartas</div>
@@ -974,7 +1042,7 @@ function rerollShop(){
 // Helper: add one unit to bench from shop
 function _addToBench(card, cost, silent){
   const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
-  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){if(!silent)log('❌ Banco cheio! Posicione ou venda uma carta.','lk');return false;}
+  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){if(!silent)log('❌ Barracks full! Place or sell a card.','lk');return false;}
   if(existingIdx>=0){
     const ex=G.bench[existingIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
     if(ex.lv>prevLv){
@@ -1014,7 +1082,7 @@ function buyCombo(){
   const cid=combo.cids[0];
   const existingIdx=G.bench.findIndex(u=>u.cid===cid);
   const slotsNeeded=existingIdx<0?1:0;
-  if(G.bench.length+slotsNeeded>BENCH_SLOTS){log('❌ Banco cheio!','lk');return}
+  if(G.bench.length+slotsNeeded>BENCH_SLOTS){log('❌ Barracks full!','lk');return}
   G.gold-=cost;
   // Add all combo cards (they're same cid, stack them)
   for(let k=0;k<combo.type;k++) _addToBench({cid,ico:C[cid].ico,name:C[cid].name},0,k>0);
@@ -1062,7 +1130,7 @@ function retBench(i){
     G.bench.push({...u});
   }else{
     const val=SELL[u.lv];G.gold+=val;
-    log(`💸 Banco cheio! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
+    log(`💸 Barracks full! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
   }
   render();
 }
@@ -1078,7 +1146,7 @@ function returnBoardToBench(){
       G.bench.push({...u});
     }else{
       const val=SELL[u.lv];G.gold+=val;
-      log(`💸 Banco cheio! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
+      log(`💸 Barracks full! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
     }
     G.board[i]=null;
   });
@@ -1826,7 +1894,7 @@ function renderShop(){
 function renderBench(){
   const row=document.getElementById('benchrow');row.innerHTML='';const active=G.phase==='shop';
   if(!G.bench.length){
-    const m=document.createElement('div');m.className='bench-msg';m.textContent='Banco vazio — arraste cartas da loja para o banco';row.appendChild(m);
+    const m=document.createElement('div');m.className='bench-msg';m.textContent='Barracks empty — drag cards from Recruitment';row.appendChild(m);
   }else{
     G.bench.forEach(u=>{
       const cc=C[u.cid];const isSel=G.bsel===u.cid;
@@ -1860,7 +1928,7 @@ function renderBench(){
     for(let i=G.bench.length;i<BENCH_SLOTS;i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
   }
   const bc=document.getElementById('bcount');
-  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS} personagens`;
+  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS} heroes`;
 }
 function updateHdr(){
   document.getElementById('h-duel').textContent=`Duelo ${G.duelNum}`;
@@ -1876,7 +1944,7 @@ function render(){
   if(G.phase==='shop'){
     const n=G.board.filter(Boolean).length,mx=maxUnits();
     const selUnit=G.bsel?G.bench.find(u=>u.cid===G.bsel):null;
-    const hint=selUnit?` — ${selUnit.name} ${LS[selUnit.lv]} selecionado · clique ou arraste para o campo`:' — Arraste ou selecione uma carta do banco';
+    const hint=selUnit?` — ${selUnit.name} ${LS[selUnit.lv]} selecionado · clique ou arraste para o campo`:' — Drag or select a card from Barracks';
     setBanner(`🛡️ Batalha ${G.battleNum}/${G.format} | ${n}/${mx} no campo${hint}`,'bshop');
   }
 }
