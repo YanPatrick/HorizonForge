@@ -114,6 +114,27 @@ app.get('/api/level-scale', async (_req, res) => {
 });
 
 /**
+ * GET /api/config
+ * Retorna horizon_forge_details como objeto { key: parsedValue }.
+ * Sempre lê do banco — nunca cache.
+ */
+app.get('/api/config', async (_req, res) => {
+  try {
+    const rows = await sql`SELECT key, value FROM horizon_forge_details`;
+    const config = {};
+    for (const r of rows) {
+      // Converte para número se possível, caso contrário mantém string
+      const num = Number(r.value);
+      config[r.key] = isNaN(num) ? r.value : num;
+    }
+    res.json({ ok: true, config });
+  } catch (err) {
+    console.error('[/api/config]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/migrate
  * Cria as tabelas se não existirem. Seguro para re-executar.
  */

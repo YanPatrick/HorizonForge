@@ -167,7 +167,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
   opacity:.4;text-align:center;flex-shrink:0;font-weight:700;
 }
 .field{
-  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,1fr);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
   gap:calc(4px * var(--s));padding:calc(8px * var(--s));
   border-radius:calc(14px * var(--s));flex:1;min-height:0;
 }
@@ -312,10 +312,10 @@ body::before{content:'';position:fixed;inset:0;background-image:
   display:flex;flex-direction:column;align-items:center;
   padding:calc(7px * var(--s)) calc(6px * var(--s)) calc(5px * var(--s));
   gap:calc(2px * var(--s));
-  position:absolute;
-  transition:transform .38s cubic-bezier(.22,.68,0,1.2), opacity .28s ease, filter .22s;
+  position:absolute;top:0;
+  transition:left .38s cubic-bezier(.22,.68,0,1.2), opacity .28s ease, filter .22s, transform .18s ease;
   overflow:visible;
-  will-change:transform,opacity;
+  will-change:left,opacity;
 }
 .scard::before{
   content:'';position:absolute;inset:0;border-radius:calc(10px * var(--s));
@@ -323,7 +323,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
   pointer-events:none;
 }
 .scard.buyable{cursor:pointer}
-.scard.buyable:hover{transform:translateY(-7px) !important;filter:brightness(1.12);z-index:10}
+.scard.buyable:not(.combo-card):hover{transform:translateY(-8px);filter:brightness(1.15);z-index:10}
 .scard.buyable:hover::after{
   content:'';position:absolute;inset:-2px;border-radius:calc(12px * var(--s));
   background:inherit;filter:blur(14px);opacity:.35;z-index:-1;
@@ -390,24 +390,34 @@ body::before{content:'';position:fixed;inset:0;background-image:
 }
 .scard.buyable:hover .caction{opacity:1;color:#ffdd55}
 .scard.combo-card.buyable:hover .caction{color:#88ff88}
-.combo-banner{
-  display:flex;align-items:center;justify-content:space-between;gap:8px;
-  width:100%;padding:calc(5px * var(--s)) calc(10px * var(--s));
-  background:linear-gradient(135deg,rgba(80,220,80,.1),rgba(50,180,50,.06));
-  border:1px solid rgba(80,220,80,.35);border-radius:calc(10px * var(--s));
-  margin-bottom:calc(5px * var(--s));
-  animation:comboglow 1.4s ease-in-out infinite;
+/* Combo card glow — pulsing green border on matching consecutive cards */
+@keyframes comboPulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(68,255,136,.5), 0 0 10px 2px rgba(68,255,136,.25)}
+  50%{box-shadow:0 0 0 3px rgba(68,255,136,.9), 0 0 28px 8px rgba(68,255,136,.55), inset 0 0 14px rgba(68,255,136,.1)}
 }
-@keyframes comboglow{0%,100%{box-shadow:0 0 8px rgba(80,220,80,.2)}50%{box-shadow:0 0 18px rgba(80,220,80,.45)}}
-.combo-banner-lbl{font-size:calc(9px * var(--s));font-weight:700;color:#88ee88;white-space:nowrap}
-.combo-buy-btn{
-  font-size:calc(8.5px * var(--s));font-weight:800;padding:calc(3px * var(--s)) calc(10px * var(--s));
-  border-radius:calc(7px * var(--s));border:1px solid rgba(80,220,80,.5);
-  background:linear-gradient(135deg,rgba(50,180,50,.25),rgba(30,140,30,.15));
-  color:#99ffaa;cursor:pointer;transition:all .2s;white-space:nowrap;
+.scard.combo-card{
+  border-color:#44ff88 !important;
+  animation:comboPulse 1.2s ease-in-out infinite;
+  z-index:2;
 }
-.combo-buy-btn:hover{background:linear-gradient(135deg,rgba(60,210,60,.35),rgba(40,160,40,.25));transform:translateY(-2px)}
-.combo-buy-btn.broke{opacity:.45;cursor:not-allowed;color:#888;border-color:rgba(255,255,255,.15)}
+/* Group hover: all combo cards rise together */
+.scard.combo-card.combo-lift{
+  transform:translateY(-11px) scale(1.03);
+  filter:brightness(1.18);
+  z-index:8;
+  animation:comboPulse 1.2s ease-in-out infinite, none;
+  box-shadow:0 0 0 3px rgba(68,255,136,1), 0 0 32px 10px rgba(68,255,136,.7), inset 0 0 16px rgba(68,255,136,.12) !important;
+}
+/* Small combo price badge on the card */
+.combo-price-badge{
+  position:absolute;bottom:4px;right:4px;
+  font-size:calc(7px * var(--s));font-weight:900;
+  background:linear-gradient(135deg,rgba(40,180,80,.85),rgba(20,140,60,.9));
+  border:1px solid rgba(68,255,136,.5);
+  border-radius:4px;padding:1px 5px;
+  color:#ccffdd;pointer-events:none;
+  box-shadow:0 0 6px rgba(68,255,136,.3);
+}
 .rrbtn{
   font-size:calc(9px * var(--s));padding:calc(3px * var(--s)) calc(10px * var(--s));
   border-radius:9px;border:1px solid rgba(255,255,255,.14);
@@ -609,7 +619,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
   <div class="sec-hdr">
     <span class="sec-title">⛺ Recruitment</span>
     <div style="display:flex;align-items:center;gap:6px">
-      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡Combo3 = 2💰 &nbsp;·&nbsp; 🔗Combo2 = 1💰</span>
+      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡ Combo3 = 2💰 &nbsp;·&nbsp; 🔗 Combo2 = 1💰</span>
       <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
     </div>
   </div>
@@ -700,18 +710,20 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 let C = {};   // keyed by cid
 let CK = [];  // array of cid strings
 const LS = ['','★','★★','★★★','★★★★','★★★★★'];
-const SELL = [0,1,2,4], BENCH_SLOTS=7, START_GOLD=7;
-// horizon_forge_details config (mirrors DB)
-const HF = {
+const SELL = [0,1,2,4,7,11], BENCH_SLOTS=7; // idx=lv; lv1=1,lv2=2,lv3=4,lv4=7,lv5=11
+// HF is populated from /api/config at boot — defaults below are safety fallbacks only
+let HF = {
   initial_gold: 7,
   value_buy_card: 3,
   value_new_recruitment: 2,
   value_sell_card: 1,
-  value_chance_combo3: 0.10,   // 10%: 3 consecutive equal cards
+  value_chance_combo3: 0.10,
   value_gold_combo3: 2,
-  value_chance_combo2: 0.30,   // 30%: 2 consecutive equal cards
+  value_chance_combo2: 0.30,
   value_gold_combo2: 1,
 };
+// Convenience getter — always reads live HF
+function START_GOLD(){ return HF.initial_gold; }
 
 // ── Loading screen ─────────────────────────────────────
 function showLoader(msg='Loading characters...'){
@@ -750,26 +762,47 @@ function showError(msg){
     </div>`;
 }
 
-// ── Bootstrap: fetch characters from DB then show start screen ──
+// ── Bootstrap: fetch config + characters from DB in parallel ──
 async function initGame(){
-  showLoader();
+  showLoader('Loading game data...');
   try {
-    const res  = await fetch(`${API_BASE}/api/characters`);
-    const data = await res.json();
-    if(!data.ok) throw new Error(data.error);
+    // Fetch both in parallel
+    const [charRes, cfgRes] = await Promise.all([
+      fetch(`${API_BASE}/api/characters`),
+      fetch(`${API_BASE}/api/config`),
+    ]);
+    const [charData, cfgData] = await Promise.all([charRes.json(), cfgRes.json()]);
 
-    // Build C map from API response
+    if(!charData.ok) throw new Error(charData.error);
+
+    // ── Apply DB config to HF (overrides JS defaults) ──
+    if(cfgData.ok && cfgData.config){
+      const cfg = cfgData.config;
+      HF.initial_gold         = cfg.initial_gold          ?? HF.initial_gold;
+      HF.value_buy_card       = cfg.value_buy_card        ?? HF.value_buy_card;
+      HF.value_new_recruitment= cfg.value_new_recruitment ?? HF.value_new_recruitment;
+      HF.value_sell_card      = cfg.value_sell_card       ?? HF.value_sell_card;
+      HF.value_chance_combo3  = cfg.value_chance_combo3   ?? HF.value_chance_combo3;
+      HF.value_gold_combo3    = cfg.value_gold_combo3     ?? HF.value_gold_combo3;
+      HF.value_chance_combo2  = cfg.value_chance_combo2   ?? HF.value_chance_combo2;
+      HF.value_gold_combo2    = cfg.value_gold_combo2     ?? HF.value_gold_combo2;
+      console.log('✅ Config loaded from DB:', HF);
+    } else {
+      console.warn('⚠️ Config fetch failed — using defaults:', cfgData.error);
+    }
+
+    // ── Build character map ──
     C  = {};
-    for(const char of data.characters){
+    for(const char of charData.characters){
       C[char.cid] = {
-        id:         char.cid,
-        name:       char.name,
-        ico:        char.icon,
-        col:        char.color_hex,
-        bg:         char.bg_gradient,
-        role:       char.role,
-        tp:         char.target_type,
-        levels:     char.levels,   // {1:{max_hp,atk,atk_speed,crit_chance,crit_rate,skill_power}, ...}
+        id:     char.cid,
+        name:   char.name,
+        ico:    char.icon,
+        col:    char.color_hex,
+        bg:     char.bg_gradient,
+        role:   char.role,
+        tp:     char.target_type,
+        levels: char.levels,
         abi: {
           ico:  skillIcon(char.skill.key),
           name: char.skill.name,
@@ -839,9 +872,9 @@ let G={
   format:3,winsNeeded:2,
   phase:'shop',duelNum:1,battleNum:1,
   duelScore:{p:0,e:0},duelsWon:0,duelsLost:0,
-  gold:START_GOLD,shop:[],shopCombo:null,bench:[],
-  board:Array(12).fill(null),
-  duelEnemy:Array(12).fill(null),enemy:Array(12).fill(null),
+  gold:START_GOLD(),shop:[],shopCombo:null,bench:[],
+  board:Array(9).fill(null),
+  duelEnemy:Array(9).fill(null),enemy:Array(9).fill(null),
   bsel:null,fieldSel:null,fieldDrag:null,
   lastBattleResult:null,
   duelStats:{dmgP:0,dmgE:0,killsP:0,killsE:0,mergesP:0,battles:[]},
@@ -852,9 +885,9 @@ function rnd(n){return Math.floor(Math.random()*n)}
 function randCid(){return CK[rnd(CK.length)]}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 function adjacentSlots(slot){
-  const col=slot%4,row=Math.floor(slot/4),adj=[];
-  if(row>0)adj.push(slot-4);if(row<2)adj.push(slot+4);
-  if(col>0)adj.push(slot-1);if(col<3)adj.push(slot+1);
+  const col=slot%3,row=Math.floor(slot/3),adj=[];
+  if(row>0)adj.push(slot-3);if(row<2)adj.push(slot+3);
+  if(col>0)adj.push(slot-1);if(col<2)adj.push(slot+1);
   return adj;
 }
 
@@ -886,7 +919,7 @@ function startGame(fmt){
   botInitDuel();
   G.duelEnemy=BOT.board.map(u=>u?{...u}:null);
   genShop();render();
-  log(`⚔️ Format BO${fmt} | AI Opponent | Win ${G.winsNeeded} battles to claim the duel. You have ${START_GOLD}💰.`,'lr');
+  log(`⚔️ Format BO${fmt} | AI Opponent | Win ${G.winsNeeded} battles to claim the duel. You have ${START_GOLD()}💰.`,'lr');
 }
 
 // ===== PRICING =====
@@ -894,6 +927,27 @@ function cardCost(cid){return totalOwned(cid)>0?2:3}
 
 
 // ===== ECONOMY =====
+// Escaneia G.shop e detecta combo — chamado após geração e após cada slide
+function _detectCombos(){
+  G.shopCombo=null;
+  const s=G.shop;
+  // Combo 3 tem prioridade sobre Combo 2
+  for(let i=0;i<=2;i++){
+    if(s[i]&&s[i+1]&&s[i+2]&&s[i].cid===s[i+1].cid&&s[i].cid===s[i+2].cid){
+      G.shopCombo={type:3,cids:[s[i].cid,s[i].cid,s[i].cid],
+                   idxs:[i,i+1,i+2],cost:HF.value_gold_combo3};
+      return;
+    }
+  }
+  for(let i=0;i<=3;i++){
+    if(s[i]&&s[i+1]&&s[i].cid===s[i+1].cid){
+      G.shopCombo={type:2,cids:[s[i].cid,s[i].cid],
+                   idxs:[i,i+1],cost:HF.value_gold_combo2};
+      return;
+    }
+  }
+}
+
 function genShop(){
   const slots=[];
   const r=Math.random();
@@ -910,26 +964,7 @@ function genShop(){
     for(let i=0;i<5;i++) slots.push(mkUnit(randCid(),1));
   }
   G.shop=slots;
-  // Detecta combos nos slots gerados — forçados OU coincidência aleatória
-  // Combo 3 tem prioridade
-  G.shopCombo=null;
-  for(let i=0;i<=2;i++){
-    if(slots[i]&&slots[i+1]&&slots[i+2]&&
-       slots[i].cid===slots[i+1].cid&&slots[i].cid===slots[i+2].cid){
-      G.shopCombo={type:3,cids:[slots[i].cid,slots[i].cid,slots[i].cid],
-                   idxs:[i,i+1,i+2],cost:HF.value_gold_combo3};
-      break;
-    }
-  }
-  if(!G.shopCombo){
-    for(let i=0;i<=3;i++){
-      if(slots[i]&&slots[i+1]&&slots[i].cid===slots[i+1].cid){
-        G.shopCombo={type:2,cids:[slots[i].cid,slots[i].cid],
-                     idxs:[i,i+1],cost:HF.value_gold_combo2};
-        break;
-      }
-    }
-  }
+  _detectCombos(); // detecta combos forçados OU por coincidência
 }
 function rerollShop(){
   const cost=HF.value_new_recruitment;
@@ -954,15 +989,11 @@ function _addToBench(card, cost, silent){
   }
   return true;
 }
-// Slide shop left from idx, fill slot 4 with new random card
+// Slide shop left from idx, fill slot 4 with new random card, then re-detect combos
 function _slideShop(idx){
   for(let i=idx;i<4;i++) G.shop[i]=G.shop[i+1];
   G.shop[4]=mkUnit(randCid(),1);
-  // Invalidate combo if it involved this card
-  if(G.shopCombo){
-    G.shopCombo.idxs=G.shopCombo.idxs.filter(x=>x!==idx).map(x=>x>idx?x-1:x);
-    if(G.shopCombo.idxs.length<G.shopCombo.type) G.shopCombo=null;
-  }
+  _detectCombos(); // re-scan: cartas que se juntaram podem formar novo combo
 }
 function buyCard(idx){
   if(G.phase!=='shop')return;
@@ -993,7 +1024,8 @@ function buyCombo(){
     for(let j=i;j<4;j++) G.shop[j]=G.shop[j+1];
     G.shop[4]=mkUnit(randCid(),1);
   });
-  G.shopCombo=null;render();
+  _detectCombos(); // cartas restantes podem ter formado novo combo
+  render();
 }
 function sellBench(cid){
   if(G.phase!=='shop')return;
@@ -1057,9 +1089,9 @@ function returnBoardToBench(){
 const BOT_CFG={rerollAt:3, mergeWeight:0.92, adaptRate:0.85, mistakeRate:0.05, label:'🤖 IA'};
 
 // Role priority for positioning: tanks front (cols 3-2), supports mid, dmg back (cols 0-1)
-const FRONT_SLOTS=[3,7,11,2,6,10];
-const MID_SLOTS=[1,5,9];
-const BACK_SLOTS=[0,4,8];
+const FRONT_SLOTS=[2,5,8,1,4,7]; // right→mid cols (tanks front)
+const MID_SLOTS=[1,4,7];
+const BACK_SLOTS=[0,3,6];          // left col (ranged back)
 const ROLE_SLOT={Tanque:FRONT_SLOTS,Paladino:FRONT_SLOTS,Assassino:MID_SLOTS,Suporte:MID_SLOTS,Mago:BACK_SLOTS,Arquimago:BACK_SLOTS,Atirador:BACK_SLOTS};
 
 // Unit base value for decision-making
@@ -1068,9 +1100,9 @@ const LM=[0,1.0,1.4,1.8,2.2,2.6];
 
 // Bot state (parallel to player G)
 let BOT={
-  gold:START_GOLD,
+  gold:START_GOLD(),
   bench:[],
-  board:Array(12).fill(null),
+  board:Array(9).fill(null),
   shop:[],
   lastResult:null,
   battleNum:1,
@@ -1152,7 +1184,7 @@ function botBuyPhase(){
 
 // Bot positioning — tactical slot assignment by role, highest value units first
 function botPosition(){
-  BOT.board=Array(12).fill(null);
+  BOT.board=Array(9).fill(null);
   const maxSlots=Math.min(3+G.duelNum,9);
   const pool=[...BOT.bench].sort((a,b)=>(UNIT_SCORE[b.cid]||5)*LM[b.lv]-(UNIT_SCORE[a.cid]||5)*LM[a.lv]);
   const used=new Set();
@@ -1181,7 +1213,7 @@ function botNextBattle(playerWon){
     if(ex){ex.stack=(ex.stack||1)+(u.stack||1);botApplyMerge(ex);}
     else if(BOT.bench.length<BENCH_SLOTS)BOT.bench.push({...u});
   });
-  BOT.board=Array(12).fill(null);
+  BOT.board=Array(9).fill(null);
 }
 
 // Learn which player units did the most damage to adapt strategy
@@ -1202,8 +1234,8 @@ function botRunTurn(){
 
 // Initialize bot for a new duel
 function botInitDuel(){
-  BOT.gold=START_GOLD;
-  BOT.bench=[];BOT.board=Array(12).fill(null);BOT.shop=[];
+  BOT.gold=START_GOLD();
+  BOT.bench=[];BOT.board=Array(9).fill(null);BOT.shop=[];
   BOT.lastResult=null;BOT.battleNum=1;BOT.threatMap={};
   botRunTurn();
 }
@@ -1539,13 +1571,13 @@ function nextBattle(){
 }
 function nextDuel(){
   document.getElementById('duel-result').classList.remove('open');
-  G.duelNum++;G.battleNum=1;G.duelScore={p:0,e:0};G.gold=START_GOLD;G.bench=[];G.board=Array(12).fill(null);
+  G.duelNum++;G.battleNum=1;G.duelScore={p:0,e:0};G.gold=START_GOLD();G.bench=[];G.board=Array(9).fill(null);
   G.lastBattleResult=null;G.bsel=null;G.fieldSel=null;G.fieldDrag=null;G.phase='shop';
   G.duelStats={dmgP:0,dmgE:0,killsP:0,killsE:0,mergesP:0,battles:[]};
   // New duel: fresh bot
   botInitDuel();
   G.duelEnemy=BOT.board.map(u=>u?{...u}:null);
-  G.enemy=Array(12).fill(null);
+  G.enemy=Array(9).fill(null);
   genShop();document.getElementById('bnext')?.remove();document.getElementById('bfight').style.display='';
   document.getElementById('log').innerHTML='';render();updateHdr();
   log(`🌟 Duelo ${G.duelNum}! Novo adversário IA com 7💰. Analise e monte!`,'lr');
@@ -1684,13 +1716,11 @@ function renderField(fid,board,isP){
 }
 // ── Shop animation state ──────────────────────────────────
 const SHOP_SLOTS = 5;
-let _shopCardEls = []; // live DOM refs keyed by unit id
 
-function _shopSlotX(slotIdx, cardW, gap, containerW){
-  // Centre the group of 5 cards inside the container
+function _shopSlotLeft(slotIdx, cardW, gap, containerW){
   const totalW = SHOP_SLOTS * cardW + (SHOP_SLOTS - 1) * gap;
   const startX = (containerW - totalW) / 2;
-  return startX + slotIdx * (cardW + gap);
+  return Math.round(startX + slotIdx * (cardW + gap));
 }
 
 function renderShop(){
@@ -1699,83 +1729,94 @@ function renderShop(){
   const combo  = G.shopCombo;
   const comboIdxSet = combo ? new Set(combo.idxs) : new Set();
 
-  // ── Combo banner (above cards) ──
-  let banner = row.querySelector('.combo-banner');
-  if(combo && active){
-    if(!banner){ banner = document.createElement('div'); banner.className='combo-banner'; row.appendChild(banner); }
-    const lbl = combo.type===3 ? '⚡ COMBO 3' : '🔗 COMBO 2';
-    const cid = combo.cids[0]; const cc = C[cid];
-    const canAfford = G.gold >= combo.cost;
-    banner.innerHTML = `<span class="combo-banner-lbl">${lbl} <b>${cc.ico} ${cc.name}</b> ×${combo.type}</span><button class="combo-buy-btn${canAfford?'':' broke'}" onclick="buyCombo()">${canAfford?`▶ Comprar todos por ${combo.cost}💰`:`❌ Falta ouro (${combo.cost}💰)`}</button>`;
-  } else if(banner){
-    banner.remove();
-  }
-
-  // ── Card dimensions (read from CSS vars) ──
-  const s      = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1;
-  const cardW  = Math.round(92 * s);
-  const gap    = Math.round(6  * s);
-  const contW  = row.getBoundingClientRect().width || (cardW * SHOP_SLOTS + gap * (SHOP_SLOTS-1) + 40);
+  // ── Card dimensions ──
+  const s     = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--s')) || 1;
+  const cardW = Math.round(92 * s);
+  const gap   = Math.round(6  * s);
+  const contW = row.getBoundingClientRect().width || (cardW * SHOP_SLOTS + gap * (SHOP_SLOTS - 1) + 80);
 
   // Map current DOM cards by unit id
   const domById = {};
   row.querySelectorAll('.scard[data-uid]').forEach(el => domById[el.dataset.uid] = el);
 
-  // Track which unit ids are still in shop
+  // Animate out removed cards (fly up + fade)
   const keepIds = new Set(G.shop.filter(Boolean).map(u => u.id));
-
-  // Animate out cards that were bought/removed
   Object.keys(domById).forEach(uid => {
     if(!keepIds.has(uid)){
       const el = domById[uid];
-      el.style.transition = 'transform .28s ease-in, opacity .22s ease-in';
-      el.style.transform  = 'translateY(-22px) scale(.85)';
-      el.style.opacity    = '0';
-      el.style.pointerEvents = 'none';
-      setTimeout(() => el.remove(), 300);
+      el.style.transition   = 'transform .22s ease-in, opacity .2s ease-in';
+      el.style.transform    = 'translateY(-24px) scale(.82)';
+      el.style.opacity      = '0';
+      el.style.pointerEvents= 'none';
+      setTimeout(() => el.remove(), 240);
     }
   });
 
-  // Create or update cards
+  // Create or update each card
   G.shop.forEach((u, i) => {
     if(!u) return;
-    const targetX = _shopSlotX(i, cardW, gap, contW);
+    const targetLeft = _shopSlotLeft(i, cardW, gap, contW);
     const cc      = C[u.cid];
     const isOwned = G.bench.find(b=>b.cid===u.cid) || G.board.find(b=>b&&b.cid===u.cid);
     const cost    = isOwned ? 2 : HF.value_buy_card;
     const isCombo = comboIdxSet.has(i);
-    const canBuy  = G.gold >= cost && active;
+    const canBuy  = G.gold >= (isCombo ? combo.cost : cost) && active;
     const cntLabel= isOwned ? `🔗${isOwned.stack||1}/3` : '★';
-    const actionLbl = canBuy ? (isOwned ? `▶ Empilhar ${cost}💰` : `▶ Recrutar ${cost}💰`) : '';
-    const inner   = `<div class="sprice ${isOwned?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isOwned?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
+    // Combo cards: show combo price badge, click buys whole combo
+    const comboPrice = isCombo ? combo.cost : null;
+    const actionLbl = canBuy
+      ? (isCombo ? `⚡ Combo ×${combo.type} por ${combo.cost}💰` : (isOwned ? `▶ Empilhar ${cost}💰` : `▶ Recrutar ${cost}💰`))
+      : '';
+    const priceLbl = isCombo ? `${combo.cost}💰` : `${cost}💰`;
+    const priceClass = isOwned ? 'pcombo' : (isCombo ? 'pcombo' : 'pnew');
+    const inner = `<div class="sprice ${priceClass}">${priceLbl}</div>`+
+      `<div class="scnt ${isOwned?'ccombo':'cnew'}">${cntLabel}</div>`+
+      `<div class="cico">${u.ico}</div>`+
+      `<div class="cnm">${u.name}</div>`+
+      `<div class="crole">${u.role}</div>`+
+      `<div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div>`+
+      `<div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div>`+
+      `<div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div>`+
+      `<div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div>`+
+      `<div class="caction">${actionLbl}</div>`;
 
     let el = domById[u.id];
     const isNew = !el;
 
     if(isNew){
-      // New card: start off-screen to the right, slide in
       el = document.createElement('div');
       el.dataset.uid = u.id;
-      el.style.cssText = `background:${cc.bg};border-color:${isCombo?'#55dd55':cc.col};top:0;left:0;` +
-                         `transform:translate(${contW}px, 0px);opacity:0;`;
-      if(isCombo) el.style.boxShadow = '0 0 18px rgba(80,220,80,.4)';
+      // Start off-screen right, invisible — uses left for position
+      el.style.left    = `${contW + cardW}px`;
+      el.style.opacity = '0';
+      el.style.transition = 'none';
       row.appendChild(el);
-      // Force layout before animating
-      el.offsetWidth;
+      el.offsetWidth; // force layout
     }
 
-    // Update classes and content
+    // Update class & content
     el.className = `scard${isCombo?' combo-card':''}${canBuy?' buyable':' broke'}`;
-    el.innerHTML = inner;
-    el.style.background   = cc.bg;
-    el.style.borderColor  = isCombo ? '#55dd55' : cc.col;
-    el.style.boxShadow    = isCombo ? '0 0 18px rgba(80,220,80,.4)' : '';
-    el.onclick = canBuy ? () => buyCard(i) : null;
+    el.innerHTML  = inner;
+    el.style.background  = cc.bg;
+    el.style.borderColor = isCombo ? '#44ff88' : cc.col;
+    // Click: combo cards trigger buyCombo, others buyCard
+    el.onclick = canBuy ? (isCombo ? () => buyCombo() : () => buyCard(i)) : null;
 
-    // Animate to target position
+    // Group hover for combo cards: all rise and fall together
+    el.onmouseenter = isCombo ? () => {
+      row.querySelectorAll('.scard.combo-card').forEach(card => card.classList.add('combo-lift'));
+    } : null;
+    el.onmouseleave = isCombo ? (e) => {
+      // Only drop if not moving to another combo card
+      if(!e.relatedTarget || !e.relatedTarget.classList?.contains('combo-card')){
+        row.querySelectorAll('.scard.combo-card').forEach(card => card.classList.remove('combo-lift'));
+      }
+    } : null;
+
+    // Animate to target position using left (hover transform stays independent)
     requestAnimationFrame(() => {
-      el.style.transition = 'transform .38s cubic-bezier(.22,.68,0,1.2), opacity .28s ease';
-      el.style.transform  = `translate(${targetX}px, 0px)`;
+      el.style.transition = 'left .38s cubic-bezier(.22,.68,0,1.2), opacity .26s ease, transform .18s ease, filter .18s ease, box-shadow .18s ease';
+      el.style.left       = `${targetLeft}px`;
       el.style.opacity    = '1';
     });
   });
