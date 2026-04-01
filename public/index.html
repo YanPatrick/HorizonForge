@@ -275,6 +275,11 @@ body::before{content:'';position:fixed;inset:0;background-image:
 .uhf.lo{background:linear-gradient(90deg,#ff2222,#ff6633)}
 .ulvl{position:absolute;top:2px;right:3px;font-size:calc(7px * var(--s));font-weight:900;color:rgba(255,220,100,.95);text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .uabi{position:absolute;bottom:2px;left:3px;font-size:calc(9px * var(--s));line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
+/* Stack progress dots on field units */
+.uprog{position:absolute;bottom:2px;right:2px;display:flex;gap:calc(2px * var(--s));align-items:center}
+.uprog-dot{width:calc(5px * var(--s));height:calc(5px * var(--s));border-radius:50%;border:1.5px solid;transition:all .25s}
+.uprog-dot.filled{background:currentColor;box-shadow:0 0 4px currentColor}
+.uprog-dot.empty{background:transparent;opacity:.3}
 .urmv{
   position:absolute;top:2px;left:3px;font-size:calc(7px * var(--s));
   color:rgba(255,100,100,.8);cursor:pointer;display:none;
@@ -402,7 +407,9 @@ body::before{content:'';position:fixed;inset:0;background-image:
   background:inherit;filter:blur(14px);opacity:.35;z-index:-1;
 }
 .scard.sold{opacity:.18;pointer-events:none}
-.scard.broke{opacity:.42;filter:grayscale(.5)}
+.scard.broke{opacity:.42;filter:grayscale(.5);cursor:not-allowed}
+.scard.broke:hover{transform:none !important;filter:grayscale(.5) !important;z-index:auto !important}
+.scard.broke .caction{display:none}
 .scard.combo-card{border-color:#44bb44!important;box-shadow:0 0 14px rgba(68,220,68,.3)}
 .sprice{
   position:absolute;top:4px;left:5px;
@@ -803,7 +810,19 @@ let C = {};   // keyed by cid
 let CK = [];  // array of cid strings
 const LS = ['','★','★★','★★★','★★★★','★★★★★'];
 const SELL = [0,1,2,4,7,11]; // idx=lv; lv1=1,lv2=2,lv3=4,lv4=7,lv5=11
-function BENCH_SLOTS(){ return HF.qtd_max_heroes || 5; }
+const BARRACKS_MAX = 5;                  // fixed barracks capacity (substitutes)
+function BENCH_SLOTS(){ return BARRACKS_MAX; }   // barracks = always 5
+function FIELD_MAX(){ return HF.qtd_max_heroes || 5; } // field = from DB
+// Count DISTINCT hero types across bench + board (stacks of same hero = 1 slot)
+// Bench count = entries in barracks (each unique hero = 1 slot)
+function distinctHeroes(){ return G.bench.length; }
+function canAddNewHero(cid){
+  // Can stack if hero already in bench or board
+  const inBench=G.bench.some(u=>u.cid===cid);
+  const inBoard=G.board.some(u=>u&&u.cid===cid);
+  if(inBench||inBoard) return true;  // always allow stacking
+  return G.bench.length < BENCH_SLOTS(); // new hero: check barracks space
+}
 // HF is populated from /api/config at boot — defaults below are safety fallbacks only
 let HF = {
   initial_gold: 7,
@@ -1068,17 +1087,42 @@ function rerollShop(){
 }
 // Helper: add one unit to bench from shop
 function _addToBench(card, cost, silent){
-  const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
-  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS()){if(!silent)log('❌ Barracks full! Place or sell a card.','lk');return false;}
-  if(existingIdx>=0){
-    const ex=G.bench[existingIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
+  if(!canAddNewHero(card.cid)){if(!silent)log('❌ Barracks full! Place or sell a card.','lk');return false;}
+
+  // Check bench first, then board
+  const benchIdx=G.bench.findIndex(u=>u.cid===card.cid);
+  const boardIdx=G.board.findIndex(u=>u&&u.cid===card.cid);
+
+  if(benchIdx>=0){
+    // Stack on bench unit
+    const ex=G.bench[benchIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
     if(ex.lv>prevLv){
+      if(!silent)log(`✨ ${ex.name} evoluiu para ${LS[ex.lv]}! (Barracks)`,'ll');
       setTimeout(()=>{document.querySelectorAll('#benchrow .bcard').forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('just-merged');setTimeout(()=>bc.classList.remove('just-merged'),700);}});},40);
     }else{
       if(!silent)log(`🔗 ${card.name} empilhado! (${ex.stack}/3 → ${LS[ex.lv+1]||'MAX'})${cost===2?' −2💰':' −3💰'}`,'ll');
       setTimeout(()=>{document.querySelectorAll('#benchrow .bcard').forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('new-copy');setTimeout(()=>bc.classList.remove('new-copy'),500);}});},40);
     }
+  }else if(boardIdx>=0){
+    // Stack on field unit — evolves in place!
+    const ex=G.board[boardIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
+    if(ex.lv>prevLv){
+      if(!silent)log(`⚡ ${ex.name} evoluiu para ${LS[ex.lv]} em campo!`,'ll');
+      // Trigger merge animation on the field unit
+      setTimeout(()=>{
+        const fieldEl=document.querySelector(`#pfield [data-cid="${ex.cid}"]`);
+        if(fieldEl){const u=fieldEl.querySelector('.unit');if(u){u.classList.add('mg');setTimeout(()=>u.classList.remove('mg'),600);}}
+      },40);
+    }else{
+      if(!silent)log(`🔗 ${card.name} empilhado em campo! (${ex.stack}/3 → ${LS[ex.lv+1]||'MAX'})${cost===2?' −2💰':' −3💰'}`,'ll');
+      setTimeout(()=>{
+        const fieldEl=document.querySelector(`#pfield [data-cid="${ex.cid}"]`);
+        if(fieldEl){const u=fieldEl.querySelector('.unit');if(u){u.classList.add('new-copy');setTimeout(()=>u.classList.remove('new-copy'),500);}}
+      },40);
+    }
+    render(); // refresh field display
   }else{
+    // Brand new hero — goes to barracks
     const newUnit=mkUnit(card.cid,1);newUnit.stack=1;G.bench.push(newUnit);
     if(!silent)log(`🛒 Recrutou ${card.name} por ${cost}💰`,'ll');
   }
@@ -1107,9 +1151,7 @@ function buyCombo(){
   if(G.gold<cost){log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`,'lk');return}
   // Check bench space for new unique cids
   const cid=combo.cids[0];
-  const existingIdx=G.bench.findIndex(u=>u.cid===cid);
-  const slotsNeeded=existingIdx<0?1:0;
-  if(G.bench.length+slotsNeeded>BENCH_SLOTS()){log('❌ Barracks full!','lk');return}
+  if(!canAddNewHero(cid)){log('❌ Barracks full!','lk');return}
   G.gold-=cost;
   // Add all combo cards (they're same cid, stack them)
   for(let k=0;k<combo.type;k++) _addToBench({cid,ico:C[cid].ico,name:C[cid].name},0,k>0);
@@ -1134,10 +1176,10 @@ function sellBench(cid){
 function betweenIncome(){return(1+G.battleNum)+(G.lastBattleResult==='win'?1:0)}
 
 // ===== BOARD =====
-function maxUnits(){return Math.min(3+G.duelNum,9)}
+function maxUnits(){return FIELD_MAX();}
 function placeUnit(i,cid=null){
   if(G.phase!=='shop'||G.board[i])return;
-  if(G.board.filter(Boolean).length>=maxUnits()){log(`❌ Máximo de ${maxUnits()} unidades!`,'lk');return}
+  if(G.board.filter(Boolean).length>=maxUnits()){log(`❌ Field full! Max ${maxUnits()} heroes in battle.`,'lk');return}
   const selCid=cid||G.bsel;if(!selCid)return;
   const bidx=G.bench.findIndex(u=>u.cid===selCid);if(bidx<0)return;
   G.board[i]={...G.bench[bidx]};
@@ -1153,7 +1195,7 @@ function retBench(i){
     const ex=G.bench[existingIdx];
     ex.stack=(ex.stack||1)+(u.stack||1);
     applyMerge(ex);
-  }else if(G.bench.length<BENCH_SLOTS()){
+  }else if(distinctHeroes()<BENCH_SLOTS()){
     G.bench.push({...u});
   }else{
     const val=SELL[u.lv];G.gold+=val;
@@ -1161,21 +1203,12 @@ function retBench(i){
   }
   render();
 }
-function returnBoardToBench(){
-  G.board.forEach((u,i)=>{
+function restoreFieldHp(){
+  // Heroes stay in their field positions — just restore HP for next battle
+  G.board.forEach(u=>{
     if(!u)return;
-    const existingIdx=G.bench.findIndex(b=>b.cid===u.cid);
-    if(existingIdx>=0){
-      const ex=G.bench[existingIdx];
-      ex.stack=(ex.stack||1)+(u.stack||1);
-      applyMerge(ex);
-    }else if(G.bench.length<BENCH_SLOTS()){
-      G.bench.push({...u});
-    }else{
-      const val=SELL[u.lv];G.gold+=val;
-      log(`💸 Barracks full! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,'la');
-    }
-    G.board[i]=null;
+    const st=C[u.cid]?.levels[u.lv];
+    if(st) u.hp=u.maxHp=st.max_hp;
   });
 }
 
@@ -1654,7 +1687,7 @@ function showDuelResult(pw){
   document.getElementById('duel-result').classList.add('open');
 }
 function nextBattle(){
-  G.battleNum++;returnBoardToBench();const inc=betweenIncome();G.gold+=inc;
+  G.battleNum++;restoreFieldHp();const inc=betweenIncome();G.gold+=inc;
   G.phase='shop';G.bsel=null;G.fieldSel=null;G.fieldDrag=null;genShop();
   // Bot evolves between battles
   botNextBattle(G.lastBattleResult==='win'?'loss':'win'); // bot result is inverse of player
@@ -1704,14 +1737,19 @@ function renderDuelBar(){
 }
 function renderField(fid,board,isP){
   const f=document.getElementById(fid);f.innerHTML='';
-  for(let i=0;i<12;i++){
+  for(let i=0;i<9;i++){
     const cell=document.createElement('div');cell.className='cell';cell.dataset.i=i;
     const u=board[i];
     if(u){
       cell.classList.add('occ');const cc=C[u.cid];
-      const el=document.createElement('div');el.className=`unit l${u.lv}`;el.dataset.uid=u.id;el.style.background=cc.bg;
+      const el=document.createElement('div');el.className=`unit l${u.lv}`;el.dataset.uid=u.id;el.dataset.cid=u.cid;el.style.background=cc.bg;
       el.title=`${u.name} ${LS[u.lv]}\n${cc.abi.name}: ${cc.abi.desc}`;
-      el.innerHTML=`<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${isP?`<div class="urmv" onclick="event.stopPropagation();retBench(${i})">↩</div>`:''}<div class="uabi" title="${cc.abi.name}: ${cc.abi.desc}">${cc.abi.ico}</div>`;
+      // Stack progress dots
+      const dotColor=u.lv===1?cc.col:u.lv===2?'#4488ff':u.lv===3?'#aa44ff':'#ffaa00';
+      let uDotsHtml='<div class="uprog" style="color:'+dotColor+'">';
+      for(let d=0;d<3;d++){uDotsHtml+=`<div class="uprog-dot ${d<(u.stack||1)?'filled':'empty'}" style="border-color:${dotColor}"></div>`;}
+      uDotsHtml+='</div>';
+      el.innerHTML=`<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${isP?`<div class="urmv" onclick="event.stopPropagation();retBench(${i})">↩</div>`:''}<div class="uabi" title="${cc.abi.name}: ${cc.abi.desc}">${cc.abi.ico}</div>${uDotsHtml}`;
 
       if(isP&&G.phase==='shop'){
         // Drag FROM an occupied slot
@@ -1952,10 +1990,10 @@ function renderBench(){
       }
       row.appendChild(card);
     });
-    for(let i=G.bench.length;i<BENCH_SLOTS();i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
+    for(let i=G.bench.length;i<BARRACKS_MAX;i++){const ph=document.createElement('div');ph.className='bcard-empty';row.appendChild(ph);}
   }
   const bc=document.getElementById('bcount');
-  if(bc)bc.textContent=`${G.bench.length}/${BENCH_SLOTS()}`;
+  if(bc)bc.textContent=`${G.bench.length}/${BARRACKS_MAX}`;
 
   // Expand barracks when it has cards, collapse when empty
   const bw=document.getElementById('benchwrap');
