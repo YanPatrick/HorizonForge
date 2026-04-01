@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>⚔️ Batalha Fantasia</title>
+<title>⚔️ Horizon Forge</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap');
 
@@ -381,6 +381,24 @@ body::before{content:'';position:fixed;inset:0;background-image:
 }
 .scard.buyable:hover .caction{opacity:1;color:#ffdd55}
 .scard.combo-card.buyable:hover .caction{color:#88ff88}
+.combo-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;padding:calc(5px * var(--s)) calc(10px * var(--s));
+  background:linear-gradient(135deg,rgba(80,220,80,.1),rgba(50,180,50,.06));
+  border:1px solid rgba(80,220,80,.35);border-radius:calc(10px * var(--s));
+  margin-bottom:calc(5px * var(--s));
+  animation:comboglow 1.4s ease-in-out infinite;
+}
+@keyframes comboglow{0%,100%{box-shadow:0 0 8px rgba(80,220,80,.2)}50%{box-shadow:0 0 18px rgba(80,220,80,.45)}}
+.combo-banner-lbl{font-size:calc(9px * var(--s));font-weight:700;color:#88ee88;white-space:nowrap}
+.combo-buy-btn{
+  font-size:calc(8.5px * var(--s));font-weight:800;padding:calc(3px * var(--s)) calc(10px * var(--s));
+  border-radius:calc(7px * var(--s));border:1px solid rgba(80,220,80,.5);
+  background:linear-gradient(135deg,rgba(50,180,50,.25),rgba(30,140,30,.15));
+  color:#99ffaa;cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.combo-buy-btn:hover{background:linear-gradient(135deg,rgba(60,210,60,.35),rgba(40,160,40,.25));transform:translateY(-2px)}
+.combo-buy-btn.broke{opacity:.45;cursor:not-allowed;color:#888;border-color:rgba(255,255,255,.15)}
 .rrbtn{
   font-size:calc(9px * var(--s));padding:calc(3px * var(--s)) calc(10px * var(--s));
   border-radius:9px;border:1px solid rgba(255,255,255,.14);
@@ -540,7 +558,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 <div id="startscreen">
   <div id="ss-box">
-    <div class="ss-title">⚔️ Batalha Fantasia</div>
+    <div class="ss-title">⚔️ Horizon Forge</div>
     <div class="ss-sub">Auto Battler de fantasia anime — monte seu exército,<br>faça fusões e vença duelos épicos!</div>
     <div class="ss-label">Escolha o formato dos duelos</div>
     <div class="format-btns">
@@ -552,7 +570,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 
 <div id="game" style="display:none;flex-direction:column;align-items:center;width:100%">
 <div id="hdr">
-  <span class="htitle">⚔️ Batalha Fantasia</span>
+  <span class="htitle">⚔️ Horizon Forge</span>
   <div class="hstats">
     <span class="sb sr" id="h-duel">Duelo 1</span>
     <span class="sb sw" id="h-dw">🏆 0</span>
@@ -580,10 +598,10 @@ body::before{content:'';position:fixed;inset:0;background-image:
 </div>
 <div id="shopwrap">
   <div class="sec-hdr">
-    <span class="sec-title">🛍️ Loja — sempre nível ★</span>
+    <span class="sec-title">⛺ Recruitment</span>
     <div style="display:flex;align-items:center;gap:6px">
-      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰</span>
-      <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 Reembaralhar (2💰)</button>
+      <span class="combo-hint">🔗 Já possui = 2💰 &nbsp;·&nbsp; Novo = 3💰 &nbsp;·&nbsp; ⚡Combo3 = 2💰 &nbsp;·&nbsp; 🔗Combo2 = 1💰</span>
+      <button class="rrbtn" id="breroll" onclick="rerollShop()">🔄 New Recruitment (2💰)</button>
     </div>
   </div>
   <div id="shoprow"></div>
@@ -624,7 +642,7 @@ body::before{content:'';position:fixed;inset:0;background-image:
 <!-- HOW TO PLAY -->
 <div id="howto"><div id="htp-box">
   <button id="htp-close" onclick="closeHowTo()">✕ Fechar</button>
-  <div class="htp-h1">📖 Como Jogar — Batalha Fantasia</div>
+  <div class="htp-h1">📖 Como Jogar — Horizon Forge</div>
 
   <div class="htp-h2">🎯 Objetivo</div>
   <p class="htp-p">Vença a maioria das batalhas de um duelo para avançar. No formato <span class="htp-hl">Melhor de 3</span>, vença 2 batalhas. No <span class="htp-hl">Melhor de 5</span>, vença 3. O adversário mantém o mesmo exército durante todo o duelo — analise-o antes de montar o seu.</p>
@@ -633,10 +651,10 @@ body::before{content:'';position:fixed;inset:0;background-image:
   <div class="htp-tips">
     <div class="htp-tip"><span class="htp-tip-ico">🏁</span><div>Cada duelo começa com <b style="color:#ffdd55">7💰</b>.</div></div>
     <div class="htp-tip"><span class="htp-tip-ico">⚔️</span><div>Entre batalhas você recebe ouro automaticamente — <b style="color:#88ff88">um bônus extra</b> se venceu a batalha anterior.</div></div>
-    <div class="htp-tip"><span class="htp-tip-ico">🔄</span><div>Reembaralhar a loja custa <b style="color:#ffdd55">2💰</b>.</div></div>
+    <div class="htp-tip"><span class="htp-tip-ico">🔄</span><div>New Recruitment costs <b style="color:#ffdd55">2💰</b>.</div></div>
   </div>
 
-  <div class="htp-h2">🛒 Loja & Banco</div>
+  <div class="htp-h2">⛺ Recruitment & Bench</div>
   <div class="htp-tips">
     <div class="htp-tip"><span class="htp-tip-ico">🆕</span><div>Comprar um personagem que você ainda não possui custa <b style="color:#ffdd55">3💰</b>. Ele vai direto para o banco.</div></div>
     <div class="htp-tip"><span class="htp-tip-ico">🔗</span><div>Comprar um personagem que você já tem custa <b style="color:#88ff88">2💰</b> e empilha na mesma carta — cada personagem ocupa apenas <b>1 slot</b> no banco.</div></div>
@@ -674,6 +692,17 @@ let C = {};   // keyed by cid
 let CK = [];  // array of cid strings
 const LS = ['','★','★★','★★★','★★★★','★★★★★'];
 const SELL = [0,1,2,4], BENCH_SLOTS=7, START_GOLD=7;
+// horizon_forge_details config (mirrors DB)
+const HF = {
+  initial_gold: 7,
+  value_buy_card: 3,
+  value_new_recruitment: 2,
+  value_sell_card: 1,
+  value_chance_combo3: 0.10,   // 10%: 3 consecutive equal cards
+  value_gold_combo3: 2,
+  value_chance_combo2: 0.30,   // 30%: 2 consecutive equal cards
+  value_gold_combo2: 1,
+};
 
 // ── Loading screen ─────────────────────────────────────
 function showLoader(msg='Loading characters...'){
@@ -801,7 +830,7 @@ let G={
   format:3,winsNeeded:2,
   phase:'shop',duelNum:1,battleNum:1,
   duelScore:{p:0,e:0},duelsWon:0,duelsLost:0,
-  gold:START_GOLD,shop:[],bench:[],
+  gold:START_GOLD,shop:[],shopCombo:null,bench:[],
   board:Array(12).fill(null),
   duelEnemy:Array(12).fill(null),enemy:Array(12).fill(null),
   bsel:null,fieldSel:null,fieldDrag:null,
@@ -856,36 +885,91 @@ function cardCost(cid){return totalOwned(cid)>0?2:3}
 
 
 // ===== ECONOMY =====
-function genShop(){G.shop=Array.from({length:5},()=>mkUnit(randCid(),1));}
+function genShop(){
+  // Generate 5 slots with combo chances
+  const slots=[];
+  const r=Math.random();
+  if(r<HF.value_chance_combo3){
+    // Combo 3: positions 0,1,2 same cid
+    const cid=randCid();
+    slots.push(mkUnit(cid,1),mkUnit(cid,1),mkUnit(cid,1),mkUnit(randCid(),1),mkUnit(randCid(),1));
+    G.shopCombo={type:3,cids:[cid,cid,cid],idxs:[0,1,2],cost:HF.value_gold_combo3};
+  } else if(r<HF.value_chance_combo3+HF.value_chance_combo2){
+    // Combo 2: find two consecutive positions
+    const pos=Math.floor(Math.random()*4); // 0-3 so pos+1 is still valid
+    const cid=randCid();
+    for(let i=0;i<5;i++) slots.push(mkUnit(i===pos||i===pos+1?cid:randCid(),1));
+    G.shopCombo={type:2,cids:[cid,cid],idxs:[pos,pos+1],cost:HF.value_gold_combo2};
+  } else {
+    for(let i=0;i<5;i++) slots.push(mkUnit(randCid(),1));
+    G.shopCombo=null;
+  }
+  G.shop=slots;
+}
 function rerollShop(){
-  if(G.phase!=='shop'||G.gold<2){log(G.gold<2?'❌ Precisa de 2💰!':'','lk');return}
-  G.gold-=2;genShop();render();log('🔄 Loja reembaralhada (−2💰)','lr');
+  const cost=HF.value_new_recruitment;
+  if(G.phase!=='shop'||G.gold<cost){log(G.gold<cost?`❌ Precisa de ${cost}💰!`:'','lk');return}
+  G.gold-=cost;genShop();render();log('🔄 New Recruitment! (−2💰)','lr');
+}
+// Helper: add one unit to bench from shop
+function _addToBench(card, cost, silent){
+  const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
+  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){if(!silent)log('❌ Banco cheio! Posicione ou venda uma carta.','lk');return false;}
+  if(existingIdx>=0){
+    const ex=G.bench[existingIdx];ex.stack=(ex.stack||1)+1;const prevLv=ex.lv;applyMerge(ex);
+    if(ex.lv>prevLv){
+      setTimeout(()=>{document.querySelectorAll('#benchrow .bcard').forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('just-merged');setTimeout(()=>bc.classList.remove('just-merged'),700);}});},40);
+    }else{
+      if(!silent)log(`🔗 ${card.name} empilhado! (${ex.stack}/3 → ${LS[ex.lv+1]||'MAX'})${cost===2?' −2💰':' −3💰'}`,'ll');
+      setTimeout(()=>{document.querySelectorAll('#benchrow .bcard').forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('new-copy');setTimeout(()=>bc.classList.remove('new-copy'),500);}});},40);
+    }
+  }else{
+    const newUnit=mkUnit(card.cid,1);newUnit.stack=1;G.bench.push(newUnit);
+    if(!silent)log(`🛒 Recrutou ${card.name} por ${cost}💰`,'ll');
+  }
+  return true;
+}
+// Slide shop left from idx, fill slot 4 with new random card
+function _slideShop(idx){
+  for(let i=idx;i<4;i++) G.shop[i]=G.shop[i+1];
+  G.shop[4]=mkUnit(randCid(),1);
+  // Invalidate combo if it involved this card
+  if(G.shopCombo){
+    G.shopCombo.idxs=G.shopCombo.idxs.filter(x=>x!==idx).map(x=>x>idx?x-1:x);
+    if(G.shopCombo.idxs.length<G.shopCombo.type) G.shopCombo=null;
+  }
 }
 function buyCard(idx){
   if(G.phase!=='shop')return;
   const card=G.shop[idx];if(!card)return;
   const cost=cardCost(card.cid);
   if(G.gold<cost){log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`,'lk');return}
-  const existingIdx=G.bench.findIndex(u=>u.cid===card.cid);
-  if(existingIdx<0&&G.bench.length>=BENCH_SLOTS){log('❌ Banco cheio! Posicione ou venda uma carta.','lk');return}
-  G.gold-=cost;G.shop[idx]=null;
-  if(existingIdx>=0){
-    const ex=G.bench[existingIdx];
-    ex.stack=(ex.stack||1)+1;
-    const prevLv=ex.lv;
-    applyMerge(ex);
-    if(ex.lv>prevLv){
-      setTimeout(()=>{const cards=document.querySelectorAll('#benchrow .bcard');cards.forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('just-merged');setTimeout(()=>bc.classList.remove('just-merged'),700);}});},40);
-    }else{
-      log(`🔗 ${card.name} empilhado! (${ex.stack}/3 → ${LS[ex.lv+1]||'MAX'})${cost===2?' −2💰':' −3💰'}`,'ll');
-      setTimeout(()=>{const cards=document.querySelectorAll('#benchrow .bcard');cards.forEach(bc=>{if(bc.dataset.cid===ex.cid){bc.classList.add('new-copy');setTimeout(()=>bc.classList.remove('new-copy'),500);}});},40);
-    }
-  }else{
-    const newUnit=mkUnit(card.cid,1);newUnit.stack=1;
-    G.bench.push(newUnit);
-    log(`🛒 Comprou ${card.name} por ${cost}💰 (1/3 para ${LS[2]})`,'ll');
-  }
+  if(!_addToBench(card,cost,false))return;
+  G.gold-=cost;
+  _slideShop(idx);
+  G.shopCombo=null; // single buy clears combo
   render();
+}
+// Buy combo (2 or 3 cards for special price)
+function buyCombo(){
+  if(G.phase!=='shop'||!G.shopCombo)return;
+  const combo=G.shopCombo;const cost=combo.cost;
+  if(G.gold<cost){log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`,'lk');return}
+  // Check bench space for new unique cids
+  const cid=combo.cids[0];
+  const existingIdx=G.bench.findIndex(u=>u.cid===cid);
+  const slotsNeeded=existingIdx<0?1:0;
+  if(G.bench.length+slotsNeeded>BENCH_SLOTS){log('❌ Banco cheio!','lk');return}
+  G.gold-=cost;
+  // Add all combo cards (they're same cid, stack them)
+  for(let k=0;k<combo.type;k++) _addToBench({cid,ico:C[cid].ico,name:C[cid].name},0,k>0);
+  log(`⚡ COMBO ${combo.type}! ${C[cid].name} ×${combo.type} por ${cost}💰!`,'ll');
+  // Remove combo slots (sorted descending so indices don't shift)
+  [...combo.idxs].sort((a,b)=>b-a).forEach(i=>{
+    for(let j=i;j<4;j++) G.shop[j]=G.shop[j+1];
+    G.shop[4]=mkUnit(randCid(),1);
+  });
+  G.shopCombo=null;render();
 }
 function sellBench(cid){
   if(G.phase!=='shop')return;
@@ -1576,20 +1660,42 @@ function renderField(fid,board,isP){
 }
 function renderShop(){
   const row=document.getElementById('shoprow');row.innerHTML='';const active=G.phase==='shop';
+  const combo=G.shopCombo;
+  const comboIdxSet=combo?new Set(combo.idxs):new Set();
+
+  // Combo banner
+  if(combo&&active){
+    const banner=document.createElement('div');
+    banner.className='combo-banner';
+    const lbl=combo.type===3?'⚡ COMBO 3':'🔗 COMBO 2';
+    const cid=combo.cids[0];const cc=C[cid];
+    const canAfford=G.gold>=combo.cost;
+    banner.innerHTML=`<span class="combo-banner-lbl">${lbl} <b>${cc.ico} ${cc.name}</b> ×${combo.type}</span><button class="combo-buy-btn${canAfford?'':' broke'}" onclick="buyCombo()">${canAfford?`▶ Comprar todos por ${combo.cost}💰`:`❌ Falta ouro (${combo.cost}💰)`}</button>`;
+    row.appendChild(banner);
+  }
+
+  const cardsRow=document.createElement('div');
+  cardsRow.style.cssText='display:flex;gap:calc(6px * var(--s));justify-content:center;flex-wrap:wrap;';
   G.shop.forEach((u,i)=>{
     const card=document.createElement('div');
-    if(!u){card.className='scard sold';row.appendChild(card);return;}
-    const cc=C[u.cid];const cost=cardCost(u.cid);const isCombo=cost===2;
+    if(!u){card.className='scard sold';cardsRow.appendChild(card);return;}
+    const cc=C[u.cid];
+    const isOwned=G.bench.find(b=>b.cid===u.cid)||G.board.find(b=>b&&b.cid===u.cid);
+    const cost=isOwned?2:HF.value_buy_card;
+    const isComboCard=comboIdxSet.has(i);
     const canBuy=G.gold>=cost&&active;
-    card.className=`scard${isCombo?' combo-card':''}${canBuy?' buyable':' broke'}`;
-    card.style.cssText=`background:${cc.bg};border-color:${isCombo?'#44aa44':cc.col}`;
-    const owned=G.bench.find(b=>b.cid===u.cid)||G.board.find(b=>b&&b.cid===u.cid);
-    const cntLabel=isCombo&&owned?`🔗${owned.stack||1}/3`:'★';
-    card.innerHTML=`<div class="sprice ${isCombo?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isCombo?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${canBuy?(isCombo?`▶ Empilhar ${cost}💰`:`▶ Comprar ${cost}💰`):''}</div>`;
+    let cls=`scard${isComboCard?' combo-card':''}${canBuy?' buyable':' broke'}`;
+    card.className=cls;
+    card.style.cssText=`background:${cc.bg};border-color:${isComboCard?'#55dd55':cc.col}`;
+    if(isComboCard) card.style.boxShadow='0 0 18px rgba(80,220,80,.4)';
+    const cntLabel=isOwned?`🔗${isOwned.stack||1}/3`:'★';
+    const actionLbl=canBuy?(isOwned?`▶ Empilhar ${cost}💰`:`▶ Recrutar ${cost}💰`):'';
+    card.innerHTML=`<div class="sprice ${isOwned?'pcombo':'pnew'}">${cost}💰</div><div class="scnt ${isOwned?'ccombo':'cnew'}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi" title="${cc.abi.desc}">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
     if(canBuy)card.addEventListener('click',()=>buyCard(i));
-    row.appendChild(card);
+    cardsRow.appendChild(card);
   });
-  document.getElementById('breroll').disabled=G.gold<2||G.phase!=='shop';
+  row.appendChild(cardsRow);
+  document.getElementById('breroll').disabled=G.gold<HF.value_new_recruitment||G.phase!=='shop';
 }
 function renderBench(){
   const row=document.getElementById('benchrow');row.innerHTML='';const active=G.phase==='shop';
