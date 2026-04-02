@@ -305,8 +305,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
    BOTTOM ZONE — flex row, fixed height
    ════════════════════════════════════════ */
 #bottom-zone{
-  display:flex;
+ display:flex;
   align-items:stretch;
+  justify-content:space-between;
   gap:calc(8px * var(--s));
   width:100%;
   height:var(--bottom-h);
@@ -316,12 +317,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* ── BARRACKS (left) ── */
 #benchwrap{
-  width:var(--bench-w);flex-shrink:0;
+  width:var(--bench-w);
+  flex-shrink:0;
   background:linear-gradient(160deg,rgba(80,50,180,.09),rgba(40,20,100,.05));
-  border:1px solid rgba(120,80,255,.2);border-radius:calc(12px * var(--s));
+  border:1px solid rgba(120,80,255,.2);
+  border-radius:calc(12px * var(--s));
   padding:calc(7px * var(--s)) calc(8px * var(--s));
   box-shadow:0 0 24px rgba(80,50,180,.08);
-  overflow:hidden;display:flex;flex-direction:column;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
   max-height:calc(44px * var(--s));
   transition:max-height .28s ease-in;
   align-self:flex-end;
@@ -341,9 +346,11 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* ── CENTER COLUMN (battle + log) ── */
 #center-col{
-  flex:1 1 0;min-width:0;
+  flex:1 1 0;
+  min-width:0;
   max-width:var(--center-max-w);
-  display:flex;flex-direction:column;
+  display:flex;
+  flex-direction:column;
   align-items:center;
   gap:calc(6px * var(--s));
 }
@@ -351,12 +358,15 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 /* ── SHOP (right) ── */
 #shopwrap{
-  width:var(--shop-w);flex-shrink:0;
+  width:var(--shop-w);
+  flex-shrink:0;
   background:linear-gradient(160deg,rgba(40,80,40,.09),rgba(20,60,20,.05));
-  border:1px solid rgba(80,160,80,.2);border-radius:calc(12px * var(--s));
+  border:1px solid rgba(80,160,80,.2);
+  border-radius:calc(12px * var(--s));
   padding:calc(7px * var(--s)) calc(8px * var(--s));
   box-shadow:0 0 24px rgba(60,180,60,.08);
-  display:flex;flex-direction:column;
+  display:flex;
+  flex-direction:column;
 }
 #shoprow{position:relative;width:100%;flex:1;overflow:visible;}
 
