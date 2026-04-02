@@ -119,7 +119,7 @@ FROM characters c
 JOIN (VALUES
   ('knight',    'iron_defense',    'Iron Defense',    'Reduces skill_power% of damage taken each hit. Scales with level.',                                                                           'passive'),
   ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.',                         'atk_modifier'),
-  ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power bonus to crit_chance and crit_rate. Scales with level.',                                                                     'passive'),
+  ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power as a bonus to crit_chance. Scales with level.',                                                                            'passive'),
   ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = atk x skill_power. Then attacks nearest enemy. Scales with level.',                                    'skill'),
   ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',                             'skill'),
   ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',             'skill'),

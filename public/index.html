@@ -3240,7 +3240,7 @@
         mage: 8,
         archmage: 10,
       };
-      const LM = [0, 1.0, 1.4, 1.8, 2.2, 2.6];
+      const LM = [0, 1.0, 1.3, 1.6, 1.9, 2.2];
 
       let BOT = {
         gold: 7,
@@ -3538,7 +3538,7 @@
             .forEach((u) => {
               const targets = foeSide.filter((f) => f.alive);
               if (!targets.length) return;
-              const t = [...targets].sort((a, b) => a.hp - b.hp);
+              const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
               dealDmg(u, t, Math.round(u.atk * u.skillPower), false);
               evs.push({
                 type: "ability",
@@ -3554,7 +3554,14 @@
         function pickTarget(unit) {
           const f = foes(unit.side);
           if (!f.length) return null;
-          if (unit.tp === "lowhp") return [...f].sort((a, b) => a.hp - b.hp);
+          if (unit.tp === "lowhp") return [...f].sort((a, b) => a.hp - b.hp)[0];
+          if (unit.cid === "archmage") {
+            const myRow = Math.floor(unit.slot / 3);
+            const lineF = f
+              .filter((e) => Math.floor(e.slot / 3) === myRow)
+              .sort((a, b) => (b.slot % 3) - (a.slot % 3));
+            return lineF.length ? lineF[0] : f[rnd(f.length)];
+          }
           return f[rnd(f.length)];
         }
 
@@ -3594,15 +3601,6 @@
           const unit = queue.shift();
           if (!unit.alive) continue;
 
-          if (unit.cid === "archer") {
-            const effCC = unit.critChance + unit.skillPower; // ← Apenas soma
-            const effCR = unit.critRate;
-            if (Math.random() < effCC) {
-              isCrit = true;
-              dmg = Math.round(dmg * effCR);
-            }
-          }
-
           if (
             unit.cid === "barbarian" &&
             !unit.enraged &&
@@ -3620,7 +3618,7 @@
             if (al.length) {
               const target = [...al].sort(
                 (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-              );
+              )[0];
               const h = Math.round(unit.atk * unit.skillPower);
               target.hp = Math.min(target.maxHp, target.hp + h);
               evs.push({
@@ -3647,8 +3645,8 @@
               let dmg = unit.atk,
                 isCrit = false;
 
-              // ✅ CORREÇÃO: REMOVA /100
-              const effCC = unit.critChance + unit.skillPower;
+              const effCC =
+                unit.critChance + (unit.cid === "archer" ? unit.skillPower : 0);
               const effCR = unit.critRate;
 
               if (Math.random() < effCC) {
@@ -3657,6 +3655,15 @@
               }
 
               dealDmg(unit, t, dmg, isCrit);
+              if (unit.cid === "archer" && isCrit) {
+                evs.push({
+                  type: "ability",
+                  uid: unit.id,
+                  abilName: "Precise Shot",
+                  tick,
+                  silent: true,
+                });
+              }
               if (unit.cid === "mage") {
                 const adj = adjacentSlots(t.slot);
                 const splash = foes(unit.side).filter(
@@ -3664,7 +3671,7 @@
                 );
                 if (splash.length) {
                   splash.forEach((f) =>
-                    dealDmg(unit, f, Math.round(dmg * unit.skillPower)),
+                    dealDmg(unit, f, Math.round(unit.atk * unit.skillPower)),
                   );
                   evs.push({
                     type: "ability",
@@ -3676,13 +3683,29 @@
                 }
               }
               if (unit.cid === "archmage") {
+                const myRow = Math.floor(unit.slot / 3);
+                const primaryCol = t.slot % 3;
                 const chain = foes(unit.side)
-                  .filter((f) => f.id !== t.id && f.alive)
-                  .sort((a, b) => a.slot - b.slot);
-                if (chain)
-                  dealDmg(unit, chain, Math.round(dmg * unit.skillPower));
-                if (chain)
-                  dealDmg(unit, chain, Math.round((dmg * unit.skillPower) / 2));
+                  .filter(
+                    (f) =>
+                      f.id !== t.id &&
+                      f.alive &&
+                      Math.floor(f.slot / 3) === myRow &&
+                      f.slot % 3 < primaryCol,
+                  )
+                  .sort((a, b) => (b.slot % 3) - (a.slot % 3));
+                if (chain.length > 0)
+                  dealDmg(
+                    unit,
+                    chain[0],
+                    Math.round(unit.atk * unit.skillPower),
+                  );
+                if (chain.length > 1)
+                  dealDmg(
+                    unit,
+                    chain[1],
+                    Math.round((unit.atk * unit.skillPower) / 2),
+                  );
                 if (chain.length)
                   evs.push({
                     type: "ability",
@@ -3754,6 +3777,7 @@
         Fireball: "🔥 {n}: Fireball! Splash damage to adjacent targets.",
         "Chain Lightning": "⛓️ {n}: Chain Lightning! Hitting enemies in line.",
         Healing: "💚 {n}: Healing! Restoring the most wounded ally.",
+        "Precise Shot": "🎯 {n}: Precise Shot! Critical hit landed.",
       };
 
       let _tpPrev = [];
@@ -4443,7 +4467,7 @@
         },
         chain_lightning: {
           name: "Chain Lightning",
-          desc: "Attack hits primary target for 100% damage. The next enemy takes a portion of that damage, and the one behind that takes an even smaller portion.",
+          desc: "Line attack, 3 slots. The attack hits the primary target dealing 100% damage; subsequent targets receive reduced damage.",
           format: (skillPower, level, atk) => {
             const dmg1 = atk;
             const dmg2 = Math.round(atk * skillPower);
@@ -4563,10 +4587,10 @@
           const cntLabel = isOwned ? `🔗${isOwned.stack || 1}/3` : "★";
           const actionLbl = canBuy
             ? isCombo
-              ? `⚡ Combo ×${combo.type} por ${combo.cost}💰`
+              ? `⚡ Combo ×${combo.type} for ${combo.cost}💰`
               : isOwned
-                ? `▶ Empilhar ${cost}💰`
-                : `▶ Recrutar ${cost}💰`
+                ? `▶ Stack ${cost}💰`
+                : `▶ Recruit ${cost}💰`
             : "";
           const priceLbl = isCombo ? `${combo.cost}💰` : `${cost}💰`;
           const priceClass = isOwned ? "pcombo" : isCombo ? "pcombo" : "pnew";
@@ -4736,7 +4760,7 @@
       }
 
       function updateHdr() {
-        document.getElementById("h-duel").textContent = `Duelo ${G.duelNum}`;
+        document.getElementById("h-duel").textContent = `Duel ${G.duelNum}`;
         document.getElementById("h-dw").textContent = `🏆 ${G.duelsWon}`;
         document.getElementById("h-dl").textContent = `💔 ${G.duelsLost}`;
         document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
@@ -4762,7 +4786,7 @@
             ? ` — ${selUnit.name} ${LS[selUnit.lv]} selecionado · clique ou arraste para o campo`
             : " — Drag or select a card from Barracks";
           setBanner(
-            `🛡️ Batalha ${G.battleNum}/${G.format} | ${n}/${mx} no campo${hint}`,
+            `🛡️ Battle ${G.battleNum}/${G.format} | ${n}/${mx} no campo${hint}`,
             "bshop",
           );
         }
