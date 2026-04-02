@@ -2503,8 +2503,8 @@
     <div id="howto">
       <div id="htp-box">
         <button id="htp-close" onclick="closeHowTo()">✕ Fechar</button>
-        <div class="htp-h1">📖 Como Jogar — Horizon Forge</div>
-        <div class="htp-h2">🎯 Objetivo</div>
+        <div class="htp-h1">📖 How To Play — Horizon Forge</div>
+        <div class="htp-h2">🎯 Objective</div>
         <p class="htp-p">
           Vença a maioria das batalhas de um duelo para avançar. No formato
           <span class="htp-hl">Melhor de 3</span>, vença 2 batalhas. No
@@ -2601,7 +2601,7 @@
           <tr>
             <td>💚 Curandeira</td>
             <td>💫 Cura Dupla</td>
-            <td>Cura os dois aliados com menos vida.</td>
+            <td>Cura o aliado com menos vida.</td>
           </tr>
           <tr>
             <td>🗡️ Assassino</td>
@@ -3082,6 +3082,7 @@
       }
 
       function buyCard(idx) {
+        console.log("buyCard chamado com idx:", idx); // ← ADICIONE ISTO
         if (G.phase !== "shop") return;
         const card = G.shop[idx];
         if (!card) return;
@@ -3527,6 +3528,7 @@
             });
           });
         }
+
         applyStart(ps);
         applyStart(es);
 
@@ -3536,7 +3538,7 @@
             .forEach((u) => {
               const targets = foeSide.filter((f) => f.alive);
               if (!targets.length) return;
-              const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
+              const t = [...targets].sort((a, b) => a.hp - b.hp);
               dealDmg(u, t, Math.round(u.atk * u.skillPower), false);
               evs.push({
                 type: "ability",
@@ -3552,7 +3554,7 @@
         function pickTarget(unit) {
           const f = foes(unit.side);
           if (!f.length) return null;
-          if (unit.tp === "lowhp") return [...f].sort((a, b) => a.hp - b.hp)[0];
+          if (unit.tp === "lowhp") return [...f].sort((a, b) => a.hp - b.hp);
           return f[rnd(f.length)];
         }
 
@@ -3592,6 +3594,15 @@
           const unit = queue.shift();
           if (!unit.alive) continue;
 
+          if (unit.cid === "archer") {
+            const effCC = unit.critChance + unit.skillPower; // ← Apenas soma
+            const effCR = unit.critRate;
+            if (Math.random() < effCC) {
+              isCrit = true;
+              dmg = Math.round(dmg * effCR);
+            }
+          }
+
           if (
             unit.cid === "barbarian" &&
             !unit.enraged &&
@@ -3609,7 +3620,7 @@
             if (al.length) {
               const target = [...al].sort(
                 (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-              )[0];
+              );
               const h = Math.round(unit.atk * unit.skillPower);
               target.hp = Math.min(target.maxHp, target.hp + h);
               evs.push({
@@ -3631,21 +3642,20 @@
             if (et && et.alive) dealDmg(unit, et, unit.atk);
           } else {
             const t = pickTarget(unit);
+
             if (t && t.alive) {
               let dmg = unit.atk,
                 isCrit = false;
-              const effCC =
-                unit.cid === "archer"
-                  ? unit.critChance + unit.skillPower / 100
-                  : unit.critChance;
-              const effCR =
-                unit.cid === "archer"
-                  ? unit.critRate + unit.skillPower
-                  : unit.critRate;
+
+              // ✅ CORREÇÃO: REMOVA /100
+              const effCC = unit.critChance + unit.skillPower;
+              const effCR = unit.critRate;
+
               if (Math.random() < effCC) {
                 isCrit = true;
                 dmg = Math.round(dmg * effCR);
               }
+
               dealDmg(unit, t, dmg, isCrit);
               if (unit.cid === "mage") {
                 const adj = adjacentSlots(t.slot);
@@ -3669,14 +3679,10 @@
                 const chain = foes(unit.side)
                   .filter((f) => f.id !== t.id && f.alive)
                   .sort((a, b) => a.slot - b.slot);
-                if (chain[0])
-                  dealDmg(unit, chain[0], Math.round(dmg * unit.skillPower));
-                if (chain[1])
-                  dealDmg(
-                    unit,
-                    chain[1],
-                    Math.round((dmg * unit.skillPower) / 2),
-                  );
+                if (chain)
+                  dealDmg(unit, chain, Math.round(dmg * unit.skillPower));
+                if (chain)
+                  dealDmg(unit, chain, Math.round((dmg * unit.skillPower) / 2));
                 if (chain.length)
                   evs.push({
                     type: "ability",
@@ -4390,69 +4396,67 @@
       const SKILL_DESCRIPTIONS = {
         iron_defense: {
           name: "Iron Defense",
-          desc: "Reduces X% of damage taken. Scales with level.",
+          desc: "Reduces damage taken.",
           format: (skillPower, level) => {
             const reduction = Math.round(skillPower * 100);
-            return `Reduz ${reduction}% do dano recebido`;
+            return `Reduces ${reduction}% of the damage received`;
           },
         },
         fireball: {
           name: "Fireball",
-          desc: "Primary target takes full damage. Adjacent targets take skill_power % of that damage.",
+          desc: "Primary target takes full damage. Adjacent targets take a portion of that damage.",
           format: (skillPower, level, atk) => {
             const splashDmg = Math.round(atk * skillPower);
-            return `Dano principal: ${atk}. Dano em área: ${splashDmg} (${Math.round(skillPower * 100)}%)`;
+            return `Main damage: ${atk}. Area damage: ${splashDmg} (${Math.round(skillPower * 100)}%)`;
           },
         },
         precise_shot: {
           name: "Precise Shot",
-          desc: "Adds skill_power bonus to crit chance (%) and crit rate (x). Scales per level.",
+          desc: "Increases the chance of landing a critical hit.",
           format: (skillPower, level) => {
             const critChanceBonus = Math.round(skillPower * 100);
-            const critRateBonus = skillPower.toFixed(2);
-            return `+${critChanceBonus}% chance crítico, +${critRateBonus}x multiplicador crítico`;
+            return `+${critChanceBonus}% critical chance`;
           },
         },
         healing: {
           name: "Healing",
-          desc: "Heals the ally with lowest HP: heal = atk × skill_power. Then attacks nearest enemy.",
+          desc: "Heals the ally with lowest HP.",
           format: (skillPower, level, atk) => {
             const healAmount = Math.round(atk * skillPower);
-            return `Cura o aliado mais ferido em ${healAmount} HP (${Math.round(skillPower * 100)}% do ATK)`;
+            return `Heals the most injured ally for ${healAmount} HP (${Math.round(skillPower * 100)}% of ATK)`;
           },
         },
         sneak_strike: {
           name: "Sneak Strike",
-          desc: "At battle start, performs one sneak attack on lowest-HP enemy for atk × skill_power damage.",
+          desc: "At battle start, performs one sneak attack on lowest-HP enemy.",
           format: (skillPower, level, atk) => {
             const sneakDmg = Math.round(atk * skillPower);
-            return `Ataque furtivo inicial: ${sneakDmg} dano (${Math.round(skillPower * 100)}% do ATK)`;
+            return `Initial sneak attack: ${sneakDmg} damage (${Math.round(skillPower * 100)}% of ATK)`;
           },
         },
         sacred_aura: {
           name: "Sacred Aura",
-          desc: "At battle start, grants adjacent allies (+ shape) a max HP bonus of skill_power %. Buff persists even if paladin dies.",
-          format: (skillPower, level, maxHp) => {
-            const hpBonus = Math.round(maxHp * skillPower);
-            return `Aliados adjacentes ganham +${hpBonus} HP máximo (${Math.round(skillPower * 100)}% do seu HP)`;
+          desc: "At battle start, grants adjacent allies a max HP bonus. Buff persists even if paladin dies.",
+          format: (skillPower, level) => {
+            return `Adjacent allies gain +${Math.round(skillPower * 100)}% max HP bonus`;
           },
         },
         chain_lightning: {
           name: "Chain Lightning",
-          desc: "Attack hits primary target for 100%. Next enemy in line takes skill_power %, third takes skill_power/2 %.",
+          desc: "Attack hits primary target for 100% damage. The next enemy takes a portion of that damage, and the one behind that takes an even smaller portion.",
           format: (skillPower, level, atk) => {
             const dmg1 = atk;
             const dmg2 = Math.round(atk * skillPower);
             const dmg3 = Math.round((atk * skillPower) / 2);
-            return `1º alvo: ${dmg1}. 2º alvo: ${dmg2} (${Math.round(skillPower * 100)}%). 3º alvo: ${dmg3} (${Math.round(skillPower * 50)}%)`;
+            return `1º target: ${dmg1}. 2º target: ${dmg2} (${Math.round(skillPower * 100)}%). 3º target: ${dmg3} (${Math.round(skillPower * 50)}%)`;
           },
         },
         fury: {
           name: "Fury",
-          desc: "When HP drops below 60%, permanently gain skill_power % bonus attack for the rest of the battle.",
+          desc: "When HP drops below 60%, permanently gain bonus attack for the rest of the battle.",
           format: (skillPower, level) => {
             const atkBonus = Math.round(skillPower * 100);
-            return `Quando HP < 60%: +${atkBonus}% de ATK permanente`;
+            return `When HP < 60%: +${atkBonus}% permanent ATK`;
           },
         },
       };
@@ -4461,7 +4465,7 @@
       function generateSkillTooltip(unit) {
         const skillKey = C[unit.cid]?.abi?.key;
         if (!skillKey || !SKILL_DESCRIPTIONS[skillKey]) {
-          return `${C[unit.cid]?.abi?.name || "Habilidade"}: Sem descrição`;
+          return `${C[unit.cid]?.abi?.name || "Skill"}: No description`;
         }
 
         const skillInfo = SKILL_DESCRIPTIONS[skillKey];
@@ -4470,14 +4474,10 @@
         const maxHp = unit.maxHp || 0;
         const level = unit.lv || 1;
 
-        // Gera o texto formatado com valores calculados
         const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
 
-        return `<div class="tooltip-skill">
-    <div class="tooltip-title">${skillInfo.name}</div>
-    <div class="tooltip-desc">${skillInfo.desc}</div>
-    <div class="tooltip-calc">${calculatedValue}</div>
-  </div>`;
+        // ✅ Retorna APENAS TEXTO, não HTML
+        return `${skillInfo.name}\n${skillInfo.desc}\n\n${calculatedValue}`;
       }
 
       // Função auxiliar para atualizar tooltip em tempo real
@@ -4621,17 +4621,12 @@
             el.style.opacity = "1";
           });
 
-          // ✅ ADICIONE TOOLTIP AQUI
+          // ✅ ADICIONAR ISTO (simples e funciona):
           const cabiEl = el.querySelector(".cabi");
           if (cabiEl) {
-            const tooltipContent = generateSkillTooltip(u);
-            cabiEl.title = tooltipContent;
-            cabiEl.addEventListener("mouseenter", function () {
-              showTooltip(this, tooltipContent);
-            });
-            cabiEl.addEventListener("mouseleave", function () {
-              hideTooltip();
-            });
+            const tooltipText = generateSkillTooltip(u);
+            cabiEl.title = tooltipText;
+            cabiEl.style.cursor = "help";
           }
         });
         document.getElementById("breroll").disabled =
@@ -4670,7 +4665,9 @@
             dotsHtml += `<span class="bprog-label">${u.stack || 1}/3${nextLbl}</span></div>`;
 
             const tooltipContent = generateSkillTooltip(u);
+
             card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi" data-tooltip="${escapeHtml(tooltipContent)}">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="venda = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Vender +${SELL[u.lv]}💰</div>`;
+
             if (active) {
               card.addEventListener("click", () => {
                 G.bsel = G.bsel === u.cid ? null : u.cid;
@@ -4688,14 +4685,31 @@
                 G.bsel = null;
                 render();
               });
-              card
-                .querySelector(".bsell-hint")
-                .addEventListener("click", (e) => {
+            }
+
+            // ✅ ADICIONAR ISTO FORA do if(active), DEPOIS de appendChild
+            row.appendChild(card);
+
+            // ✅ Agora sim, pode selecionar elementos dentro de card
+            if (active) {
+              const sellHint = card.querySelector(".bsell-hint");
+              if (sellHint) {
+                sellHint.addEventListener("click", (e) => {
                   e.stopPropagation();
                   sellBench(u.cid);
                 });
+              }
             }
+
             row.appendChild(card);
+
+            // ✅ ADICIONAR (após appendChild):
+            const cabiEl = card.querySelector(".cabi");
+            if (cabiEl) {
+              const tooltipText = generateSkillTooltip(u);
+              cabiEl.title = tooltipText;
+              cabiEl.style.cursor = "help";
+            }
           });
           for (let i = G.bench.length; i < BARRACKS_MAX; i++) {
             const ph = document.createElement("div");
