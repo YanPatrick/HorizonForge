@@ -1473,37 +1473,7 @@
         letter-spacing: 0.2px;
       }
 
-      .cabi::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: calc(100% + 12px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(160deg, #1a0e38, #120b28);
-        border: 1.5px solid rgba(200, 150, 255, 0.4);
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: calc(9.5px * var(--s));
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.9);
-        line-height: 1.6;
-        white-space: normal;
-        width: 220px;
-        max-width: 280px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        box-shadow:
-          0 12px 32px rgba(0, 0, 0, 0.7),
-          0 0 24px rgba(120, 60, 255, 0.2);
-        z-index: 1000;
-        backdrop-filter: blur(8px);
-      }
-
-      .cabi:hover::after {
-        opacity: 1;
-        pointer-events: auto;
-      }
+      .cabi::after { content: none; }
 
       .caction {
         font-size: calc(7px * var(--s));
@@ -2275,53 +2245,95 @@
         margin-top: 4px;
       }
 
-      .cabi::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: calc(100% + 12px);
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(160deg, #1a0e38, #120b28);
-        border: 1.5px solid rgba(200, 150, 255, 0.4);
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: calc(9.5px * var(--s));
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.9);
-        line-height: 1.6;
-        white-space: normal;
-        width: 220px;
-        max-width: 280px;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        box-shadow:
-          0 12px 32px rgba(0, 0, 0, 0.7),
-          0 0 24px rgba(120, 60, 255, 0.2);
-        z-index: 1000;
-        backdrop-filter: blur(8px);
-      }
+      .cabi::after { content: none; }
 
-      .cabi:hover::after {
-        opacity: 1;
-        pointer-events: auto;
-      }
-      .tooltip-popup {
-        background: linear-gradient(160deg, #1a0e38, #120b28);
-        border: 1.5px solid rgba(200, 150, 255, 0.4);
-        border-radius: 12px;
-        padding: 12px 14px;
-        font-size: calc(9.5px * var(--s));
-        font-weight: 400;
-        color: rgba(255, 255, 255, 0.9);
-        line-height: 1.6;
-        width: 220px;
-        max-width: 280px;
-        box-shadow:
-          0 12px 32px rgba(0, 0, 0, 0.7),
-          0 0 24px rgba(120, 60, 255, 0.2);
-        backdrop-filter: blur(8px);
+      /* ── Skill Tooltip rico ── */
+      .skill-tip {
+        position: fixed;
+        z-index: 99999;
         pointer-events: none;
+        width: 234px;
+        background: linear-gradient(160deg, #0d0820 0%, #1b0f3a 55%, #120a2c 100%);
+        border: 1.5px solid rgba(200, 150, 255, 0.45);
+        border-radius: 13px;
+        box-shadow:
+          0 0 0 1px rgba(120, 60, 255, 0.08),
+          0 12px 40px rgba(0, 0, 0, 0.9),
+          0 0 55px rgba(120, 60, 255, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.055);
+        backdrop-filter: blur(16px);
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(9px) scale(0.95);
+        transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.22,.68,0,1.15);
+        font-family: "Exo 2", sans-serif;
+      }
+      .skill-tip.stp-visible {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .skill-tip::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1.5px;
+        background: linear-gradient(90deg, transparent 0%, rgba(200, 150, 255, 0.9) 38%, rgba(255, 200, 80, 0.75) 68%, transparent 100%);
+      }
+      .stp-header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 12px 13px 9px;
+      }
+      .stp-icon {
+        font-size: 20px;
+        line-height: 1;
+        flex-shrink: 0;
+        filter: drop-shadow(0 0 8px rgba(255, 200, 80, 0.8));
+      }
+      .stp-name {
+        font-size: 12.5px;
+        font-weight: 800;
+        color: rgba(255, 212, 90, 0.97);
+        letter-spacing: 0.35px;
+        text-shadow: 0 0 16px rgba(255, 165, 45, 0.6);
+        font-family: "Cinzel", serif;
+        line-height: 1.2;
+      }
+      .stp-divider {
+        height: 1px;
+        margin: 0 12px;
+        background: linear-gradient(90deg, transparent, rgba(185, 135, 255, 0.5), transparent);
+      }
+      .stp-desc {
+        padding: 9px 13px 7px;
+        font-size: 10.5px;
+        color: rgba(198, 210, 242, 0.8);
+        line-height: 1.6;
+      }
+      .stp-power {
+        margin: 3px 11px 11px;
+        background: linear-gradient(135deg, rgba(100, 50, 220, 0.22), rgba(55, 28, 130, 0.14));
+        border: 1px solid rgba(148, 88, 255, 0.38);
+        border-radius: 9px;
+        padding: 7px 11px 8px;
+      }
+      .stp-power-label {
+        display: block;
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(148, 100, 255, 0.72);
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .stp-power-value {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        color: rgba(172, 228, 255, 0.97);
+        text-shadow: 0 0 14px rgba(110, 188, 255, 0.6);
+        line-height: 1.45;
       }
     </style>
   </head>
@@ -4504,40 +4516,81 @@
         return `${skillInfo.name}\n${skillInfo.desc}\n\n${calculatedValue}`;
       }
 
-      // Função auxiliar para atualizar tooltip em tempo real
-      function updateSkillTooltip(element, unit) {
-        if (!element || !unit) return;
+      // ── Skill Tooltip Rico ──────────────────────────────────
+      function generateSkillTooltipHtml(unit) {
+        const cc = C[unit.cid];
+        const skillKey = cc?.abi?.key;
+        const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
+        const icon = cc?.abi?.ico || "✨";
+        const name = cc?.abi?.name || "Skill";
 
-        const tooltipHtml = generateSkillTooltip(unit);
-        element.setAttribute("data-tooltip", tooltipHtml);
-        element.title = ""; // Remove title padrão
-      }
-
-      let currentTooltip = null;
-
-      function showTooltip(element, content) {
-        hideTooltip();
-
-        const tooltip = document.createElement("div");
-        tooltip.className = "tooltip-popup";
-        tooltip.innerHTML = content;
-        document.body.appendChild(tooltip);
-
-        const rect = element.getBoundingClientRect();
-        tooltip.style.position = "fixed";
-        tooltip.style.left = rect.left + rect.width / 2 - 110 + "px";
-        tooltip.style.top = rect.top - tooltip.offsetHeight - 12 + "px";
-        tooltip.style.zIndex = "10000";
-
-        currentTooltip = tooltip;
-      }
-
-      function hideTooltip() {
-        if (currentTooltip) {
-          currentTooltip.remove();
-          currentTooltip = null;
+        if (!skillInfo) {
+          return `<div class="stp-header"><span class="stp-icon">${icon}</span><span class="stp-name">${name}</span></div>`;
         }
+
+        const skillPower = unit.skillPower || 0;
+        const atk = unit.atk || 0;
+        const maxHp = unit.maxHp || 0;
+        const level = unit.lv || 1;
+        const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
+
+        return `
+          <div class="stp-header">
+            <span class="stp-icon">${icon}</span>
+            <span class="stp-name">${skillInfo.name}</span>
+          </div>
+          <div class="stp-divider"></div>
+          <div class="stp-desc">${skillInfo.desc}</div>
+          <div class="stp-power">
+            <span class="stp-power-label">Current Effect</span>
+            <span class="stp-power-value">${calculatedValue}</span>
+          </div>`;
       }
+
+      const SkillTip = (() => {
+        let el = null;
+        let hideTimer = null;
+
+        function getEl() {
+          if (!el) {
+            el = document.createElement("div");
+            el.className = "skill-tip";
+            document.body.appendChild(el);
+          }
+          return el;
+        }
+
+        function show(anchor, html) {
+          clearTimeout(hideTimer);
+          const tip = getEl();
+          tip.innerHTML = html;
+          tip.classList.remove("stp-visible");
+
+          const tipW = 234;
+          const rect = anchor.getBoundingClientRect();
+          let left = rect.left + rect.width / 2 - tipW / 2;
+          left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+          tip.style.left = left + "px";
+          tip.style.top = "-9999px";
+
+          requestAnimationFrame(() => {
+            const tipH = tip.offsetHeight;
+            let top = rect.top - tipH - 10;
+            if (top < 8) top = rect.bottom + 10;
+            tip.style.top = top + "px";
+            requestAnimationFrame(() => tip.classList.add("stp-visible"));
+          });
+        }
+
+        function hide() {
+          clearTimeout(hideTimer);
+          hideTimer = setTimeout(() => {
+            if (el) el.classList.remove("stp-visible");
+          }, 80);
+        }
+
+        return { show, hide };
+      })();
 
       function renderShop() {
         const row = document.getElementById("shoprow"),
@@ -4645,11 +4698,12 @@
             el.style.opacity = "1";
           });
 
-          // ✅ ADICIONAR ISTO (simples e funciona):
           const cabiEl = el.querySelector(".cabi");
           if (cabiEl) {
-            const tooltipText = generateSkillTooltip(u);
-            cabiEl.title = tooltipText;
+            const html = generateSkillTooltipHtml(u);
+            cabiEl.title = "";
+            cabiEl.onmouseenter = () => SkillTip.show(cabiEl, html);
+            cabiEl.onmouseleave = () => SkillTip.hide();
             cabiEl.style.cursor = "help";
           }
         });
@@ -4688,9 +4742,7 @@
               dotsHtml += `<div class="bprog-dot ${d < (u.stack || 1) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack || 1}/3${nextLbl}</span></div>`;
 
-            const tooltipContent = generateSkillTooltip(u);
-
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi" data-tooltip="${escapeHtml(tooltipContent)}">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="venda = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Vender +${SELL[u.lv]}💰</div>`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="venda = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Vender +${SELL[u.lv]}💰</div>`;
 
             if (active) {
               card.addEventListener("click", () => {
@@ -4727,11 +4779,12 @@
 
             row.appendChild(card);
 
-            // ✅ ADICIONAR (após appendChild):
             const cabiEl = card.querySelector(".cabi");
             if (cabiEl) {
-              const tooltipText = generateSkillTooltip(u);
-              cabiEl.title = tooltipText;
+              const html = generateSkillTooltipHtml(u);
+              cabiEl.title = "";
+              cabiEl.onmouseenter = () => SkillTip.show(cabiEl, html);
+              cabiEl.onmouseleave = () => SkillTip.hide();
               cabiEl.style.cursor = "help";
             }
           });
