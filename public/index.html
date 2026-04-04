@@ -4090,7 +4090,7 @@
               dHp[t.id] = Math.min(t.maxHp, dHp[t.id] + ev.amt);
               updHp(t);
               log(
-                `💚 ${uTag(u)} <span class="lheal">heals</span> ${uTag(t)} <span class="lheal">+${ev.amt} HP</span>`,
+                `${uTag(u)} <span class="lheal">heals</span> ${uTag(t)} <span class="lheal">+${ev.amt} HP</span>`,
                 "lab",
                 true,
               );
@@ -4265,31 +4265,41 @@
 
       function confirmQuit() {
         closeQuitModal();
-        G.winsP = 0;
-        G.winsE = 0;
-        G.battleNum = 0;
-        G.phase = "shop";
-        G.bench = [];
-        G.board = Array(6).fill(null);
-        G.shop = [];
-        G.gold = 0;
-        G.bsel = null;
-        G.fieldSel = null;
-        G.format = null;
-        G.winsNeeded = 0;
         document.getElementById("game").style.display = "none";
         document.getElementById("startscreen").style.display = "";
         showStartScreen();
       }
 
       function startGame(fmt) {
+        // Reset completo do estado para garantir partida limpa
         G.format = fmt;
         G.winsNeeded = fmt === 10 ? 6 : Math.ceil(fmt / 2);
+        G.phase = "shop";
+        G.duelNum = 1;
+        G.battleNum = 1;
+        G.duelScore = { p: 0, e: 0 };
+        G.duelsWon = 0;
+        G.duelsLost = 0;
+        G.gold = START_GOLD();
+        G.shop = [];
+        G.shopCombo = null;
+        G.bench = [];
+        G.board = Array(9).fill(null);
+        G.duelEnemy = Array(9).fill(null);
+        G.enemy = Array(9).fill(null);
+        G.bsel = null;
+        G.fieldSel = null;
+        G.fieldDrag = null;
+        G.lastBattleResult = null;
+        G.duelStats = { dmgP: 0, dmgE: 0, killsP: 0, killsE: 0, mergesP: 0, battles: [] };
+        G.lastBoardSnap = [];
         document.getElementById("startscreen").style.display = "none";
         document.getElementById("game").style.display = "flex";
         document.getElementById("h-fmt").textContent = `BO${fmt}`;
+        // Limpa o log de partidas anteriores
+        document.getElementById("log").innerHTML = "";
         botInitDuel();
-        validateGameState(); // ← ADICIONE
+        validateGameState();
         G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
         genShop();
         render();
