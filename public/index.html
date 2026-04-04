@@ -222,6 +222,16 @@
         box-shadow: 0 12px 32px rgba(255, 200, 50, 0.25);
       }
 
+      .fmtbtn.bo10 {
+        border-color: rgba(255, 110, 55, 0.45);
+        color: #ff8844;
+      }
+
+      .fmtbtn.bo10:hover {
+        background: rgba(255, 110, 55, 0.1);
+        box-shadow: 0 12px 32px rgba(255, 110, 55, 0.28);
+      }
+
       .fmtbtn-ico {
         font-size: 30px;
       }
@@ -338,6 +348,122 @@
         background: rgba(180, 150, 255, 0.12);
         color: #cc99ff;
         border: 1px solid rgba(180, 150, 255, 0.3);
+        cursor: pointer;
+        transition: background 0.18s, box-shadow 0.18s;
+        user-select: none;
+      }
+
+      .sfmt:hover {
+        background: rgba(180, 150, 255, 0.22);
+        box-shadow: 0 0 10px rgba(180, 150, 255, 0.25);
+      }
+
+      /* ── Modal de confirmação de saída ── */
+      #quit-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(5, 2, 18, 0.78);
+        backdrop-filter: blur(6px);
+        z-index: 99998;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #quit-overlay.open {
+        display: flex;
+      }
+
+      #quit-modal {
+        background: linear-gradient(160deg, #0e0922 0%, #1c1040 60%, #130c30 100%);
+        border: 1.5px solid rgba(200, 150, 255, 0.4);
+        border-radius: 16px;
+        box-shadow:
+          0 0 0 1px rgba(120, 60, 255, 0.08),
+          0 20px 60px rgba(0, 0, 0, 0.92),
+          0 0 60px rgba(120, 60, 255, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        padding: 28px 30px 24px;
+        width: 340px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        animation: qm-in 0.22s cubic-bezier(.22,.68,0,1.15) both;
+      }
+
+      @keyframes qm-in {
+        from { opacity: 0; transform: scale(0.88) translateY(12px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      #quit-modal::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1.5px;
+        background: linear-gradient(90deg, transparent, rgba(200, 150, 255, 0.9), rgba(255, 120, 60, 0.6), transparent);
+      }
+
+      .qm-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 0 12px rgba(255, 180, 60, 0.6));
+      }
+
+      .qm-title {
+        font-family: "Cinzel", serif;
+        font-size: 16px;
+        font-weight: 800;
+        color: rgba(255, 210, 90, 0.97);
+        text-shadow: 0 0 18px rgba(255, 160, 40, 0.5);
+        margin-bottom: 12px;
+        letter-spacing: 0.4px;
+      }
+
+      .qm-body {
+        font-size: 12px;
+        color: rgba(195, 208, 242, 0.75);
+        line-height: 1.6;
+        margin-bottom: 22px;
+      }
+
+      .qm-btns {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .qm-btn {
+        padding: 8px 20px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1.5px solid;
+        transition: all 0.18s;
+        font-family: "Exo 2", sans-serif;
+      }
+
+      .qm-cancel {
+        background: rgba(180, 150, 255, 0.1);
+        color: #cc99ff;
+        border-color: rgba(180, 150, 255, 0.35);
+      }
+
+      .qm-cancel:hover {
+        background: rgba(180, 150, 255, 0.2);
+        box-shadow: 0 4px 16px rgba(180, 150, 255, 0.2);
+      }
+
+      .qm-confirm {
+        background: rgba(220, 60, 60, 0.15);
+        color: #ff7777;
+        border-color: rgba(220, 60, 60, 0.4);
+      }
+
+      .qm-confirm:hover {
+        background: rgba(220, 60, 60, 0.28);
+        box-shadow: 0 4px 16px rgba(220, 60, 60, 0.25);
       }
 
       .htp-btn {
@@ -2359,6 +2485,24 @@
             ><span class="fmtbtn-title">Best of 5</span
             ><span class="fmtbtn-desc">Win 3 battles</span>
           </button>
+          <button class="fmtbtn bo10" onclick="startGame(10)">
+            <span class="fmtbtn-ico">🔥</span
+            ><span class="fmtbtn-title">Best of 10</span
+            ><span class="fmtbtn-desc">Win 6 battles</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ QUIT MODAL ══════════════════ -->
+    <div id="quit-overlay" onclick="if(event.target===this)closeQuitModal()">
+      <div id="quit-modal">
+        <div class="qm-icon">⚠️</div>
+        <div class="qm-title">Encerrar Partida?</div>
+        <div class="qm-body">Você perderá todo o progresso desta partida e voltará ao menu inicial.</div>
+        <div class="qm-btns">
+          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">Continuar Jogando</button>
+          <button class="qm-btn qm-confirm" onclick="confirmQuit()">Encerrar</button>
         </div>
       </div>
     </div>
@@ -2373,7 +2517,7 @@
           <span class="sb sw" id="h-dw">🏆 0</span>
           <span class="sb sl" id="h-dl">💔 0</span>
           <span class="sb sg" id="h-gold">💰 7</span>
-          <span class="sb sfmt" id="h-fmt">BO3</span>
+          <span class="sb sfmt" id="h-fmt" onclick="openQuitModal()" title="Encerrar partida">BO3</span>
           <button class="htp-btn" onclick="openHowTo()">📖 Como Jogar</button>
         </div>
       </div>
@@ -2711,6 +2855,7 @@
       <div class="format-btns">
         <button class="fmtbtn bo3" onclick="startGame(3)"><span class="fmtbtn-ico">⚔️</span><span class="fmtbtn-title">Best of 3</span><span class="fmtbtn-desc">Win 2 battles</span></button>
         <button class="fmtbtn bo5" onclick="startGame(5)"><span class="fmtbtn-ico">🏆</span><span class="fmtbtn-title">Best of 5</span><span class="fmtbtn-desc">Win 3 battles</span></button>
+        <button class="fmtbtn bo10" onclick="startGame(10)"><span class="fmtbtn-ico">🔥</span><span class="fmtbtn-title">Best of 10</span><span class="fmtbtn-desc">Win 6 battles</span></button>
       </div>
     </div>`;
       }
@@ -4110,9 +4255,36 @@
       // ═══════════════════════════════════════════════════
       //  GAME FLOW
       // ═══════════════════════════════════════════════════
+      function openQuitModal() {
+        document.getElementById("quit-overlay").classList.add("open");
+      }
+
+      function closeQuitModal() {
+        document.getElementById("quit-overlay").classList.remove("open");
+      }
+
+      function confirmQuit() {
+        closeQuitModal();
+        G.winsP = 0;
+        G.winsE = 0;
+        G.battleNum = 0;
+        G.phase = "shop";
+        G.bench = [];
+        G.board = Array(6).fill(null);
+        G.shop = [];
+        G.gold = 0;
+        G.bsel = null;
+        G.fieldSel = null;
+        G.format = null;
+        G.winsNeeded = 0;
+        document.getElementById("game").style.display = "none";
+        document.getElementById("startscreen").style.display = "";
+        showStartScreen();
+      }
+
       function startGame(fmt) {
         G.format = fmt;
-        G.winsNeeded = Math.ceil(fmt / 2);
+        G.winsNeeded = fmt === 10 ? 6 : Math.ceil(fmt / 2);
         document.getElementById("startscreen").style.display = "none";
         document.getElementById("game").style.display = "flex";
         document.getElementById("h-fmt").textContent = `BO${fmt}`;
