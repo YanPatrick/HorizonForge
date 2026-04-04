@@ -3945,8 +3945,8 @@
               dHp[t.id] = Math.min(t.maxHp, dHp[t.id] + ev.amt);
               updHp(t);
               log(
-                `💚 ${u?.name} cura <b>${t.ico} ${t.name}</b> em <span class="lheal">+${ev.amt} HP</span>`,
-                "lheal",
+                `💚 ${uTag(u)} <span class="lheal">heals</span> ${uTag(t)} <span class="lheal">+${ev.amt} HP</span>`,
+                "lab",
                 true,
               );
             } else if (ev.type === "atk" && t) {
