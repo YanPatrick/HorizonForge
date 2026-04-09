@@ -949,6 +949,18 @@
         animation: none;
       }
 
+      .cell.target-preview {
+        border-color: rgba(255, 60, 60, 0.9) !important;
+        background: rgba(255, 40, 40, 0.13) !important;
+        box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5),
+          0 0 12px rgba(255, 40, 40, 0.35);
+        animation: targetPulse 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes targetPulse {
+        from { box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5), 0 0 6px rgba(255, 40, 40, 0.3); }
+        to   { box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.9), 0 0 18px rgba(255, 40, 40, 0.6); }
+      }
+
       .cell.field-sel {
         border-color: rgba(255, 200, 80, 0.95) !important;
         background: rgba(255, 200, 80, 0.12) !important;
@@ -3711,15 +3723,58 @@
         function pickTarget(unit) {
           const f = foes(unit.side);
           if (!f.length) return null;
-          if (unit.tp === "lowhp") return [...f].sort((a, b) => a.hp - b.hp)[0];
-          if (unit.cid === "archmage") {
-            const myRow = Math.floor(unit.slot / 3);
-            const lineF = f
-              .filter((e) => Math.floor(e.slot / 3) === myRow)
+
+          const isM = (u) => u.tp !== "ranged";
+          const unitRow = Math.floor(unit.slot / 3);
+          const unitIsRanged = !isM(unit);
+
+          // Enemies in a row, sorted front-to-back (col 2 → 1 → 0)
+          const inRow = (row) =>
+            f
+              .filter((e) => Math.floor(e.slot / 3) === row)
               .sort((a, b) => (b.slot % 3) - (a.slot % 3));
-            return lineF.length ? lineF[0] : f[rnd(f.length)];
+          const meleeOf = (row) => inRow(row).filter(isM);
+          const rangedOf = (row) => inRow(row).filter((e) => !isM(e));
+
+          // Own row always has priority — front-to-back, any type
+          const own = inRow(unitRow);
+          if (own.length) return own[0];
+
+          // Own row empty:
+          if (unitIsRanged) {
+            // Ranged: fallback to nearest other row
+            if (unitRow === 0) return inRow(1)[0] || inRow(2)[0] || null;
+            if (unitRow === 2) return inRow(1)[0] || inRow(0)[0] || null;
+            // Row B ranged: RNG between A and C
+            const fA = inRow(0), fC = inRow(2);
+            if (fA.length && fC.length)
+              return Math.random() < 0.5 ? fA[0] : fC[0];
+            return fA[0] || fC[0] || null;
           }
-          return f[rnd(f.length)];
+
+          // Melee: melee-first priority across other rows
+          if (unitRow === 0) {
+            return (
+              meleeOf(1)[0] || meleeOf(2)[0] ||
+              rangedOf(1)[0] || rangedOf(2)[0] || null
+            );
+          }
+          if (unitRow === 2) {
+            return (
+              meleeOf(1)[0] || meleeOf(0)[0] ||
+              rangedOf(1)[0] || rangedOf(0)[0] || null
+            );
+          }
+          // Row B melee: RNG when both sides have equal-priority targets
+          const mA = meleeOf(0), mC = meleeOf(2);
+          if (mA.length && mC.length)
+            return Math.random() < 0.5 ? mA[0] : mC[0];
+          if (mA.length) return mA[0];
+          if (mC.length) return mC[0];
+          const rA = rangedOf(0), rC = rangedOf(2);
+          if (rA.length && rC.length)
+            return Math.random() < 0.5 ? rA[0] : rC[0];
+          return rA[0] || rC[0] || null;
         }
 
         const isMelee = (u) => u.tp !== "ranged";
@@ -3770,7 +3825,7 @@
 
           if (unit.cid === "healer") {
             const al = alliesOf(unit.side).filter(
-              (a) => a.id !== unit.id && a.alive,
+              (a) => a.id !== unit.id && a.alive && a.hp < a.maxHp,
             );
             if (al.length) {
               const target = [...al].sort(
@@ -4454,6 +4509,64 @@
           `Batalha ${G.battleNum} / ${G.format}`;
       }
 
+      // ═══════════════════════════════════════════════════
+      //  TARGET PREVIEW (mirrors pickTarget logic, outside simulate)
+      // ═══════════════════════════════════════════════════
+      function previewTarget(playerUnit, enemyBoard) {
+        const isM = (u) => u.tp !== "ranged";
+        const enemies = enemyBoard
+          .map((u, i) => (u ? { ...u, slot: i } : null))
+          .filter(Boolean);
+        if (!enemies.length) return null;
+
+        const unitRow = Math.floor(playerUnit.slot / 3);
+        const unitIsRanged = !isM(playerUnit);
+
+        const inRow = (row) =>
+          enemies
+            .filter((e) => Math.floor(e.slot / 3) === row)
+            .sort((a, b) => (b.slot % 3) - (a.slot % 3));
+        const meleeOf = (row) => inRow(row).filter(isM);
+        const rangedOf = (row) => inRow(row).filter((e) => !isM(e));
+
+        // Own row always first
+        const own = inRow(unitRow);
+        if (own.length) return own[0];
+
+        if (unitIsRanged) {
+          if (unitRow === 0) return inRow(1)[0] || inRow(2)[0] || null;
+          if (unitRow === 2) return inRow(1)[0] || inRow(0)[0] || null;
+          // Row B ranged: RNG between A and C
+          const fA = inRow(0), fC = inRow(2);
+          if (fA.length && fC.length) return Math.random() < 0.5 ? fA[0] : fC[0];
+          return fA[0] || fC[0] || null;
+        }
+
+        // Melee: melee-first in other rows
+        if (unitRow === 0) {
+          return (
+            meleeOf(1)[0] || meleeOf(2)[0] ||
+            rangedOf(1)[0] || rangedOf(2)[0] || null
+          );
+        }
+        if (unitRow === 2) {
+          return (
+            meleeOf(1)[0] || meleeOf(0)[0] ||
+            rangedOf(1)[0] || rangedOf(0)[0] || null
+          );
+        }
+        // Row B melee: RNG on ties
+        const mA = meleeOf(0), mC = meleeOf(2);
+        if (mA.length && mC.length)
+          return Math.random() < 0.5 ? mA[0] : mC[0];
+        if (mA.length) return mA[0];
+        if (mC.length) return mC[0];
+        const rA = rangedOf(0), rC = rangedOf(2);
+        if (rA.length && rC.length)
+          return Math.random() < 0.5 ? rA[0] : rC[0];
+        return rA[0] || rC[0] || null;
+      }
+
       function renderField(fid, board, isP) {
         const f = document.getElementById(fid);
         f.innerHTML = "";
@@ -4525,6 +4638,28 @@
                 render();
               });
             }
+            // ── Hover: preview do alvo ──
+            if (isP && u) {
+              const unitWithSlot = { ...u, slot: i };
+              cell.addEventListener("mouseenter", () => {
+                const enemyBoard =
+                  G.phase === "battle" ? G.enemy : G.duelEnemy;
+                if (!enemyBoard) return;
+                const target = previewTarget(unitWithSlot, enemyBoard);
+                if (!target && target !== 0) return;
+                const efieldEl = document.getElementById("efield");
+                const targetCell = efieldEl?.querySelector(
+                  `[data-i="${target.slot}"]`,
+                );
+                targetCell?.classList.add("target-preview");
+              });
+              cell.addEventListener("mouseleave", () => {
+                document
+                  .querySelectorAll(".target-preview")
+                  .forEach((el) => el.classList.remove("target-preview"));
+              });
+            }
+
             cell.appendChild(el);
           } else {
             if (
