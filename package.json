@@ -7,8 +7,7 @@
   "scripts": {
     "dev": "node --watch api/server.js",
     "start": "node api/server.js",
-    "migrate": "curl -s -X POST http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\"",
-    "seed:game": "node scripts/seedGameDatabase.js"
+    "migrate": "curl -s -X POST http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\""
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
