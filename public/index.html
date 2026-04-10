@@ -956,6 +956,17 @@
           0 0 12px rgba(255, 40, 40, 0.35);
         animation: targetPulse 0.7s ease-in-out infinite alternate;
       }
+      .cell.target-preview-splash {
+        border-color: rgba(255, 130, 40, 0.8) !important;
+        background: rgba(255, 100, 20, 0.10) !important;
+        box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.4),
+          0 0 10px rgba(255, 100, 20, 0.25);
+        animation: splashPulse 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes splashPulse {
+        from { box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.4), 0 0 5px rgba(255, 100, 20, 0.2); }
+        to   { box-shadow: 0 0 0 2px rgba(255, 150, 60, 0.8), 0 0 14px rgba(255, 100, 20, 0.45); }
+      }
       @keyframes targetPulse {
         from { box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5), 0 0 6px rgba(255, 40, 40, 0.3); }
         to   { box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.9), 0 0 18px rgba(255, 40, 40, 0.6); }
@@ -3325,7 +3336,6 @@
       }
 
       function buyCard(idx) {
-        console.log("buyCard chamado com idx:", idx); // ← ADICIONE ISTO
         if (G.phase !== "shop") return;
         const card = G.shop[idx];
         if (!card) return;
@@ -3811,14 +3821,19 @@
           const isM = (u) => u.tp !== "ranged";
           const unitRow = Math.floor(unit.slot / 3);
 
-          // Sort by physical column first (col 0 = enemy front, closest to player).
-          // Melee before ranged only as a tie-breaker at the same column.
+          // "Front" of the target side depends on the attacker:
+          //   Player (side "p") attacks enemy: enemy col 0 is closest → ascending
+          //   Enemy  (side "e") attacks player: player col 2 is closest → descending
+          const colCmp = unit.side === "p"
+            ? (a, b) => (a.slot % 3) - (b.slot % 3)   // col 0 first (enemy front)
+            : (a, b) => (b.slot % 3) - (a.slot % 3);  // col 2 first (player front)
+
           const bestInRow = (row) => {
             const units = f.filter((e) => Math.floor(e.slot / 3) === row);
             if (!units.length) return null;
             return units.slice().sort((a, b) => {
-              const colA = a.slot % 3, colB = b.slot % 3;
-              if (colA !== colB) return colA - colB;
+              const cc = colCmp(a, b);
+              if (cc !== 0) return cc;
               return isM(a) === isM(b) ? 0 : isM(a) ? -1 : 1;
             })[0];
           };
@@ -3956,19 +3971,27 @@
                 }
               }
               if (unit.cid === "archmage") {
-                // Chain continua na row do ALVO, avançando para dentro do campo inimigo
-                // (col crescente = mais fundo no território inimigo)
+                // Chain goes deeper into the TARGET's territory.
+                // Player (side "p") → higher col (col 0→1→2 into enemy back)
+                // Enemy  (side "e") → lower  col (col 2→1→0 into player back)
                 const targetRow = Math.floor(t.slot / 3);
                 const primaryCol = t.slot % 3;
+                const goDeeper = unit.side === "p"
+                  ? (f) => f.slot % 3 > primaryCol
+                  : (f) => f.slot % 3 < primaryCol;
                 const chain = foes(unit.side)
                   .filter(
                     (f) =>
                       f.id !== t.id &&
                       f.alive &&
                       Math.floor(f.slot / 3) === targetRow &&
-                      f.slot % 3 > primaryCol,
+                      goDeeper(f),
                   )
-                  .sort((a, b) => (a.slot % 3) - (b.slot % 3));
+                  .sort((a, b) =>
+                    unit.side === "p"
+                      ? (a.slot % 3) - (b.slot % 3)   // ascending: next col toward back
+                      : (b.slot % 3) - (a.slot % 3),  // descending: next col toward back
+                  );
                 if (chain.length) {
                   evs.push({
                     type: "ability",
@@ -4701,15 +4724,27 @@
                 const target = previewTarget(unitWithSlot, enemyBoard);
                 if (!target && target !== 0) return;
                 const efieldEl = document.getElementById("efield");
-                const targetCell = efieldEl?.querySelector(
-                  `[data-i="${target.slot}"]`,
-                );
-                targetCell?.classList.add("target-preview");
+
+                // Primary target
+                efieldEl?.querySelector(`[data-i="${target.slot}"]`)
+                  ?.classList.add("target-preview");
+
+                // Mage Fireball: highlight adjacent splash targets (+shape)
+                if (unitWithSlot.cid === "mage") {
+                  const adj = adjacentSlots(target.slot);
+                  enemyBoard.forEach((eu, ei) => {
+                    if (eu && ei !== target.slot && adj.includes(ei)) {
+                      efieldEl?.querySelector(`[data-i="${ei}"]`)
+                        ?.classList.add("target-preview-splash");
+                    }
+                  });
+                }
               });
               cell.addEventListener("mouseleave", () => {
-                document
-                  .querySelectorAll(".target-preview")
+                document.querySelectorAll(".target-preview")
                   .forEach((el) => el.classList.remove("target-preview"));
+                document.querySelectorAll(".target-preview-splash")
+                  .forEach((el) => el.classList.remove("target-preview-splash"));
               });
             }
 
