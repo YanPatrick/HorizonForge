@@ -1176,6 +1176,14 @@
         line-height: 1;
       }
 
+      .ustv-aura {
+        font-size: calc(12px * var(--s));
+        font-weight: 700;
+        color: #66ffaa;
+        line-height: 1;
+        text-shadow: 0 0 7px rgba(80,255,140,.65);
+      }
+
       .ustl {
         font-size: calc(8px * var(--s));
         color: rgba(255, 255, 255, 0.38);
@@ -4101,26 +4109,18 @@
                         ? (a.slot % 3) - (b.slot % 3) // ascending: next col toward back
                         : (b.slot % 3) - (a.slot % 3), // descending: next col toward back
                   );
-                if (chain.length) {
-                  evs.push({
-                    type: "ability",
-                    uid: unit.id,
-                    abilName: "Chain Lightning",
-                    tick,
-                  });
-                  if (chain.length > 0)
-                    dealDmg(
-                      unit,
-                      chain[0],
-                      Math.round(unit.atk * unit.skillPower),
-                    );
-                  if (chain.length > 1)
-                    dealDmg(
-                      unit,
-                      chain[1],
-                      Math.round((unit.atk * unit.skillPower) / 2),
-                    );
-                }
+                if (chain.length > 0)
+                  dealDmg(
+                    unit,
+                    chain[0],
+                    Math.round(unit.atk * unit.skillPower),
+                  );
+                if (chain.length > 1)
+                  dealDmg(
+                    unit,
+                    chain[1],
+                    Math.round((unit.atk * unit.skillPower) / 2),
+                  );
               }
             }
           }
@@ -4183,7 +4183,6 @@
         "Sneak Strike": "⚡ {n}: Sneak Strike! Targeting lowest HP enemy...",
         Fury: "😡 {n}: FURY! Attack permanently increased.",
         Fireball: "🔥 {n}: Fireball! Splash damage to adjacent targets.",
-        "Chain Lightning": "⛓️ {n}: Chain Lightning! Hitting enemies in line.",
         Healing: "💚 {n}: Healing! Restoring the most wounded ally.",
         "Precise Shot": "🎯 {n}: Precise Shot! Critical hit landed.",
       };
@@ -4756,6 +4755,24 @@
       function renderField(fid, board, isP) {
         const f = document.getElementById(fid);
         f.innerHTML = "";
+
+        // Compute Sacred Aura HP bonus for adjacent allies when Paladin is on player field
+        const auraBonus = {};
+        if (isP && G.phase === "shop") {
+          for (let s = 0; s < 9; s++) {
+            const pal = board[s];
+            if (pal && pal.cid === "paladin") {
+              adjacentSlots(s).forEach((as) => {
+                const ally = board[as];
+                if (ally && ally.cid !== "paladin") {
+                  const bonus = Math.round(ally.maxHp * pal.skillPower);
+                  auraBonus[as] = (auraBonus[as] || 0) + bonus;
+                }
+              });
+            }
+          }
+        }
+
         for (let i = 0; i < 9; i++) {
           const cell = document.createElement("div");
           cell.className = "cell";
@@ -4791,7 +4808,10 @@
             for (let d = 0; d < 3; d++)
               uDotsHtml += `<div class="uprog-dot ${u.lv >= 5 || d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             uDotsHtml += "</div>";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="ustv">${u.hp}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
+            const hpBonus = auraBonus[i] || 0;
+            const hpDisplay = hpBonus > 0 ? u.hp + hpBonus : u.hp;
+            const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
+            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}">${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
 
             const ucabiEl = el.querySelector(".ucabi");
             if (ucabiEl) {
