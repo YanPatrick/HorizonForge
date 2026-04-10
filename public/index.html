@@ -4264,7 +4264,7 @@
         const res = simulate(G.board, G.enemy);
         botLearnFromBattle(res.evs, res.umap);
         res.evs
-          .filter((e) => e.type === "ability" && e.tick === -1)
+          .filter((e) => e.type === "ability" && e.tick === -1 && e.abilName !== "Chain Lightning")
           .forEach((e) => {
             const u = res.umap[e.uid];
             log(
