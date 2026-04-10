@@ -3473,6 +3473,16 @@
         Archmage: BACK_SLOTS,
         Shooter: BACK_SLOTS,
       };
+      // Bot uses inverted columns: col 0 = closest to player (bot's front), col 2 = bot's back
+      const BOT_ROLE_SLOT = {
+        Tank: BACK_SLOTS,
+        Paladin: BACK_SLOTS,
+        Assassin: MID_SLOTS,
+        Support: MID_SLOTS,
+        Mage: FRONT_SLOTS,
+        Archmage: FRONT_SLOTS,
+        Shooter: FRONT_SLOTS,
+      };
       const UNIT_SCORE = {
         knight: 6,
         paladin: 7,
@@ -3652,7 +3662,7 @@
         let placed = 0;
         for (const u of pool) {
           if (placed >= maxSlots) break;
-          if (place(u, ROLE_SLOT[C[u.cid].role] || MID_SLOTS)) placed++;
+          if (place(u, BOT_ROLE_SLOT[C[u.cid].role] || MID_SLOTS)) placed++;
         }
         BOT.bench = BOT.bench.filter((u) => !used.has(u.cid));
       }
@@ -3801,15 +3811,16 @@
           const isM = (u) => u.tp !== "ranged";
           const unitRow = Math.floor(unit.slot / 3);
 
-          // Dentro de uma linha: melee primeiro (protege ranged atrás),
-          // depois ranged. Ambos ordenados frente→fundo (col 0 = frente inimigo).
+          // Sort by physical column first (col 0 = enemy front, closest to player).
+          // Melee before ranged only as a tie-breaker at the same column.
           const bestInRow = (row) => {
             const units = f.filter((e) => Math.floor(e.slot / 3) === row);
             if (!units.length) return null;
-            const byFront = (arr) => arr.slice().sort((a, b) => (a.slot % 3) - (b.slot % 3));
-            const melee = byFront(units.filter(isM));
-            if (melee.length) return melee[0];
-            return byFront(units.filter((e) => !isM(e)))[0] || null;
+            return units.slice().sort((a, b) => {
+              const colA = a.slot % 3, colB = b.slot % 3;
+              if (colA !== colB) return colA - colB;
+              return isM(a) === isM(b) ? 0 : isM(a) ? -1 : 1;
+            })[0];
           };
 
           // Ordem de busca: linha própria → linhas adjacentes por proximidade
@@ -4127,9 +4138,10 @@
             log(
               (ABILOG[e.abilName] || "✨ {n}: " + e.abilName).replace(
                 "{n}",
-                u?.name || "?",
+                u ? nameTag(u) : "?",
               ),
               "lab",
+              true,
             );
           });
         playback(res);
@@ -4190,9 +4202,10 @@
               log(
                 (ABILOG[ev.abilName] || "✨ {n}: " + ev.abilName).replace(
                   "{n}",
-                  u?.name || "?",
+                  u ? nameTag(u) : "?",
                 ),
                 "lab",
+                true,
               );
             } else if (ev.type === "heal" && t) {
               dHp[t.id] = Math.min(t.maxHp, dHp[t.id] + ev.amt);
@@ -4211,9 +4224,8 @@
                 void e2.offsetWidth;
                 e2.classList.add("hit");
               }
-              const sameName = u.name === t.name;
-              const who = uTag(u, sameName),
-                whom = uTag(t, sameName);
+              const who = uTag(u),
+                whom = uTag(t);
               log(
                 ev.isCrit
                   ? `${who} → ${whom} &nbsp;${dmgTag(ev.amt, true)}`
@@ -4234,9 +4246,8 @@
                 const e3 = gEl(t);
                 if (e3) e3.classList.add("dead");
               }, 200);
-              const sameNameK = u.name === t.name;
               log(
-                `${uTag(u, sameNameK)} <span class="lkill">abateu</span> ${uTag(t, sameNameK)} &nbsp;<span class="ldmg">−${ev.amt}</span> 💀`,
+                `${uTag(u)} <span class="lkill">killed</span> ${uTag(t)} &nbsp;<span class="ldmg">−${ev.amt}</span> 💀`,
                 "lkill",
                 true,
               );
@@ -4512,10 +4523,13 @@
         l.appendChild(d);
         l.scrollTop = l.scrollHeight;
       }
-      function uTag(u, showSide = false) {
+      function uTag(u) {
         const side = u.side === "p" ? "lside-p" : "lside-e";
-        const prefix = showSide ? `<span style="opacity:.65;font-size:.8em">[${u.side === "p" ? "Yours" : "Enemy"}]</span> ` : "";
-        return `<span class="${side}">${prefix}${u.ico || ""} ${u.name}</span>`;
+        return `<span class="${side}">${u.ico || ""} ${u.name}</span>`;
+      }
+      function nameTag(u) {
+        const side = u.side === "p" ? "lside-p" : "lside-e";
+        return `<span class="${side}">${u.name}</span>`;
       }
       function dmgTag(amt, isCrit) {
         return isCrit
@@ -4581,10 +4595,11 @@
         const bestInRow = (row) => {
           const units = enemies.filter((e) => Math.floor(e.slot / 3) === row);
           if (!units.length) return null;
-          const byFront = (arr) => arr.slice().sort((a, b) => (a.slot % 3) - (b.slot % 3));
-          const melee = byFront(units.filter(isM));
-          if (melee.length) return melee[0];
-          return byFront(units.filter((e) => !isM(e)))[0] || null;
+          return units.slice().sort((a, b) => {
+            const colA = a.slot % 3, colB = b.slot % 3;
+            if (colA !== colB) return colA - colB;
+            return isM(a) === isM(b) ? 0 : isM(a) ? -1 : 1;
+          })[0];
         };
 
         if (unitRow === 0) {
