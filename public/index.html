@@ -1066,13 +1066,52 @@
         text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
       }
 
-      .uabi {
+      .ucabi {
         position: absolute;
         bottom: 2px;
         left: 3px;
-        font-size: calc(9px * var(--s));
+        font-size: calc(6.5px * var(--s));
+        font-weight: 700;
+        color: rgba(255, 210, 90, 0.92);
+        background: rgba(255, 200, 50, 0.1);
+        border: 1px solid rgba(255, 200, 50, 0.25);
+        border-radius: 3px;
+        padding: 1px 3px;
+        line-height: 1.25;
+        cursor: help;
+        white-space: nowrap;
+        overflow: hidden;
+        max-width: calc(62px * var(--s));
+        text-overflow: ellipsis;
+      }
+
+      .usts {
+        display: flex;
+        gap: calc(5px * var(--s));
+        justify-content: center;
+        margin-top: calc(2px * var(--s));
+        width: 100%;
+      }
+
+      .ust {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+      }
+
+      .ustv {
+        font-size: calc(7.5px * var(--s));
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.9);
         line-height: 1;
-        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+      }
+
+      .ustl {
+        font-size: calc(5.5px * var(--s));
+        color: rgba(255, 255, 255, 0.38);
+        font-weight: 600;
+        letter-spacing: 0.2px;
       }
 
       .uprog {
@@ -1102,22 +1141,10 @@
         opacity: 0.3;
       }
 
-      .urmv {
-        position: absolute;
-        top: 2px;
-        left: 3px;
-        font-size: calc(7px * var(--s));
-        color: rgba(255, 100, 100, 0.8);
-        cursor: pointer;
-        display: none;
-        background: rgba(0, 0, 0, 0.65);
-        border-radius: 3px;
-        padding: 1px 3px;
-        line-height: 1.3;
-      }
-
-      .cell:hover .urmv {
-        display: block;
+      #benchwrap.bench-drop-over {
+        box-shadow: 0 0 0 2px rgba(136, 204, 255, 0.65), 0 0 18px rgba(136, 204, 255, 0.18);
+        background: rgba(136, 204, 255, 0.04);
+        transition: box-shadow 0.15s, background 0.15s;
       }
 
       /* Level border colors */
@@ -2945,6 +2972,33 @@
           console.error(err);
           showError(err.message);
         }
+
+        // ── Drag campo → barracas (setup único) ──
+        const bw = document.getElementById("benchwrap");
+        bw.addEventListener("dragenter", (e) => {
+          if (G.fieldDrag !== null && G.phase === "shop") {
+            e.preventDefault();
+            bw.classList.add("bench-drop-over");
+          }
+        });
+        bw.addEventListener("dragover", (e) => {
+          if (G.fieldDrag !== null && G.phase === "shop") {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+          }
+        });
+        bw.addEventListener("dragleave", (e) => {
+          if (!bw.contains(e.relatedTarget))
+            bw.classList.remove("bench-drop-over");
+        });
+        bw.addEventListener("drop", (e) => {
+          bw.classList.remove("bench-drop-over");
+          const fromSlot = e.dataTransfer.getData("fromSlot");
+          if (fromSlot !== "" && G.phase === "shop") {
+            e.preventDefault();
+            retBench(parseInt(fromSlot));
+          }
+        });
       }
 
       function skillIcon(key) {
@@ -4590,9 +4644,7 @@
 
             el.style.background = cc.bg;
 
-            // ✅ ADICIONE TOOLTIP AQUI TAMBÉM:
-            const tooltipContent = generateSkillTooltip(u);
-            el.title = `${u.name} ${LS[u.lv]}\n${cc.abi.name}: ${cc.abi.desc}`;
+            el.title = "";
 
             const dotColor =
               u.lv === 1
@@ -4607,7 +4659,15 @@
             for (let d = 0; d < 3; d++)
               uDotsHtml += `<div class="uprog-dot ${d < (u.stack || 1) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             uDotsHtml += "</div>";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${isP ? `<div class="urmv" onclick="event.stopPropagation();retBench(${i})">↩</div>` : ""}<div class="uabi" title="${cc.abi.name}: ${cc.abi.desc}">${cc.abi.ico}</div>${uDotsHtml}`;
+            const skillShort = cc.abi.name.length > 9 ? cc.abi.name.slice(0, 8) + "…" : cc.abi.name;
+            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="ustv">${u.hp}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">VEL</span></div></div><div class="ucabi">${cc.abi.ico} ${skillShort}</div>${uDotsHtml}`;
+
+            const ucabiEl = el.querySelector(".ucabi");
+            if (ucabiEl) {
+              const tipHtml = generateSkillTooltipHtml(u);
+              ucabiEl.onmouseenter = () => SkillTip.show(ucabiEl, tipHtml);
+              ucabiEl.onmouseleave = () => SkillTip.hide();
+            }
 
             if (isP && G.phase === "shop") {
               el.draggable = true;
@@ -4623,7 +4683,6 @@
                 render();
               });
               cell.addEventListener("click", (e) => {
-                if (e.target.classList.contains("urmv")) return;
                 if (G.fieldSel === i) {
                   G.fieldSel = null;
                 } else if (G.fieldSel !== null) {
