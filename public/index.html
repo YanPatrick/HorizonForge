@@ -3905,7 +3905,8 @@
           });
         }
 
-        applyStart(ps);
+        // Player Sacred Aura was already applied to G.board before simulate() was called;
+        // the ps copies inherit those boosted values, so we skip applyStart(ps) here.
         applyStart(es);
 
         function applySneak(units, foeSide) {
@@ -4253,8 +4254,31 @@
         G.enemy = G.duelEnemy.map((u) => (u ? { ...u } : null));
         G.fieldSel = null;
         G.fieldDrag = null;
+
+        // Apply Sacred Aura bonus to G.board units before render/simulate
+        // so the displayed HP and simulation base both use the boosted value.
+        // (simulate's applyStart only runs for enemy side now — no double-apply)
+        const _auraFired = new Set();
+        for (let s = 0; s < 9; s++) {
+          const pal = G.board[s];
+          if (!pal || pal.cid !== "paladin") continue;
+          adjacentSlots(s).forEach((as) => {
+            const ally = G.board[as];
+            if (ally && ally.cid !== "paladin") {
+              const bonus = Math.round(ally.maxHp * pal.skillPower);
+              ally.maxHp += bonus;
+              ally.hp += bonus;
+            }
+          });
+          _auraFired.add(pal.id);
+        }
+
         document.getElementById("log").innerHTML = "";
         log("⚔️ Battle begins!", "lr");
+        _auraFired.forEach((pid) => {
+          const pal = G.board.find((u) => u && u.id === pid);
+          if (pal) log((ABILOG["Sacred Aura"] || "✨ {n}: Sacred Aura!").replace("{n}", nameTag(pal)), "lab", true);
+        });
         setBanner(
           `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
           "bbattle",
