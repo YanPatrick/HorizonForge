@@ -6,6 +6,7 @@
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap");
 
+      /*checkpoint v1*/
       /* ════════════════════════════════════════
    RESET & VARIABLES
    ════════════════════════════════════════ */
@@ -349,7 +350,9 @@
         color: #cc99ff;
         border: 1px solid rgba(180, 150, 255, 0.3);
         cursor: pointer;
-        transition: background 0.18s, box-shadow 0.18s;
+        transition:
+          background 0.18s,
+          box-shadow 0.18s;
         user-select: none;
       }
 
@@ -375,7 +378,12 @@
       }
 
       #quit-modal {
-        background: linear-gradient(160deg, #0e0922 0%, #1c1040 60%, #130c30 100%);
+        background: linear-gradient(
+          160deg,
+          #0e0922 0%,
+          #1c1040 60%,
+          #130c30 100%
+        );
         border: 1.5px solid rgba(200, 150, 255, 0.4);
         border-radius: 16px;
         box-shadow:
@@ -388,20 +396,34 @@
         text-align: center;
         position: relative;
         overflow: hidden;
-        animation: qm-in 0.22s cubic-bezier(.22,.68,0,1.15) both;
+        animation: qm-in 0.22s cubic-bezier(0.22, 0.68, 0, 1.15) both;
       }
 
       @keyframes qm-in {
-        from { opacity: 0; transform: scale(0.88) translateY(12px); }
-        to   { opacity: 1; transform: scale(1) translateY(0); }
+        from {
+          opacity: 0;
+          transform: scale(0.88) translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
       }
 
       #quit-modal::before {
-        content: '';
+        content: "";
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 1.5px;
-        background: linear-gradient(90deg, transparent, rgba(200, 150, 255, 0.9), rgba(255, 120, 60, 0.6), transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(200, 150, 255, 0.9),
+          rgba(255, 120, 60, 0.6),
+          transparent
+        );
       }
 
       .qm-icon {
@@ -952,35 +974,62 @@
       .cell.target-preview {
         border-color: rgba(255, 60, 60, 0.9) !important;
         background: rgba(255, 40, 40, 0.13) !important;
-        box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5),
+        box-shadow:
+          0 0 0 2px rgba(255, 60, 60, 0.5),
           0 0 12px rgba(255, 40, 40, 0.35);
         animation: targetPulse 0.7s ease-in-out infinite alternate;
       }
       .cell.target-preview-splash {
         border-color: rgba(255, 130, 40, 0.8) !important;
-        background: rgba(255, 100, 20, 0.10) !important;
-        box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.4),
+        background: rgba(255, 100, 20, 0.1) !important;
+        box-shadow:
+          0 0 0 2px rgba(255, 130, 40, 0.4),
           0 0 10px rgba(255, 100, 20, 0.25);
         animation: splashPulse 0.7s ease-in-out infinite alternate;
       }
       @keyframes splashPulse {
-        from { box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.4), 0 0 5px rgba(255, 100, 20, 0.2); }
-        to   { box-shadow: 0 0 0 2px rgba(255, 150, 60, 0.8), 0 0 14px rgba(255, 100, 20, 0.45); }
+        from {
+          box-shadow:
+            0 0 0 2px rgba(255, 130, 40, 0.4),
+            0 0 5px rgba(255, 100, 20, 0.2);
+        }
+        to {
+          box-shadow:
+            0 0 0 2px rgba(255, 150, 60, 0.8),
+            0 0 14px rgba(255, 100, 20, 0.45);
+        }
       }
       .cell.target-preview-ally {
         border-color: rgba(60, 220, 100, 0.9) !important;
-        background: rgba(40, 200, 80, 0.10) !important;
-        box-shadow: 0 0 0 2px rgba(60, 220, 100, 0.5),
+        background: rgba(40, 200, 80, 0.1) !important;
+        box-shadow:
+          0 0 0 2px rgba(60, 220, 100, 0.5),
           0 0 12px rgba(40, 200, 80, 0.3);
         animation: allyPulse 0.7s ease-in-out infinite alternate;
       }
       @keyframes allyPulse {
-        from { box-shadow: 0 0 0 2px rgba(60, 220, 100, 0.4), 0 0 5px rgba(40, 200, 80, 0.2); }
-        to   { box-shadow: 0 0 0 2px rgba(80, 240, 120, 0.8), 0 0 14px rgba(40, 200, 80, 0.45); }
+        from {
+          box-shadow:
+            0 0 0 2px rgba(60, 220, 100, 0.4),
+            0 0 5px rgba(40, 200, 80, 0.2);
+        }
+        to {
+          box-shadow:
+            0 0 0 2px rgba(80, 240, 120, 0.8),
+            0 0 14px rgba(40, 200, 80, 0.45);
+        }
       }
       @keyframes targetPulse {
-        from { box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5), 0 0 6px rgba(255, 40, 40, 0.3); }
-        to   { box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.9), 0 0 18px rgba(255, 40, 40, 0.6); }
+        from {
+          box-shadow:
+            0 0 0 2px rgba(255, 60, 60, 0.5),
+            0 0 6px rgba(255, 40, 40, 0.3);
+        }
+        to {
+          box-shadow:
+            0 0 0 2px rgba(255, 80, 80, 0.9),
+            0 0 18px rgba(255, 40, 40, 0.6);
+        }
       }
 
       .cell.field-sel {
@@ -1164,9 +1213,13 @@
       }
 
       #benchwrap.bench-drop-over {
-        box-shadow: 0 0 0 2px rgba(136, 204, 255, 0.65), 0 0 18px rgba(136, 204, 255, 0.18);
+        box-shadow:
+          0 0 0 2px rgba(136, 204, 255, 0.65),
+          0 0 18px rgba(136, 204, 255, 0.18);
         background: rgba(136, 204, 255, 0.04);
-        transition: box-shadow 0.15s, background 0.15s;
+        transition:
+          box-shadow 0.15s,
+          background 0.15s;
       }
 
       /* Level border colors */
@@ -1682,7 +1735,9 @@
         letter-spacing: 0.2px;
       }
 
-      .cabi::after { content: none; }
+      .cabi::after {
+        content: none;
+      }
 
       .caction {
         font-size: calc(7px * var(--s));
@@ -2454,7 +2509,9 @@
         margin-top: 4px;
       }
 
-      .cabi::after { content: none; }
+      .cabi::after {
+        content: none;
+      }
 
       /* ── Skill Tooltip rico ── */
       .skill-tip {
@@ -2462,7 +2519,12 @@
         z-index: 99999;
         pointer-events: none;
         width: 234px;
-        background: linear-gradient(160deg, #0d0820 0%, #1b0f3a 55%, #120a2c 100%);
+        background: linear-gradient(
+          160deg,
+          #0d0820 0%,
+          #1b0f3a 55%,
+          #120a2c 100%
+        );
         border: 1.5px solid rgba(200, 150, 255, 0.45);
         border-radius: 13px;
         box-shadow:
@@ -2474,7 +2536,9 @@
         overflow: hidden;
         opacity: 0;
         transform: translateY(9px) scale(0.95);
-        transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.22,.68,0,1.15);
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s cubic-bezier(0.22, 0.68, 0, 1.15);
         font-family: "Exo 2", sans-serif;
       }
       .skill-tip.stp-visible {
@@ -2482,11 +2546,19 @@
         transform: translateY(0) scale(1);
       }
       .skill-tip::before {
-        content: '';
+        content: "";
         position: absolute;
-        top: 0; left: 0; right: 0;
+        top: 0;
+        left: 0;
+        right: 0;
         height: 1.5px;
-        background: linear-gradient(90deg, transparent 0%, rgba(200, 150, 255, 0.9) 38%, rgba(255, 200, 80, 0.75) 68%, transparent 100%);
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(200, 150, 255, 0.9) 38%,
+          rgba(255, 200, 80, 0.75) 68%,
+          transparent 100%
+        );
       }
       .stp-header {
         display: flex;
@@ -2512,7 +2584,12 @@
       .stp-divider {
         height: 1px;
         margin: 0 12px;
-        background: linear-gradient(90deg, transparent, rgba(185, 135, 255, 0.5), transparent);
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(185, 135, 255, 0.5),
+          transparent
+        );
       }
       .stp-desc {
         padding: 9px 13px 7px;
@@ -2522,7 +2599,11 @@
       }
       .stp-power {
         margin: 3px 11px 11px;
-        background: linear-gradient(135deg, rgba(100, 50, 220, 0.22), rgba(55, 28, 130, 0.14));
+        background: linear-gradient(
+          135deg,
+          rgba(100, 50, 220, 0.22),
+          rgba(55, 28, 130, 0.14)
+        );
         border: 1px solid rgba(148, 88, 255, 0.38);
         border-radius: 9px;
         padding: 7px 11px 8px;
@@ -2578,14 +2659,23 @@
     </div>
 
     <!-- ══════════════════ QUIT MODAL ══════════════════ -->
-    <div id="quit-overlay" onclick="if(event.target===this)closeQuitModal()">
+    <div
+      id="quit-overlay"
+      onclick="if (event.target === this) closeQuitModal();"
+    >
       <div id="quit-modal">
         <div class="qm-icon">⚠️</div>
         <div class="qm-title">Quit Match?</div>
-        <div class="qm-body">You will lose all progress in this match and return to the main menu.</div>
+        <div class="qm-body">
+          You will lose all progress in this match and return to the main menu.
+        </div>
         <div class="qm-btns">
-          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">Keep Playing</button>
-          <button class="qm-btn qm-confirm" onclick="confirmQuit()">Quit</button>
+          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">
+            Keep Playing
+          </button>
+          <button class="qm-btn qm-confirm" onclick="confirmQuit()">
+            Quit
+          </button>
         </div>
       </div>
     </div>
@@ -2600,7 +2690,13 @@
           <span class="sb sw" id="h-dw">🏆 0</span>
           <span class="sb sl" id="h-dl">💔 0</span>
           <span class="sb sg" id="h-gold">💰 7</span>
-          <span class="sb sfmt" id="h-fmt" onclick="openQuitModal()" title="Quit match">BO3</span>
+          <span
+            class="sb sfmt"
+            id="h-fmt"
+            onclick="openQuitModal()"
+            title="Quit match"
+            >BO3</span
+          >
           <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button>
         </div>
       </div>
@@ -2783,8 +2879,8 @@
             <span class="htp-tip-ico">🔗</span>
             <div>
               Buying a character you already own costs
-              <b style="color: #88ff88">2💰</b> and stacks on the same card — each
-              hero uses only <b>1 slot</b> in the Barracks.
+              <b style="color: #88ff88">2💰</b> and stacks on the same card —
+              each hero uses only <b>1 slot</b> in the Barracks.
             </div>
           </div>
           <div class="htp-tip">
@@ -2800,16 +2896,16 @@
           <div class="htp-tip">
             <span class="htp-tip-ico">⭐</span>
             <div>
-              Stack <b>3 copies</b> of the same character to auto-merge —
-              they level up (<b style="color: #ffcc44">★ → ★★ → ★★★...</b
-              >) and become much more powerful.
+              Stack <b>3 copies</b> of the same character to auto-merge — they
+              level up (<b style="color: #ffcc44">★ → ★★ → ★★★...</b>) and
+              become much more powerful.
             </div>
           </div>
           <div class="htp-tip">
             <span class="htp-tip-ico">⚠️</span>
             <div>
-              Selling a card gives gold based on its level.
-              Unmerged copies are lost.
+              Selling a card gives gold based on its level. Unmerged copies are
+              lost.
             </div>
           </div>
         </div>
@@ -3835,9 +3931,10 @@
           // "Front" of the target side depends on the attacker:
           //   Player (side "p") attacks enemy: enemy col 0 is closest → ascending
           //   Enemy  (side "e") attacks player: player col 2 is closest → descending
-          const colCmp = unit.side === "p"
-            ? (a, b) => (a.slot % 3) - (b.slot % 3)   // col 0 first (enemy front)
-            : (a, b) => (b.slot % 3) - (a.slot % 3);  // col 2 first (player front)
+          const colCmp =
+            unit.side === "p"
+              ? (a, b) => (a.slot % 3) - (b.slot % 3) // col 0 first (enemy front)
+              : (a, b) => (b.slot % 3) - (a.slot % 3); // col 2 first (player front)
 
           const bestInRow = (row) => {
             const units = f.filter((e) => Math.floor(e.slot / 3) === row);
@@ -3859,7 +3956,8 @@
           // Linha B: própria primeiro, depois A e C aleatório
           const t = bestInRow(1);
           if (t) return t;
-          const tA = bestInRow(0), tC = bestInRow(2);
+          const tA = bestInRow(0),
+            tC = bestInRow(2);
           if (tA && tC) return Math.random() < 0.5 ? tA : tC;
           return tA || tC || null;
         }
@@ -3987,9 +4085,10 @@
                 // Enemy  (side "e") → lower  col (col 2→1→0 into player back)
                 const targetRow = Math.floor(t.slot / 3);
                 const primaryCol = t.slot % 3;
-                const goDeeper = unit.side === "p"
-                  ? (f) => f.slot % 3 > primaryCol
-                  : (f) => f.slot % 3 < primaryCol;
+                const goDeeper =
+                  unit.side === "p"
+                    ? (f) => f.slot % 3 > primaryCol
+                    : (f) => f.slot % 3 < primaryCol;
                 const chain = foes(unit.side)
                   .filter(
                     (f) =>
@@ -3998,10 +4097,11 @@
                       Math.floor(f.slot / 3) === targetRow &&
                       goDeeper(f),
                   )
-                  .sort((a, b) =>
-                    unit.side === "p"
-                      ? (a.slot % 3) - (b.slot % 3)   // ascending: next col toward back
-                      : (b.slot % 3) - (a.slot % 3),  // descending: next col toward back
+                  .sort(
+                    (a, b) =>
+                      unit.side === "p"
+                        ? (a.slot % 3) - (b.slot % 3) // ascending: next col toward back
+                        : (b.slot % 3) - (a.slot % 3), // descending: next col toward back
                   );
                 if (chain.length) {
                   evs.push({
@@ -4325,10 +4425,7 @@
           const pw = G.duelScore.p > G.duelScore.e;
           if (pw) {
             G.duelsWon++;
-            setBanner(
-              `🏆 DUEL WON! ${G.duelScore.p}–${G.duelScore.e}`,
-              "bwin",
-            );
+            setBanner(`🏆 DUEL WON! ${G.duelScore.p}–${G.duelScore.e}`, "bwin");
           } else {
             G.duelsLost++;
             setBanner(
@@ -4446,7 +4543,14 @@
         G.fieldSel = null;
         G.fieldDrag = null;
         G.lastBattleResult = null;
-        G.duelStats = { dmgP: 0, dmgE: 0, killsP: 0, killsE: 0, mergesP: 0, battles: [] };
+        G.duelStats = {
+          dmgP: 0,
+          dmgE: 0,
+          killsP: 0,
+          killsE: 0,
+          mergesP: 0,
+          battles: [],
+        };
         G.lastBoardSnap = [];
         document.getElementById("startscreen").style.display = "none";
         document.getElementById("game").style.display = "flex";
@@ -4630,7 +4734,8 @@
           const units = enemies.filter((e) => Math.floor(e.slot / 3) === row);
           if (!units.length) return null;
           return units.slice().sort((a, b) => {
-            const colA = a.slot % 3, colB = b.slot % 3;
+            const colA = a.slot % 3,
+              colB = b.slot % 3;
             if (colA !== colB) return colA - colB;
             return isM(a) === isM(b) ? 0 : isM(a) ? -1 : 1;
           })[0];
@@ -4644,7 +4749,8 @@
         }
         const t = bestInRow(1);
         if (t) return t;
-        const tA = bestInRow(0), tC = bestInRow(2);
+        const tA = bestInRow(0),
+          tC = bestInRow(2);
         if (tA && tC) return Math.random() < 0.5 ? tA : tC;
         return tA || tC || null;
       }
@@ -4685,9 +4791,12 @@
             let uDotsHtml =
               '<div class="uprog" style="color:' + dotColor + '">';
             for (let d = 0; d < 3; d++)
-              uDotsHtml += `<div class="uprog-dot ${(u.lv >= 5 || d < u.stack) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
+              uDotsHtml += `<div class="uprog-dot ${u.lv >= 5 || d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             uDotsHtml += "</div>";
-            const skillShort = cc.abi.name.length > 9 ? cc.abi.name.slice(0, 8) + "…" : cc.abi.name;
+            const skillShort =
+              cc.abi.name.length > 9
+                ? cc.abi.name.slice(0, 8) + "…"
+                : cc.abi.name;
             el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="ustv">${u.hp}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">VEL</span></div></div><div class="ucabi">${cc.abi.ico} ${skillShort}</div>${uDotsHtml}`;
 
             const ucabiEl = el.querySelector(".ucabi");
@@ -4737,7 +4846,8 @@
                 // ── Primary attack target (red) ──
                 const target = previewTarget(unitWithSlot, enemyBoard);
                 if (target) {
-                  efieldEl?.querySelector(`[data-i="${target.slot}"]`)
+                  efieldEl
+                    ?.querySelector(`[data-i="${target.slot}"]`)
                     ?.classList.add("target-preview");
 
                   // Mage Fireball: adjacent enemies in + shape (orange)
@@ -4745,7 +4855,8 @@
                     const adj = adjacentSlots(target.slot);
                     enemyBoard.forEach((eu, ei) => {
                       if (eu && ei !== target.slot && adj.includes(ei))
-                        efieldEl?.querySelector(`[data-i="${ei}"]`)
+                        efieldEl
+                          ?.querySelector(`[data-i="${ei}"]`)
                           ?.classList.add("target-preview-splash");
                     });
                   }
@@ -4756,15 +4867,21 @@
                     const pCol = target.slot % 3;
                     const chain = [];
                     enemyBoard.forEach((eu, ei) => {
-                      if (eu && ei !== target.slot &&
-                          Math.floor(ei / 3) === tRow && ei % 3 > pCol)
+                      if (
+                        eu &&
+                        ei !== target.slot &&
+                        Math.floor(ei / 3) === tRow &&
+                        ei % 3 > pCol
+                      )
                         chain.push(ei);
                     });
-                    chain.sort((a, b) => (a % 3) - (b % 3))
+                    chain
+                      .sort((a, b) => (a % 3) - (b % 3))
                       .slice(0, 2)
-                      .forEach(ei =>
-                        efieldEl?.querySelector(`[data-i="${ei}"]`)
-                          ?.classList.add("target-preview-splash")
+                      .forEach((ei) =>
+                        efieldEl
+                          ?.querySelector(`[data-i="${ei}"]`)
+                          ?.classList.add("target-preview-splash"),
                       );
                   }
                 }
@@ -4774,17 +4891,23 @@
                   const adj = adjacentSlots(unitWithSlot.slot);
                   G.board.forEach((pu, pi) => {
                     if (pu && pi !== unitWithSlot.slot && adj.includes(pi))
-                      pfieldEl?.querySelector(`[data-i="${pi}"]`)
+                      pfieldEl
+                        ?.querySelector(`[data-i="${pi}"]`)
                         ?.classList.add("target-preview-ally");
                   });
                 }
               });
               cell.addEventListener("mouseleave", () => {
-                document.querySelectorAll(".target-preview")
+                document
+                  .querySelectorAll(".target-preview")
                   .forEach((el) => el.classList.remove("target-preview"));
-                document.querySelectorAll(".target-preview-splash")
-                  .forEach((el) => el.classList.remove("target-preview-splash"));
-                document.querySelectorAll(".target-preview-ally")
+                document
+                  .querySelectorAll(".target-preview-splash")
+                  .forEach((el) =>
+                    el.classList.remove("target-preview-splash"),
+                  );
+                document
+                  .querySelectorAll(".target-preview-ally")
                   .forEach((el) => el.classList.remove("target-preview-ally"));
               });
             }
@@ -5083,17 +5206,34 @@
           const isAtMax = !!(isOwned && isOwned.lv >= 5);
           const cost = isOwned ? 2 : HF.value_buy_card;
           const isCombo = comboIdxSet.has(i);
-          const canBuy = !isAtMax && G.gold >= (isCombo ? combo.cost : cost) && active;
-          const cntLabel = isAtMax ? "🏆 MAX" : isOwned ? `🔗${isOwned.stack}/3` : "★";
+          const canBuy =
+            !isAtMax && G.gold >= (isCombo ? combo.cost : cost) && active;
+          const cntLabel = isAtMax
+            ? "🏆 MAX"
+            : isOwned
+              ? `🔗${isOwned.stack}/3`
+              : "★";
           const actionLbl = canBuy
             ? isCombo
               ? `⚡ Combo ×${combo.type} for ${combo.cost}💰`
               : isOwned
                 ? `▶ Stack ${cost}💰`
                 : `▶ Recruit ${cost}💰`
-            : isAtMax ? "Nível Máximo" : "";
-          const priceLbl = isAtMax ? "MAX" : isCombo ? `${combo.cost}💰` : `${cost}💰`;
-          const priceClass = isAtMax ? "pmax" : isOwned ? "pcombo" : isCombo ? "pcombo" : "pnew";
+            : isAtMax
+              ? "Nível Máximo"
+              : "";
+          const priceLbl = isAtMax
+            ? "MAX"
+            : isCombo
+              ? `${combo.cost}💰`
+              : `${cost}💰`;
+          const priceClass = isAtMax
+            ? "pmax"
+            : isOwned
+              ? "pcombo"
+              : isCombo
+                ? "pcombo"
+                : "pnew";
 
           const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
 
