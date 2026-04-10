@@ -967,6 +967,17 @@
         from { box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.4), 0 0 5px rgba(255, 100, 20, 0.2); }
         to   { box-shadow: 0 0 0 2px rgba(255, 150, 60, 0.8), 0 0 14px rgba(255, 100, 20, 0.45); }
       }
+      .cell.target-preview-ally {
+        border-color: rgba(60, 220, 100, 0.9) !important;
+        background: rgba(40, 200, 80, 0.10) !important;
+        box-shadow: 0 0 0 2px rgba(60, 220, 100, 0.5),
+          0 0 12px rgba(40, 200, 80, 0.3);
+        animation: allyPulse 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes allyPulse {
+        from { box-shadow: 0 0 0 2px rgba(60, 220, 100, 0.4), 0 0 5px rgba(40, 200, 80, 0.2); }
+        to   { box-shadow: 0 0 0 2px rgba(80, 240, 120, 0.8), 0 0 14px rgba(40, 200, 80, 0.45); }
+      }
       @keyframes targetPulse {
         from { box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.5), 0 0 6px rgba(255, 40, 40, 0.3); }
         to   { box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.9), 0 0 18px rgba(255, 40, 40, 0.6); }
@@ -4718,25 +4729,53 @@
             if (isP && u) {
               const unitWithSlot = { ...u, slot: i };
               cell.addEventListener("mouseenter", () => {
-                const enemyBoard =
-                  G.phase === "battle" ? G.enemy : G.duelEnemy;
+                const enemyBoard = G.phase === "battle" ? G.enemy : G.duelEnemy;
                 if (!enemyBoard) return;
-                const target = previewTarget(unitWithSlot, enemyBoard);
-                if (!target && target !== 0) return;
                 const efieldEl = document.getElementById("efield");
+                const pfieldEl = document.getElementById("pfield");
 
-                // Primary target
-                efieldEl?.querySelector(`[data-i="${target.slot}"]`)
-                  ?.classList.add("target-preview");
+                // ── Primary attack target (red) ──
+                const target = previewTarget(unitWithSlot, enemyBoard);
+                if (target) {
+                  efieldEl?.querySelector(`[data-i="${target.slot}"]`)
+                    ?.classList.add("target-preview");
 
-                // Mage Fireball: highlight adjacent splash targets (+shape)
-                if (unitWithSlot.cid === "mage") {
-                  const adj = adjacentSlots(target.slot);
-                  enemyBoard.forEach((eu, ei) => {
-                    if (eu && ei !== target.slot && adj.includes(ei)) {
-                      efieldEl?.querySelector(`[data-i="${ei}"]`)
-                        ?.classList.add("target-preview-splash");
-                    }
+                  // Mage Fireball: adjacent enemies in + shape (orange)
+                  if (unitWithSlot.cid === "mage") {
+                    const adj = adjacentSlots(target.slot);
+                    enemyBoard.forEach((eu, ei) => {
+                      if (eu && ei !== target.slot && adj.includes(ei))
+                        efieldEl?.querySelector(`[data-i="${ei}"]`)
+                          ?.classList.add("target-preview-splash");
+                    });
+                  }
+
+                  // Archmage Chain Lightning: same row, deeper cols (orange)
+                  if (unitWithSlot.cid === "archmage") {
+                    const tRow = Math.floor(target.slot / 3);
+                    const pCol = target.slot % 3;
+                    const chain = [];
+                    enemyBoard.forEach((eu, ei) => {
+                      if (eu && ei !== target.slot &&
+                          Math.floor(ei / 3) === tRow && ei % 3 > pCol)
+                        chain.push(ei);
+                    });
+                    chain.sort((a, b) => (a % 3) - (b % 3))
+                      .slice(0, 2)
+                      .forEach(ei =>
+                        efieldEl?.querySelector(`[data-i="${ei}"]`)
+                          ?.classList.add("target-preview-splash")
+                      );
+                  }
+                }
+
+                // ── Paladin Sacred Aura: adjacent allies (green) ──
+                if (unitWithSlot.cid === "paladin") {
+                  const adj = adjacentSlots(unitWithSlot.slot);
+                  G.board.forEach((pu, pi) => {
+                    if (pu && pi !== unitWithSlot.slot && adj.includes(pi))
+                      pfieldEl?.querySelector(`[data-i="${pi}"]`)
+                        ?.classList.add("target-preview-ally");
                   });
                 }
               });
@@ -4745,6 +4784,8 @@
                   .forEach((el) => el.classList.remove("target-preview"));
                 document.querySelectorAll(".target-preview-splash")
                   .forEach((el) => el.classList.remove("target-preview-splash"));
+                document.querySelectorAll(".target-preview-ally")
+                  .forEach((el) => el.classList.remove("target-preview-ally"));
               });
             }
 
