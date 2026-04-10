@@ -3957,26 +3957,8 @@
                       Math.floor(f.slot / 3) === targetRow &&
                       f.slot % 3 > primaryCol,
                   )
-<<<<<<< HEAD
-                  .sort((a, b) => (b.slot % 3) - (a.slot % 3));
+                  .sort((a, b) => (a.slot % 3) - (b.slot % 3));
                 if (chain.length) {
-=======
-                  .sort((a, b) => (a.slot % 3) - (b.slot % 3)); // ascendente: mais próximo primeiro
-                // Slots vazios são pulados; o 1º encontrado recebe skillPower%, o 2º metade disso
-                if (chain.length > 0)
-                  dealDmg(
-                    unit,
-                    chain[0],
-                    Math.round(unit.atk * unit.skillPower),
-                  );
-                if (chain.length > 1)
-                  dealDmg(
-                    unit,
-                    chain[1],
-                    Math.round((unit.atk * unit.skillPower) / 2),
-                  );
-                if (chain.length)
->>>>>>> 64ff5a374e0ac9967a7547967f06526b7c195280
                   evs.push({
                     type: "ability",
                     uid: unit.id,
