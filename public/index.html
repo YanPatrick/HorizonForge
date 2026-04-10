@@ -1541,6 +1541,28 @@
         color: #88ff88;
       }
 
+      .pmax {
+        color: #ffaa00;
+        text-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
+      }
+
+      .cmax {
+        color: #ffaa00;
+        background: rgba(255, 170, 0, 0.15);
+        text-shadow: 0 0 6px rgba(255, 170, 0, 0.4);
+      }
+
+      .scard.maxed {
+        opacity: 0.55;
+        cursor: not-allowed;
+        filter: grayscale(0.3);
+      }
+
+      .scard.maxed:hover {
+        transform: none;
+        filter: grayscale(0.3) brightness(1.05);
+      }
+
       .scnt {
         position: absolute;
         top: 4px;
@@ -3780,55 +3802,31 @@
 
           const isM = (u) => u.tp !== "ranged";
           const unitRow = Math.floor(unit.slot / 3);
-          const unitIsRanged = !isM(unit);
 
-          // Enemies in a row, sorted front-to-back (col 2 → 1 → 0)
-          const inRow = (row) =>
-            f
-              .filter((e) => Math.floor(e.slot / 3) === row)
-              .sort((a, b) => (b.slot % 3) - (a.slot % 3));
-          const meleeOf = (row) => inRow(row).filter(isM);
-          const rangedOf = (row) => inRow(row).filter((e) => !isM(e));
+          // Dentro de uma linha: melee primeiro (protege ranged atrás),
+          // depois ranged. Ambos ordenados frente→fundo (col 0 = frente inimigo).
+          const bestInRow = (row) => {
+            const units = f.filter((e) => Math.floor(e.slot / 3) === row);
+            if (!units.length) return null;
+            const byFront = (arr) => arr.slice().sort((a, b) => (a.slot % 3) - (b.slot % 3));
+            const melee = byFront(units.filter(isM));
+            if (melee.length) return melee[0];
+            return byFront(units.filter((e) => !isM(e)))[0] || null;
+          };
 
-          // Own row always has priority — front-to-back, any type
-          const own = inRow(unitRow);
-          if (own.length) return own[0];
-
-          // Own row empty:
-          if (unitIsRanged) {
-            // Ranged: fallback to nearest other row
-            if (unitRow === 0) return inRow(1)[0] || inRow(2)[0] || null;
-            if (unitRow === 2) return inRow(1)[0] || inRow(0)[0] || null;
-            // Row B ranged: RNG between A and C
-            const fA = inRow(0), fC = inRow(2);
-            if (fA.length && fC.length)
-              return Math.random() < 0.5 ? fA[0] : fC[0];
-            return fA[0] || fC[0] || null;
-          }
-
-          // Melee: melee-first priority across other rows
+          // Ordem de busca: linha própria → linhas adjacentes por proximidade
           if (unitRow === 0) {
-            return (
-              meleeOf(1)[0] || meleeOf(2)[0] ||
-              rangedOf(1)[0] || rangedOf(2)[0] || null
-            );
+            return bestInRow(0) || bestInRow(1) || bestInRow(2) || null;
           }
           if (unitRow === 2) {
-            return (
-              meleeOf(1)[0] || meleeOf(0)[0] ||
-              rangedOf(1)[0] || rangedOf(0)[0] || null
-            );
+            return bestInRow(2) || bestInRow(1) || bestInRow(0) || null;
           }
-          // Row B melee: RNG when both sides have equal-priority targets
-          const mA = meleeOf(0), mC = meleeOf(2);
-          if (mA.length && mC.length)
-            return Math.random() < 0.5 ? mA[0] : mC[0];
-          if (mA.length) return mA[0];
-          if (mC.length) return mC[0];
-          const rA = rangedOf(0), rC = rangedOf(2);
-          if (rA.length && rC.length)
-            return Math.random() < 0.5 ? rA[0] : rC[0];
-          return rA[0] || rC[0] || null;
+          // Linha B: própria primeiro, depois A e C aleatório
+          const t = bestInRow(1);
+          if (t) return t;
+          const tA = bestInRow(0), tC = bestInRow(2);
+          if (tA && tC) return Math.random() < 0.5 ? tA : tC;
+          return tA || tC || null;
         }
 
         const isMelee = (u) => u.tp !== "ranged";
@@ -4574,51 +4572,27 @@
         if (!enemies.length) return null;
 
         const unitRow = Math.floor(playerUnit.slot / 3);
-        const unitIsRanged = !isM(playerUnit);
 
-        const inRow = (row) =>
-          enemies
-            .filter((e) => Math.floor(e.slot / 3) === row)
-            .sort((a, b) => (b.slot % 3) - (a.slot % 3));
-        const meleeOf = (row) => inRow(row).filter(isM);
-        const rangedOf = (row) => inRow(row).filter((e) => !isM(e));
+        const bestInRow = (row) => {
+          const units = enemies.filter((e) => Math.floor(e.slot / 3) === row);
+          if (!units.length) return null;
+          const byFront = (arr) => arr.slice().sort((a, b) => (a.slot % 3) - (b.slot % 3));
+          const melee = byFront(units.filter(isM));
+          if (melee.length) return melee[0];
+          return byFront(units.filter((e) => !isM(e)))[0] || null;
+        };
 
-        // Own row always first
-        const own = inRow(unitRow);
-        if (own.length) return own[0];
-
-        if (unitIsRanged) {
-          if (unitRow === 0) return inRow(1)[0] || inRow(2)[0] || null;
-          if (unitRow === 2) return inRow(1)[0] || inRow(0)[0] || null;
-          // Row B ranged: RNG between A and C
-          const fA = inRow(0), fC = inRow(2);
-          if (fA.length && fC.length) return Math.random() < 0.5 ? fA[0] : fC[0];
-          return fA[0] || fC[0] || null;
-        }
-
-        // Melee: melee-first in other rows
         if (unitRow === 0) {
-          return (
-            meleeOf(1)[0] || meleeOf(2)[0] ||
-            rangedOf(1)[0] || rangedOf(2)[0] || null
-          );
+          return bestInRow(0) || bestInRow(1) || bestInRow(2) || null;
         }
         if (unitRow === 2) {
-          return (
-            meleeOf(1)[0] || meleeOf(0)[0] ||
-            rangedOf(1)[0] || rangedOf(0)[0] || null
-          );
+          return bestInRow(2) || bestInRow(1) || bestInRow(0) || null;
         }
-        // Row B melee: RNG on ties
-        const mA = meleeOf(0), mC = meleeOf(2);
-        if (mA.length && mC.length)
-          return Math.random() < 0.5 ? mA[0] : mC[0];
-        if (mA.length) return mA[0];
-        if (mC.length) return mC[0];
-        const rA = rangedOf(0), rC = rangedOf(2);
-        if (rA.length && rC.length)
-          return Math.random() < 0.5 ? rA[0] : rC[0];
-        return rA[0] || rC[0] || null;
+        const t = bestInRow(1);
+        if (t) return t;
+        const tA = bestInRow(0), tC = bestInRow(2);
+        if (tA && tC) return Math.random() < 0.5 ? tA : tC;
+        return tA || tC || null;
       }
 
       function renderField(fid, board, isP) {
@@ -4657,7 +4631,7 @@
             let uDotsHtml =
               '<div class="uprog" style="color:' + dotColor + '">';
             for (let d = 0; d < 3; d++)
-              uDotsHtml += `<div class="uprog-dot ${d < (u.stack || 1) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
+              uDotsHtml += `<div class="uprog-dot ${(u.lv >= 5 || d < (u.stack || 1)) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             uDotsHtml += "</div>";
             const skillShort = cc.abi.name.length > 9 ? cc.abi.name.slice(0, 8) + "…" : cc.abi.name;
             el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="ustv">${u.hp}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">VEL</span></div></div><div class="ucabi">${cc.abi.ico} ${skillShort}</div>${uDotsHtml}`;
@@ -5010,21 +4984,22 @@
           const isOwned =
             G.bench.find((b) => b.cid === u.cid) ||
             G.board.find((b) => b && b.cid === u.cid);
+          const isAtMax = !!(isOwned && isOwned.lv >= 5);
           const cost = isOwned ? 2 : HF.value_buy_card;
           const isCombo = comboIdxSet.has(i);
-          const canBuy = G.gold >= (isCombo ? combo.cost : cost) && active;
-          const cntLabel = isOwned ? `🔗${isOwned.stack || 1}/3` : "★";
+          const canBuy = !isAtMax && G.gold >= (isCombo ? combo.cost : cost) && active;
+          const cntLabel = isAtMax ? "🏆 MAX" : isOwned ? `🔗${isOwned.stack || 1}/3` : "★";
           const actionLbl = canBuy
             ? isCombo
               ? `⚡ Combo ×${combo.type} for ${combo.cost}💰`
               : isOwned
                 ? `▶ Stack ${cost}💰`
                 : `▶ Recruit ${cost}💰`
-            : "";
-          const priceLbl = isCombo ? `${combo.cost}💰` : `${cost}💰`;
-          const priceClass = isOwned ? "pcombo" : isCombo ? "pcombo" : "pnew";
+            : isAtMax ? "Nível Máximo" : "";
+          const priceLbl = isAtMax ? "MAX" : isCombo ? `${combo.cost}💰` : `${cost}💰`;
+          const priceClass = isAtMax ? "pmax" : isOwned ? "pcombo" : isCombo ? "pcombo" : "pnew";
 
-          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
+          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
 
           let el = domById[u.id];
           const isNew = !el;
@@ -5037,7 +5012,7 @@
             row.appendChild(el);
             el.offsetWidth;
           }
-          el.className = `scard${isCombo ? " combo-card" : ""}${canBuy ? " buyable" : " broke"}`;
+          el.className = `scard${isCombo ? " combo-card" : ""}${isAtMax ? " maxed" : canBuy ? " buyable" : " broke"}`;
           el.innerHTML = inner;
           el.style.background = cc.bg;
           el.style.borderColor = isCombo ? "#44ff88" : cc.col;
