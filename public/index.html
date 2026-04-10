@@ -3947,17 +3947,20 @@
                 }
               }
               if (unit.cid === "archmage") {
-                const myRow = Math.floor(unit.slot / 3);
+                // Chain continua na row do ALVO, avançando para dentro do campo inimigo
+                // (col crescente = mais fundo no território inimigo)
+                const targetRow = Math.floor(t.slot / 3);
                 const primaryCol = t.slot % 3;
                 const chain = foes(unit.side)
                   .filter(
                     (f) =>
                       f.id !== t.id &&
                       f.alive &&
-                      Math.floor(f.slot / 3) === myRow &&
-                      f.slot % 3 < primaryCol,
+                      Math.floor(f.slot / 3) === targetRow &&
+                      f.slot % 3 > primaryCol,
                   )
-                  .sort((a, b) => (b.slot % 3) - (a.slot % 3));
+                  .sort((a, b) => (a.slot % 3) - (b.slot % 3)); // ascendente: mais próximo primeiro
+                // Slots vazios são pulados; o 1º encontrado recebe skillPower%, o 2º metade disso
                 if (chain.length > 0)
                   dealDmg(
                     unit,
