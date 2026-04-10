@@ -2661,7 +2661,7 @@
     <!-- ══════════════════ DUEL RESULT ══════════════════ -->
     <div id="duel-result">
       <div id="dr-box">
-        <div class="dr-title" id="dr-title">🏆 DUELO VENCIDO!</div>
+        <div class="dr-title" id="dr-title">🏆 DUEL WON!</div>
         <div class="dr-score" id="dr-score"></div>
         <div class="dr-battles" id="dr-battles"></div>
         <div class="dr-divider"></div>
@@ -4299,13 +4299,13 @@
           if (pw) {
             G.duelsWon++;
             setBanner(
-              `🏆 DUELO VENCIDO! ${G.duelScore.p}–${G.duelScore.e}`,
+              `🏆 DUEL WON! ${G.duelScore.p}–${G.duelScore.e}`,
               "bwin",
             );
           } else {
             G.duelsLost++;
             setBanner(
-              `💔 DUELO PERDIDO! ${G.duelScore.p}–${G.duelScore.e}`,
+              `💔 DUEL LOST! ${G.duelScore.p}–${G.duelScore.e}`,
               "blose",
             );
           }
@@ -4338,8 +4338,8 @@
       // ═══════════════════════════════════════════════════
       function showDuelResult(pw) {
         document.getElementById("dr-title").textContent = pw
-          ? "🏆 DUELO VENCIDO!"
-          : "💔 DUELO PERDIDO!";
+          ? "🏆 DUEL WON!"
+          : "💔 DUEL LOST!";
         document.getElementById("dr-title").className =
           "dr-title " + (pw ? "win" : "loss");
         const sc = G.duelScore;
