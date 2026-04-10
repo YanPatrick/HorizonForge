@@ -2938,7 +2938,7 @@
         // Valida bench
         G.bench.forEach((u) => {
           if (!u.cid || !C[u.cid]) throw new Error(`Invalid unit: ${u.cid}`);
-          if (!u.stack) u.stack = 1;
+          if (u.stack == null) u.stack = 1;
         });
         // Valida board
         G.board.forEach((u) => {
@@ -3151,7 +3151,7 @@
 
       function applyMerge(u) {
         while (u.stack >= 3 && u.lv < 5) {
-          u.stack = u.stack - 3 + 1; // stack vira 1 aqui
+          u.stack = u.stack - 3; // sobra exata após o merge
           u.lv++;
           upgradeUnit(u);
           G.duelStats.mergesP++;
@@ -3239,7 +3239,7 @@
 
         if (benchIdx >= 0) {
           const ex = G.bench[benchIdx];
-          ex.stack = (ex.stack || 1) + 1;
+          ex.stack = ex.stack + 1;
           applyMerge(ex);
           const prevLv = ex.lv;
           applyMerge(ex);
@@ -3271,7 +3271,7 @@
           }
         } else if (boardIdx >= 0) {
           const ex = G.board[boardIdx];
-          ex.stack = (ex.stack || 1) + 1;
+          ex.stack = ex.stack + 1;
           applyMerge(ex);
           const prevLv = ex.lv;
           applyMerge(ex);
@@ -3430,7 +3430,7 @@
         const existingIdx = G.bench.findIndex((b) => b.cid === u.cid);
         if (existingIdx >= 0) {
           const ex = G.bench[existingIdx];
-          ex.stack = (ex.stack || 1) + (u.stack || 1);
+          ex.stack = ex.stack + u.stack;
           applyMerge(ex);
         } else if (distinctHeroes() < BENCH_SLOTS()) {
           G.bench.push({ ...u });
@@ -3505,7 +3505,7 @@
       }
       function botApplyMerge(u) {
         while (u.stack >= 3 && u.lv < 5) {
-          u.stack = u.stack - 3 + 1;
+          u.stack = u.stack - 3;
           u.lv++;
           upgradeUnit(u);
         }
@@ -3573,7 +3573,7 @@
           BOT.shop[pick.i] = null;
           const existing = BOT.bench.find((u) => u.cid === pick.cid);
           if (existing) {
-            existing.stack = (existing.stack || 1) + 1;
+            existing.stack = existing.stack + 1;
             botApplyMerge(existing);
           } else {
             const nu = mkUnit(pick.cid, 1);
@@ -3614,7 +3614,7 @@
             BOT.shop[p.i] = null;
             const ex = BOT.bench.find((u) => u.cid === p.cid);
             if (ex) {
-              ex.stack = (ex.stack || 1) + 1;
+              ex.stack = ex.stack + 1;
               botApplyMerge(ex);
             } else {
               const nu = mkUnit(p.cid, 1);
@@ -3668,7 +3668,7 @@
           if (!u) return;
           const ex = BOT.bench.find((b) => b.cid === u.cid);
           if (ex) {
-            ex.stack = (ex.stack || 1) + (u.stack || 1);
+            ex.stack = ex.stack + u.stack;
             botApplyMerge(ex);
           } else if (BOT.bench.length < BENCH_SLOTS()) BOT.bench.push({ ...u });
         });
@@ -4631,7 +4631,7 @@
             let uDotsHtml =
               '<div class="uprog" style="color:' + dotColor + '">';
             for (let d = 0; d < 3; d++)
-              uDotsHtml += `<div class="uprog-dot ${(u.lv >= 5 || d < (u.stack || 1)) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
+              uDotsHtml += `<div class="uprog-dot ${(u.lv >= 5 || d < u.stack) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             uDotsHtml += "</div>";
             const skillShort = cc.abi.name.length > 9 ? cc.abi.name.slice(0, 8) + "…" : cc.abi.name;
             el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="ustv">${u.hp}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">VEL</span></div></div><div class="ucabi">${cc.abi.ico} ${skillShort}</div>${uDotsHtml}`;
@@ -4988,7 +4988,7 @@
           const cost = isOwned ? 2 : HF.value_buy_card;
           const isCombo = comboIdxSet.has(i);
           const canBuy = !isAtMax && G.gold >= (isCombo ? combo.cost : cost) && active;
-          const cntLabel = isAtMax ? "🏆 MAX" : isOwned ? `🔗${isOwned.stack || 1}/3` : "★";
+          const cntLabel = isAtMax ? "🏆 MAX" : isOwned ? `🔗${isOwned.stack}/3` : "★";
           const actionLbl = canBuy
             ? isCombo
               ? `⚡ Combo ×${combo.type} for ${combo.cost}💰`
@@ -5090,8 +5090,8 @@
             const nextLbl = u.lv < 5 ? ` → ${LS[u.lv + 1]}` : "(MAX)";
             let dotsHtml = `<div class="bprog" style="color:${dotColor}">`;
             for (let d = 0; d < 3; d++)
-              dotsHtml += `<div class="bprog-dot ${d < (u.stack || 1) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
-            dotsHtml += `<span class="bprog-label">${u.stack || 1}/3${nextLbl}</span></div>`;
+              dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
+            dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
 
             card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="venda = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Vender +${SELL[u.lv]}💰</div>`;
 
