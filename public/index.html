@@ -2510,11 +2510,11 @@
     <div id="quit-overlay" onclick="if(event.target===this)closeQuitModal()">
       <div id="quit-modal">
         <div class="qm-icon">⚠️</div>
-        <div class="qm-title">Encerrar Partida?</div>
-        <div class="qm-body">Você perderá todo o progresso desta partida e voltará ao menu inicial.</div>
+        <div class="qm-title">Quit Match?</div>
+        <div class="qm-body">You will lose all progress in this match and return to the main menu.</div>
         <div class="qm-btns">
-          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">Continuar Jogando</button>
-          <button class="qm-btn qm-confirm" onclick="confirmQuit()">Encerrar</button>
+          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">Keep Playing</button>
+          <button class="qm-btn qm-confirm" onclick="confirmQuit()">Quit</button>
         </div>
       </div>
     </div>
@@ -2525,48 +2525,48 @@
       <div id="hdr">
         <span class="htitle">⚔️ Horizon Forge</span>
         <div class="hstats">
-          <span class="sb sr" id="h-duel">Duelo 1</span>
+          <span class="sb sr" id="h-duel">Duel 1</span>
           <span class="sb sw" id="h-dw">🏆 0</span>
           <span class="sb sl" id="h-dl">💔 0</span>
           <span class="sb sg" id="h-gold">💰 7</span>
-          <span class="sb sfmt" id="h-fmt" onclick="openQuitModal()" title="Encerrar partida">BO3</span>
-          <button class="htp-btn" onclick="openHowTo()">📖 Como Jogar</button>
+          <span class="sb sfmt" id="h-fmt" onclick="openQuitModal()" title="Quit match">BO3</span>
+          <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button>
         </div>
       </div>
 
       <!-- DUEL BAR -->
       <div id="duelbar">
-        <span class="dscore-label">Você</span>
+        <span class="dscore-label">You</span>
         <div class="dscore" id="dots-p"></div>
         <span class="duel-vs">⚔</span>
         <div class="dscore" id="dots-e"></div>
-        <span class="dscore-label">Inimigo</span>
-        <span class="battle-tag" id="btag">Batalha 1</span>
+        <span class="dscore-label">Enemy</span>
+        <span class="battle-tag" id="btag">Battle 1</span>
       </div>
 
       <!-- BANNER -->
       <div id="banner" class="bshop">
-        🛍️ Analise o inimigo, compre cartas e monte seu exército!
+        🛍️ Analyze the enemy, buy cards and build your army!
       </div>
 
       <!-- ══════════════════ ARENA ══════════════════ -->
       <div id="arena-wrap">
         <!-- Turn Order Panel -->
         <div id="turnpanel" class="hidden">
-          <div class="tp-title">⚔ Ordem</div>
+          <div class="tp-title">⚔ Order</div>
           <div class="tp-list" id="tp-list"></div>
         </div>
 
         <!-- Fields Row: Player | VS | Enemy -->
         <div id="fields-row">
           <div class="fwrap">
-            <div class="flbl" style="color: #88aaff">⚔ Seu Exército</div>
+            <div class="flbl" style="color: #88aaff">⚔ Your Army</div>
             <div class="field pf" id="pfield"></div>
           </div>
           <div id="vs"><span class="vstxt">VS</span></div>
           <div class="fwrap">
             <div class="flbl" style="color: #ff8888">
-              ☠ Adversário (fixo no duelo)
+              ☠ Opponent (fixed this duel)
             </div>
             <div class="field ef" id="efield"></div>
           </div>
@@ -2588,7 +2588,7 @@
         <div id="center-col">
           <div id="ctrl">
             <button class="btn bbtn" id="bfight" onclick="startBattle()">
-              ⚔️ Batalhar!
+              ⚔️ Battle!
             </button>
           </div>
           <div id="log"></div>
@@ -2619,17 +2619,17 @@
         <div class="dr-stats-grid">
           <div class="dr-stat-row">
             <div class="dr-val p" id="drs-dmgP">0</div>
-            <div class="dr-stat-lbl">⚔️ Dano Total</div>
+            <div class="dr-stat-lbl">⚔️ Total Damage</div>
             <div class="dr-val e" id="drs-dmgE">0</div>
           </div>
           <div class="dr-stat-row">
             <div class="dr-val p" id="drs-killsP">0</div>
-            <div class="dr-stat-lbl">💀 Abates</div>
+            <div class="dr-stat-lbl">💀 Kills</div>
             <div class="dr-val e" id="drs-killsE">0</div>
           </div>
           <div class="dr-stat-row">
             <div class="dr-val p" id="drs-merges">0</div>
-            <div class="dr-stat-lbl">✨ Fusões</div>
+            <div class="dr-stat-lbl">✨ Merges</div>
             <div class="dr-val e">—</div>
           </div>
         </div>
@@ -2637,19 +2637,19 @@
         <div class="dr-teams">
           <div class="dr-team">
             <div class="dr-team-lbl" style="color: rgba(136, 170, 255, 0.6)">
-              Seu Exército Final
+              Your Final Army
             </div>
             <div class="dr-team-units" id="drt-p"></div>
           </div>
           <div class="dr-team">
             <div class="dr-team-lbl" style="color: rgba(255, 100, 100, 0.6)">
-              Exército Inimigo
+              Enemy Army
             </div>
             <div class="dr-team-units" id="drt-e"></div>
           </div>
         </div>
         <div class="dr-cta">
-          <button class="btn gnbtn" id="dr-next-btn">🌟 Próximo Duelo</button>
+          <button class="btn gnbtn" id="dr-next-btn">🌟 Next Duel</button>
           <button
             class="btn"
             style="
@@ -2661,7 +2661,7 @@
               document.getElementById('duel-result').classList.remove('open')
             "
           >
-            ✕ Ver Campo
+            ✕ View Field
           </button>
         </div>
       </div>
@@ -2670,28 +2670,27 @@
     <!-- ══════════════════ HOW TO PLAY ══════════════════ -->
     <div id="howto">
       <div id="htp-box">
-        <button id="htp-close" onclick="closeHowTo()">✕ Fechar</button>
+        <button id="htp-close" onclick="closeHowTo()">✕ Close</button>
         <div class="htp-h1">📖 How To Play — Horizon Forge</div>
         <div class="htp-h2">🎯 Objective</div>
         <p class="htp-p">
-          Vença a maioria das batalhas de um duelo para avançar. No formato
-          <span class="htp-hl">Melhor de 3</span>, vença 2 batalhas. No
-          <span class="htp-hl">Melhor de 5</span>, vença 3. O adversário mantém
-          o mesmo exército durante todo o duelo — analise-o antes de montar o
-          seu.
+          Win most battles in a duel to advance. In
+          <span class="htp-hl">Best of 3</span>, win 2 battles. In
+          <span class="htp-hl">Best of 5</span>, win 3. The opponent keeps the
+          same army for the whole duel — analyze it before building yours.
         </p>
-        <div class="htp-h2">💰 Ouro</div>
+        <div class="htp-h2">💰 Gold</div>
         <div class="htp-tips">
           <div class="htp-tip">
             <span class="htp-tip-ico">🏁</span>
-            <div>Cada duelo começa com <b style="color: #ffdd55">7💰</b>.</div>
+            <div>Each duel starts with <b style="color: #ffdd55">7💰</b>.</div>
           </div>
           <div class="htp-tip">
             <span class="htp-tip-ico">⚔️</span>
             <div>
-              Entre batalhas você recebe ouro automaticamente —
-              <b style="color: #88ff88">um bônus extra</b> se venceu a batalha
-              anterior.
+              Between battles you receive gold automatically —
+              <b style="color: #88ff88">a bonus</b> if you won the previous
+              battle.
             </div>
           </div>
           <div class="htp-tip">
@@ -2704,7 +2703,7 @@
           <div class="htp-tip">
             <span class="htp-tip-ico">🆕</span>
             <div>
-              Comprar um personagem que você ainda não possui custa
+              Buying a character you don't own yet costs
               <b style="color: #ffdd55">3💰</b>. They go straight to the
               Barracks.
             </div>
@@ -2712,8 +2711,8 @@
           <div class="htp-tip">
             <span class="htp-tip-ico">🔗</span>
             <div>
-              Comprar um personagem que você já tem custa
-              <b style="color: #88ff88">2💰</b> e stacks on the same card — each
+              Buying a character you already own costs
+              <b style="color: #88ff88">2💰</b> and stacks on the same card — each
               hero uses only <b>1 slot</b> in the Barracks.
             </div>
           </div>
@@ -2725,71 +2724,70 @@
             </div>
           </div>
         </div>
-        <div class="htp-h2">✨ Fusão de Cartas</div>
+        <div class="htp-h2">✨ Card Merging</div>
         <div class="htp-tips">
           <div class="htp-tip">
             <span class="htp-tip-ico">⭐</span>
             <div>
-              Acumule <b>3 cópias</b> do mesmo personagem para fundir
-              automaticamente — ele sobe de nível (<b style="color: #ffcc44"
-                >★ → ★★ → ★★★...</b
-              >) e fica muito mais poderoso.
+              Stack <b>3 copies</b> of the same character to auto-merge —
+              they level up (<b style="color: #ffcc44">★ → ★★ → ★★★...</b
+              >) and become much more powerful.
             </div>
           </div>
           <div class="htp-tip">
             <span class="htp-tip-ico">⚠️</span>
             <div>
-              Ao vender uma carta, você recebe ouro de acordo com o nível dela.
-              Cópias ainda não fundidas são perdidas.
+              Selling a card gives gold based on its level.
+              Unmerged copies are lost.
             </div>
           </div>
         </div>
-        <div class="htp-h2">🧙 Personagens</div>
+        <div class="htp-h2">🧙 Characters</div>
         <table class="htp-table">
           <tr>
-            <th>Personagem</th>
-            <th>Habilidade</th>
-            <th>Efeito</th>
+            <th>Character</th>
+            <th>Ability</th>
+            <th>Effect</th>
           </tr>
           <tr>
-            <td>⚔️ Cavaleiro</td>
-            <td>🛡️ Defesa de Ferro</td>
-            <td>Reduz parte do dano recebido.</td>
+            <td>⚔️ Knight</td>
+            <td>🛡️ Iron Defense</td>
+            <td>Reduces damage taken per hit.</td>
           </tr>
           <tr>
-            <td>🔮 Mago</td>
-            <td>🔥 Bola de Fogo</td>
-            <td>Dano em área nos inimigos ao redor.</td>
+            <td>🔮 Mage</td>
+            <td>🔥 Fireball</td>
+            <td>Area damage to surrounding enemies.</td>
           </tr>
           <tr>
-            <td>🏹 Arqueiro</td>
-            <td>🎯 Tiro Certeiro</td>
-            <td>Chance de acerto crítico aumentada.</td>
+            <td>🏹 Archer</td>
+            <td>🎯 Precise Shot</td>
+            <td>Increased critical hit chance.</td>
           </tr>
           <tr>
-            <td>💚 Curandeira</td>
-            <td>💫 Cura Dupla</td>
-            <td>Cura o aliado com menos vida.</td>
+            <td>💚 Healer</td>
+            <td>💫 Healing</td>
+            <td>Heals the ally with lowest HP.</td>
           </tr>
           <tr>
-            <td>🗡️ Assassino</td>
-            <td>⚡ Golpe Furtivo</td>
-            <td>Primeiro ataque amplificado. Mira o mais fraco.</td>
+            <td>🗡️ Assassin</td>
+            <td>⚡ Sneak Strike</td>
+            <td>Amplified first attack on the weakest foe.</td>
           </tr>
           <tr>
-            <td>🛡️ Paladino</td>
-            <td>✨ Aura Sagrada</td>
-            <td>Aumenta HP máximo dos aliados adjacentes.</td>
+            <td>🛡️ Paladin</td>
+            <td>✨ Sacred Aura</td>
+            <td>Boosts max HP of adjacent allies.</td>
           </tr>
           <tr>
-            <td>🌟 Arquimago</td>
-            <td>⛓️ Raio em Cadeia</td>
-            <td>Ataque encadeia para múltiplos alvos.</td>
+            <td>🌟 Archmage</td>
+            <td>⛓️ Chain Lightning</td>
+            <td>Attack chains to multiple targets in a row.</td>
           </tr>
           <tr>
-            <td>🪓 Bárbaro</td>
-            <td>😡 Fúria</td>
-            <td>Bônus de ataque quando com pouca vida.</td>
+            <td>🪓 Barbarian</td>
+            <td>😡 Fury</td>
+            <td>Attack bonus when low on HP.</td>
           </tr>
         </table>
       </div>
@@ -3144,7 +3142,7 @@
       function rerollShop() {
         const cost = HF.value_new_recruitment;
         if (G.phase !== "shop" || G.gold < cost) {
-          log(G.gold < cost ? `❌ Precisa de ${cost}💰!` : "", "lk");
+          log(G.gold < cost ? `❌ Need ${cost}💰!` : "", "lk");
           return;
         }
         G.gold -= cost;
@@ -3169,7 +3167,7 @@
           applyMerge(ex);
           if (ex.lv > prevLv) {
             if (!silent)
-              log(`✨ ${ex.name} evoluiu para ${LS[ex.lv]}! (Barracks)`, "ll");
+              log(`✨ ${ex.name} evolved to ${LS[ex.lv]}! (Barracks)`, "ll");
             setTimeout(() => {
               document.querySelectorAll("#benchrow .bcard").forEach((bc) => {
                 if (bc.dataset.cid === ex.cid) {
@@ -3181,7 +3179,7 @@
           } else {
             if (!silent)
               log(
-                `🔗 ${card.name} empilhado! (${ex.stack}/3 → ${LS[ex.lv + 1] || "MAX"})${cost === 2 ? " −2💰" : " −3💰"}`,
+                `🔗 ${card.name} stacked! (${ex.stack}/3 → ${LS[ex.lv + 1] || "MAX"})${cost === 2 ? " −2💰" : " −3💰"}`,
                 "ll",
               );
             setTimeout(() => {
@@ -3201,7 +3199,7 @@
           applyMerge(ex);
           if (ex.lv > prevLv) {
             if (!silent)
-              log(`⚡ ${ex.name} evoluiu para ${LS[ex.lv]} em campo!`, "ll");
+              log(`⚡ ${ex.name} evolved to ${LS[ex.lv]} on the field!`, "ll");
             setTimeout(() => {
               const f = document.querySelector(
                 `#pfield [data-cid="${ex.cid}"]`,
@@ -3217,7 +3215,7 @@
           } else {
             if (!silent)
               log(
-                `🔗 ${card.name} empilhado em campo! (${ex.stack}/3 → ${LS[ex.lv + 1] || "MAX"})${cost === 2 ? " −2💰" : " −3💰"}`,
+                `🔗 ${card.name} stacked on field! (${ex.stack}/3 → ${LS[ex.lv + 1] || "MAX"})${cost === 2 ? " −2💰" : " −3💰"}`,
                 "ll",
               );
             setTimeout(() => {
@@ -3238,7 +3236,7 @@
           const newUnit = mkUnit(card.cid, 1);
           newUnit.stack = 1;
           G.bench.push(newUnit);
-          if (!silent) log(`🛒 Recrutou ${card.name} por ${cost}💰`, "ll");
+          if (!silent) log(`🛒 Recruited ${card.name} for ${cost}💰`, "ll");
         }
         return true;
       }
@@ -3257,7 +3255,7 @@
         if (!card) return;
         const cost = cardCost(card.cid);
         if (G.gold < cost) {
-          log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`, "lk");
+          log(`❌ Need ${cost}💰! You have ${G.gold}💰`, "lk");
           return;
         }
         if (!_addToBench(card, cost, false)) return;
@@ -3271,7 +3269,7 @@
         const combo = G.shopCombo,
           cost = combo.cost;
         if (G.gold < cost) {
-          log(`❌ Precisa de ${cost}💰! Você tem ${G.gold}💰`, "lk");
+          log(`❌ Need ${cost}💰! You have ${G.gold}💰`, "lk");
           return;
         }
         const cid = combo.cids[0];
@@ -3283,7 +3281,7 @@
         for (let k = 0; k < combo.type; k++)
           _addToBench({ cid, ico: C[cid].ico, name: C[cid].name }, 0, k > 0);
         log(
-          `⚡ COMBO ${combo.type}! ${C[cid].name} ×${combo.type} por ${cost}💰!`,
+          `⚡ COMBO ${combo.type}! ${C[cid].name} ×${combo.type} for ${cost}💰!`,
           "ll",
         );
         [...combo.idxs]
@@ -3303,7 +3301,7 @@
 
         // Proteção: não venda se tem em campo
         if (G.board.some((u) => u && u.cid === cid)) {
-          log("❌ Retire do campo antes de vender!", "lk");
+          log("❌ Remove from field before selling!", "lk");
           return;
         }
 
@@ -3313,7 +3311,7 @@
         G.bench.splice(idx, 1);
         if (G.bsel === cid) G.bsel = null;
         render();
-        log(`💸 Vendeu ${u.name} ${LS[u.lv]} por ${val}💰`, "la");
+        log(`💸 Sold ${u.name} ${LS[u.lv]} for ${val}💰`, "la");
       }
 
       function betweenIncome() {
@@ -3337,7 +3335,7 @@
         if (!selCid) return;
         const bidx = G.bench.findIndex((u) => u.cid === selCid);
         if (bidx < 0) {
-          log("❌ Unidade não encontrada no barracks!", "lk");
+          log("❌ Unit not found in barracks!", "lk");
           return;
         }
         G.board[i] = { ...G.bench[bidx] };
@@ -3362,7 +3360,7 @@
           const val = SELL[u.lv];
           G.gold += val;
           log(
-            `💸 Barracks full! ${u.name} ${LS[u.lv]} vendido automaticamente (+${val}💰)`,
+            `💸 Barracks full! ${u.name} ${LS[u.lv]} auto-sold (+${val}💰)`,
             "la",
           );
         }
@@ -3385,19 +3383,19 @@
         mergeWeight: 0.92,
         adaptRate: 0.85,
         mistakeRate: 0.05,
-        label: "🤖 IA",
+        label: "🤖 AI",
       };
       const FRONT_SLOTS = [2, 5, 8, 1, 4, 7],
         MID_SLOTS = [1, 4, 7],
         BACK_SLOTS = [0, 3, 6];
       const ROLE_SLOT = {
-        Tanque: FRONT_SLOTS,
-        Paladino: FRONT_SLOTS,
-        Assassino: MID_SLOTS,
-        Suporte: MID_SLOTS,
-        Mago: BACK_SLOTS,
-        Arquimago: BACK_SLOTS,
-        Atirador: BACK_SLOTS,
+        Tank: FRONT_SLOTS,
+        Paladin: FRONT_SLOTS,
+        Assassin: MID_SLOTS,
+        Support: MID_SLOTS,
+        Mage: BACK_SLOTS,
+        Archmage: BACK_SLOTS,
+        Shooter: BACK_SLOTS,
       };
       const UNIT_SCORE = {
         knight: 6,
@@ -3906,25 +3904,26 @@
                       f.slot % 3 < primaryCol,
                   )
                   .sort((a, b) => (b.slot % 3) - (a.slot % 3));
-                if (chain.length > 0)
-                  dealDmg(
-                    unit,
-                    chain[0],
-                    Math.round(unit.atk * unit.skillPower),
-                  );
-                if (chain.length > 1)
-                  dealDmg(
-                    unit,
-                    chain[1],
-                    Math.round((unit.atk * unit.skillPower) / 2),
-                  );
-                if (chain.length)
+                if (chain.length) {
                   evs.push({
                     type: "ability",
                     uid: unit.id,
                     abilName: "Chain Lightning",
                     tick,
                   });
+                  if (chain.length > 0)
+                    dealDmg(
+                      unit,
+                      chain[0],
+                      Math.round(unit.atk * unit.skillPower),
+                    );
+                  if (chain.length > 1)
+                    dealDmg(
+                      unit,
+                      chain[1],
+                      Math.round((unit.atk * unit.skillPower) / 2),
+                    );
+                }
               }
             }
           }
@@ -4051,7 +4050,7 @@
 
       function startBattle() {
         if (!G.board.filter(Boolean).length) {
-          log("❌ Posicione ao menos um combatente!", "lk");
+          log("❌ Place at least one fighter!", "lk");
           return;
         }
         G.phase = "battle";
@@ -4059,9 +4058,9 @@
         G.fieldSel = null;
         G.fieldDrag = null;
         document.getElementById("log").innerHTML = "";
-        log("⚔️ A batalha começa!", "lr");
+        log("⚔️ Battle begins!", "lr");
         setBanner(
-          `⚔️ Batalha ${G.battleNum}/${G.format} em andamento...`,
+          `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
           "bbattle",
         );
         render();
@@ -4158,8 +4157,9 @@
                 void e2.offsetWidth;
                 e2.classList.add("hit");
               }
-              const who = uTag(u),
-                whom = uTag(t);
+              const sameName = u.name === t.name;
+              const who = uTag(u, sameName),
+                whom = uTag(t, sameName);
               log(
                 ev.isCrit
                   ? `${who} → ${whom} &nbsp;${dmgTag(ev.amt, true)}`
@@ -4180,8 +4180,9 @@
                 const e3 = gEl(t);
                 if (e3) e3.classList.add("dead");
               }, 200);
+              const sameNameK = u.name === t.name;
               log(
-                `${uTag(u)} <span class="lkill">abateu</span> ${uTag(t)} &nbsp;<span class="ldmg">−${ev.amt}</span> 💀`,
+                `${uTag(u, sameNameK)} <span class="lkill">abateu</span> ${uTag(t, sameNameK)} &nbsp;<span class="ldmg">−${ev.amt}</span> 💀`,
                 "lkill",
                 true,
               );
@@ -4206,11 +4207,11 @@
         if (w === "p") {
           G.duelScore.p++;
           G.lastBattleResult = "win";
-          log(`🏆 Batalha ${G.battleNum} vencida!`, "lr");
+          log(`🏆 Battle ${G.battleNum} won!`, "lr");
         } else {
           G.duelScore.e++;
           G.lastBattleResult = "loss";
-          log(`💔 Batalha ${G.battleNum} perdida!`, "lk");
+          log(`💔 Battle ${G.battleNum} lost!`, "lk");
         }
 
         const over =
@@ -4237,22 +4238,22 @@
             );
           }
           log(
-            `${pw ? "🏆" : "💔"} Duelo ${G.duelNum} encerrado! Você ${G.duelScore.p} × ${G.duelScore.e}`,
+            `${pw ? "🏆" : "💔"} Duel ${G.duelNum} over! You ${G.duelScore.p} × ${G.duelScore.e}`,
             "lr",
           );
           setTimeout(() => showDuelResult(pw), 500);
           nb.className = "btn gnbtn";
-          nb.textContent = "🌟 Próximo Duelo";
+          nb.textContent = "🌟 Next Duel";
           nb.onclick = nextDuel;
         } else {
           const inc = betweenIncome();
           const sc = `${G.duelScore.p}–${G.duelScore.e}`;
           setBanner(
-            `⚔️ Batalha ${G.battleNum}/${G.format}: ${sc}. ${w === "p" ? "Vitória!" : "Derrota!"}`,
+            `⚔️ Battle ${G.battleNum}/${G.format}: ${sc}. ${w === "p" ? "Victory!" : "Defeat!"}`,
             w === "p" ? "bwin" : "blose",
           );
           nb.className = "btn nbtn";
-          nb.textContent = `▶ Batalha ${G.battleNum + 1} (+${inc}💰)`;
+          nb.textContent = `▶ Battle ${G.battleNum + 1} (+${inc}💰)`;
           nb.onclick = nextBattle;
         }
         document.getElementById("ctrl").appendChild(nb);
@@ -4397,7 +4398,7 @@
         render();
         updateHdr();
         log(
-          `🔄 Batalha ${G.battleNum}/${G.format} | Placar: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | Adversário IA evoluiu!`,
+          `🔄 Battle ${G.battleNum}/${G.format} | Score: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | AI opponent upgraded!`,
           "lr",
         );
       }
@@ -4440,7 +4441,7 @@
         render();
         updateHdr();
         log(
-          `🌟 Duelo ${G.duelNum}! Novo adversário IA com 7💰. Analise e monte!`,
+          `🌟 Duel ${G.duelNum}! New AI opponent with 7💰. Analyze and build!`,
           "lr",
         );
       }
@@ -4457,12 +4458,14 @@
         l.appendChild(d);
         l.scrollTop = l.scrollHeight;
       }
-      function uTag(u) {
-        return `<span class="${u.side === "p" ? "lside-p" : "lside-e"}">${u.ico || ""} ${u.name}</span>`;
+      function uTag(u, showSide = false) {
+        const side = u.side === "p" ? "lside-p" : "lside-e";
+        const prefix = showSide ? `<span style="opacity:.65;font-size:.8em">[${u.side === "p" ? "Yours" : "Enemy"}]</span> ` : "";
+        return `<span class="${side}">${prefix}${u.ico || ""} ${u.name}</span>`;
       }
       function dmgTag(amt, isCrit) {
         return isCrit
-          ? `<span class="lcrit">💥 ${amt} CRÍTICO</span>`
+          ? `<span class="lcrit">💥 ${amt} CRIT</span>`
           : `<span class="ldmg">${amt}</span>`;
       }
       function openHowTo() {
@@ -4506,7 +4509,7 @@
           de.appendChild(ed);
         }
         document.getElementById("btag").textContent =
-          `Batalha ${G.battleNum} / ${G.format}`;
+          `Battle ${G.battleNum} / ${G.format}`;
       }
 
       // ═══════════════════════════════════════════════════
@@ -5059,7 +5062,7 @@
               dotsHtml += `<div class="bprog-dot ${d < (u.stack || 1) ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack || 1}/3${nextLbl}</span></div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="venda = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Vender +${SELL[u.lv]}💰</div>`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="sell = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Sell +${SELL[u.lv]}💰</div>`;
 
             if (active) {
               card.addEventListener("click", () => {
@@ -5153,10 +5156,10 @@
             mx = maxUnits();
           const selUnit = G.bsel ? G.bench.find((u) => u.cid === G.bsel) : null;
           const hint = selUnit
-            ? ` — ${selUnit.name} ${LS[selUnit.lv]} selecionado · clique ou arraste para o campo`
+            ? ` — ${selUnit.name} ${LS[selUnit.lv]} selected · click or drag to field`
             : " — Drag or select a card from Barracks";
           setBanner(
-            `🛡️ Battle ${G.battleNum}/${G.format} | ${n}/${mx} no campo${hint}`,
+            `🛡️ Battle ${G.battleNum}/${G.format} | ${n}/${mx} on field${hint}`,
             "bshop",
           );
         }
