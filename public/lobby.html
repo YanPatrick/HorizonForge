@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon Forge — Lobby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      min-height: 100vh;
+      background: #050210;
+      font-family: 'Exo 2', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    #stars-cv { position: fixed; inset: 0; z-index: 0; }
+
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(110px);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .bg-orb.a { width:700px; height:700px; top:-250px; left:-250px; background:rgba(70,22,170,.13); animation:oa 15s ease-in-out infinite alternate; }
+    .bg-orb.b { width:600px; height:600px; bottom:-200px; right:-220px; background:rgba(22,50,190,.10); animation:ob 12s ease-in-out infinite alternate; }
+    @keyframes oa { to { transform:translate(30px,22px); } }
+    @keyframes ob { to { transform:translate(-26px,18px); } }
+
+    /* ══════════════════════════════
+       TOP NAV
+    ══════════════════════════════ */
+    .topnav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 58px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 24px;
+      background: rgba(6,3,20,.82);
+      border-bottom: 1px solid rgba(180,130,255,.14);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .nav-logo-ico { font-size: 22px; filter: drop-shadow(0 0 10px rgba(255,180,30,.7)); }
+    .nav-logo-name {
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2.5px;
+      background: linear-gradient(135deg, #ffd700, #ffb020, #ffe066);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .nav-center {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: rgba(190,170,240,.55);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .15s;
+      border: none;
+      background: none;
+      font-family: 'Exo 2', sans-serif;
+    }
+    .nav-link:hover {
+      background: rgba(180,140,255,.1);
+      color: rgba(215,200,255,.85);
+    }
+    .nav-link .nl-ico { font-size: 14px; }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .hive-bal {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      background: rgba(255,150,30,.09);
+      border: 1px solid rgba(255,150,30,.22);
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: rgba(255,185,60,.9);
+    }
+    .hive-bal-ico { font-size: 13px; }
+    .nav-username {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: rgba(190,175,240,.75);
+    }
+    .nav-username span { color: rgba(190,175,240,.45); }
+    .btn-exit {
+      padding: 6px 16px;
+      background: rgba(200,40,40,.15);
+      border: 1.5px solid rgba(220,60,60,.35);
+      border-radius: 8px;
+      color: rgba(255,100,100,.88);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: .3px;
+    }
+    .btn-exit:hover {
+      background: rgba(220,50,50,.28);
+      border-color: rgba(255,80,80,.55);
+      color: #ff8888;
+    }
+
+    /* ══════════════════════════════
+       LOBBY MAIN
+    ══════════════════════════════ */
+    .lobby-wrap {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      padding: 80px 24px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .lobby-title {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: rgba(190,160,255,.35);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .banners-grid {
+      display: grid;
+      grid-template-columns: 1fr 56px 1fr;
+      gap: 0;
+      width: 100%;
+      max-width: 960px;
+      align-items: start;
+    }
+
+    .vs-col {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 160px;
+    }
+    .vs-badge {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: rgba(210,180,255,.28);
+      text-shadow: 0 0 20px rgba(180,100,255,.5);
+      letter-spacing: 2px;
+    }
+
+    /* ══════════════════════════════
+       BANNER
+    ══════════════════════════════ */
+    .banner {
+      position: relative;
+      border-radius: 20px;
+      border: 1.5px solid rgba(120,80,255,.25);
+      padding: 32px 28px 28px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .banner::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .banner:hover { box-shadow: 0 16px 60px rgba(0,0,0,.5); }
+
+    /* AI banner theme */
+    .banner-ai {
+      background: linear-gradient(160deg, rgba(18,10,48,.96), rgba(12,7,36,.95), rgba(8,4,24,.98));
+      border-color: rgba(110,70,255,.28);
+    }
+    .banner-ai::before { background: linear-gradient(90deg, transparent, rgba(120,80,255,.7), transparent); }
+    .banner-ai:hover   { border-color: rgba(140,90,255,.5); box-shadow: 0 16px 60px rgba(0,0,0,.5), 0 0 40px rgba(100,60,220,.12); }
+
+    /* PvP banner theme */
+    .banner-pvp {
+      background: linear-gradient(160deg, rgba(36,18,6,.96), rgba(28,14,4,.95), rgba(18,8,2,.98));
+      border-color: rgba(200,130,28,.25);
+    }
+    .banner-pvp::before { background: linear-gradient(90deg, transparent, rgba(220,150,30,.65), transparent); }
+    .banner-pvp:hover   { border-color: rgba(230,155,40,.45); box-shadow: 0 16px 60px rgba(0,0,0,.5), 0 0 40px rgba(200,120,20,.1); }
+
+    /* ── Banner sphere art ── */
+    .banner-sphere {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sph-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+
+    /* AI sphere rings — purple/blue */
+    .banner-ai .sph-ring.r1 {
+      width: 150px; height: 150px;
+      margin: -75px 0 0 -75px;
+      border-top-color:    rgba(120,80,255,.65);
+      border-right-color:  rgba(120,80,255,.2);
+      border-bottom-color: rgba(80,140,255,.5);
+      border-left-color:   transparent;
+      animation: spin-cw 9s linear infinite;
+    }
+    .banner-ai .sph-ring.r2 {
+      width: 112px; height: 112px;
+      margin: -56px 0 0 -56px;
+      border: 2px solid transparent;
+      border-top-color:   transparent;
+      border-right-color: rgba(80,155,255,.75);
+      border-bottom-color:transparent;
+      border-left-color:  rgba(80,155,255,.35);
+      animation: spin-ccw 5.5s linear infinite;
+    }
+    .banner-ai .sph-ring.r3 {
+      width: 74px; height: 74px;
+      margin: -37px 0 0 -37px;
+      border: 1.5px solid transparent;
+      border-top-color:    rgba(180,130,255,.85);
+      border-right-color:  rgba(180,130,255,.2);
+      border-bottom-color: rgba(180,130,255,.5);
+      border-left-color:   rgba(180,130,255,.2);
+      animation: spin-cw 3s linear infinite;
+    }
+    .banner-ai .sph-core {
+      position: relative;
+      z-index: 1;
+      font-size: 34px;
+      filter: drop-shadow(0 0 22px rgba(130,90,255,.9));
+      animation: ico-float 5s ease-in-out infinite;
+    }
+
+    /* PvP sphere rings — gold/orange */
+    .banner-pvp .sph-ring.r1 {
+      width: 150px; height: 150px;
+      margin: -75px 0 0 -75px;
+      border-top-color:    rgba(220,150,30,.65);
+      border-right-color:  rgba(220,150,30,.2);
+      border-bottom-color: rgba(255,180,50,.5);
+      border-left-color:   transparent;
+      animation: spin-cw 9s linear infinite;
+    }
+    .banner-pvp .sph-ring.r2 {
+      width: 112px; height: 112px;
+      margin: -56px 0 0 -56px;
+      border: 2px solid transparent;
+      border-top-color:   transparent;
+      border-right-color: rgba(255,100,50,.7);
+      border-bottom-color:transparent;
+      border-left-color:  rgba(255,100,50,.3);
+      animation: spin-ccw 5.5s linear infinite;
+    }
+    .banner-pvp .sph-ring.r3 {
+      width: 74px; height: 74px;
+      margin: -37px 0 0 -37px;
+      border: 1.5px solid transparent;
+      border-top-color:    rgba(255,210,60,.9);
+      border-right-color:  rgba(255,210,60,.2);
+      border-bottom-color: rgba(255,210,60,.5);
+      border-left-color:   rgba(255,210,60,.2);
+      animation: spin-cw 3s linear infinite;
+    }
+    .banner-pvp .sph-core {
+      position: relative;
+      z-index: 1;
+      font-size: 34px;
+      filter: drop-shadow(0 0 22px rgba(255,180,40,.9));
+      animation: ico-float 5s ease-in-out infinite;
+    }
+
+    @keyframes spin-cw  { to { transform: rotate(360deg); } }
+    @keyframes spin-ccw { to { transform: rotate(-360deg); } }
+    @keyframes ico-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+
+    /* ── Banner text ── */
+    .banner-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      align-self: flex-start;
+    }
+    .banner-ai .banner-type-badge {
+      background: rgba(110,70,255,.18);
+      border: 1px solid rgba(130,90,255,.35);
+      color: rgba(190,160,255,.85);
+    }
+    .banner-pvp .banner-type-badge {
+      background: rgba(200,130,28,.15);
+      border: 1px solid rgba(220,150,30,.32);
+      color: rgba(255,200,80,.85);
+    }
+
+    .banner-title {
+      font-family: 'Cinzel', serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+    .banner-ai  .banner-title { color: rgba(210,195,255,.95); }
+    .banner-pvp .banner-title { color: rgba(255,215,100,.95); }
+
+    .banner-desc {
+      font-size: 12px;
+      color: rgba(165,148,210,.6);
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+
+    /* ── Config section ── */
+    .cfg-divider {
+      height: 1px;
+      margin-bottom: 18px;
+    }
+    .banner-ai  .cfg-divider { background: linear-gradient(90deg, transparent, rgba(110,70,255,.35), transparent); }
+    .banner-pvp .cfg-divider { background: linear-gradient(90deg, transparent, rgba(200,130,28,.32), transparent); }
+
+    .cfg-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .cfg-lbl {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      font-weight: 700;
+      width: 60px;
+      flex-shrink: 0;
+    }
+    .banner-ai  .cfg-lbl { color: rgba(150,115,255,.6); }
+    .banner-pvp .cfg-lbl { color: rgba(210,150,40,.6); }
+
+    .pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .pill {
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      border: 1.5px solid;
+    }
+    .banner-ai .pill {
+      background: rgba(255,255,255,.04);
+      border-color: rgba(110,75,255,.28);
+      color: rgba(170,148,225,.58);
+    }
+    .banner-ai .pill:hover {
+      border-color: rgba(150,105,255,.5);
+      color: rgba(200,180,255,.82);
+    }
+    .banner-ai .pill.active {
+      background: rgba(110,70,255,.22);
+      border-color: rgba(165,115,255,.72);
+      color: rgba(225,210,255,.96);
+      box-shadow: 0 0 12px rgba(110,70,255,.3);
+    }
+    .banner-pvp .pill {
+      background: rgba(255,255,255,.03);
+      border-color: rgba(200,130,28,.26);
+      color: rgba(210,170,80,.55);
+    }
+    .banner-pvp .pill:hover:not(:disabled) {
+      border-color: rgba(230,155,38,.48);
+      color: rgba(240,195,90,.82);
+    }
+    .banner-pvp .pill.active {
+      background: rgba(200,130,28,.2);
+      border-color: rgba(235,165,40,.68);
+      color: rgba(255,220,100,.96);
+      box-shadow: 0 0 12px rgba(200,130,28,.28);
+    }
+    .pill:disabled { opacity:.42; cursor:not-allowed; }
+
+    /* ── Action buttons ── */
+    .btn-action {
+      width: 100%;
+      margin-top: auto;
+      padding: 15px;
+      border-radius: 13px;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.8px;
+      cursor: pointer;
+      transition: all .18s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-action::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.09), transparent);
+      transform: translateX(-100%);
+      animation: btn-shim 3.5s ease-in-out infinite;
+    }
+    @keyframes btn-shim { 0%{transform:translateX(-100%)} 50%,100%{transform:translateX(150%)} }
+
+    .btn-start {
+      background: linear-gradient(135deg, rgba(110,65,230,.85), rgba(75,40,195,.85));
+      border: 1.5px solid rgba(145,100,255,.5);
+      color: #fff;
+      margin-top: 22px;
+    }
+    .btn-start:hover {
+      background: linear-gradient(135deg, rgba(130,78,248,.92), rgba(90,52,220,.92));
+      box-shadow: 0 8px 32px rgba(105,60,220,.42);
+      transform: translateY(-2px);
+    }
+
+    .btn-find {
+      background: linear-gradient(135deg, rgba(195,120,18,.8), rgba(155,88,12,.8));
+      border: 1.5px solid rgba(225,150,28,.45);
+      color: #fff;
+      margin-top: 22px;
+    }
+    .btn-find:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(220,140,22,.88), rgba(178,105,15,.88));
+      box-shadow: 0 8px 32px rgba(200,120,20,.38);
+      transform: translateY(-2px);
+    }
+    .btn-find:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-soon-badge {
+      position: absolute;
+      top: -10px;
+      right: 14px;
+      background: rgba(255,140,30,.92);
+      color: #fff;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ══════════════════════════════
+       MATCH SEARCH OVERLAY
+    ══════════════════════════════ */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(4,2,16,.84);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-overlay.open { display: flex; }
+
+    .search-panel {
+      background: linear-gradient(160deg, rgba(16,9,42,.96), rgba(22,12,52,.93));
+      border: 1.5px solid rgba(180,130,255,.3);
+      border-radius: 22px;
+      padding: 44px 40px 38px;
+      width: 360px;
+      text-align: center;
+      animation: panel-in .3s cubic-bezier(.22,.68,0,1.15) both;
+      position: relative;
+    }
+    .search-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(200,140,255,.7), rgba(255,200,60,.5), transparent);
+      border-radius: 22px 22px 0 0;
+    }
+    @keyframes panel-in { from{opacity:0;transform:scale(.88) translateY(14px)} to{opacity:1;transform:none} }
+
+    /* Arcane rings */
+    .arcane-rings {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 28px;
+    }
+    .arc-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .arc-ring.a1 {
+      width: 160px; height: 160px;
+      margin: -80px 0 0 -80px;
+      border-top-color:    rgba(155,90,255,.7);
+      border-right-color:  rgba(155,90,255,.15);
+      border-bottom-color: rgba(90,160,255,.5);
+      border-left-color:   rgba(155,90,255,.15);
+      animation: spin-cw 3s linear infinite;
+    }
+    .arc-ring.a2 {
+      width: 118px; height: 118px;
+      margin: -59px 0 0 -59px;
+      border-top-color:   transparent;
+      border-right-color: rgba(80,170,255,.75);
+      border-bottom-color:transparent;
+      border-left-color:  rgba(80,170,255,.35);
+      animation: spin-ccw 2.2s linear infinite;
+    }
+    .arc-ring.a3 {
+      width: 78px; height: 78px;
+      margin: -39px 0 0 -39px;
+      border-top-color:    rgba(255,210,60,.9);
+      border-right-color:  rgba(255,210,60,.2);
+      border-bottom-color: rgba(255,210,60,.55);
+      border-left-color:   rgba(255,210,60,.2);
+      animation: spin-cw 1.5s linear infinite;
+    }
+    .arc-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 42px; height: 42px;
+      margin: -21px 0 0 -21px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(160,100,255,.3), rgba(100,60,200,.15));
+      box-shadow: 0 0 22px rgba(160,100,255,.5), inset 0 0 14px rgba(160,100,255,.25);
+      animation: pulse-c 2s ease-in-out infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    @keyframes pulse-c { 0%,100%{box-shadow:0 0 22px rgba(160,100,255,.5),inset 0 0 14px rgba(160,100,255,.25)} 50%{box-shadow:0 0 36px rgba(160,100,255,.8),inset 0 0 22px rgba(160,100,255,.4)} }
+
+    .search-title {
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: rgba(220,205,255,.92);
+      margin-bottom: 8px;
+    }
+    .search-sub {
+      font-size: 11px;
+      color: rgba(160,140,210,.55);
+      margin-bottom: 6px;
+    }
+    .search-config-tag {
+      display: inline-block;
+      padding: 4px 12px;
+      background: rgba(110,70,255,.15);
+      border: 1px solid rgba(130,90,255,.28);
+      border-radius: 999px;
+      font-size: 11px;
+      color: rgba(190,165,255,.75);
+      margin-bottom: 24px;
+    }
+    .search-dots span {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(155,110,255,.7);
+      margin: 0 3px;
+      animation: dot-pulse 1.4s ease-in-out infinite;
+    }
+    .search-dots span:nth-child(2) { animation-delay: .2s; }
+    .search-dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dot-pulse { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1.1);opacity:1} }
+
+    .btn-cancel {
+      margin-top: 28px;
+      padding: 9px 28px;
+      background: rgba(255,255,255,.04);
+      border: 1.5px solid rgba(150,100,220,.25);
+      border-radius: 10px;
+      color: rgba(175,155,220,.6);
+      font-family: 'Exo 2', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-cancel:hover {
+      background: rgba(200,80,80,.12);
+      border-color: rgba(220,80,80,.35);
+      color: rgba(255,130,130,.8);
+    }
+
+    /* ── toast ── */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(18,10,42,.95);
+      border: 1.5px solid rgba(180,130,255,.35);
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-size: 13px;
+      color: rgba(210,190,255,.9);
+      z-index: 300;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* responsive */
+    @media (max-width: 700px) {
+      .banners-grid { grid-template-columns: 1fr; }
+      .vs-col { padding-top: 0; }
+      .vs-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="stars-cv"></canvas>
+<div class="bg-orb a"></div>
+<div class="bg-orb b"></div>
+
+<!-- ── TOP NAV ─────────────────────── -->
+<nav class="topnav">
+  <a class="nav-logo" href="/lobby.html">
+    <span class="nav-logo-ico">⚔️</span>
+    <span class="nav-logo-name">HORIZON FORGE</span>
+  </a>
+
+  <div class="nav-center">
+    <button class="nav-link" onclick="toast('Shop coming soon!')"><span class="nl-ico">🛒</span> Shop</button>
+    <button class="nav-link" onclick="toast('Deck Editor coming soon!')"><span class="nl-ico">✏️</span> Edit</button>
+    <button class="nav-link" onclick="toast('Wallet coming soon!')"><span class="nl-ico">💰</span> Wallet</button>
+    <button class="nav-link" onclick="toast('Settings coming soon!')"><span class="nl-ico">⚙️</span> Settings</button>
+  </div>
+
+  <div class="nav-right">
+    <div class="hive-bal" id="hive-bal">
+      <span class="hive-bal-ico">⚡</span>
+      <span id="hive-bal-val">— HIVE</span>
+    </div>
+    <span class="nav-username"><span>@</span><span id="nav-user">—</span></span>
+    <button class="btn-exit" onclick="doLogout()">Exit</button>
+  </div>
+</nav>
+
+<!-- ── LOBBY ──────────────────────── -->
+<div class="lobby-wrap">
+  <p class="lobby-title">Choose your Battle Mode</p>
+
+  <div class="banners-grid">
+
+    <!-- ── AI BANNER ── -->
+    <section class="banner banner-ai">
+      <div class="banner-sphere">
+        <div class="sph-ring r1"></div>
+        <div class="sph-ring r2"></div>
+        <div class="sph-ring r3"></div>
+        <span class="sph-core">🤖</span>
+      </div>
+
+      <span class="banner-type-badge">⚔️ Solo</span>
+      <h2 class="banner-title">BATTLE VS AI</h2>
+      <p class="banner-desc">Test your strategies against our intelligent bot. No bets, no risk — pure tactics. Perfect for learning the mechanics.</p>
+
+      <div class="cfg-divider"></div>
+
+      <div class="cfg-row">
+        <span class="cfg-lbl">Format</span>
+        <div class="pills" id="ai-fmt-pills">
+          <button class="pill" data-fmt="3">BO3</button>
+          <button class="pill active" data-fmt="5">BO5</button>
+          <button class="pill" data-fmt="10">BO10</button>
+        </div>
+      </div>
+
+      <button class="btn-action btn-start" id="btn-ai-battle">▶ START BATTLE</button>
+    </section>
+
+    <!-- ── VS DIVIDER ── -->
+    <div class="vs-col">
+      <span class="vs-badge">VS</span>
+    </div>
+
+    <!-- ── PvP BANNER ── -->
+    <section class="banner banner-pvp">
+      <div class="banner-sphere">
+        <div class="sph-ring r1"></div>
+        <div class="sph-ring r2"></div>
+        <div class="sph-ring r3"></div>
+        <span class="sph-core">⚔️</span>
+      </div>
+
+      <span class="banner-type-badge">🏆 PvP Arena</span>
+      <h2 class="banner-title">CHALLENGE PLAYERS</h2>
+      <p class="banner-desc">Bet HIVE against real players. The winner takes most of the pot. Sharpen your deck and enter the arena.</p>
+
+      <div class="cfg-divider"></div>
+
+      <div class="cfg-row">
+        <span class="cfg-lbl">Bet</span>
+        <div class="pills" id="pvp-bet-pills">
+          <button class="pill" data-bet="1" disabled>1 HIVE</button>
+          <button class="pill active" data-bet="5" disabled>5 HIVE</button>
+          <button class="pill" data-bet="10" disabled>10 HIVE</button>
+        </div>
+      </div>
+
+      <div class="cfg-row">
+        <span class="cfg-lbl">Format</span>
+        <div class="pills" id="pvp-fmt-pills">
+          <button class="pill" data-fmt="3" disabled>BO3</button>
+          <button class="pill active" data-fmt="5" disabled>BO5</button>
+          <button class="pill" data-fmt="10" disabled>BO10</button>
+        </div>
+      </div>
+
+      <div class="cfg-row">
+        <span class="cfg-lbl">Payout</span>
+        <div class="pills" id="pvp-pay-pills">
+          <button class="pill active" data-pay="liquid" disabled>💧 Liquid (90%)</button>
+          <button class="pill" data-pay="hp" disabled>⚡ HIVE Power (95%)</button>
+        </div>
+      </div>
+
+      <button class="btn-action btn-find" id="btn-pvp-find" disabled>
+        <span class="btn-soon-badge">Coming Soon</span>
+        🔍 FIND MATCH
+      </button>
+    </section>
+
+  </div>
+</div>
+
+<!-- ── MATCH SEARCH OVERLAY ────── -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-panel">
+    <div class="arcane-rings">
+      <div class="arc-ring a1"></div>
+      <div class="arc-ring a2"></div>
+      <div class="arc-ring a3"></div>
+      <div class="arc-center">⚔️</div>
+    </div>
+    <h2 class="search-title">Searching for Opponent</h2>
+    <p class="search-sub">Matchmaking server connecting...</p>
+    <span class="search-config-tag" id="search-config-tag">5 HIVE · BO5 · Liquid</span>
+    <div class="search-dots">
+      <span></span><span></span><span></span>
+    </div>
+    <button class="btn-cancel" onclick="cancelSearch()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── TOAST ────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  /* ── Stars ───────────────────── */
+  const cv = document.getElementById('stars-cv');
+  const cx = cv.getContext('2d');
+  let stars = [];
+  function rsz() { cv.width = innerWidth; cv.height = innerHeight; }
+  function mkStars() {
+    stars = Array.from({ length: 220 }, () => ({
+      x: Math.random() * cv.width,
+      y: Math.random() * cv.height,
+      r: Math.random() * 1.3 + 0.2,
+      a: Math.random(),
+      da: (Math.random() - 0.5) * 0.006,
+    }));
+  }
+  function draw() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+    for (const s of stars) {
+      s.a = Math.max(0, Math.min(1, s.a + s.da));
+      if (s.a <= 0 || s.a >= 1) s.da = -s.da;
+      cx.beginPath();
+      cx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      cx.fillStyle = `rgba(255,255,255,${s.a * 0.68})`;
+      cx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize', () => { rsz(); mkStars(); });
+  rsz(); mkStars(); draw();
+
+  /* ── Auth guard ──────────────── */
+  function getSession() { try { return JSON.parse(sessionStorage.getItem('hf_session')); } catch { return null; } }
+  const session = getSession();
+  if (!session) { window.location.replace('/'); return; }
+
+  /* ── Show user info ──────────── */
+  document.getElementById('nav-user').textContent = session.username;
+
+  if (session.mode === 'hive') {
+    fetchBalance(session.username);
+  } else {
+    document.getElementById('hive-bal').style.display = 'none';
+  }
+
+  async function fetchBalance(user) {
+    try {
+      const r = await fetch('https://api.hive.blog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', method: 'condenser_api.get_accounts',
+          params: [[user]], id: 1,
+        }),
+      });
+      const d = await r.json();
+      if (d.result && d.result[0]) {
+        document.getElementById('hive-bal-val').textContent = d.result[0].balance;
+      }
+    } catch { /* silent */ }
+  }
+
+  /* ── Logout ──────────────────── */
+  window.doLogout = function () {
+    sessionStorage.removeItem('hf_session');
+    sessionStorage.removeItem('hf_battle_cfg');
+    window.location.replace('/');
+  };
+
+  /* ── Toast ───────────────────── */
+  let toastTimer;
+  window.toast = function (msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  };
+
+  /* ── AI config state ─────────── */
+  const aiCfg = { format: 5 };
+
+  function bindPills(containerId, key, obj) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.pill:not(:disabled)').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
+        btn.classList.add('active');
+        obj[key] = Number(btn.dataset[key]) || btn.dataset[key];
+      });
+    });
+  }
+
+  bindPills('ai-fmt-pills', 'fmt', { set fmt(v) { aiCfg.format = v; } });
+
+  // Re-bind properly with direct object
+  document.getElementById('ai-fmt-pills').querySelectorAll('.pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.getElementById('ai-fmt-pills').querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
+      btn.classList.add('active');
+      aiCfg.format = Number(btn.dataset.fmt);
+    });
+  });
+
+  /* ── Start AI Battle ─────────── */
+  document.getElementById('btn-ai-battle').addEventListener('click', () => {
+    sessionStorage.setItem('hf_battle_cfg', JSON.stringify({
+      mode: 'ai',
+      format: aiCfg.format,
+    }));
+    window.location.href = '/battle.html';
+  });
+
+  /* ── PvP (coming soon) ───────── */
+  document.getElementById('btn-pvp-find').addEventListener('click', () => {
+    toast('PvP matchmaking coming soon! Stay tuned. 🏆');
+  });
+
+  /* ── Search overlay (future use) */
+  window.cancelSearch = function () {
+    document.getElementById('search-overlay').classList.remove('open');
+  };
+})();
+</script>
+</body>
+</html>
