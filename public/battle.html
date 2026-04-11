@@ -505,12 +505,23 @@
         box-shadow: 0 0 12px rgba(180, 150, 255, 0.2);
       }
 
+      .hback-btn {
+        background: rgba(220, 60, 60, 0.12);
+        color: rgba(255, 110, 110, 0.85);
+        border-color: rgba(220, 60, 60, 0.3);
+      }
+      .hback-btn:hover {
+        background: rgba(220, 60, 60, 0.24);
+        box-shadow: 0 0 12px rgba(220, 60, 60, 0.2);
+        color: #ff8888;
+      }
+
       /* ── DUEL BAR ── */
       #duelbar {
+        position: relative;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: calc(10px * var(--s));
         width: 100%;
         padding: calc(2px * var(--s)) calc(14px * var(--s));
         background: rgba(255, 255, 255, 0.025);
@@ -518,6 +529,17 @@
         border-radius: var(--r);
         font-size: calc(10px * var(--s));
         flex-shrink: 0;
+      }
+
+      .duelbar-center {
+        display: flex;
+        align-items: center;
+        gap: calc(10px * var(--s));
+      }
+
+      #duelbar .battle-tag {
+        position: absolute;
+        right: calc(14px * var(--s));
       }
 
       .dscore {
@@ -2676,7 +2698,7 @@
         <div class="qm-icon">⚠️</div>
         <div class="qm-title">Quit Match?</div>
         <div class="qm-body">
-          You will lose all progress in this match and return to the main menu.
+          You will lose all progress in this match and return to the Lobby.
         </div>
         <div class="qm-btns">
           <button class="qm-btn qm-cancel" onclick="closeQuitModal()">
@@ -2696,8 +2718,8 @@
         <span class="htitle">⚔️ Horizon Forge</span>
         <div class="hstats">
           <span class="sb sr" id="h-duel">Duel 1</span>
-          <span class="sb sw" id="h-dw">🏆 0</span>
-          <span class="sb sl" id="h-dl">💔 0</span>
+          <span class="sb sw" id="h-dw">W 0</span>
+          <span class="sb sl" id="h-dl">L 0</span>
           <span class="sb sg" id="h-gold">💰 7</span>
           <span
             class="sb sfmt"
@@ -2707,17 +2729,20 @@
             >BO3</span
           >
           <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button>
+          <button class="htp-btn hback-btn" onclick="openQuitModal()" title="Back to Lobby">← Lobby</button>
         </div>
       </div>
 
       <!-- DUEL BAR -->
       <div id="duelbar">
-        <span class="dscore-label">You</span>
-        <div class="dscore" id="dots-p"></div>
-        <span class="duel-vs">⚔</span>
-        <div class="dscore" id="dots-e"></div>
-        <span class="dscore-label">Enemy</span>
         <span class="battle-tag" id="btag">Battle 1</span>
+        <div class="duelbar-center">
+          <span class="dscore-label">You</span>
+          <div class="dscore" id="dots-p"></div>
+          <span class="duel-vs">⚔</span>
+          <div class="dscore" id="dots-e"></div>
+          <span class="dscore-label">Enemy</span>
+        </div>
       </div>
 
       <!-- BANNER -->
@@ -5455,8 +5480,8 @@
 
       function updateHdr() {
         document.getElementById("h-duel").textContent = `Duel ${G.duelNum}`;
-        document.getElementById("h-dw").textContent = `🏆 ${G.duelsWon}`;
-        document.getElementById("h-dl").textContent = `💔 ${G.duelsLost}`;
+        document.getElementById("h-dw").textContent = `W ${G.duelsWon}`;
+        document.getElementById("h-dl").textContent = `L ${G.duelsLost}`;
         document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
       }
 
