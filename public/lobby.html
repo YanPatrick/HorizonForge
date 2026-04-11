@@ -101,45 +101,75 @@
     .nav-right {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       flex-shrink: 0;
     }
+
+    /* ── HIVE balance pill ── */
     .hive-bal {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 5px 13px;
-      background: rgba(255,150,30,.09);
-      border: 1px solid rgba(255,150,30,.22);
+      gap: 8px;
+      padding: 7px 18px;
+      background: rgba(20,14,4,.7);
+      border: 1.5px solid rgba(200,150,30,.45);
       border-radius: 999px;
-      font-size: 12.5px;
+      font-size: 13.5px;
       font-weight: 700;
-      color: rgba(255,185,60,.9);
+      color: rgba(255,195,60,.95);
+      box-shadow: 0 0 16px rgba(200,130,20,.12), inset 0 1px 0 rgba(255,200,60,.08);
     }
-    .hive-bal-ico { font-size: 13px; }
-    .nav-username {
-      font-size: 12.5px;
+    .hive-logo-svg {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 5px rgba(220,40,40,.5));
+    }
+
+    /* ── User badge ── */
+    .nav-user-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px 5px 6px;
+      background: rgba(12,8,32,.75);
+      border: 1.5px solid rgba(130,100,220,.35);
+      border-radius: 999px;
+      font-size: 13px;
       font-weight: 600;
-      color: rgba(190,175,240,.75);
+      color: rgba(200,185,245,.88);
+      box-shadow: 0 0 14px rgba(100,70,200,.1), inset 0 1px 0 rgba(180,150,255,.06);
     }
-    .nav-username span { color: rgba(190,175,240,.45); }
+    .nav-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid rgba(150,120,255,.4);
+      background: rgba(80,50,160,.3);
+      flex-shrink: 0;
+    }
+    .nav-user-badge .nav-at { color: rgba(160,140,220,.45); }
+
+    /* ── Exit button ── */
     .btn-exit {
-      padding: 6px 16px;
-      background: rgba(200,40,40,.15);
-      border: 1.5px solid rgba(220,60,60,.35);
-      border-radius: 8px;
-      color: rgba(255,100,100,.88);
+      padding: 9px 20px;
+      background: rgba(180,20,20,.22);
+      border: 1.5px solid rgba(220,50,50,.45);
+      border-radius: 10px;
+      color: rgba(255,100,100,.9);
       font-family: 'Exo 2', sans-serif;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       transition: all .15s;
       letter-spacing: .3px;
     }
     .btn-exit:hover {
-      background: rgba(220,50,50,.28);
-      border-color: rgba(255,80,80,.55);
+      background: rgba(220,40,40,.32);
+      border-color: rgba(255,70,70,.6);
       color: #ff8888;
+      box-shadow: 0 0 14px rgba(220,40,40,.2);
     }
 
     /* ══════════════════════════════
@@ -700,10 +730,15 @@
 
   <div class="nav-right">
     <div class="hive-bal" id="hive-bal">
-      <span class="hive-bal-ico">⚡</span>
+      <img class="hive-logo-svg" src="https://cryptologos.cc/logos/hive-blockchain-hive-logo.svg" alt="HIVE">
       <span id="hive-bal-val">— HIVE</span>
     </div>
-    <span class="nav-username"><span>@</span><span id="nav-user">—</span></span>
+
+    <div class="nav-user-badge" id="nav-user-badge">
+      <img class="nav-avatar" id="nav-avatar" src="" alt="avatar">
+      <span class="nav-at">@</span><span id="nav-user">—</span>
+    </div>
+
     <button class="btn-exit" onclick="doLogout()">Exit</button>
   </div>
 </nav>
@@ -858,9 +893,16 @@
   document.getElementById('nav-user').textContent = session.username;
 
   if (session.mode === 'hive') {
+    // Avatar from Hive images CDN
+    const avatarEl = document.getElementById('nav-avatar');
+    avatarEl.src = `https://images.hive.blog/u/${session.username}/avatar/small`;
+    avatarEl.onerror = () => { avatarEl.src = ''; avatarEl.style.display = 'none'; };
     fetchBalance(session.username);
   } else {
+    // Guest: hide balance, show simple avatar placeholder
     document.getElementById('hive-bal').style.display = 'none';
+    const avatarEl = document.getElementById('nav-avatar');
+    avatarEl.style.display = 'none';
   }
 
   async function fetchBalance(user) {
