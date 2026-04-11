@@ -2718,8 +2718,7 @@
         <span class="htitle">⚔️ Horizon Forge</span>
         <div class="hstats">
           <span class="sb sr" id="h-duel">Duel 1</span>
-          <span class="sb sw" id="h-dw">W 0</span>
-          <span class="sb sl" id="h-dl">L 0</span>
+
           <span class="sb sg" id="h-gold">💰 7</span>
           <span
             class="sb sfmt"
@@ -4760,15 +4759,14 @@
           de = document.getElementById("dots-e");
         dp.innerHTML = "";
         de.innerHTML = "";
-        const pp = G.duelScore.p,
-          ee = G.duelScore.e,
-          total = pp + ee;
+        const battles = G.duelStats.battles; // [{winner:"p"|"e"}, ...]
         for (let i = 0; i < G.format; i++) {
           const pd = document.createElement("div"),
             ed = document.createElement("div");
-          if (i < total) {
-            pd.className = `dot ${i < pp ? "dot-w" : "dot-l"}`;
-            ed.className = `dot ${i < ee ? "dot-w" : "dot-l"}`;
+          if (i < battles.length) {
+            const w = battles[i].winner;
+            pd.className = `dot ${w === "p" ? "dot-w" : "dot-l"}`;
+            ed.className = `dot ${w === "e" ? "dot-w" : "dot-l"}`;
           } else {
             pd.className = "dot dot-e";
             ed.className = "dot dot-e";
@@ -5480,8 +5478,6 @@
 
       function updateHdr() {
         document.getElementById("h-duel").textContent = `Duel ${G.duelNum}`;
-        document.getElementById("h-dw").textContent = `W ${G.duelsWon}`;
-        document.getElementById("h-dl").textContent = `L ${G.duelsLost}`;
         document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
       }
 
