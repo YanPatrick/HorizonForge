@@ -204,7 +204,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding-top: 160px;
+      padding-top: 120px;
     }
     .vs-badge {
       font-family: 'Cinzel', serif;
@@ -226,9 +226,8 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: 580px;
       cursor: pointer;
-      transition: border-color .3s, box-shadow .3s, transform .3s, opacity .3s, filter .3s;
+      transition: border-color .35s, box-shadow .35s, transform .35s;
     }
     .banner::before {
       content: '';
@@ -237,53 +236,36 @@
       height: 2px;
     }
 
-    /* banner-body always visible */
-    .banner-body {
+    /* ── Preview (always visible) ── */
+    .banner-preview {
       display: flex;
       flex-direction: column;
-      flex: 1;
     }
 
-    /* ── Inactive: dimmed and pushed back (more solid) ── */
-    .banner.inactive {
-      opacity: .65;
-      filter: brightness(.72) saturate(.6);
-      transform: scale(.97) translateY(4px);
+    /* ── Expand (slides in on hover) ── */
+    .banner-expand {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height .42s cubic-bezier(.4,0,.2,1), opacity .3s ease;
     }
-    /* Disable action button when banner is inactive */
-    .banner.inactive .btn-action {
-      pointer-events: none;
-      opacity: .45;
-    }
-    /* Hovering over inactive does NOT light it up */
-    .banner.inactive:hover {
-      opacity: .72;
-      filter: brightness(.78) saturate(.65);
-      cursor: pointer;
-    }
-
-    /* ── Active: bright, glowing, lifted ── */
-    .banner.active {
-      transform: translateY(-6px);
+    .banner:hover .banner-expand {
+      max-height: 340px;
       opacity: 1;
-      filter: none;
     }
-    .banner-ai.active  {
-      border-color: rgba(160,105,255,.75);
-      box-shadow: 0 0 52px rgba(120,75,255,.3), 0 0 18px rgba(120,75,255,.15), 0 20px 60px rgba(0,0,0,.55);
-    }
-    .banner-pvp.active {
-      border-color: rgba(240,165,40,.65);
-      box-shadow: 0 0 52px rgba(210,140,25,.28), 0 0 18px rgba(210,140,25,.14), 0 20px 60px rgba(0,0,0,.55);
-    }
-    /* Hovering over ACTIVE banner enhances its glow */
-    .banner-ai.active:hover  {
-      box-shadow: 0 0 70px rgba(130,80,255,.42), 0 0 26px rgba(130,80,255,.22), 0 22px 65px rgba(0,0,0,.6);
+
+    /* ── AI hover ── */
+    .banner-ai:hover {
       border-color: rgba(175,120,255,.9);
+      box-shadow: 0 0 70px rgba(130,80,255,.42), 0 0 26px rgba(130,80,255,.22), 0 24px 68px rgba(0,0,0,.65);
+      transform: translateY(-5px);
     }
-    .banner-pvp.active:hover {
-      box-shadow: 0 0 70px rgba(225,155,30,.38), 0 0 26px rgba(225,155,30,.2), 0 22px 65px rgba(0,0,0,.6);
+
+    /* ── PvP hover ── */
+    .banner-pvp:hover {
       border-color: rgba(255,180,50,.85);
+      box-shadow: 0 0 70px rgba(225,155,30,.38), 0 0 26px rgba(225,155,30,.2), 0 24px 68px rgba(0,0,0,.65);
+      transform: translateY(-5px);
     }
 
     /* AI banner theme */
@@ -512,7 +494,6 @@
     /* ── Action buttons ── */
     .btn-action {
       width: 100%;
-      margin-top: auto;
       padding: 15px;
       border-radius: 13px;
       font-family: 'Cinzel', serif;
@@ -795,7 +776,7 @@
   <div class="banners-grid">
 
     <!-- ── AI BANNER ── -->
-    <section class="banner banner-ai active">
+    <section class="banner banner-ai">
       <div class="banner-sphere">
         <div class="sph-ring r1"></div>
         <div class="sph-ring r2"></div>
@@ -803,11 +784,13 @@
         <span class="sph-core">🤖</span>
       </div>
 
-      <div class="banner-body">
+      <div class="banner-preview">
         <span class="banner-type-badge">⚔️ Solo</span>
         <h2 class="banner-title">BATTLE VS AI</h2>
         <p class="banner-desc">Test your strategies against our intelligent bot. No bets, no risk — pure tactics. Perfect for learning the mechanics.</p>
+      </div>
 
+      <div class="banner-expand">
         <div class="cfg-divider"></div>
 
         <div class="cfg-row">
@@ -829,7 +812,7 @@
     </div>
 
     <!-- ── PvP BANNER ── -->
-    <section class="banner banner-pvp inactive">
+    <section class="banner banner-pvp">
       <div class="banner-sphere">
         <div class="sph-ring r1"></div>
         <div class="sph-ring r2"></div>
@@ -837,11 +820,13 @@
         <span class="sph-core">⚔️</span>
       </div>
 
-      <div class="banner-body">
+      <div class="banner-preview">
         <span class="banner-type-badge">🏆 PvP Arena</span>
         <h2 class="banner-title">CHALLENGE PLAYERS</h2>
         <p class="banner-desc">Bet HIVE against real players. The winner takes most of the pot. Sharpen your deck and enter the arena.</p>
+      </div>
 
+      <div class="banner-expand">
         <div class="cfg-divider"></div>
 
         <div class="cfg-row">
@@ -991,21 +976,6 @@
   /* ── AI config state ─────────── */
   const aiCfg = { format: 5 };
 
-  function bindPills(containerId, key, obj) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.querySelectorAll('.pill:not(:disabled)').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        container.querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
-        btn.classList.add('active');
-        obj[key] = Number(btn.dataset[key]) || btn.dataset[key];
-      });
-    });
-  }
-
-  bindPills('ai-fmt-pills', 'fmt', { set fmt(v) { aiCfg.format = v; } });
-
-  // Re-bind properly with direct object
   document.getElementById('ai-fmt-pills').querySelectorAll('.pill').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.getElementById('ai-fmt-pills').querySelectorAll('.pill').forEach((p) => p.classList.remove('active'));
@@ -1033,18 +1003,6 @@
     document.getElementById('search-overlay').classList.remove('open');
   };
 
-  /* ── Banner active/inactive toggle ── */
-  const banners = document.querySelectorAll('.banner');
-  banners.forEach((b) => {
-    b.addEventListener('click', () => {
-      banners.forEach((x) => {
-        x.classList.remove('active');
-        x.classList.add('inactive');
-      });
-      b.classList.remove('inactive');
-      b.classList.add('active');
-    });
-  });
 })();
 </script>
 </body>
