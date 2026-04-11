@@ -3124,6 +3124,11 @@
           }
           CK = Object.keys(C);
           showStartScreen();
+          // Auto-start when navigated from lobby with a pre-set format
+          if (window._HF_BATTLE_CFG) {
+            startGame(window._HF_BATTLE_CFG.format);
+            window._HF_BATTLE_CFG = null;
+          }
         } catch (err) {
           console.error(err);
           showError(err.message);
@@ -5483,20 +5488,19 @@
 
       // ── Boot ──
       document.addEventListener("DOMContentLoaded", () => {
-        initGame();
-        // Auto-start when navigated from lobby
-        if (window._HF_BATTLE_CFG) {
-          startGame(window._HF_BATTLE_CFG.format);
-        }
+        initGame(); // async: auto-start happens inside after data loads
         // Show username in header if logged in
-        if (window._HF_SESSION) {
-          const hdrEl = document.getElementById("h-fmt");
-          if (hdrEl && window._HF_SESSION.mode !== "guest") {
-            const uSpan = document.createElement("span");
-            uSpan.style.cssText = "font-size:11px;color:rgba(180,160,240,.55);margin-left:10px;font-weight:500;";
-            uSpan.textContent = "@" + window._HF_SESSION.username;
-            hdrEl.parentElement.appendChild(uSpan);
-          }
+        if (window._HF_SESSION && window._HF_SESSION.mode !== "guest") {
+          // Wait for DOM + header to exist (initGame renders it)
+          setTimeout(() => {
+            const hdrEl = document.getElementById("h-fmt");
+            if (hdrEl) {
+              const uSpan = document.createElement("span");
+              uSpan.style.cssText = "font-size:11px;color:rgba(180,160,240,.55);margin-left:10px;font-weight:500;";
+              uSpan.textContent = "@" + window._HF_SESSION.username;
+              hdrEl.parentElement.appendChild(uSpan);
+            }
+          }, 200);
         }
       });
     </script>
