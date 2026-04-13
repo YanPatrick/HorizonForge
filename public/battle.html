@@ -3345,17 +3345,24 @@
 
       function _detectCombos() {
         const s = G.shop;
-        // Group indexes by cid
-        const byId = {};
-        s.forEach((u, i) => {
-          if (u) { if (!byId[u.cid]) byId[u.cid] = []; byId[u.cid].push(i); }
-        });
         const combos = [];
-        for (const [cid, idxs] of Object.entries(byId)) {
-          if (idxs.length >= 3)
-            combos.push({ type: 3, cids: [cid, cid, cid], idxs: idxs.slice(0, 3), cost: HF.value_gold_combo3 });
-          else if (idxs.length >= 2)
-            combos.push({ type: 2, cids: [cid, cid], idxs: idxs.slice(0, 2), cost: HF.value_gold_combo2 });
+        const used = new Set();
+        // Pass 1: adjacent triplets (combo 3)
+        for (let i = 0; i <= 2; i++) {
+          if (s[i] && s[i+1] && s[i+2] &&
+              s[i].cid === s[i+1].cid && s[i].cid === s[i+2].cid &&
+              !used.has(i) && !used.has(i+1) && !used.has(i+2)) {
+            combos.push({ type: 3, cids: [s[i].cid, s[i].cid, s[i].cid], idxs: [i, i+1, i+2], cost: HF.value_gold_combo3 });
+            used.add(i); used.add(i+1); used.add(i+2);
+          }
+        }
+        // Pass 2: adjacent pairs not already consumed by a triplet (combo 2)
+        for (let i = 0; i <= 3; i++) {
+          if (s[i] && s[i+1] && s[i].cid === s[i+1].cid &&
+              !used.has(i) && !used.has(i+1)) {
+            combos.push({ type: 2, cids: [s[i].cid, s[i].cid], idxs: [i, i+1], cost: HF.value_gold_combo2 });
+            used.add(i); used.add(i+1);
+          }
         }
         G.shopCombos = combos;
         G.shopCombo = combos.length > 0 ? combos[0] : null;
