@@ -50,12 +50,12 @@ app.get('/api/characters', async (_req, res) => {
         sk.description AS skill_desc,
         sk.skill_type,
         ls.level,
-        ROUND(cb.max_hp * ls.multiplier)::int                          AS max_hp,
-        ROUND((cb.atk * ls.multiplier)::numeric, 1)::float             AS atk,
+        FLOOR(cb.max_hp * ls.multiplier)::int                                    AS max_hp,
+        FLOOR(cb.atk * ls.multiplier)::int                                        AS atk,
         cb.atk_speed::float,
         cb.crit_chance::float,
         cb.crit_rate::float,
-        ROUND((cb.skill_power * ls.skill_power_multiplier)::numeric, 4)::float AS skill_power
+        TRUNC((cb.skill_power * ls.skill_power_multiplier)::numeric, 4)::float    AS skill_power
       FROM characters c
       JOIN characters_base cb ON cb.character_id = c.id
       JOIN skills          sk ON sk.character_id = c.id
