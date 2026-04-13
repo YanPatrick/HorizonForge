@@ -5374,7 +5374,6 @@
           el.onmouseenter =
             isCombo && canBuy
               ? () => {
-                  // Only lift cards belonging to the same combo
                   cardCombo.idxs.forEach((ci) => {
                     row
                       .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)
@@ -5385,14 +5384,12 @@
           el.onmouseleave =
             isCombo && canBuy
               ? (e) => {
-                  if (
-                    !e.relatedTarget ||
-                    !comboByIdx[
-                      G.shop.findIndex(
-                        (u) => u && u.id === e.relatedTarget?.dataset?.uid,
-                      )
-                    ]
-                  )
+                  // Check if moving into another card of the SAME combo
+                  const relUid = e.relatedTarget?.closest?.("[data-uid]")?.dataset?.uid;
+                  const stayingInCombo = relUid && cardCombo.idxs.some(
+                    (ci) => G.shop[ci]?.id === relUid,
+                  );
+                  if (!stayingInCombo)
                     cardCombo.idxs.forEach((ci) => {
                       row
                         .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)

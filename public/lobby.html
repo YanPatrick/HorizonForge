@@ -16,7 +16,7 @@
       background: #050210;
       font-family: 'Exo 2', sans-serif;
       color: #fff;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     /* ── Parallax stars ── */
@@ -87,10 +87,29 @@
       font-size: 16px;
       font-weight: 900;
       letter-spacing: 2.5px;
-      background: linear-gradient(135deg, #ffd700, #ffb020, #ffe066);
+      /* Animated flowing gradient — game palette: gold → purple → blue → gold */
+      background: linear-gradient(
+        90deg,
+        #ffd700,
+        #ffb020,
+        #ffe066,
+        #c88cff,
+        #7744ee,
+        #4488ff,
+        #ffe066,
+        #ffd700
+      );
+      background-size: 300% auto;
       -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: logo-flow 7s linear infinite;
+      -webkit-transform: translate3d(0,0,0);
+      -webkit-backface-visibility: hidden;
+    }
+    @keyframes logo-flow {
+      0%   { background-position: 0%   center; }
+      100% { background-position: 300% center; }
     }
 
     .nav-center {
@@ -208,11 +227,48 @@
 
     .lobby-title {
       font-family: 'Cinzel', serif;
-      font-size: 13px;
-      letter-spacing: 4px;
-      color: rgba(190,160,255,.35);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 6px;
       text-transform: uppercase;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
+      position: relative;
+      /* Animated gradient — same game palette */
+      background: linear-gradient(
+        90deg,
+        #ffd700,
+        #ffb020,
+        #ffe066,
+        #c88cff,
+        #7744ee,
+        #4488ff,
+        #ffe066,
+        #ffd700
+      );
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: logo-flow 7s linear infinite;
+      /* Subtle glow behind the text */
+      filter: drop-shadow(0 0 18px rgba(180,130,255,.35));
+    }
+    /* Decorative lines flanking the title */
+    .lobby-title::before,
+    .lobby-title::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(200,150,255,.45));
+    }
+    .lobby-title::before {
+      right: calc(100% + 14px);
+      transform: scaleX(-1);
+    }
+    .lobby-title::after {
+      left: calc(100% + 14px);
     }
 
     .banners-grid {
@@ -246,7 +302,7 @@
       position: relative;
       border-radius: 20px;
       border: 1.5px solid rgba(120,80,255,.25);
-      padding: 32px 28px 28px;
+      padding: 32px 28px 14px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -543,7 +599,7 @@
       background: linear-gradient(135deg, rgba(110,65,230,.85), rgba(75,40,195,.85));
       border: 1.5px solid rgba(145,100,255,.5);
       color: #fff;
-      margin-top: 22px;
+      margin-top: 10px;
     }
     .btn-start:hover {
       background: linear-gradient(135deg, rgba(130,78,248,.92), rgba(90,52,220,.92));
@@ -555,7 +611,7 @@
       background: linear-gradient(135deg, rgba(195,120,18,.8), rgba(155,88,12,.8));
       border: 1.5px solid rgba(225,150,28,.45);
       color: #fff;
-      margin-top: 22px;
+      margin-top: 10px;
     }
     .btn-find:hover:not(:disabled) {
       background: linear-gradient(135deg, rgba(220,140,22,.88), rgba(178,105,15,.88));
