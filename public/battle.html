@@ -3248,7 +3248,7 @@
         const st = C[u.cid].levels[u.lv];
         u.maxHp = st.max_hp;
         u.hp = st.max_hp;
-        u.atk = Math.round(st.atk);
+        u.atk = Math.floor(st.atk);
         u.spd = st.atk_speed;
         u.critChance = st.crit_chance;
         u.critRate = st.crit_rate;
@@ -3891,7 +3891,7 @@
         function dealDmg(atk, tgt, d, isCrit = false) {
           let dmg = d;
           if (tgt.cid === "knight")
-            dmg = Math.round(dmg * (1 - tgt.skillPower));
+            dmg = Math.floor(dmg * (1 - tgt.skillPower));
           tgt.hp = Math.max(0, tgt.hp - dmg);
           if (tgt.hp <= 0) {
             tgt.alive = false;
@@ -3921,7 +3921,7 @@
             units
               .filter((a) => a.id !== u.id && adj.includes(a.slot))
               .forEach((a) => {
-                const b = Math.round(a.maxHp * u.skillPower);
+                const b = Math.floor(a.maxHp * u.skillPower);
                 a.maxHp += b;
                 a.hp += b;
               });
@@ -3945,7 +3945,7 @@
               const targets = foeSide.filter((f) => f.alive);
               if (!targets.length) return;
               const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
-              dealDmg(u, t, Math.round(u.atk * u.skillPower), false);
+              dealDmg(u, t, Math.floor(u.atk * u.skillPower), false);
               evs.push({
                 type: "ability",
                 uid: u.id,
@@ -4040,7 +4040,7 @@
             unit.hp < unit.maxHp * 0.6
           ) {
             unit.enraged = true;
-            unit.atk = Math.round(unit.atk * (1 + unit.skillPower));
+            unit.atk = Math.floor(unit.atk * (1 + unit.skillPower));
             evs.push({ type: "ability", uid: unit.id, abilName: "Fury", tick });
           }
 
@@ -4052,7 +4052,7 @@
               const target = [...al].sort(
                 (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
               )[0];
-              const h = Math.round(unit.atk * unit.skillPower);
+              const h = Math.floor(unit.atk * unit.skillPower);
               target.hp = Math.min(target.maxHp, target.hp + h);
               evs.push({
                 type: "heal",
@@ -4084,7 +4084,7 @@
 
               if (Math.random() < effCC) {
                 isCrit = true;
-                dmg = Math.round(dmg * effCR);
+                dmg = Math.floor(dmg * effCR);
               }
 
               dealDmg(unit, t, dmg, isCrit);
@@ -4104,7 +4104,7 @@
                 );
                 if (splash.length) {
                   splash.forEach((f) =>
-                    dealDmg(unit, f, Math.round(unit.atk * unit.skillPower)),
+                    dealDmg(unit, f, Math.floor(unit.atk * unit.skillPower)),
                   );
                   evs.push({
                     type: "ability",
@@ -4143,13 +4143,13 @@
                   dealDmg(
                     unit,
                     chain[0],
-                    Math.round(unit.atk * unit.skillPower),
+                    Math.floor(unit.atk * unit.skillPower),
                   );
                 if (chain.length > 1)
                   dealDmg(
                     unit,
                     chain[1],
-                    Math.round((unit.atk * unit.skillPower) / 2),
+                    Math.floor((unit.atk * unit.skillPower) / 2),
                   );
               }
             }
@@ -4294,7 +4294,7 @@
           adjacentSlots(s).forEach((as) => {
             const ally = G.board[as];
             if (ally && ally.cid !== "paladin") {
-              const bonus = Math.round(ally.maxHp * pal.skillPower);
+              const bonus = Math.floor(ally.maxHp * pal.skillPower);
               ally.maxHp += bonus;
               ally.hp += bonus;
             }
@@ -4865,7 +4865,7 @@
               adjacentSlots(s).forEach((as) => {
                 const ally = board[as];
                 if (ally && ally.cid !== "paladin") {
-                  const bonus = Math.round(ally.maxHp * pal.skillPower);
+                  const bonus = Math.floor(ally.maxHp * pal.skillPower);
                   auraBonus[as] = (auraBonus[as] || 0) + bonus;
                 }
               });
@@ -5118,7 +5118,7 @@
           name: "Iron Defense",
           desc: "Reduces damage taken.",
           format: (skillPower, level) => {
-            const reduction = Math.round(skillPower * 100);
+            const reduction = Math.floor(skillPower * 100);
             return `Reduces ${reduction}% of the damage received`;
           },
         },
@@ -5126,15 +5126,15 @@
           name: "Fireball",
           desc: "Primary target takes full damage. Adjacent targets take a portion of that damage.",
           format: (skillPower, level, atk) => {
-            const splashDmg = Math.round(atk * skillPower);
-            return `Main damage: ${atk}. Area damage: ${splashDmg} (${Math.round(skillPower * 100)}%)`;
+            const splashDmg = Math.floor(atk * skillPower);
+            return `Main damage: ${atk}. Area damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
           },
         },
         precise_shot: {
           name: "Precise Shot",
           desc: "Increases the chance of landing a critical hit.",
           format: (skillPower, level) => {
-            const critChanceBonus = Math.round(skillPower * 100);
+            const critChanceBonus = Math.floor(skillPower * 100);
             return `+${critChanceBonus}% critical chance`;
           },
         },
@@ -5142,23 +5142,23 @@
           name: "Healing",
           desc: "Heals the ally with lowest HP.",
           format: (skillPower, level, atk) => {
-            const healAmount = Math.round(atk * skillPower);
-            return `Heals the most injured ally for ${healAmount} HP (${Math.round(skillPower * 100)}% of ATK)`;
+            const healAmount = Math.floor(atk * skillPower);
+            return `Heals the most injured ally for ${healAmount} HP (${Math.floor(skillPower * 100)}% of ATK)`;
           },
         },
         sneak_strike: {
           name: "Sneak Strike",
           desc: "At battle start, performs one sneak attack on lowest-HP enemy.",
           format: (skillPower, level, atk) => {
-            const sneakDmg = Math.round(atk * skillPower);
-            return `Initial sneak attack: ${sneakDmg} damage (${Math.round(skillPower * 100)}% of ATK)`;
+            const sneakDmg = Math.floor(atk * skillPower);
+            return `Initial sneak attack: ${sneakDmg} damage (${Math.floor(skillPower * 100)}% of ATK)`;
           },
         },
         sacred_aura: {
           name: "Sacred Aura",
           desc: "At battle start, grants adjacent allies a max HP bonus. Buff persists even if paladin dies.",
           format: (skillPower, level) => {
-            return `Adjacent allies gain +${Math.round(skillPower * 100)}% max HP bonus`;
+            return `Adjacent allies gain +${Math.floor(skillPower * 100)}% max HP bonus`;
           },
         },
         chain_lightning: {
@@ -5166,16 +5166,16 @@
           desc: "Line attack, 3 slots. The attack hits the primary target dealing 100% damage; subsequent targets receive reduced damage.",
           format: (skillPower, level, atk) => {
             const dmg1 = atk;
-            const dmg2 = Math.round(atk * skillPower);
-            const dmg3 = Math.round((atk * skillPower) / 2);
-            return `1º target: ${dmg1}. 2º target: ${dmg2} (${Math.round(skillPower * 100)}%). 3º target: ${dmg3} (${Math.round(skillPower * 50)}%)`;
+            const dmg2 = Math.floor(atk * skillPower);
+            const dmg3 = Math.floor((atk * skillPower) / 2);
+            return `1º target: ${dmg1}. 2º target: ${dmg2} (${Math.floor(skillPower * 100)}%). 3º target: ${dmg3} (${Math.floor(skillPower * 50)}%)`;
           },
         },
         fury: {
           name: "Fury",
           desc: "When HP drops below 60%, permanently gain bonus attack for the rest of the battle.",
           format: (skillPower, level) => {
-            const atkBonus = Math.round(skillPower * 100);
+            const atkBonus = Math.floor(skillPower * 100);
             return `When HP < 60%: +${atkBonus}% permanent ATK`;
           },
         },
