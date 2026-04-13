@@ -356,15 +356,17 @@
         user-select: none;
       }
 
-      .sfmt { cursor: default; }
+      .sfmt {
+        cursor: default;
+      }
 
       .suser {
-        background: rgba(12, 8, 32, .75);
-        color: rgba(200, 185, 245, .88);
-        border: 1px solid rgba(130, 100, 220, .35);
+        background: rgba(12, 8, 32, 0.75);
+        color: rgba(200, 185, 245, 0.88);
+        border: 1px solid rgba(130, 100, 220, 0.35);
         font-size: calc(11px * var(--s));
         font-weight: 600;
-        letter-spacing: .2px;
+        letter-spacing: 0.2px;
         cursor: default;
       }
 
@@ -544,7 +546,6 @@
         gap: calc(10px * var(--s));
       }
 
-
       .dscore {
         display: flex;
         align-items: center;
@@ -593,7 +594,6 @@
         filter: drop-shadow(0 0 6px rgba(255, 200, 100, 0.5));
         padding: 0 6px;
       }
-
 
       /* ── BANNER ── */
       #banner {
@@ -1037,28 +1037,44 @@
 
       /* ── Attack arrow (SVG paths drawn by JS) ── */
       @keyframes arr-flow {
-        from { stroke-dashoffset: 22; }
-        to   { stroke-dashoffset: 0; }
+        from {
+          stroke-dashoffset: 22;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
       }
       .atk-arrow {
         fill: none;
         stroke-width: 2.2;
         stroke-linecap: round;
         stroke-dasharray: 9 7;
-        animation: arr-flow .45s linear infinite;
+        animation: arr-flow 0.45s linear infinite;
         opacity: 0;
         animation-fill-mode: forwards;
       }
       .atk-arrow.arr-enter {
-        animation: arr-flow .45s linear infinite, arr-fade-in .18s ease forwards;
+        animation:
+          arr-flow 0.45s linear infinite,
+          arr-fade-in 0.18s ease forwards;
       }
       @keyframes arr-fade-in {
-        from { opacity: 0; }
-        to   { opacity: 1; }
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
       }
-      .atk-arr-primary { stroke: rgba(255, 70, 70, .88); }
-      .atk-arr-splash  { stroke: rgba(255, 155, 30, .82); }
-      .atk-arr-ally    { stroke: rgba(70, 215, 115, .88); }
+      .atk-arr-primary {
+        stroke: rgba(255, 70, 70, 0.88);
+      }
+      .atk-arr-splash {
+        stroke: rgba(255, 155, 30, 0.82);
+      }
+      .atk-arr-ally {
+        stroke: rgba(70, 215, 115, 0.88);
+      }
       @keyframes targetPulse {
         from {
           box-shadow:
@@ -1221,16 +1237,27 @@
         font-weight: 700;
         color: #66ffaa;
         line-height: 1;
-        text-shadow: 0 0 7px rgba(80,255,140,.65);
+        text-shadow: 0 0 7px rgba(80, 255, 140, 0.65);
       }
 
       /* HP number colour — mirrors the health bar */
       [data-uhp] {
-        transition: color .35s ease, text-shadow .35s ease;
+        transition:
+          color 0.35s ease,
+          text-shadow 0.35s ease;
       }
-      [data-uhp].hp-hi  { color: #66ee88; text-shadow: 0 0 8px rgba(80,238,120,.65); }
-      [data-uhp].hp-mid { color: #ffcc33; text-shadow: 0 0 6px rgba(255,180,30,.45); }
-      [data-uhp].hp-lo  { color: #ff4444; text-shadow: 0 0 6px rgba(255,40,40,.5); }
+      [data-uhp].hp-hi {
+        color: #66ee88;
+        text-shadow: 0 0 8px rgba(80, 238, 120, 0.65);
+      }
+      [data-uhp].hp-mid {
+        color: #ffcc33;
+        text-shadow: 0 0 6px rgba(255, 180, 30, 0.45);
+      }
+      [data-uhp].hp-lo {
+        color: #ff4444;
+        text-shadow: 0 0 6px rgba(255, 40, 40, 0.5);
+      }
 
       .ustl {
         font-size: calc(8px * var(--s));
@@ -2709,8 +2736,18 @@
             ><span class="fmtbtn-desc">Win 6 battles</span>
           </button>
         </div>
-        <div style="margin-top:18px;">
-          <a href="/lobby.html" style="font-size:11px;color:rgba(160,140,220,.45);text-decoration:none;" onmouseover="this.style.color='rgba(190,170,255,.75)'" onmouseout="this.style.color='rgba(160,140,220,.45)'">← Back to Lobby</a>
+        <div style="margin-top: 18px">
+          <a
+            href="/lobby.html"
+            style="
+              font-size: 11px;
+              color: rgba(160, 140, 220, 0.45);
+              text-decoration: none;
+            "
+            onmouseover="this.style.color = 'rgba(190,170,255,.75)'"
+            onmouseout="this.style.color = 'rgba(160,140,220,.45)'"
+            >← Back to Lobby</a
+          >
         </div>
       </div>
     </div>
@@ -2748,8 +2785,14 @@
           <span class="sb sg" id="h-gold">💰 7</span>
           <span class="sb sfmt" id="h-fmt">BO3</span>
           <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button>
-          <button class="htp-btn hback-btn" onclick="openQuitModal()" title="Back to Lobby">← Lobby</button>
-          <span class="sb suser" id="h-user" style="display:none"></span>
+          <button
+            class="htp-btn hback-btn"
+            onclick="openQuitModal()"
+            title="Back to Lobby"
+          >
+            ← Lobby
+          </button>
+          <span class="sb suser" id="h-user" style="display: none"></span>
         </div>
       </div>
 
@@ -2908,8 +2951,8 @@
           <div class="htp-tip">
             <span class="htp-tip-ico">⚔️</span>
             <div>
-              Between battles you receive gold automatically —
-              both players receive the same amount each round.
+              Between battles you receive gold automatically — both players
+              receive the same amount each round.
             </div>
           </div>
           <div class="htp-tip">
@@ -3015,12 +3058,27 @@
     <!-- ══════════════════ GAME LOGIC ══════════════════ -->
     <script>
       // ── Auth & battle config injected by lobby ──────────
-      ;(function () {
-        const session = (function () { try { return JSON.parse(sessionStorage.getItem('hf_session')); } catch { return null; } })();
-        if (!session) { window.location.replace('/'); return; }
+      (function () {
+        const session = (function () {
+          try {
+            return JSON.parse(sessionStorage.getItem("hf_session"));
+          } catch {
+            return null;
+          }
+        })();
+        if (!session) {
+          window.location.replace("/");
+          return;
+        }
         window._HF_SESSION = session;
-        window._HF_BATTLE_CFG = (function () { try { return JSON.parse(sessionStorage.getItem('hf_battle_cfg')); } catch { return null; } })();
-        sessionStorage.removeItem('hf_battle_cfg'); // consume once
+        window._HF_BATTLE_CFG = (function () {
+          try {
+            return JSON.parse(sessionStorage.getItem("hf_battle_cfg"));
+          } catch {
+            return null;
+          }
+        })();
+        sessionStorage.removeItem("hf_battle_cfg"); // consume once
       })();
 
       // ═══════════════════════════════════════════════════
@@ -3349,19 +3407,44 @@
         const used = new Set();
         // Pass 1: adjacent triplets (combo 3)
         for (let i = 0; i <= 2; i++) {
-          if (s[i] && s[i+1] && s[i+2] &&
-              s[i].cid === s[i+1].cid && s[i].cid === s[i+2].cid &&
-              !used.has(i) && !used.has(i+1) && !used.has(i+2)) {
-            combos.push({ type: 3, cids: [s[i].cid, s[i].cid, s[i].cid], idxs: [i, i+1, i+2], cost: HF.value_gold_combo3 });
-            used.add(i); used.add(i+1); used.add(i+2);
+          if (
+            s[i] &&
+            s[i + 1] &&
+            s[i + 2] &&
+            s[i].cid === s[i + 1].cid &&
+            s[i].cid === s[i + 2].cid &&
+            !used.has(i) &&
+            !used.has(i + 1) &&
+            !used.has(i + 2)
+          ) {
+            combos.push({
+              type: 3,
+              cids: [s[i].cid, s[i].cid, s[i].cid],
+              idxs: [i, i + 1, i + 2],
+              cost: HF.value_gold_combo3,
+            });
+            used.add(i);
+            used.add(i + 1);
+            used.add(i + 2);
           }
         }
         // Pass 2: adjacent pairs not already consumed by a triplet (combo 2)
         for (let i = 0; i <= 3; i++) {
-          if (s[i] && s[i+1] && s[i].cid === s[i+1].cid &&
-              !used.has(i) && !used.has(i+1)) {
-            combos.push({ type: 2, cids: [s[i].cid, s[i].cid], idxs: [i, i+1], cost: HF.value_gold_combo2 });
-            used.add(i); used.add(i+1);
+          if (
+            s[i] &&
+            s[i + 1] &&
+            s[i].cid === s[i + 1].cid &&
+            !used.has(i) &&
+            !used.has(i + 1)
+          ) {
+            combos.push({
+              type: 2,
+              cids: [s[i].cid, s[i].cid],
+              idxs: [i, i + 1],
+              cost: HF.value_gold_combo2,
+            });
+            used.add(i);
+            used.add(i + 1);
           }
         }
         G.shopCombos = combos;
@@ -3634,9 +3717,24 @@
       // difficulty: "easy" | "medium" | "hard"
       const BOT_DIFFICULTY = "hard";
       const BOT_CFG_TABLE = {
-        easy:   { mergeWeight: 0.7,  adaptRate: 0.4, mistakeRate: 0.22, maxRerolls: 1 },
-        medium: { mergeWeight: 0.88, adaptRate: 0.7, mistakeRate: 0.08, maxRerolls: 2 },
-        hard:   { mergeWeight: 1.1,  adaptRate: 1.0, mistakeRate: 0.0,  maxRerolls: 4 },
+        easy: {
+          mergeWeight: 0.7,
+          adaptRate: 0.4,
+          mistakeRate: 0.22,
+          maxRerolls: 1,
+        },
+        medium: {
+          mergeWeight: 0.88,
+          adaptRate: 0.7,
+          mistakeRate: 0.08,
+          maxRerolls: 2,
+        },
+        hard: {
+          mergeWeight: 1.1,
+          adaptRate: 1.0,
+          mistakeRate: 0.0,
+          maxRerolls: 4,
+        },
       };
       const BOT_CFG = { label: "🤖 AI", ...BOT_CFG_TABLE[BOT_DIFFICULTY] };
       const FRONT_SLOTS = [2, 5, 8, 1, 4, 7],
@@ -3734,7 +3832,7 @@
       }
 
       function botBuyPhase() {
-        const REROLL_COST    = HF.value_new_recruitment;
+        const REROLL_COST = HF.value_new_recruitment;
         // Bot collection cap: double the player bench — lets it accumulate units across rounds
         // without hitting a hard wall. botPosition always picks the best N for the board.
         const COLLECTION_MAX = BENCH_SLOTS() * 2;
@@ -3742,15 +3840,24 @@
         function buyBest() {
           if (BOT.bench.length >= COLLECTION_MAX) return false;
           const candidates = BOT.shop
-            .map((card, i) => card ? { i, cid: card.cid, cost: botCardCost(card.cid), score: botScoreCard(card.cid) } : null)
-            .filter(c => c && BOT.gold >= c.cost)
+            .map((card, i) =>
+              card
+                ? {
+                    i,
+                    cid: card.cid,
+                    cost: botCardCost(card.cid),
+                    score: botScoreCard(card.cid),
+                  }
+                : null,
+            )
+            .filter((c) => c && BOT.gold >= c.cost)
             .sort((a, b) => b.score - a.score);
           if (!candidates.length) return false;
 
           const pick = candidates[0];
           BOT.gold -= pick.cost;
           BOT.shop[pick.i] = null;
-          const existing = BOT.bench.find(u => u.cid === pick.cid);
+          const existing = BOT.bench.find((u) => u.cid === pick.cid);
           if (existing) {
             existing.stack++;
             botApplyMerge(existing);
@@ -3767,10 +3874,14 @@
 
         // 2. Reroll if we still have room and gold — but not if there are merge targets waiting
         let rerolls = 0;
-        while (rerolls < BOT_CFG.maxRerolls
-               && BOT.gold >= REROLL_COST + 2
-               && BOT.bench.length < COLLECTION_MAX) {
-          const hasMerge = BOT.shop.some(s => s && BOT.bench.some(u => u.cid === s.cid));
+        while (
+          rerolls < BOT_CFG.maxRerolls &&
+          BOT.gold >= REROLL_COST + 2 &&
+          BOT.bench.length < COLLECTION_MAX
+        ) {
+          const hasMerge = BOT.shop.some(
+            (s) => s && BOT.bench.some((u) => u.cid === s.cid),
+          );
           if (hasMerge) break; // finish buying merge targets first
           BOT.gold -= REROLL_COST;
           botGenShop();
@@ -4300,7 +4411,15 @@
         log("⚔️ Battle begins!", "lr");
         _auraFired.forEach((pid) => {
           const pal = G.board.find((u) => u && u.id === pid);
-          if (pal) log((ABILOG["Sacred Aura"] || "✨ {n}: Sacred Aura!").replace("{n}", nameTag(pal)), "lab", true);
+          if (pal)
+            log(
+              (ABILOG["Sacred Aura"] || "✨ {n}: Sacred Aura!").replace(
+                "{n}",
+                nameTag(pal),
+              ),
+              "lab",
+              true,
+            );
         });
         setBanner(
           `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
@@ -4310,7 +4429,12 @@
         const res = simulate(G.board, G.enemy);
         botLearnFromBattle(res.evs, res.umap);
         res.evs
-          .filter((e) => e.type === "ability" && e.tick === -1 && e.abilName !== "Chain Lightning")
+          .filter(
+            (e) =>
+              e.type === "ability" &&
+              e.tick === -1 &&
+              e.abilName !== "Chain Lightning",
+          )
           .forEach((e) => {
             const u = res.umap[e.uid];
             log(
@@ -4787,17 +4911,20 @@
 
         // Decide anchor sides: if target is to the right, exit right/enter left; else invert
         const toRight = tR.left >= sR.left;
-        const x1 = toRight ? sR.right - 3  : sR.left  + 3;
-        const x2 = toRight ? tR.left  + 3  : tR.right - 3;
+        const x1 = toRight ? sR.right - 3 : sR.left + 3;
+        const x2 = toRight ? tR.left + 3 : tR.right - 3;
         const y1 = sR.top + sR.height * 0.5;
         const y2 = tR.top + tR.height * 0.5;
 
         // Quadratic bezier — arc curves up a little
-        const mx  = (x1 + x2) / 2;
+        const mx = (x1 + x2) / 2;
         const arc = Math.abs(x2 - x1) * 0.2;
-        const my  = (y1 + y2) / 2 - arc;
+        const my = (y1 + y2) / 2 - arc;
 
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const path = document.createElementNS(
+          "http://www.w3.org/2000/svg",
+          "path",
+        );
         path.setAttribute("d", `M${x1},${y1} Q${mx},${my} ${x2},${y2}`);
         path.setAttribute("class", `atk-arrow atk-arr-${type}`);
         path.setAttribute("marker-end", `url(#arr-${type})`);
@@ -4956,7 +5083,9 @@
                 // ── Primary attack target (red) ──
                 const target = previewTarget(unitWithSlot, enemyBoard);
                 if (target) {
-                  const tgtCellEl = efieldEl?.querySelector(`[data-i="${target.slot}"]`);
+                  const tgtCellEl = efieldEl?.querySelector(
+                    `[data-i="${target.slot}"]`,
+                  );
                   tgtCellEl?.classList.add("target-preview");
                   drawAttackArrow(cell, tgtCellEl, "primary");
 
@@ -4965,7 +5094,9 @@
                     const adj = adjacentSlots(target.slot);
                     enemyBoard.forEach((eu, ei) => {
                       if (eu && ei !== target.slot && adj.includes(ei)) {
-                        const splEl = efieldEl?.querySelector(`[data-i="${ei}"]`);
+                        const splEl = efieldEl?.querySelector(
+                          `[data-i="${ei}"]`,
+                        );
                         splEl?.classList.add("target-preview-splash");
                         drawAttackArrow(cell, splEl, "splash");
                       }
@@ -4990,7 +5121,9 @@
                       .sort((a, b) => (a % 3) - (b % 3))
                       .slice(0, 2)
                       .forEach((ei) => {
-                        const chainEl = efieldEl?.querySelector(`[data-i="${ei}"]`);
+                        const chainEl = efieldEl?.querySelector(
+                          `[data-i="${ei}"]`,
+                        );
                         chainEl?.classList.add("target-preview-splash");
                         drawAttackArrow(cell, chainEl, "splash");
                       });
@@ -5002,7 +5135,9 @@
                   const adj = adjacentSlots(unitWithSlot.slot);
                   G.board.forEach((pu, pi) => {
                     if (pu && pi !== unitWithSlot.slot && adj.includes(pi))
-                      pfieldEl?.querySelector(`[data-i="${pi}"]`)?.classList.add("target-preview-ally");
+                      pfieldEl
+                        ?.querySelector(`[data-i="${pi}"]`)
+                        ?.classList.add("target-preview-ally");
                   });
                 }
               });
@@ -5385,10 +5520,11 @@
             isCombo && canBuy
               ? (e) => {
                   // Check if moving into another card of the SAME combo
-                  const relUid = e.relatedTarget?.closest?.("[data-uid]")?.dataset?.uid;
-                  const stayingInCombo = relUid && cardCombo.idxs.some(
-                    (ci) => G.shop[ci]?.id === relUid,
-                  );
+                  const relUid =
+                    e.relatedTarget?.closest?.("[data-uid]")?.dataset?.uid;
+                  const stayingInCombo =
+                    relUid &&
+                    cardCombo.idxs.some((ci) => G.shop[ci]?.id === relUid);
                   if (!stayingInCombo)
                     cardCombo.idxs.forEach((ci) => {
                       row
@@ -5565,17 +5701,49 @@
     </script>
 
     <!-- ── Attack arrow overlay ── -->
-    <svg id="attack-svg" xmlns="http://www.w3.org/2000/svg"
-         style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:95;overflow:visible">
+    <svg
+      id="attack-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      style="
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 95;
+        overflow: visible;
+      "
+    >
       <defs>
-        <marker id="arr-primary" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,80,80,.9)"/>
+        <marker
+          id="arr-primary"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,80,80,.9)" />
         </marker>
-        <marker id="arr-splash" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,165,30,.85)"/>
+        <marker
+          id="arr-splash"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(255,165,30,.85)" />
         </marker>
-        <marker id="arr-ally" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(80,220,130,.9)"/>
+        <marker
+          id="arr-ally"
+          markerWidth="7"
+          markerHeight="7"
+          refX="6"
+          refY="3.5"
+          orient="auto"
+        >
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="rgba(80,220,130,.9)" />
         </marker>
       </defs>
     </svg>
