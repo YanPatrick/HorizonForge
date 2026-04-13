@@ -3272,6 +3272,7 @@
         gold: 7,
         shop: [],
         shopCombo: null,
+        shopCombos: [],
         bench: [],
         board: Array(9).fill(null),
         duelEnemy: Array(9).fill(null),
@@ -3343,36 +3344,21 @@
       }
 
       function _detectCombos() {
-        G.shopCombo = null;
         const s = G.shop;
-        for (let i = 0; i <= 2; i++) {
-          if (
-            s[i] &&
-            s[i + 1] &&
-            s[i + 2] &&
-            s[i].cid === s[i + 1].cid &&
-            s[i].cid === s[i + 2].cid
-          ) {
-            G.shopCombo = {
-              type: 3,
-              cids: [s[i].cid, s[i].cid, s[i].cid],
-              idxs: [i, i + 1, i + 2],
-              cost: HF.value_gold_combo3,
-            };
-            return;
-          }
+        // Group indexes by cid
+        const byId = {};
+        s.forEach((u, i) => {
+          if (u) { if (!byId[u.cid]) byId[u.cid] = []; byId[u.cid].push(i); }
+        });
+        const combos = [];
+        for (const [cid, idxs] of Object.entries(byId)) {
+          if (idxs.length >= 3)
+            combos.push({ type: 3, cids: [cid, cid, cid], idxs: idxs.slice(0, 3), cost: HF.value_gold_combo3 });
+          else if (idxs.length >= 2)
+            combos.push({ type: 2, cids: [cid, cid], idxs: idxs.slice(0, 2), cost: HF.value_gold_combo2 });
         }
-        for (let i = 0; i <= 3; i++) {
-          if (s[i] && s[i + 1] && s[i].cid === s[i + 1].cid) {
-            G.shopCombo = {
-              type: 2,
-              cids: [s[i].cid, s[i].cid],
-              idxs: [i, i + 1],
-              cost: HF.value_gold_combo2,
-            };
-            return;
-          }
-        }
+        G.shopCombos = combos;
+        G.shopCombo = combos.length > 0 ? combos[0] : null;
       }
 
       function genShop() {
@@ -3523,10 +3509,11 @@
         render();
       }
 
-      function buyCombo() {
-        if (G.phase !== "shop" || !G.shopCombo) return;
-        const combo = G.shopCombo,
-          cost = combo.cost;
+      function buyCombo(combo) {
+        if (G.phase !== "shop") return;
+        combo = combo || G.shopCombo;
+        if (!combo) return;
+        const cost = combo.cost;
         if (G.gold < cost) {
           log(`❌ Need ${cost}💰! You have ${G.gold}💰`, "lk");
           return;
@@ -4601,6 +4588,7 @@
         G.gold = START_GOLD();
         G.shop = [];
         G.shopCombo = null;
+        G.shopCombos = [];
         G.bench = [];
         G.board = Array(9).fill(null);
         G.duelEnemy = Array(9).fill(null);
@@ -5279,8 +5267,11 @@
       function renderShop() {
         const row = document.getElementById("shoprow"),
           active = G.phase === "shop";
-        const combo = G.shopCombo,
-          comboIdxSet = combo ? new Set(combo.idxs) : new Set();
+        const combos = G.shopCombos || (G.shopCombo ? [G.shopCombo] : []);
+        // Map each shop index → its combo object
+        const comboByIdx = {};
+        combos.forEach((c) => c.idxs.forEach((i) => (comboByIdx[i] = c)));
+        const combo = G.shopCombo; // kept for legacy references below
         const s =
           parseFloat(
             getComputedStyle(document.documentElement).getPropertyValue("--s"),
@@ -5320,9 +5311,10 @@
             G.board.find((b) => b && b.cid === u.cid);
           const isAtMax = !!(isOwned && isOwned.lv >= 5);
           const cost = isOwned ? 2 : HF.value_buy_card;
-          const isCombo = comboIdxSet.has(i);
+          const cardCombo = comboByIdx[i] || null;
+          const isCombo = !!cardCombo;
           const canBuy =
-            !isAtMax && G.gold >= (isCombo ? combo.cost : cost) && active;
+            !isAtMax && G.gold >= (isCombo ? cardCombo.cost : cost) && active;
           const cntLabel = isAtMax
             ? "🏆 MAX"
             : isOwned
@@ -5330,7 +5322,7 @@
               : "★";
           const actionLbl = canBuy
             ? isCombo
-              ? `⚡ Combo ×${combo.type} for ${combo.cost}💰`
+              ? `⚡ Combo ×${cardCombo.type} for ${cardCombo.cost}💰`
               : isOwned
                 ? `▶ Stack ${cost}💰`
                 : `▶ Recruit ${cost}💰`
@@ -5340,7 +5332,7 @@
           const priceLbl = isAtMax
             ? "MAX"
             : isCombo
-              ? `${combo.cost}💰`
+              ? `${cardCombo.cost}💰`
               : `${cost}💰`;
           const priceClass = isAtMax
             ? "pmax"
@@ -5369,15 +5361,18 @@
           el.style.borderColor = isCombo ? "#44ff88" : cc.col;
           el.onclick = canBuy
             ? isCombo
-              ? () => buyCombo()
+              ? () => buyCombo(cardCombo)
               : () => buyCard(i)
             : null;
           el.onmouseenter =
             isCombo && canBuy
               ? () => {
-                  row
-                    .querySelectorAll(".scard.combo-card:not(.broke)")
-                    .forEach((c) => c.classList.add("combo-lift"));
+                  // Only lift cards belonging to the same combo
+                  cardCombo.idxs.forEach((ci) => {
+                    row
+                      .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)
+                      ?.classList.add("combo-lift");
+                  });
                 }
               : null;
           el.onmouseleave =
@@ -5385,11 +5380,17 @@
               ? (e) => {
                   if (
                     !e.relatedTarget ||
-                    !e.relatedTarget.classList?.contains("combo-card")
+                    !comboByIdx[
+                      G.shop.findIndex(
+                        (u) => u && u.id === e.relatedTarget?.dataset?.uid,
+                      )
+                    ]
                   )
-                    row
-                      .querySelectorAll(".scard.combo-card")
-                      .forEach((c) => c.classList.remove("combo-lift"));
+                    cardCombo.idxs.forEach((ci) => {
+                      row
+                        .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)
+                        ?.classList.remove("combo-lift");
+                    });
                 }
               : null;
 
