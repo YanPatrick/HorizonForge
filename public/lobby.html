@@ -2288,7 +2288,7 @@
           const stars = ["★", "★★", "★★★", "★★★★", "★★★★★"];
           const fmtSP = (v) =>
             v < 1
-              ? `${(Math.floor(v * 1000) / 10).toFixed(1)}%`
+              ? `${Math.floor(v * 100)}%`
               : `×${(Math.floor(v * 100) / 100).toFixed(2)}`;
           let rows = "";
           for (let lv = 1; lv <= 5; lv++) {
@@ -2299,7 +2299,8 @@
               <td>${st.max_hp}</td>
               <td>${st.atk}</td>
               <td>${Number(st.atk_speed).toFixed(2)}</td>
-              <td>${(Math.floor(st.crit_chance * 10000) / 100).toFixed(2)}%</td>
+              <td>${Math.floor(st.crit_chance * 100)}%</td>
+              <td>×${Number(st.crit_rate).toFixed(2)}</td>
               <td class="hd-sp">${fmtSP(st.skill_power)}</td>
             </tr>`;
           }
@@ -2319,7 +2320,7 @@
             <div class="hd-table-wrap">
               <table class="hd-table">
                 <thead><tr>
-                  <th>Level</th><th>HP</th><th>ATK</th><th>SPD</th><th>Crit</th><th>Skill Power</th>
+                  <th>Level</th><th>HP</th><th>ATK</th><th>SPD</th><th>Crit%</th><th>Crit×</th><th>Skill Power</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
               </table>
