@@ -1365,22 +1365,15 @@
       }
 
       .unit.mg {
-        animation: mf 0.55s;
+        animation: mf 0.65s cubic-bezier(.22,.68,0,1.15) forwards;
+        z-index: 10;
       }
 
       @keyframes mf {
-        0% {
-          transform: scale(1);
-        }
-
-        50% {
-          transform: scale(1.45);
-          filter: brightness(3);
-        }
-
-        100% {
-          transform: scale(1);
-        }
+        0%   { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
+        18%  { transform: scale(1.38); filter: brightness(2.8); box-shadow: 0 0 0 3px rgba(255,220,50,.95), 0 0 28px rgba(255,200,50,.75), 0 0 54px rgba(255,160,20,.4); }
+        50%  { transform: scale(1.18); filter: brightness(1.7); box-shadow: 0 0 0 2px rgba(255,220,50,.5),  0 0 16px rgba(255,200,50,.4); }
+        100% { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
       }
 
       .unit.dragging {
@@ -2014,22 +2007,38 @@
       }
 
       .bcard.just-merged {
-        animation: mergepop 0.6s;
+        animation: mergepop 0.65s cubic-bezier(.22,.68,0,1.15) forwards;
+        z-index: 10;
+        position: relative;
       }
 
       @keyframes mergepop {
-        0% {
-          transform: scale(1);
-        }
+        0%   { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
+        22%  { transform: scale(1.28); filter: brightness(2.6); box-shadow: 0 0 0 3px rgba(255,220,50,.9), 0 0 22px rgba(255,200,50,.7), 0 0 44px rgba(255,160,20,.35); }
+        55%  { transform: scale(1.12); filter: brightness(1.6); box-shadow: 0 0 0 1px rgba(255,220,50,.45), 0 0 12px rgba(255,200,50,.35); }
+        100% { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
+      }
 
-        40% {
-          transform: scale(1.2);
-          filter: brightness(2.8);
-        }
-
-        100% {
-          transform: scale(1);
-        }
+      /* Floating "Level Up" badge */
+      .merge-badge {
+        position: fixed;
+        transform: translateX(-50%);
+        font-family: 'Cinzel', serif;
+        font-size: calc(12px * var(--s));
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow: 0 0 14px rgba(255,200,50,.95), 0 0 4px rgba(0,0,0,.9);
+        pointer-events: none;
+        z-index: 99999;
+        white-space: nowrap;
+        animation: merge-badge-fly 0.85s cubic-bezier(.22,.68,0,1.1) forwards;
+        letter-spacing: 1px;
+      }
+      @keyframes merge-badge-fly {
+        0%   { opacity: 0; transform: translateX(-50%) translateY(4px)  scale(.55); }
+        22%  { opacity: 1; transform: translateX(-50%) translateY(-8px)  scale(1.15); }
+        60%  { opacity: 1; transform: translateX(-50%) translateY(-24px) scale(1); }
+        100% { opacity: 0; transform: translateX(-50%) translateY(-46px) scale(.9); }
       }
 
       .bench-msg {
@@ -3487,6 +3496,17 @@
         log("🔄 New Recruitment! (−2💰)", "lr");
       }
 
+      function showMergeBadge(el, lv) {
+        const r = el.getBoundingClientRect();
+        const badge = document.createElement('div');
+        badge.className = 'merge-badge';
+        badge.textContent = `${LS[lv]} Level Up!`;
+        badge.style.left = (r.left + r.width  / 2) + 'px';
+        badge.style.top  = (r.top  + r.height / 2) + 'px';
+        document.body.appendChild(badge);
+        badge.addEventListener('animationend', () => badge.remove(), { once: true });
+      }
+
       function _addToBench(card, cost, silent) {
         if (!canAddNewHero(card.cid)) {
           if (!silent) log("❌ Barracks full! Place or sell a card.", "lk");
@@ -3497,9 +3517,8 @@
 
         if (benchIdx >= 0) {
           const ex = G.bench[benchIdx];
-          ex.stack = ex.stack + 1;
-          applyMerge(ex);
           const prevLv = ex.lv;
+          ex.stack = ex.stack + 1;
           applyMerge(ex);
           if (ex.lv > prevLv) {
             if (!silent)
@@ -3508,6 +3527,7 @@
               document.querySelectorAll("#benchrow .bcard").forEach((bc) => {
                 if (bc.dataset.cid === ex.cid) {
                   bc.classList.add("just-merged");
+                  showMergeBadge(bc, ex.lv);
                   setTimeout(() => bc.classList.remove("just-merged"), 700);
                 }
               });
@@ -3529,9 +3549,8 @@
           }
         } else if (boardIdx >= 0) {
           const ex = G.board[boardIdx];
-          ex.stack = ex.stack + 1;
-          applyMerge(ex);
           const prevLv = ex.lv;
+          ex.stack = ex.stack + 1;
           applyMerge(ex);
           if (ex.lv > prevLv) {
             if (!silent)
@@ -3541,11 +3560,9 @@
                 `#pfield [data-cid="${ex.cid}"]`,
               );
               if (f) {
-                const u = f.querySelector(".unit");
-                if (u) {
-                  u.classList.add("mg");
-                  setTimeout(() => u.classList.remove("mg"), 600);
-                }
+                f.classList.add("mg");
+                showMergeBadge(f, ex.lv);
+                setTimeout(() => f.classList.remove("mg"), 700);
               }
             }, 40);
           } else {
@@ -3559,11 +3576,8 @@
                 `#pfield [data-cid="${ex.cid}"]`,
               );
               if (f) {
-                const u = f.querySelector(".unit");
-                if (u) {
-                  u.classList.add("new-copy");
-                  setTimeout(() => u.classList.remove("new-copy"), 500);
-                }
+                f.classList.add("new-copy");
+                setTimeout(() => f.classList.remove("new-copy"), 500);
               }
             }, 40);
           }
@@ -5035,11 +5049,13 @@
             const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
             el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}" data-uhp>${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
 
+            const tipHtml = generateSkillTooltipHtml(u);
+            el.addEventListener("dragstart",  () => SkillTip.hide());
             const ucabiEl = el.querySelector(".ucabi");
             if (ucabiEl) {
-              const tipHtml = generateSkillTooltipHtml(u);
-              ucabiEl.onmouseenter = () => SkillTip.show(ucabiEl, tipHtml);
-              ucabiEl.onmouseleave = () => SkillTip.hide();
+              ucabiEl.style.cursor = "help";
+              ucabiEl.addEventListener("mouseenter", () => SkillTip.show(ucabiEl, tipHtml));
+              ucabiEl.addEventListener("mouseleave", () => SkillTip.hide());
             }
 
             if (isP && G.phase === "shop") {
@@ -5254,10 +5270,10 @@
         },
         fireball: {
           name: "Fireball",
-          desc: "Primary target takes full damage. Adjacent targets take a portion of that damage.",
+          desc: "Full damage to the target tile. Splash damage to tiles in a + shape around it.",
           format: (skillPower, level, atk) => {
             const splashDmg = Math.floor(atk * skillPower);
-            return `Main damage: ${atk}. Area damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
+            return `Full damage: ${atk}. Splash damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
           },
         },
         precise_shot: {
@@ -5278,10 +5294,10 @@
         },
         sneak_strike: {
           name: "Sneak Strike",
-          desc: "At battle start, performs one sneak attack on lowest-HP enemy.",
+          desc: "At battle start, performs a sneak attack on lowest-HP enemy.",
           format: (skillPower, level, atk) => {
             const sneakDmg = Math.floor(atk * skillPower);
-            return `Initial sneak attack: ${sneakDmg} damage (${Math.floor(skillPower * 100)}% of ATK)`;
+            return `Sneak attack damage: ${sneakDmg} (${Math.floor(skillPower * 100)}% of ATK)`;
           },
         },
         sacred_aura: {
@@ -5293,7 +5309,7 @@
         },
         chain_lightning: {
           name: "Chain Lightning",
-          desc: "Line attack, 3 slots. The attack hits the primary target dealing 100% damage; subsequent targets receive reduced damage.",
+          desc: "Horizontal line attack, 3 tiles. The attack hits the primary target dealing 100% damage; subsequent targets receive reduced damage.",
           format: (skillPower, level, atk) => {
             const dmg1 = atk;
             const dmg2 = Math.floor(atk * skillPower);
@@ -5306,7 +5322,7 @@
           desc: "When HP drops below 60%, permanently gain bonus attack for the rest of the battle.",
           format: (skillPower, level) => {
             const atkBonus = Math.floor(skillPower * 100);
-            return `When HP < 60%: +${atkBonus}% permanent ATK`;
+            return `When HP below 60%: +${atkBonus}% permanent ATK`;
           },
         },
       };
@@ -5541,13 +5557,13 @@
             el.style.opacity = "1";
           });
 
+          const shopTipHtml = generateSkillTooltipHtml(u);
           const cabiEl = el.querySelector(".cabi");
           if (cabiEl) {
-            const html = generateSkillTooltipHtml(u);
             cabiEl.title = "";
-            cabiEl.onmouseenter = () => SkillTip.show(cabiEl, html);
-            cabiEl.onmouseleave = () => SkillTip.hide();
             cabiEl.style.cursor = "help";
+            cabiEl.addEventListener("mouseenter", () => SkillTip.show(cabiEl, shopTipHtml));
+            cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
           }
         });
         document.getElementById("breroll").disabled =
@@ -5622,13 +5638,13 @@
 
             row.appendChild(card);
 
+            const html = generateSkillTooltipHtml(u);
             const cabiEl = card.querySelector(".cabi");
             if (cabiEl) {
-              const html = generateSkillTooltipHtml(u);
               cabiEl.title = "";
-              cabiEl.onmouseenter = () => SkillTip.show(cabiEl, html);
-              cabiEl.onmouseleave = () => SkillTip.hide();
               cabiEl.style.cursor = "help";
+              cabiEl.addEventListener("mouseenter", () => SkillTip.show(cabiEl, html));
+              cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
             }
           });
           for (let i = G.bench.length; i < BARRACKS_MAX; i++) {

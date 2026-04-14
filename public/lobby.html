@@ -694,6 +694,62 @@
         color: rgba(210, 150, 40, 0.6);
       }
 
+      /* ── Format pill tooltip (rendered at body level via JS) ── */
+      .fmt-wrap { display: inline-flex; }
+
+      #fmt-tooltip {
+        position: fixed;
+        z-index: 9999;
+        background: rgba(10, 6, 28, .97);
+        border: 1px solid rgba(160, 120, 255, .35);
+        border-radius: 10px;
+        padding: 10px 14px;
+        width: 192px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity .15s ease, transform .15s ease;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 32px rgba(0,0,0,.6), 0 0 18px rgba(130,80,255,.14);
+        white-space: normal;
+      }
+      #fmt-tooltip.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      #fmt-tooltip::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: var(--arrow-left, 50%);
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-bottom-color: rgba(160, 120, 255, .55);
+      }
+      .fmt-tip-name {
+        font-family: 'Cinzel', serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(210, 190, 255, .95);
+        margin-bottom: 5px;
+        display: block;
+      }
+      .fmt-tip-desc {
+        font-size: 11px;
+        color: rgba(160, 145, 210, .72);
+        line-height: 1.55;
+        display: block;
+      }
+      .fmt-tip-win {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(140, 100, 255, .18);
+        font-size: 10.5px;
+        color: rgba(140, 210, 130, .85);
+        display: block;
+        font-weight: 600;
+      }
+
       .pills {
         display: flex;
         gap: 6px;
@@ -1172,9 +1228,9 @@
             <div class="cfg-row">
               <span class="cfg-lbl">Format</span>
               <div class="pills" id="ai-fmt-pills">
-                <button class="pill" data-fmt="3">BO3</button>
-                <button class="pill active" data-fmt="5">BO5</button>
-                <button class="pill" data-fmt="10">BO10</button>
+                <span class="fmt-wrap"><button class="pill" data-fmt="3">BO3</button></span>
+                <span class="fmt-wrap"><button class="pill active" data-fmt="5">BO5</button></span>
+                <span class="fmt-wrap"><button class="pill" data-fmt="10">BO10</button></span>
               </div>
             </div>
 
@@ -1224,9 +1280,9 @@
             <div class="cfg-row">
               <span class="cfg-lbl">Format</span>
               <div class="pills" id="pvp-fmt-pills">
-                <button class="pill" data-fmt="3" disabled>BO3</button>
-                <button class="pill active" data-fmt="5" disabled>BO5</button>
-                <button class="pill" data-fmt="10" disabled>BO10</button>
+                <span class="fmt-wrap"><button class="pill" data-fmt="3" disabled>BO3</button></span>
+                <span class="fmt-wrap"><button class="pill active" data-fmt="5" disabled>BO5</button></span>
+                <span class="fmt-wrap"><button class="pill" data-fmt="10" disabled>BO10</button></span>
               </div>
             </div>
 
@@ -1411,6 +1467,49 @@
         window.cancelSearch = function () {
           document.getElementById("search-overlay").classList.remove("open");
         };
+
+        /* ── Format tooltip (fixed, escapes overflow:hidden) ── */
+        (function () {
+          const FMT_DATA = {
+            3:  { name: 'Best of 3',  desc: 'A duel of up to 3 battles. Each battle you build and fight.',         wins: 2 },
+            5:  { name: 'Best of 5',  desc: 'A duel of up to 5 battles. More room to adapt your strategy.',        wins: 3 },
+            10: { name: 'Best of 10', desc: 'A full duel of up to 10 battles. The ultimate test of strategy.',     wins: 6 },
+          };
+
+          const tip = document.createElement('div');
+          tip.id = 'fmt-tooltip';
+          document.body.appendChild(tip);
+
+          document.querySelectorAll('.fmt-wrap').forEach((wrap) => {
+            const btn = wrap.querySelector('[data-fmt]');
+            if (!btn) return;
+            const d = FMT_DATA[parseInt(btn.dataset.fmt)];
+            if (!d) return;
+
+            wrap.addEventListener('mouseenter', () => {
+              tip.innerHTML =
+                `<span class="fmt-tip-name">${d.name}</span>` +
+                `<span class="fmt-tip-desc">${d.desc}</span>` +
+                `<span class="fmt-tip-win">🏆 First to win ${d.wins} battles wins</span>`;
+
+              const r = btn.getBoundingClientRect();
+              const TIP_W = 192;
+              let left = r.left + r.width / 2 - TIP_W / 2;
+              let top  = r.bottom + 10;
+
+              // keep inside viewport horizontally
+              left = Math.max(8, Math.min(left, window.innerWidth - TIP_W - 8));
+              // adjust arrow x to always point at button center
+              const arrowLeft = (r.left + r.width / 2) - left;
+              tip.style.setProperty('--arrow-left', arrowLeft + 'px');
+              tip.style.left = left + 'px';
+              tip.style.top  = top  + 'px';
+              tip.classList.add('visible');
+            });
+
+            wrap.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+          });
+        })();
       })();
     </script>
   </body>
