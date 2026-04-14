@@ -118,12 +118,12 @@ SELECT c.id, v.skill_key, v.name, v.description, v.skill_type
 FROM characters c
 JOIN (VALUES
   ('knight',    'iron_defense',    'Iron Defense',    'Reduces skill_power% of damage taken each hit. Scales with level.',                                                                           'passive'),
-  ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.',                         'atk_modifier'),
+  ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.',                         'atk modifier'),
   ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power as a bonus to crit_chance. Scales with level.',                                                                            'passive'),
   ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = atk x skill_power. Then attacks nearest enemy. Scales with level.',                                    'skill'),
   ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',                             'skill'),
   ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',             'skill'),
-  ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',                                'atk_modifier'),
+  ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',                                'atk modifier'),
   ('barbarian', 'fury',            'Fury',            'When HP drops below 60%, permanently gain skill_power% bonus attack for the rest of the battle. Scales with level.',                         'skill')
 ) AS v(cid, skill_key, name, description, skill_type) ON c.cid = v.cid
 ON CONFLICT (character_id) DO UPDATE SET

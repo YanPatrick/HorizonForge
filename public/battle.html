@@ -872,6 +872,21 @@
         font-weight: 700;
       }
 
+      .flbl-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 calc(2px * var(--s));
+      }
+
+      #army-count {
+        font-size: calc(8px * var(--s));
+        font-weight: 700;
+        color: rgba(136, 170, 255, 0.7);
+        letter-spacing: 0.5px;
+        opacity: 1;
+      }
+
       .field {
         display: grid;
         grid-template-columns: repeat(3, var(--cell-w));
@@ -1365,15 +1380,36 @@
       }
 
       .unit.mg {
-        animation: mf 0.65s cubic-bezier(.22,.68,0,1.15) forwards;
+        animation: mf 0.65s cubic-bezier(0.22, 0.68, 0, 1.15) forwards;
         z-index: 10;
       }
 
       @keyframes mf {
-        0%   { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
-        18%  { transform: scale(1.38); filter: brightness(2.8); box-shadow: 0 0 0 3px rgba(255,220,50,.95), 0 0 28px rgba(255,200,50,.75), 0 0 54px rgba(255,160,20,.4); }
-        50%  { transform: scale(1.18); filter: brightness(1.7); box-shadow: 0 0 0 2px rgba(255,220,50,.5),  0 0 16px rgba(255,200,50,.4); }
-        100% { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
+        0% {
+          transform: scale(1);
+          filter: brightness(1);
+          box-shadow: none;
+        }
+        18% {
+          transform: scale(1.38);
+          filter: brightness(2.8);
+          box-shadow:
+            0 0 0 3px rgba(255, 220, 50, 0.95),
+            0 0 28px rgba(255, 200, 50, 0.75),
+            0 0 54px rgba(255, 160, 20, 0.4);
+        }
+        50% {
+          transform: scale(1.18);
+          filter: brightness(1.7);
+          box-shadow:
+            0 0 0 2px rgba(255, 220, 50, 0.5),
+            0 0 16px rgba(255, 200, 50, 0.4);
+        }
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+          box-shadow: none;
+        }
       }
 
       .unit.dragging {
@@ -1499,7 +1535,7 @@
         flex-wrap: nowrap;
         padding-top: calc(4px * var(--s));
         min-height: calc(10px * var(--s));
-        overflow: hidden;
+        overflow: visible;
         flex: 1;
       }
 
@@ -1893,12 +1929,14 @@
 
       .bcard:hover {
         transform: translateY(-6px);
+        z-index: 10;
       }
 
       .bcard.bsel {
         transform: translateY(-10px) !important;
         border-color: #88ccff !important;
         box-shadow: 0 10px 24px rgba(136, 204, 255, 0.5) !important;
+        z-index: 10;
       }
 
       .bcard.dragging {
@@ -2007,38 +2045,74 @@
       }
 
       .bcard.just-merged {
-        animation: mergepop 0.65s cubic-bezier(.22,.68,0,1.15) forwards;
+        animation: mergepop 0.65s cubic-bezier(0.22, 0.68, 0, 1.15) forwards;
         z-index: 10;
         position: relative;
       }
 
       @keyframes mergepop {
-        0%   { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
-        22%  { transform: scale(1.28); filter: brightness(2.6); box-shadow: 0 0 0 3px rgba(255,220,50,.9), 0 0 22px rgba(255,200,50,.7), 0 0 44px rgba(255,160,20,.35); }
-        55%  { transform: scale(1.12); filter: brightness(1.6); box-shadow: 0 0 0 1px rgba(255,220,50,.45), 0 0 12px rgba(255,200,50,.35); }
-        100% { transform: scale(1);    filter: brightness(1);   box-shadow: none; }
+        0% {
+          transform: scale(1);
+          filter: brightness(1);
+          box-shadow: none;
+        }
+        22% {
+          transform: scale(1.28);
+          filter: brightness(2.6);
+          box-shadow:
+            0 0 0 3px rgba(255, 220, 50, 0.9),
+            0 0 22px rgba(255, 200, 50, 0.7),
+            0 0 44px rgba(255, 160, 20, 0.35);
+        }
+        55% {
+          transform: scale(1.12);
+          filter: brightness(1.6);
+          box-shadow:
+            0 0 0 1px rgba(255, 220, 50, 0.45),
+            0 0 12px rgba(255, 200, 50, 0.35);
+        }
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+          box-shadow: none;
+        }
       }
 
       /* Floating "Level Up" badge */
       .merge-badge {
         position: fixed;
         transform: translateX(-50%);
-        font-family: 'Cinzel', serif;
+        font-family: "Cinzel", serif;
         font-size: calc(12px * var(--s));
         font-weight: 900;
         color: #ffd700;
-        text-shadow: 0 0 14px rgba(255,200,50,.95), 0 0 4px rgba(0,0,0,.9);
+        text-shadow:
+          0 0 14px rgba(255, 200, 50, 0.95),
+          0 0 4px rgba(0, 0, 0, 0.9);
         pointer-events: none;
         z-index: 99999;
         white-space: nowrap;
-        animation: merge-badge-fly 0.85s cubic-bezier(.22,.68,0,1.1) forwards;
+        animation: merge-badge-fly 0.85s cubic-bezier(0.22, 0.68, 0, 1.1)
+          forwards;
         letter-spacing: 1px;
       }
       @keyframes merge-badge-fly {
-        0%   { opacity: 0; transform: translateX(-50%) translateY(4px)  scale(.55); }
-        22%  { opacity: 1; transform: translateX(-50%) translateY(-8px)  scale(1.15); }
-        60%  { opacity: 1; transform: translateX(-50%) translateY(-24px) scale(1); }
-        100% { opacity: 0; transform: translateX(-50%) translateY(-46px) scale(.9); }
+        0% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(4px) scale(0.55);
+        }
+        22% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(-8px) scale(1.15);
+        }
+        60% {
+          opacity: 1;
+          transform: translateX(-50%) translateY(-24px) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateX(-50%) translateY(-46px) scale(0.9);
+        }
       }
 
       .bench-msg {
@@ -2787,13 +2861,13 @@
     <div id="game">
       <!-- HEADER -->
       <div id="hdr">
-        <span class="htitle">⚔️ Horizon Forge</span>
+        <span class="htitle">Horizon Forge</span>
         <div class="hstats">
           <span class="sb sr" id="h-duel">Duel 1</span>
 
           <span class="sb sg" id="h-gold">💰 7</span>
           <span class="sb sfmt" id="h-fmt">BO3</span>
-          <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button>
+          <!-- <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button> -->
           <button
             class="htp-btn hback-btn"
             onclick="openQuitModal()"
@@ -2832,7 +2906,10 @@
         <!-- Fields Row: Player | VS | Enemy -->
         <div id="fields-row">
           <div class="fwrap">
-            <div class="flbl" style="color: #88aaff">⚔ Your Army</div>
+            <div class="flbl flbl-row">
+              <span style="color: #88aaff">⚔ Your Army</span>
+              <span id="army-count"></span>
+            </div>
             <div class="field pf" id="pfield"></div>
           </div>
           <div id="vs"><span class="vstxt">VS</span></div>
@@ -2850,7 +2927,7 @@
         <!-- LEFT: Barracks -->
         <div id="benchwrap">
           <div class="sec-hdr">
-            <span class="sec-title barracks-title">🪖 Barracks</span>
+            <span class="sec-title barracks-title">Barracks</span>
             <span class="sec-title bcount-lbl" id="bcount"></span>
           </div>
           <div id="benchrow"></div>
@@ -2869,10 +2946,10 @@
         <!-- RIGHT: Recruitment -->
         <div id="shopwrap">
           <div class="sec-hdr">
-            <span class="sec-title recruit-title">⛺ Recruitment</span>
+            <span class="sec-title recruit-title">Recruitment</span>
             <div class="recruit-controls">
               <button class="rrbtn" id="breroll" onclick="rerollShop()">
-                🔄 New Recruitment (2💰)
+                New Recruitment (2💰)
               </button>
             </div>
           </div>
@@ -3498,13 +3575,15 @@
 
       function showMergeBadge(el, lv) {
         const r = el.getBoundingClientRect();
-        const badge = document.createElement('div');
-        badge.className = 'merge-badge';
+        const badge = document.createElement("div");
+        badge.className = "merge-badge";
         badge.textContent = `${LS[lv]} Level Up!`;
-        badge.style.left = (r.left + r.width  / 2) + 'px';
-        badge.style.top  = (r.top  + r.height / 2) + 'px';
+        badge.style.left = r.left + r.width / 2 + "px";
+        badge.style.top = r.top + r.height / 2 + "px";
         document.body.appendChild(badge);
-        badge.addEventListener('animationend', () => badge.remove(), { once: true });
+        badge.addEventListener("animationend", () => badge.remove(), {
+          once: true,
+        });
       }
 
       function _addToBench(card, cost, silent) {
@@ -5050,11 +5129,13 @@
             el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}" data-uhp>${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
 
             const tipHtml = generateSkillTooltipHtml(u);
-            el.addEventListener("dragstart",  () => SkillTip.hide());
+            el.addEventListener("dragstart", () => SkillTip.hide());
             const ucabiEl = el.querySelector(".ucabi");
             if (ucabiEl) {
               ucabiEl.style.cursor = "help";
-              ucabiEl.addEventListener("mouseenter", () => SkillTip.show(ucabiEl, tipHtml));
+              ucabiEl.addEventListener("mouseenter", () =>
+                SkillTip.show(ucabiEl, tipHtml),
+              );
               ucabiEl.addEventListener("mouseleave", () => SkillTip.hide());
             }
 
@@ -5562,7 +5643,9 @@
           if (cabiEl) {
             cabiEl.title = "";
             cabiEl.style.cursor = "help";
-            cabiEl.addEventListener("mouseenter", () => SkillTip.show(cabiEl, shopTipHtml));
+            cabiEl.addEventListener("mouseenter", () =>
+              SkillTip.show(cabiEl, shopTipHtml),
+            );
             cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
           }
         });
@@ -5643,7 +5726,9 @@
             if (cabiEl) {
               cabiEl.title = "";
               cabiEl.style.cursor = "help";
-              cabiEl.addEventListener("mouseenter", () => SkillTip.show(cabiEl, html));
+              cabiEl.addEventListener("mouseenter", () =>
+                SkillTip.show(cabiEl, html),
+              );
               cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
             }
           });
@@ -5688,17 +5773,16 @@
         updateHdr();
         renderDuelBar();
         document.getElementById("bfight").disabled = G.phase !== "shop";
+        const n = G.board.filter(Boolean).length,
+          mx = maxUnits();
+        const acEl = document.getElementById("army-count");
+        if (acEl) acEl.textContent = `${n}/${mx}`;
         if (G.phase === "shop") {
-          const n = G.board.filter(Boolean).length,
-            mx = maxUnits();
           const selUnit = G.bsel ? G.bench.find((u) => u.cid === G.bsel) : null;
           const hint = selUnit
             ? ` — ${selUnit.name} ${LS[selUnit.lv]} selected · click or drag to field`
             : " — Drag or select a card from Barracks";
-          setBanner(
-            `🛡️ Battle ${G.battleNum}/${G.format} | ${n}/${mx} on field${hint}`,
-            "bshop",
-          );
+          setBanner(`⚔️ Battle ${G.battleNum}/${G.format} ⚔️`, "bshop");
         }
       }
 

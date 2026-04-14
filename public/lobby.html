@@ -695,21 +695,27 @@
       }
 
       /* ── Format pill tooltip (rendered at body level via JS) ── */
-      .fmt-wrap { display: inline-flex; }
+      .fmt-wrap {
+        display: inline-flex;
+      }
 
       #fmt-tooltip {
         position: fixed;
         z-index: 9999;
-        background: rgba(10, 6, 28, .97);
-        border: 1px solid rgba(160, 120, 255, .35);
+        background: rgba(10, 6, 28, 0.97);
+        border: 1px solid rgba(160, 120, 255, 0.35);
         border-radius: 10px;
         padding: 10px 14px;
         width: 192px;
         pointer-events: none;
         opacity: 0;
-        transition: opacity .15s ease, transform .15s ease;
+        transition:
+          opacity 0.15s ease,
+          transform 0.15s ease;
         transform: translateY(-4px);
-        box-shadow: 0 10px 32px rgba(0,0,0,.6), 0 0 18px rgba(130,80,255,.14);
+        box-shadow:
+          0 10px 32px rgba(0, 0, 0, 0.6),
+          0 0 18px rgba(130, 80, 255, 0.14);
         white-space: normal;
       }
       #fmt-tooltip.visible {
@@ -717,35 +723,35 @@
         transform: translateY(0);
       }
       #fmt-tooltip::before {
-        content: '';
+        content: "";
         position: absolute;
         bottom: 100%;
         left: var(--arrow-left, 50%);
         transform: translateX(-50%);
         border: 5px solid transparent;
-        border-bottom-color: rgba(160, 120, 255, .55);
+        border-bottom-color: rgba(160, 120, 255, 0.55);
       }
       .fmt-tip-name {
-        font-family: 'Cinzel', serif;
+        font-family: "Cinzel", serif;
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 1px;
-        color: rgba(210, 190, 255, .95);
+        color: rgba(210, 190, 255, 0.95);
         margin-bottom: 5px;
         display: block;
       }
       .fmt-tip-desc {
         font-size: 11px;
-        color: rgba(160, 145, 210, .72);
+        color: rgba(160, 145, 210, 0.72);
         line-height: 1.55;
         display: block;
       }
       .fmt-tip-win {
         margin-top: 6px;
         padding-top: 6px;
-        border-top: 1px solid rgba(140, 100, 255, .18);
+        border-top: 1px solid rgba(140, 100, 255, 0.18);
         font-size: 10.5px;
-        color: rgba(140, 210, 130, .85);
+        color: rgba(140, 210, 130, 0.85);
         display: block;
         font-weight: 600;
       }
@@ -1143,6 +1149,735 @@
           display: none;
         }
       }
+
+      /* ══════════════════════════════
+         GRIMÓRIO MODAL
+      ══════════════════════════════ */
+      #grimoire-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 300;
+        background: rgba(3, 1, 12, 0.88);
+        backdrop-filter: blur(10px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #grimoire-overlay.open {
+        display: flex;
+      }
+
+      #grimoire-box {
+        position: relative;
+        width: 100%;
+        max-width: 820px;
+        max-height: 90vh;
+        background: linear-gradient(
+          160deg,
+          rgba(14, 9, 30, 0.98),
+          rgba(20, 12, 44, 0.97)
+        );
+        border: 1.5px solid rgba(220, 175, 60, 0.35);
+        border-radius: 20px;
+        box-shadow:
+          0 0 60px rgba(200, 150, 30, 0.12),
+          0 30px 80px rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Top bar */
+      .gr-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 24px 0;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(220, 175, 60, 0.18);
+        padding-bottom: 14px;
+      }
+      .gr-title {
+        font-family: "Cinzel", serif;
+        font-size: 18px;
+        font-weight: 900;
+        letter-spacing: 3px;
+        background: linear-gradient(
+          90deg,
+          #ffd700,
+          #ffb020,
+          #ffe066,
+          #c88cff,
+          #7744ee,
+          #4488ff,
+          #ffe066,
+          #ffd700
+        );
+        background-size: 300% auto;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: logo-flow 7s linear infinite;
+      }
+      .gr-close {
+        background: none;
+        border: 1px solid rgba(220, 175, 60, 0.3);
+        color: rgba(220, 175, 60, 0.7);
+        border-radius: 8px;
+        padding: 5px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        font-family: "Exo 2", sans-serif;
+        transition: all 0.15s;
+      }
+      .gr-close:hover {
+        background: rgba(220, 175, 60, 0.1);
+        color: #ffd700;
+      }
+
+      /* Chapter tabs */
+      .gr-tabs {
+        display: flex;
+        gap: 4px;
+        padding: 12px 24px 0;
+        flex-shrink: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .gr-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .gr-tab {
+        background: none;
+        border: 1px solid rgba(220, 175, 60, 0.2);
+        border-radius: 8px 8px 0 0;
+        border-bottom: none;
+        color: rgba(200, 160, 60, 0.55);
+        padding: 7px 13px;
+        font-size: 11px;
+        font-family: "Exo 2", sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+        letter-spacing: 0.4px;
+      }
+      .gr-tab:hover {
+        color: rgba(255, 210, 80, 0.8);
+        background: rgba(220, 175, 60, 0.06);
+      }
+      .gr-tab.active {
+        background: rgba(220, 175, 60, 0.12);
+        border-color: rgba(220, 175, 60, 0.45);
+        color: #ffd700;
+      }
+
+      /* Content area */
+      .gr-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 28px 28px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(220, 175, 60, 0.25) transparent;
+      }
+      .gr-content::-webkit-scrollbar {
+        width: 5px;
+      }
+      .gr-content::-webkit-scrollbar-thumb {
+        background: rgba(220, 175, 60, 0.25);
+        border-radius: 3px;
+      }
+
+      .gr-chapter {
+        display: none;
+      }
+      .gr-chapter.active {
+        display: block;
+      }
+
+      /* Chapter headings */
+      .gr-ch-title {
+        font-family: "Cinzel", serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: #ffd700;
+        letter-spacing: 2px;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(220, 175, 60, 0.2);
+      }
+      .gr-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: rgba(200, 160, 60, 0.85);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin: 20px 0 10px;
+      }
+      .gr-p {
+        font-size: 13px;
+        color: rgba(210, 200, 240, 0.78);
+        line-height: 1.7;
+        margin-bottom: 10px;
+      }
+      .gr-hl {
+        color: #ffd700;
+        font-weight: 700;
+      }
+      .gr-hl-purple {
+        color: #c88cff;
+        font-weight: 700;
+      }
+      .gr-hl-green {
+        color: #66ee88;
+        font-weight: 700;
+      }
+
+      /* Tip cards */
+      .gr-tips {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .gr-tip {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: rgba(220, 175, 60, 0.05);
+        border: 1px solid rgba(220, 175, 60, 0.14);
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 13px;
+        color: rgba(210, 200, 240, 0.78);
+        line-height: 1.6;
+      }
+      .gr-tip-ico {
+        font-size: 18px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      /* Arena diagram */
+      .gr-arena {
+        display: grid;
+        grid-template-columns: 1fr 48px 1fr;
+        gap: 10px;
+        margin: 18px 0;
+        align-items: center;
+      }
+      .gr-arena-side {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+      }
+      .gr-arena-cell {
+        aspect-ratio: 1;
+        border-radius: 7px;
+        border: 1px solid rgba(220, 175, 60, 0.22);
+        background: rgba(220, 175, 60, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(200, 160, 60, 0.65);
+        font-family: "Exo 2", sans-serif;
+        letter-spacing: 0.3px;
+      }
+      .gr-arena-cell.front {
+        border-color: rgba(100, 200, 100, 0.4);
+        background: rgba(100, 200, 100, 0.07);
+        color: rgba(100, 220, 110, 0.85);
+      }
+      .gr-arena-cell.mid {
+        border-color: rgba(100, 150, 255, 0.35);
+        background: rgba(100, 150, 255, 0.06);
+        color: rgba(130, 170, 255, 0.8);
+      }
+      .gr-arena-cell.back {
+        border-color: rgba(180, 100, 255, 0.3);
+        background: rgba(180, 100, 255, 0.06);
+        color: rgba(190, 130, 255, 0.75);
+      }
+      .gr-arena-vs {
+        text-align: center;
+        font-family: "Cinzel", serif;
+        font-size: 14px;
+        font-weight: 900;
+        color: rgba(200, 160, 60, 0.5);
+      }
+      .gr-arena-legend {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        margin-top: 8px;
+        font-size: 11px;
+        flex-wrap: wrap;
+      }
+      .gr-arena-legend span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: rgba(200, 180, 240, 0.6);
+      }
+      .gr-arena-legend .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      /* Hero table */
+      .gr-hero-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 6px;
+      }
+      .gr-hero-card {
+        display: flex;
+        gap: 14px;
+        background: rgba(220, 175, 60, 0.04);
+        border: 1px solid rgba(220, 175, 60, 0.16);
+        border-radius: 12px;
+        padding: 12px 14px;
+        align-items: flex-start;
+      }
+      .gr-hero-ico {
+        font-size: 26px;
+        text-align: center;
+        flex-shrink: 0;
+        width: 36px;
+        padding-top: 2px;
+      }
+      .gr-hero-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .gr-hero-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .gr-hero-name {
+        font-weight: 700;
+        font-size: 13px;
+        color: rgba(255, 240, 200, 0.9);
+      }
+      .gr-hero-role {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+      .role-tank {
+        background: rgba(255, 165, 40, 0.13);
+        border: 1px solid rgba(255, 165, 40, 0.35);
+        color: #ffaa44;
+      }
+      .role-dps {
+        background: rgba(255, 100, 80, 0.13);
+        border: 1px solid rgba(255, 100, 80, 0.3);
+        color: #ff9977;
+      }
+      .role-support {
+        background: rgba(100, 200, 100, 0.15);
+        border: 1px solid rgba(100, 200, 100, 0.35);
+        color: #66ee88;
+      }
+      .gr-hero-abi {
+        font-size: 12px;
+        color: rgba(255, 210, 80, 0.85);
+        margin-bottom: 3px;
+        font-weight: 600;
+      }
+      .gr-hero-tip {
+        font-size: 12px;
+        color: rgba(200, 185, 230, 0.62);
+        line-height: 1.5;
+      }
+
+      /* Strategy tips */
+      .gr-strategy-tip {
+        background: rgba(180, 130, 255, 0.06);
+        border-left: 3px solid rgba(180, 130, 255, 0.4);
+        border-radius: 0 8px 8px 0;
+        padding: 10px 14px;
+        font-size: 13px;
+        color: rgba(210, 200, 240, 0.78);
+        line-height: 1.6;
+        margin-bottom: 8px;
+      }
+      .gr-warning {
+        background: rgba(255, 180, 30, 0.07);
+        border: 1px solid rgba(255, 180, 30, 0.25);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 13px;
+        color: rgba(255, 210, 120, 0.85);
+        line-height: 1.6;
+        margin-top: 14px;
+      }
+
+      /* ════════════════════════════════════════
+         HEROES OVERLAY
+         ════════════════════════════════════════ */
+      #heroes-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        background: rgba(5, 2, 16, 0.88);
+        backdrop-filter: blur(6px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      #heroes-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      #heroes-box {
+        width: min(860px, 96vw);
+        max-height: 84vh;
+        background: linear-gradient(160deg, #0f0a22, #160d2e);
+        border: 1px solid rgba(180, 130, 255, 0.28);
+        border-radius: 20px;
+        box-shadow: 0 0 60px rgba(120, 60, 255, 0.18);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .heroes-hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 22px 13px;
+        border-bottom: 1px solid rgba(180, 130, 255, 0.15);
+        flex-shrink: 0;
+      }
+      .heroes-hdr-title {
+        font-family: "Cinzel", serif;
+        font-size: 17px;
+        font-weight: 700;
+        color: rgba(255, 240, 200, 0.95);
+        letter-spacing: 1px;
+      }
+      .heroes-close-btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.6);
+        border-radius: 8px;
+        padding: 5px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.18s;
+      }
+      .heroes-close-btn:hover {
+        background: rgba(255, 80, 80, 0.15);
+        border-color: rgba(255, 80, 80, 0.4);
+        color: #ff8888;
+      }
+      .heroes-ctrl {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 16px 10px;
+        border-bottom: 1px solid rgba(180, 130, 255, 0.1);
+        flex-shrink: 0;
+        flex-wrap: wrap;
+      }
+      #hero-search {
+        flex: 1;
+        min-width: 140px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(180, 130, 255, 0.22);
+        border-radius: 8px;
+        padding: 7px 12px;
+        color: rgba(255, 240, 200, 0.9);
+        font-size: 13px;
+        font-family: "Exo 2", sans-serif;
+        outline: none;
+        transition: border-color 0.18s;
+      }
+      #hero-search::placeholder {
+        color: rgba(255, 255, 255, 0.28);
+      }
+      #hero-search:focus {
+        border-color: rgba(180, 130, 255, 0.5);
+      }
+      .hrf-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.45);
+        border-radius: 999px;
+        padding: 5px 15px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.16s;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-family: "Exo 2", sans-serif;
+      }
+      .hrf-btn:hover {
+        opacity: 0.85;
+      }
+      .hrf-btn.active[data-role="all"] {
+        background: rgba(180, 130, 255, 0.18);
+        border-color: rgba(180, 130, 255, 0.45);
+        color: #cc99ff;
+      }
+      .hrf-btn.active[data-role="tank"] {
+        background: rgba(255, 165, 40, 0.15);
+        border-color: rgba(255, 165, 40, 0.4);
+        color: #ffaa44;
+      }
+      .hrf-btn.active[data-role="dps"] {
+        background: rgba(255, 100, 80, 0.15);
+        border-color: rgba(255, 100, 80, 0.35);
+        color: #ff9977;
+      }
+      .hrf-btn.active[data-role="support"] {
+        background: rgba(100, 200, 100, 0.15);
+        border-color: rgba(100, 200, 100, 0.35);
+        color: #66ee88;
+      }
+      .heroes-main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+      #hh-list {
+        width: 210px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        border-right: 1px solid rgba(180, 130, 255, 0.12);
+        padding: 10px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      #hh-list::-webkit-scrollbar {
+        width: 4px;
+      }
+      #hh-list::-webkit-scrollbar-thumb {
+        background: rgba(180, 130, 255, 0.3);
+        border-radius: 2px;
+      }
+      .hh-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 11px;
+        border-radius: 10px;
+        border: 1px solid rgba(180, 130, 255, 0.13);
+        background: rgba(255, 255, 255, 0.025);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .hh-card:hover {
+        background: rgba(180, 130, 255, 0.08);
+        border-color: rgba(180, 130, 255, 0.28);
+      }
+      .hh-card.active {
+        background: rgba(180, 130, 255, 0.16);
+        border-color: rgba(180, 130, 255, 0.5);
+        box-shadow: 0 0 14px rgba(180, 130, 255, 0.12);
+      }
+      .hh-card-ico {
+        font-size: 22px;
+        flex-shrink: 0;
+        width: 28px;
+        text-align: center;
+      }
+      .hh-card-info {
+        min-width: 0;
+      }
+      .hh-card-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 240, 200, 0.9);
+        margin-bottom: 3px;
+      }
+      .hh-card-role {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 8px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-bottom: 3px;
+      }
+      .hh-card-skill {
+        font-size: 11px;
+        color: rgba(200, 180, 230, 0.45);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .hh-empty {
+        padding: 24px 12px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.28);
+        font-size: 13px;
+      }
+      #heroes-loading {
+        padding: 32px;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.35);
+        font-size: 13px;
+      }
+      #hh-detail {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+      }
+      #hh-detail::-webkit-scrollbar {
+        width: 4px;
+      }
+      #hh-detail::-webkit-scrollbar-thumb {
+        background: rgba(180, 130, 255, 0.3);
+        border-radius: 2px;
+      }
+      .hd-placeholder {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.2);
+        font-size: 14px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .hd-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+      .hd-ico {
+        font-size: 46px;
+      }
+      .hd-meta {
+      }
+      .hd-name {
+        font-family: "Cinzel", serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: rgba(255, 240, 200, 0.95);
+        margin-bottom: 7px;
+      }
+      .hd-role-badge {
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 12px;
+        border-radius: 999px;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .hd-skill-box {
+        background: rgba(180, 130, 255, 0.06);
+        border: 1px solid rgba(180, 130, 255, 0.2);
+        border-radius: 10px;
+        padding: 13px 16px;
+        margin-bottom: 12px;
+      }
+      .hd-skill-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: rgba(255, 210, 80, 0.9);
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hd-skill-type {
+        font-size: 11px;
+        font-weight: 400;
+        color: rgba(180, 130, 255, 0.75);
+        background: rgba(180, 130, 255, 0.12);
+        padding: 2px 9px;
+        border-radius: 999px;
+      }
+      .hd-skill-desc {
+        font-size: 13px;
+        color: rgba(200, 185, 230, 0.72);
+        line-height: 1.65;
+      }
+      .hd-targeting {
+        font-size: 12px;
+        color: rgba(200, 185, 230, 0.45);
+        margin-bottom: 16px;
+      }
+      .hd-targeting strong {
+        color: rgba(180, 130, 255, 0.85);
+      }
+      .hd-table-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(180, 130, 255, 0.6);
+        margin-bottom: 8px;
+      }
+      .hd-table-wrap {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(180, 130, 255, 0.2);
+      }
+      .hd-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .hd-table thead tr {
+        background: rgba(180, 130, 255, 0.1);
+      }
+      .hd-table th {
+        padding: 9px 14px;
+        text-align: center;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: rgba(200, 180, 255, 0.6);
+        font-weight: 700;
+        border-bottom: 1px solid rgba(180, 130, 255, 0.2);
+        font-family: "Exo 2", sans-serif;
+      }
+      .hd-table th:first-child {
+        text-align: left;
+      }
+      .hd-table td {
+        padding: 9px 14px;
+        text-align: center;
+        color: rgba(230, 220, 255, 0.8);
+        border-bottom: 1px solid rgba(180, 130, 255, 0.08);
+      }
+      .hd-table td:first-child {
+        text-align: left;
+      }
+      .hd-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+      .hd-table tbody tr:hover {
+        background: rgba(180, 130, 255, 0.06);
+      }
+      .hd-lv {
+        font-weight: 700;
+        color: rgba(255, 210, 80, 0.9);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .hd-sp {
+        color: rgba(180, 130, 255, 0.9);
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -1160,14 +1895,11 @@
       </a>
 
       <div class="nav-center">
-        <button class="nav-link" onclick="toast('Shop coming soon!')">
-          <span class="nl-ico">🛒</span> Shop
+        <button class="nav-link" onclick="openGrimoire()">
+          <span class="nl-ico">📜</span> Grimoire
         </button>
-        <button class="nav-link" onclick="toast('Deck Editor coming soon!')">
-          <span class="nl-ico">✏️</span> Edit
-        </button>
-        <button class="nav-link" onclick="toast('Wallet coming soon!')">
-          <span class="nl-ico">💰</span> Wallet
+        <button class="nav-link" onclick="openHeroes()">
+          <span class="nl-ico">🧙</span> Heroes
         </button>
         <button class="nav-link" onclick="toast('Settings coming soon!')">
           <span class="nl-ico">⚙️</span> Settings
@@ -1228,9 +1960,15 @@
             <div class="cfg-row">
               <span class="cfg-lbl">Format</span>
               <div class="pills" id="ai-fmt-pills">
-                <span class="fmt-wrap"><button class="pill" data-fmt="3">BO3</button></span>
-                <span class="fmt-wrap"><button class="pill active" data-fmt="5">BO5</button></span>
-                <span class="fmt-wrap"><button class="pill" data-fmt="10">BO10</button></span>
+                <span class="fmt-wrap"
+                  ><button class="pill" data-fmt="3">BO3</button></span
+                >
+                <span class="fmt-wrap"
+                  ><button class="pill active" data-fmt="5">BO5</button></span
+                >
+                <span class="fmt-wrap"
+                  ><button class="pill" data-fmt="10">BO10</button></span
+                >
               </div>
             </div>
 
@@ -1280,9 +2018,19 @@
             <div class="cfg-row">
               <span class="cfg-lbl">Format</span>
               <div class="pills" id="pvp-fmt-pills">
-                <span class="fmt-wrap"><button class="pill" data-fmt="3" disabled>BO3</button></span>
-                <span class="fmt-wrap"><button class="pill active" data-fmt="5" disabled>BO5</button></span>
-                <span class="fmt-wrap"><button class="pill" data-fmt="10" disabled>BO10</button></span>
+                <span class="fmt-wrap"
+                  ><button class="pill" data-fmt="3" disabled>BO3</button></span
+                >
+                <span class="fmt-wrap"
+                  ><button class="pill active" data-fmt="5" disabled>
+                    BO5
+                  </button></span
+                >
+                <span class="fmt-wrap"
+                  ><button class="pill" data-fmt="10" disabled>
+                    BO10
+                  </button></span
+                >
               </div>
             </div>
 
@@ -1415,6 +2163,169 @@
           window.location.replace("/");
         };
 
+        /* ── Grimório ────────────────── */
+        window.openGrimoire = function () {
+          document.getElementById("grimoire-overlay").classList.add("open");
+        };
+        window.closeGrimoire = function () {
+          document.getElementById("grimoire-overlay").classList.remove("open");
+        };
+        window.grTab = function (idx) {
+          document
+            .querySelectorAll(".gr-tab")
+            .forEach((t, i) => t.classList.toggle("active", i === idx));
+          document
+            .querySelectorAll(".gr-chapter")
+            .forEach((c, i) => c.classList.toggle("active", i === idx));
+          document.querySelector(".gr-content").scrollTop = 0;
+        };
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            closeGrimoire();
+            closeHeroes();
+          }
+        });
+
+        /* ── Heroes ──────────────────────── */
+        let _heroData = null,
+          _heroFilter = "all",
+          _heroSearch = "",
+          _heroSelected = null;
+
+        function _roleCategory(role) {
+          if (!role) return "dps";
+          const r = role.toLowerCase();
+          if (r === "tank" || r === "paladin") return "tank";
+          if (r === "support") return "support";
+          return "dps";
+        }
+
+        window.openHeroes = async function () {
+          document.getElementById("heroes-overlay").classList.add("open");
+          if (_heroData) {
+            _renderHeroList();
+            return;
+          }
+          try {
+            const res = await fetch("/api/characters");
+            const d = await res.json();
+            if (d.ok) {
+              const order = { tank: 0, dps: 1, support: 2 };
+              _heroData = d.characters.sort(
+                (a, b) =>
+                  (order[_roleCategory(a.role)] ?? 3) -
+                  (order[_roleCategory(b.role)] ?? 3),
+              );
+            }
+          } catch (e) {
+            /* silent */
+          }
+          const ld = document.getElementById("heroes-loading");
+          if (ld) ld.remove();
+          _renderHeroList();
+        };
+
+        window.closeHeroes = function () {
+          document.getElementById("heroes-overlay").classList.remove("open");
+        };
+
+        window.setHeroFilter = function (role) {
+          _heroFilter = role;
+          document
+            .querySelectorAll(".hrf-btn")
+            .forEach((b) =>
+              b.classList.toggle("active", b.dataset.role === role),
+            );
+          _renderHeroList();
+        };
+
+        window.filterHeroes = function () {
+          _heroSearch = document
+            .getElementById("hero-search")
+            .value.toLowerCase();
+          _renderHeroList();
+        };
+
+        function _renderHeroList() {
+          if (!_heroData) return;
+          const list = document.getElementById("hh-list");
+          const filtered = _heroData.filter((h) => {
+            const matchRole =
+              _heroFilter === "all" || _roleCategory(h.role) === _heroFilter;
+            const matchSearch =
+              !_heroSearch || h.name.toLowerCase().includes(_heroSearch);
+            return matchRole && matchSearch;
+          });
+          list.innerHTML = "";
+          if (!filtered.length) {
+            list.innerHTML = '<div class="hh-empty">No heroes found</div>';
+            return;
+          }
+          filtered.forEach((h) => {
+            const cat = _roleCategory(h.role);
+            const label =
+              cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
+            const div = document.createElement("div");
+            div.className =
+              "hh-card" + (_heroSelected?.cid === h.cid ? " active" : "");
+            div.onclick = () => _selectHero(h);
+            div.innerHTML = `<div class="hh-card-ico">${h.icon}</div>
+              <div class="hh-card-info">
+                <div class="hh-card-name">${h.name}</div>
+                <div class="hh-card-role role-${cat}">${label}</div>
+                <div class="hh-card-skill">${h.skill.name}</div>
+              </div>`;
+            list.appendChild(div);
+          });
+        }
+
+        function _selectHero(h) {
+          _heroSelected = h;
+          _renderHeroList();
+          const cat = _roleCategory(h.role);
+          const label =
+            cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
+          const stars = ["★", "★★", "★★★", "★★★★", "★★★★★"];
+          const fmtSP = (v) =>
+            v < 1
+              ? `${(Math.floor(v * 1000) / 10).toFixed(1)}%`
+              : `×${(Math.floor(v * 100) / 100).toFixed(2)}`;
+          let rows = "";
+          for (let lv = 1; lv <= 5; lv++) {
+            const st = h.levels[lv];
+            if (!st) continue;
+            rows += `<tr>
+              <td class="hd-lv">${stars[lv - 1]}</td>
+              <td>${st.max_hp}</td>
+              <td>${st.atk}</td>
+              <td>${Number(st.atk_speed).toFixed(2)}</td>
+              <td>${(Math.floor(st.crit_chance * 10000) / 100).toFixed(2)}%</td>
+              <td class="hd-sp">${fmtSP(st.skill_power)}</td>
+            </tr>`;
+          }
+          document.getElementById("hh-detail").innerHTML = `
+            <div class="hd-header">
+              <div class="hd-ico">${h.icon}</div>
+              <div class="hd-meta">
+                <div class="hd-name">${h.name}</div>
+                <span class="hd-role-badge role-${cat}">${label}</span>
+              </div>
+            </div>
+            <div class="hd-skill-box">
+              <div class="hd-skill-name">${h.skill.name}<span class="hd-skill-type">${h.skill.type}</span></div>
+              <div class="hd-skill-desc">${h.skill.description}</div>
+            </div>
+            <div class="hd-table-section-title">Stats by Level</div>
+            <div class="hd-table-wrap">
+              <table class="hd-table">
+                <thead><tr>
+                  <th>Level</th><th>HP</th><th>ATK</th><th>SPD</th><th>Crit</th><th>Skill Power</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>`;
+        }
+
         /* ── Toast ───────────────────── */
         let toastTimer;
         window.toast = function (msg) {
@@ -1471,22 +2382,34 @@
         /* ── Format tooltip (fixed, escapes overflow:hidden) ── */
         (function () {
           const FMT_DATA = {
-            3:  { name: 'Best of 3',  desc: 'A duel of up to 3 battles. Each battle you build and fight.',         wins: 2 },
-            5:  { name: 'Best of 5',  desc: 'A duel of up to 5 battles. More room to adapt your strategy.',        wins: 3 },
-            10: { name: 'Best of 10', desc: 'A full duel of up to 10 battles. The ultimate test of strategy.',     wins: 6 },
+            3: {
+              name: "Best of 3",
+              desc: "A duel of up to 3 battles. Each battle you build and fight.",
+              wins: 2,
+            },
+            5: {
+              name: "Best of 5",
+              desc: "A duel of up to 5 battles. More room to adapt your strategy.",
+              wins: 3,
+            },
+            10: {
+              name: "Best of 10",
+              desc: "A full duel of up to 10 battles. The ultimate test of strategy.",
+              wins: 6,
+            },
           };
 
-          const tip = document.createElement('div');
-          tip.id = 'fmt-tooltip';
+          const tip = document.createElement("div");
+          tip.id = "fmt-tooltip";
           document.body.appendChild(tip);
 
-          document.querySelectorAll('.fmt-wrap').forEach((wrap) => {
-            const btn = wrap.querySelector('[data-fmt]');
+          document.querySelectorAll(".fmt-wrap").forEach((wrap) => {
+            const btn = wrap.querySelector("[data-fmt]");
             if (!btn) return;
             const d = FMT_DATA[parseInt(btn.dataset.fmt)];
             if (!d) return;
 
-            wrap.addEventListener('mouseenter', () => {
+            wrap.addEventListener("mouseenter", () => {
               tip.innerHTML =
                 `<span class="fmt-tip-name">${d.name}</span>` +
                 `<span class="fmt-tip-desc">${d.desc}</span>` +
@@ -1495,22 +2418,579 @@
               const r = btn.getBoundingClientRect();
               const TIP_W = 192;
               let left = r.left + r.width / 2 - TIP_W / 2;
-              let top  = r.bottom + 10;
+              let top = r.bottom + 10;
 
               // keep inside viewport horizontally
               left = Math.max(8, Math.min(left, window.innerWidth - TIP_W - 8));
               // adjust arrow x to always point at button center
-              const arrowLeft = (r.left + r.width / 2) - left;
-              tip.style.setProperty('--arrow-left', arrowLeft + 'px');
-              tip.style.left = left + 'px';
-              tip.style.top  = top  + 'px';
-              tip.classList.add('visible');
+              const arrowLeft = r.left + r.width / 2 - left;
+              tip.style.setProperty("--arrow-left", arrowLeft + "px");
+              tip.style.left = left + "px";
+              tip.style.top = top + "px";
+              tip.classList.add("visible");
             });
 
-            wrap.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+            wrap.addEventListener("mouseleave", () =>
+              tip.classList.remove("visible"),
+            );
           });
         })();
       })();
     </script>
+
+    <!-- ══════════════════ GRIMÓRIO ══════════════════ -->
+    <div
+      id="grimoire-overlay"
+      onclick="if (event.target === this) closeGrimoire();"
+    >
+      <div id="grimoire-box">
+        <div class="gr-header">
+          <div class="gr-title">📜 Grimoire — Horizon Forge</div>
+          <button class="gr-close" onclick="closeGrimoire()">✕ Close</button>
+        </div>
+
+        <div class="gr-tabs">
+          <button class="gr-tab active" onclick="grTab(0)">📖 Basics</button>
+          <button class="gr-tab" onclick="grTab(1)">
+            💰 Gold &amp; Recruit
+          </button>
+          <button class="gr-tab" onclick="grTab(2)">⚔️ Battlefield</button>
+          <button class="gr-tab" onclick="grTab(3)">✨ Combos</button>
+          <button class="gr-tab" onclick="grTab(4)">⭐ Fusion</button>
+          <button class="gr-tab" onclick="grTab(5)">💡 Strategies</button>
+        </div>
+
+        <div class="gr-content">
+          <!-- ── Ch 1: Basics ── -->
+          <div class="gr-chapter active">
+            <div class="gr-ch-title">📖 Chapter 1 — The Basics</div>
+
+            <div class="gr-section-title">🎯 Objective</div>
+            <p class="gr-p">
+              Win the most battles in a duel to be declared the winner. The
+              format determines how many victories are needed:
+              <span class="gr-hl">BO3</span> (best of 3, need 2 wins),
+              <span class="gr-hl">BO5</span> (3 wins), or
+              <span class="gr-hl">BO10</span> (6 wins).
+            </p>
+
+            <div class="gr-section-title">⚔️ What is a Battle?</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🤖</span>
+                <div>
+                  A battle is an
+                  <span class="gr-hl">automatic simulation</span>. Once heroes
+                  are placed, you control nothing — all strategy happens
+                  <em>before</em> combat begins.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">👁️</span>
+                <div>
+                  Watch the fight unfold in real time through the battle log and
+                  field animations — learn from every outcome.
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">🏆 What is a Duel?</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔁</span>
+                <div>
+                  A duel is a series of battles. Between each battle you return
+                  to the <span class="gr-hl">recruitment phase</span> — buy new
+                  heroes, merge copies, and reposition your army.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔒</span>
+                <div>
+                  You may end up
+                  <strong
+                    >identifying your opponent's positioning pattern</strong
+                  >
+                  through the matches. If this happens, adapt your strategies to
+                  counter it.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Ch 2: Gold & Recruit ── -->
+          <div class="gr-chapter">
+            <div class="gr-ch-title">💰 Chapter 2 — Gold &amp; Recruitment</div>
+
+            <div class="gr-section-title">💸 Earning Gold</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🏁</span>
+                <div>Each duel starts with <span class="gr-hl">7💰</span>.</div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">⏱️</span>
+                <div>
+                  Gold is awarded automatically between battles. Both players
+                  receive the same amount each round.
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">🛒 Recruitment Actions</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🆕</span>
+                <div>
+                  Recruiting a hero you <strong>don't own yet</strong>:
+                  <span class="gr-hl">3💰</span>. They go straight to the
+                  Barracks.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔗</span>
+                <div>
+                  Recruiting a hero you <strong>already own</strong>:
+                  <span class="gr-hl">2💰</span>. Stacks on the same card — each
+                  hero uses only 1 Barracks slot regardless of stack count.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔄</span>
+                <div>
+                  <strong>New Recruitment</strong> (reroll):
+                  <span class="gr-hl">2💰</span>. Generates 5 new heroes in the
+                  shop.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">💵</span>
+                <div>
+                  <strong>Sell hero</strong>: returns gold based on current
+                  level. Warning — unmerged copies are lost with it.
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">🖱️ Placing Heroes</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🎯</span>
+                <div>
+                  <strong>Drag</strong> a card from the Barracks to a field
+                  slot, or <strong>click the card</strong> then
+                  <strong>click the slot</strong>.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔀</span>
+                <div>
+                  You can also drag heroes already on the field to swap their
+                  positions before battle starts.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Ch 3: Battlefield ── -->
+          <div class="gr-chapter">
+            <div class="gr-ch-title">⚔️ Chapter 3 — The Battlefield</div>
+
+            <div class="gr-section-title">🗺️ The 3×3 Arena</div>
+            <p class="gr-p">
+              Each side has a grid of
+              <span class="gr-hl">3 rows × 3 columns</span>. Rows are A, B and C
+              (top to bottom). Columns indicate depth:
+              <span class="gr-hl" style="color: #66ee88">Front</span>,
+              <span class="gr-hl" style="color: #88aaff">Mid</span>, and
+              <span class="gr-hl" style="color: #c88cff">Back</span>.
+            </p>
+
+            <div class="gr-arena">
+              <div>
+                <p
+                  style="
+                    font-size: 11px;
+                    color: rgba(200, 160, 60, 0.6);
+                    text-align: center;
+                    margin-bottom: 6px;
+                    font-family: &quot;Cinzel&quot;, serif;
+                    letter-spacing: 1px;
+                  "
+                >
+                  YOUR ARMY
+                </p>
+                <div class="gr-arena-side">
+                  <div class="gr-arena-cell back">A-Back</div>
+                  <div class="gr-arena-cell mid">A-Mid</div>
+                  <div class="gr-arena-cell front">A-Front</div>
+                  <div class="gr-arena-cell back">B-Back</div>
+                  <div class="gr-arena-cell mid">B-Mid</div>
+                  <div class="gr-arena-cell front">B-Front</div>
+                  <div class="gr-arena-cell back">C-Back</div>
+                  <div class="gr-arena-cell mid">C-Mid</div>
+                  <div class="gr-arena-cell front">C-Front</div>
+                </div>
+              </div>
+              <div class="gr-arena-vs">VS</div>
+              <div>
+                <p
+                  style="
+                    font-size: 11px;
+                    color: rgba(200, 160, 60, 0.6);
+                    text-align: center;
+                    margin-bottom: 6px;
+                    font-family: &quot;Cinzel&quot;, serif;
+                    letter-spacing: 1px;
+                  "
+                >
+                  OPPONENT
+                </p>
+                <div class="gr-arena-side">
+                  <div class="gr-arena-cell front">A-Front</div>
+                  <div class="gr-arena-cell mid">A-Mid</div>
+                  <div class="gr-arena-cell back">A-Back</div>
+                  <div class="gr-arena-cell front">B-Front</div>
+                  <div class="gr-arena-cell mid">B-Mid</div>
+                  <div class="gr-arena-cell back">B-Back</div>
+                  <div class="gr-arena-cell front">C-Front</div>
+                  <div class="gr-arena-cell mid">C-Mid</div>
+                  <div class="gr-arena-cell back">C-Back</div>
+                </div>
+              </div>
+            </div>
+            <div class="gr-arena-legend">
+              <span
+                ><span class="dot" style="background: #66ee88"></span>Front —
+                absorbs damage</span
+              >
+              <span
+                ><span class="dot" style="background: #88aaff"></span>Mid —
+                versatile</span
+              >
+              <span
+                ><span class="dot" style="background: #c88cff"></span>Back —
+                protected</span
+              >
+            </div>
+
+            <div class="gr-section-title">⚡ Attack Order (SPD)</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">📋</span>
+                <div>
+                  Before battle, the game builds an
+                  <span class="gr-hl">attack queue</span> with all living heroes
+                  from both sides, sorted by speed (<span class="gr-hl"
+                    >SPD</span
+                  >) — fastest first.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔁</span>
+                <div>
+                  This queue runs in a
+                  <span class="gr-hl">continuous loop</span>: each hero attacks
+                  on their turn, and when the list ends it restarts from the
+                  top.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">💀</span>
+                <div>
+                  When a hero dies, the queue is
+                  <span class="gr-hl">rebuilt</span> on the next cycle with the
+                  survivors — the order can shift as the field empties.
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">🎯 Row Targeting</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">➡️</span>
+                <div>
+                  <strong>Row priority:</strong> each hero attacks the frontmost
+                  enemy in the <span class="gr-hl">same row</span> they occupy.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🅰️</span>
+                <div>
+                  <strong>Row A:</strong> if no enemy in row A, searches row B
+                  then row C.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🅱️</span>
+                <div>
+                  <strong>Row B:</strong> if no enemy in row B, picks
+                  <span class="gr-hl">randomly</span> between row A and row C
+                  (50/50). If only one has enemies, attacks that one.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🅲</span>
+                <div>
+                  <strong>Row C:</strong> if no enemy in row C, searches row B
+                  then row A.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Ch 4: Combos ── -->
+          <div class="gr-chapter">
+            <div class="gr-ch-title">✨ Chapter 4 — Combos</div>
+
+            <div class="gr-section-title">🤔 What is a Combo?</div>
+            <p class="gr-p">
+              When recruitment generates
+              <span class="gr-hl">2 or 3 identical adjacent heroes</span> in the
+              shop, they are highlighted with glowing borders. That's a Combo —
+              a chance to recruit multiple heroes at once for a reduced special
+              cost.
+            </p>
+
+            <div class="gr-section-title">✨ Combo 2</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">2️⃣</span>
+                <div>
+                  Two identical adjacent heroes in the shop. Special cost:
+                  <span class="gr-hl">2💰</span> for both at once (instead of
+                  6💰 separately).
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">📦</span>
+                <div>
+                  Both go to the Barracks and stack — you're already 2/3 of the
+                  way to a merge!
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">✨✨ Combo 3</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">3️⃣</span>
+                <div>
+                  Three identical adjacent heroes in the shop. Special cost:
+                  <span class="gr-hl">2💰</span> for all three at once.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">⭐</span>
+                <div>
+                  All 3 are recruited and the merge happens
+                  <strong>immediately</strong> — you walk away with a hero
+                  already evolved to <span class="gr-hl">★★</span> at no extra
+                  cost!
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">💡 Why It Matters</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">💰</span>
+                <div>
+                  Huge gold savings — 3 heroes for 2💰 vs 3×3💰 = 9💰
+                  individually.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🚀</span>
+                <div>
+                  Speeds up hero evolution, letting you field stronger units
+                  earlier in the duel.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">⚠️</span>
+                <div>
+                  Combos appear with limited probability each recruitment —
+                  always watch for the glowing borders!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Ch 5: Fusion ── -->
+          <div class="gr-chapter">
+            <div class="gr-ch-title">⭐ Chapter 5 — Fusion &amp; Evolution</div>
+
+            <div class="gr-section-title">🔄 How Fusion Works</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">📦</span>
+                <div>
+                  Stack <span class="gr-hl">3 copies</span> of the same hero (in
+                  Barracks or on the field) → automatic merge → hero levels up:
+                  <span class="gr-hl">★ → ★★</span>.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🔁</span>
+                <div>
+                  The process repeats: 3 copies of a ★★ hero → merge →
+                  <span class="gr-hl">★★★</span>, all the way to the maximum
+                  level <span class="gr-hl">★★★★★</span>.
+                </div>
+              </div>
+            </div>
+
+            <div class="gr-section-title">📈 Power Scaling</div>
+            <div class="gr-tips">
+              <div class="gr-tip">
+                <span class="gr-tip-ico">❤️</span>
+                <div>
+                  <strong>HP and ATK</strong> scale with a level multiplier:
+                  level 1 (×1.0) → level 5 (×2.2). A ★★★★★ hero has more than
+                  double the HP and ATK of their base.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">✨</span>
+                <div>
+                  <strong>Skill Power</strong> also scales with level (×1.0 at ★
+                  up to ×1.8 at ★★★★★), making abilities increasingly impactful.
+                </div>
+              </div>
+              <div class="gr-tip">
+                <span class="gr-tip-ico">🏆</span>
+                <div>
+                  A single <span class="gr-hl">★★★</span> hero is dramatically
+                  stronger than three separate
+                  <span class="gr-hl">★</span> heroes — focus on evolving rather
+                  than spreading resources.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Ch 6: Strategies ── -->
+          <div class="gr-chapter">
+            <div class="gr-ch-title">💡 Chapter 6 — Strategy Tips</div>
+
+            <div class="gr-section-title">🤖 Solo Mode (vs Bot)</div>
+            <div class="gr-strategy-tip">
+              👁️
+              <strong
+                >Analyze the enemy army before placing your heroes.</strong
+              >
+              In Solo mode you can see the opponent's field — use it to counter
+              their row positioning directly.
+            </div>
+            <div class="gr-strategy-tip">
+              ⭐ <strong>A Combo 3 early can decide the match.</strong> Fielding
+              a ★★ hero in round one creates a power lead that is very hard to
+              overcome.
+            </div>
+            <div class="gr-strategy-tip">
+              🛡️💚
+              <strong
+                >Paladin + Healer adjacent = classic sustain combo.</strong
+              >
+              The HP bonus from Sacred Aura combined with constant healing keeps
+              your team standing much longer.
+            </div>
+            <div class="gr-strategy-tip">
+              🌟
+              <strong>Place Archmage on the enemy's most populated row.</strong>
+              If the opponent stacks heroes on row B, mirror with your Archmage
+              — the chain hits everyone in front.
+            </div>
+            <div class="gr-strategy-tip">
+              🔮 <strong>Mage shines against grouped enemies.</strong> Enemies
+              close together take massive area damage — avoid clustering your
+              own heroes against an enemy Mage.
+            </div>
+            <div class="gr-strategy-tip">
+              🗡️
+              <strong>Assassin eliminates supports on the first turn.</strong>
+              Sneak Strike auto-targets the lowest HP enemy — the enemy Healer
+              often falls before ever acting.
+            </div>
+
+            <div class="gr-warning">
+              ⚠️ <strong>Note — PvP Mode:</strong> in battles against other
+              players via blockchain, you will
+              <strong>not see the opponent's field</strong> before the battle.
+              This completely changes the dynamic — building a balanced and
+              adaptable army will matter more than direct countering. Prepare
+              for the challenge!
+            </div>
+          </div>
+        </div>
+        <!-- /gr-content -->
+      </div>
+      <!-- /grimoire-box -->
+    </div>
+    <!-- /grimoire-overlay -->
+
+    <!-- ══════════════════ HEROES OVERLAY ══════════════════ -->
+    <div
+      id="heroes-overlay"
+      onclick="if (event.target === this) closeHeroes();"
+    >
+      <div id="heroes-box">
+        <div class="heroes-hdr">
+          <span class="heroes-hdr-title">🧙 Heroes</span>
+          <button class="heroes-close-btn" onclick="closeHeroes()">
+            ✕ Close
+          </button>
+        </div>
+        <div class="heroes-ctrl">
+          <input
+            type="text"
+            id="hero-search"
+            placeholder="🔍  Search hero…"
+            oninput="filterHeroes()"
+          />
+          <button
+            class="hrf-btn active"
+            data-role="all"
+            onclick="setHeroFilter('all')"
+          >
+            All
+          </button>
+          <button
+            class="hrf-btn"
+            data-role="tank"
+            onclick="setHeroFilter('tank')"
+          >
+            🛡 Tank
+          </button>
+          <button
+            class="hrf-btn"
+            data-role="dps"
+            onclick="setHeroFilter('dps')"
+          >
+            ⚔ DPS
+          </button>
+          <button
+            class="hrf-btn"
+            data-role="support"
+            onclick="setHeroFilter('support')"
+          >
+            💚 Support
+          </button>
+        </div>
+        <div class="heroes-main">
+          <div id="hh-list">
+            <div id="heroes-loading">⏳ Loading heroes…</div>
+          </div>
+          <div id="hh-detail">
+            <div class="hd-placeholder">
+              <span style="font-size: 36px; opacity: 0.4">🧙</span>
+              <span>Select a hero to see details</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- /heroes-overlay -->
   </body>
 </html>
