@@ -30,61 +30,14 @@
       }
 
       /* ── Parallax stars ── */
-      #stars,
-      #stars2,
-      #stars3 {
+      #stars-canvas {
         position: fixed;
         top: 0;
         left: 0;
+        width: 100%;
+        height: 100%;
         z-index: 0;
         pointer-events: none;
-        border-radius: 50%;
-      }
-      #stars {
-        width: 1px;
-        height: 1px;
-        background: transparent;
-        animation: animStar 50s linear infinite;
-      }
-      #stars2 {
-        width: 2px;
-        height: 2px;
-        background: transparent;
-        animation: animStar 100s linear infinite;
-      }
-      #stars3 {
-        width: 3px;
-        height: 3px;
-        background: transparent;
-        animation: animStar 150s linear infinite;
-      }
-      #stars::after,
-      #stars2::after,
-      #stars3::after {
-        content: " ";
-        position: absolute;
-        top: 2000px;
-        background: transparent;
-      }
-      #stars::after {
-        width: 1px;
-        height: 1px;
-      }
-      #stars2::after {
-        width: 2px;
-        height: 2px;
-      }
-      #stars3::after {
-        width: 3px;
-        height: 3px;
-      }
-      @keyframes animStar {
-        from {
-          transform: translateY(0px);
-        }
-        to {
-          transform: translateY(-2000px);
-        }
       }
 
       .bg-orb {
@@ -1097,15 +1050,6 @@
         display: none;
         align-items: center;
         justify-content: center;
-      }
-      /* Pause star animations while overlay is open so backdrop-filter is free */
-      .stars-paused #stars,
-      .stars-paused #stars2,
-      .stars-paused #stars3,
-      .stars-paused #stars::after,
-      .stars-paused #stars2::after,
-      .stars-paused #stars3::after {
-        animation-play-state: paused;
       }
       .search-overlay.open {
         display: flex;
@@ -2203,9 +2147,7 @@
     </style>
   </head>
   <body>
-    <div id="stars"></div>
-    <div id="stars2"></div>
-    <div id="stars3"></div>
+    <canvas id="stars-canvas"></canvas>
     <div class="bg-orb a"></div>
     <div class="bg-orb b"></div>
 
@@ -2417,25 +2359,72 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       (function () {
-        /* ── Parallax stars ─────────── */
+        /* ── Canvas stars ─────────────────────────────────────────────────
+           Replaces the old CSS box-shadow approach (580 DOM shadows) with a
+           single Canvas element rendered on the GPU via requestAnimationFrame.
+           pauseStars() / resumeStars() stop/restart the RAF loop so that
+           backdrop-filter: blur on the search overlay costs nothing.
+        ──────────────────────────────────────────────────────────────── */
         (function () {
-          function genShadows(n) {
-            const parts = [];
-            for (let i = 0; i < n; i++)
-              parts.push(
-                `${Math.floor(Math.random() * 2000)}px ${Math.floor(Math.random() * 2000)}px #FFF`,
-              );
-            return parts.join(",");
+          const canvas = document.getElementById("stars-canvas");
+          const ctx    = canvas.getContext("2d");
+
+          function resize() {
+            canvas.width  = window.innerWidth;
+            canvas.height = window.innerHeight;
           }
-          const s1 = genShadows(400);  // small stars  (was 700)
-          const s2 = genShadows(120);  // medium stars (was 200)
-          const s3 = genShadows(60);   // large stars  (was 100)
-          const tag = document.createElement("style");
-          tag.textContent =
-            `#stars{box-shadow:${s1}}#stars::after{box-shadow:${s1}}` +
-            `#stars2{box-shadow:${s2}}#stars2::after{box-shadow:${s2}}` +
-            `#stars3{box-shadow:${s3}}#stars3::after{box-shadow:${s3}}`;
-          document.head.appendChild(tag);
+          resize();
+          window.addEventListener("resize", resize);
+
+          // Three layers: small/fast, medium, large/slow
+          // Speeds match original CSS durations (2000px ÷ duration_s ÷ 60fps)
+          const layers = [
+            { count: 400, size: 1, speed: 0.67, alpha: 0.70 }, // 50s equiv
+            { count: 120, size: 2, speed: 0.33, alpha: 0.85 }, // 100s equiv
+            { count:  60, size: 3, speed: 0.22, alpha: 1.00 }, // 150s equiv
+          ];
+
+          // Pre-generate star positions per layer
+          const starLayers = layers.map(({ count, size, speed, alpha }) => {
+            const list = Array.from({ length: count }, () => ({
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+            }));
+            return { list, size, speed, alpha };
+          });
+
+          let rafId   = null;
+          let _paused = false;
+
+          function draw() {
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            for (const layer of starLayers) {
+              ctx.fillStyle = `rgba(255,255,255,${layer.alpha})`;
+              for (const s of layer.list) {
+                s.y -= layer.speed;
+                if (s.y < 0) { s.y = h; s.x = Math.random() * w; }
+                ctx.fillRect(s.x | 0, s.y | 0, layer.size, layer.size);
+              }
+            }
+            rafId = requestAnimationFrame(draw);
+          }
+
+          draw();
+
+          window.pauseStars  = function () {
+            if (_paused) return;
+            _paused = true;
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          };
+          window.resumeStars = function () {
+            if (!_paused) return;
+            _paused = false;
+            draw();
+          };
         })();
 
         /* ── Auth guard ──────────────── */
@@ -2798,7 +2787,7 @@
             window.hive_keychain.requestHandshake(() => {});
           }
 
-          document.body.classList.add("stars-paused");
+          pauseStars();
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("found");
           overlay.classList.add("open");
@@ -2866,7 +2855,7 @@
 
         function _saveAndRedirect() {
           if (!_matchData) return;
-          document.body.classList.remove("stars-paused");
+          resumeStars();
           sessionStorage.setItem(
             "hf_battle_cfg",
             JSON.stringify({
@@ -3033,7 +3022,7 @@
 
         socket.on("wager_refunded", (data) => {
           // Server sent the wager back — close overlay and notify player
-          document.body.classList.remove("stars-paused");
+          resumeStars();
           cancelSearch();
           toast(`↩️ ${data.amount} HIVE refunded. ${data.reason || ""}`);
         });
@@ -3087,7 +3076,7 @@
         /* ── Search overlay cancel ───── */
         window.cancelSearch = function () {
           _stopSearchUI();
-          document.body.classList.remove("stars-paused");
+          resumeStars();
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("open", "found", "paying");
           document.getElementById("search-timer").style.display = "";
