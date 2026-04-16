@@ -1092,10 +1092,20 @@
         position: fixed;
         inset: 0;
         z-index: 200;
-        background: rgba(4, 2, 16, 0.92);
+        background: rgba(4, 2, 16, 0.84);
+        backdrop-filter: blur(8px);
         display: none;
         align-items: center;
         justify-content: center;
+      }
+      /* Pause star animations while overlay is open so backdrop-filter is free */
+      .stars-paused #stars,
+      .stars-paused #stars2,
+      .stars-paused #stars3,
+      .stars-paused #stars::after,
+      .stars-paused #stars2::after,
+      .stars-paused #stars3::after {
+        animation-play-state: paused;
       }
       .search-overlay.open {
         display: flex;
@@ -2417,9 +2427,9 @@
               );
             return parts.join(",");
           }
-          const s1 = genShadows(700);
-          const s2 = genShadows(200);
-          const s3 = genShadows(100);
+          const s1 = genShadows(400);  // small stars  (was 700)
+          const s2 = genShadows(120);  // medium stars (was 200)
+          const s3 = genShadows(60);   // large stars  (was 100)
           const tag = document.createElement("style");
           tag.textContent =
             `#stars{box-shadow:${s1}}#stars::after{box-shadow:${s1}}` +
@@ -2788,6 +2798,7 @@
             window.hive_keychain.requestHandshake(() => {});
           }
 
+          document.body.classList.add("stars-paused");
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("found");
           overlay.classList.add("open");
@@ -2855,6 +2866,7 @@
 
         function _saveAndRedirect() {
           if (!_matchData) return;
+          document.body.classList.remove("stars-paused");
           sessionStorage.setItem(
             "hf_battle_cfg",
             JSON.stringify({
@@ -3021,6 +3033,7 @@
 
         socket.on("wager_refunded", (data) => {
           // Server sent the wager back — close overlay and notify player
+          document.body.classList.remove("stars-paused");
           cancelSearch();
           toast(`↩️ ${data.amount} HIVE refunded. ${data.reason || ""}`);
         });
@@ -3074,6 +3087,7 @@
         /* ── Search overlay cancel ───── */
         window.cancelSearch = function () {
           _stopSearchUI();
+          document.body.classList.remove("stars-paused");
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("open", "found", "paying");
           document.getElementById("search-timer").style.display = "";
