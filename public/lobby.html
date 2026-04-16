@@ -23,56 +23,16 @@
       body {
         height: 100%;
         min-height: 100vh;
-        background: #050210;
+        background:
+          radial-gradient(ellipse at 18% 28%, rgba(70, 22, 170, 0.28) 0%, transparent 55%),
+          radial-gradient(ellipse at 82% 72%, rgba(22, 50, 190, 0.20) 0%, transparent 55%),
+          radial-gradient(ellipse at 50% 50%, rgba(40, 10, 100, 0.15) 0%, transparent 70%),
+          #060213;
         font-family: "Exo 2", sans-serif;
         color: #fff;
         overflow: hidden;
       }
 
-      /* ── Parallax stars ── */
-      #stars-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 0;
-        pointer-events: none;
-      }
-
-      .bg-orb {
-        position: fixed;
-        border-radius: 50%;
-        filter: blur(110px);
-        z-index: 1;
-        pointer-events: none;
-      }
-      .bg-orb.a {
-        width: 700px;
-        height: 700px;
-        top: -250px;
-        left: -250px;
-        background: rgba(70, 22, 170, 0.13);
-        animation: oa 15s ease-in-out infinite alternate;
-      }
-      .bg-orb.b {
-        width: 600px;
-        height: 600px;
-        bottom: -200px;
-        right: -220px;
-        background: rgba(22, 50, 190, 0.1);
-        animation: ob 12s ease-in-out infinite alternate;
-      }
-      @keyframes oa {
-        to {
-          transform: translate(30px, 22px);
-        }
-      }
-      @keyframes ob {
-        to {
-          transform: translate(-26px, 18px);
-        }
-      }
 
       /* ══════════════════════════════
        TOP NAV
@@ -2147,10 +2107,6 @@
     </style>
   </head>
   <body>
-    <canvas id="stars-canvas"></canvas>
-    <div class="bg-orb a"></div>
-    <div class="bg-orb b"></div>
-
     <!-- ── TOP NAV ─────────────────────── -->
     <nav class="topnav">
       <a class="nav-logo" href="/lobby.html">
@@ -2359,74 +2315,6 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       (function () {
-        /* ── Canvas stars ─────────────────────────────────────────────────
-           Replaces the old CSS box-shadow approach (580 DOM shadows) with a
-           single Canvas element rendered on the GPU via requestAnimationFrame.
-           pauseStars() / resumeStars() stop/restart the RAF loop so that
-           backdrop-filter: blur on the search overlay costs nothing.
-        ──────────────────────────────────────────────────────────────── */
-        (function () {
-          const canvas = document.getElementById("stars-canvas");
-          const ctx    = canvas.getContext("2d");
-
-          function resize() {
-            canvas.width  = window.innerWidth;
-            canvas.height = window.innerHeight;
-          }
-          resize();
-          window.addEventListener("resize", resize);
-
-          // Three layers: small/fast, medium, large/slow
-          // Speeds match original CSS durations (2000px ÷ duration_s ÷ 60fps)
-          const layers = [
-            { count: 400, size: 1, speed: 0.67, alpha: 0.70 }, // 50s equiv
-            { count: 120, size: 2, speed: 0.33, alpha: 0.85 }, // 100s equiv
-            { count:  60, size: 3, speed: 0.22, alpha: 1.00 }, // 150s equiv
-          ];
-
-          // Pre-generate star positions per layer
-          const starLayers = layers.map(({ count, size, speed, alpha }) => {
-            const list = Array.from({ length: count }, () => ({
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }));
-            return { list, size, speed, alpha };
-          });
-
-          let rafId   = null;
-          let _paused = false;
-
-          function draw() {
-            const w = canvas.width;
-            const h = canvas.height;
-            ctx.clearRect(0, 0, w, h);
-
-            for (const layer of starLayers) {
-              ctx.fillStyle = `rgba(255,255,255,${layer.alpha})`;
-              for (const s of layer.list) {
-                s.y -= layer.speed;
-                if (s.y < 0) { s.y = h; s.x = Math.random() * w; }
-                ctx.fillRect(s.x | 0, s.y | 0, layer.size, layer.size);
-              }
-            }
-            rafId = requestAnimationFrame(draw);
-          }
-
-          draw();
-
-          window.pauseStars  = function () {
-            if (_paused) return;
-            _paused = true;
-            cancelAnimationFrame(rafId);
-            rafId = null;
-          };
-          window.resumeStars = function () {
-            if (!_paused) return;
-            _paused = false;
-            draw();
-          };
-        })();
-
         /* ── Auth guard ──────────────── */
         function getSession() {
           try {
@@ -2787,7 +2675,6 @@
             window.hive_keychain.requestHandshake(() => {});
           }
 
-          pauseStars();
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("found");
           overlay.classList.add("open");
@@ -2855,7 +2742,6 @@
 
         function _saveAndRedirect() {
           if (!_matchData) return;
-          resumeStars();
           sessionStorage.setItem(
             "hf_battle_cfg",
             JSON.stringify({
@@ -3022,7 +2908,6 @@
 
         socket.on("wager_refunded", (data) => {
           // Server sent the wager back — close overlay and notify player
-          resumeStars();
           cancelSearch();
           toast(`↩️ ${data.amount} HIVE refunded. ${data.reason || ""}`);
         });
@@ -3076,7 +2961,6 @@
         /* ── Search overlay cancel ───── */
         window.cancelSearch = function () {
           _stopSearchUI();
-          resumeStars();
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("open", "found", "paying");
           document.getElementById("search-timer").style.display = "";
