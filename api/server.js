@@ -1027,11 +1027,54 @@ async function runDailyCleanup() {
 runDailyCleanup();
 setInterval(runDailyCleanup, 24 * 60 * 60 * 1000);
 
+// ── Admin: manual prize / refund (protected by ADMIN_SECRET env var) ──────────
+// Usage: POST /api/admin/send-prize  { to, amount, type: 'liquid'|'stake', matchId }
+//        POST /api/admin/send-refund { to, amount, matchId }
+// Header: x-admin-secret: <ADMIN_SECRET>
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+
+function requireAdmin(req, res) {
+  if (!ADMIN_SECRET) { res.status(503).json({ error: 'Admin endpoint not configured (set ADMIN_SECRET)' }); return false; }
+  if (req.headers['x-admin-secret'] !== ADMIN_SECRET) { res.status(401).json({ error: 'Unauthorized' }); return false; }
+  return true;
+}
+
+app.post('/api/admin/send-prize', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { to, amount, type = 'liquid', matchId = 'manual' } = req.body;
+  if (!to || !amount) return res.status(400).json({ error: 'to and amount are required' });
+  try {
+    const key = HiveKey.fromString(HIVE_ACTIVE_KEY);
+    const amt = `${parseFloat(amount).toFixed(3)} HIVE`;
+    if (type === 'stake') {
+      await hiveClient().broadcast.transferToVesting({ from: HIVE_GAME_ACCOUNT, to, amount: amt }, key);
+    } else {
+      await hiveClient().broadcast.transfer(
+        { from: HIVE_GAME_ACCOUNT, to, amount: amt, memo: `Horizon Forge manual prize — match ${matchId}` }, key);
+    }
+    console.log(`🛠️  Admin prize: ${amt} (${type}) → ${to}`);
+    res.json({ ok: true, to, amount: amt, type });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/admin/send-refund', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const { to, amount, matchId = 'manual' } = req.body;
+  if (!to || !amount) return res.status(400).json({ error: 'to and amount are required' });
+  const r = await refundHiveWager(to, amount, matchId);
+  if (r.ok) res.json({ ok: true, to, amount });
+  else res.status(500).json({ ok: false, error: r.error });
+});
+
 // ── Start server ───────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`⚔️  Horizon Forge running on http://localhost:${PORT}`);
-  console.log(`   DB:      ${process.env.DATABASE_URL ? '✅ Connected' : '❌ DATABASE_URL not set'}`);
-  console.log(`   Sockets: ✅ Socket.io ready`);
-  console.log(`   Phase 2: ✅ Matchmaking active`);
+  console.log(`   DB:        ${process.env.DATABASE_URL ? '✅ Connected' : '❌ DATABASE_URL not set'}`);
+  console.log(`   Sockets:   ✅ Socket.io ready`);
+  console.log(`   HIVE acct: ${HIVE_GAME_ACCOUNT  ? `✅ ${HIVE_GAME_ACCOUNT}` : '❌ HIVE_GAME_ACCOUNT not set'}`);
+  console.log(`   HIVE key:  ${HIVE_ACTIVE_KEY    ? '✅ Set'                  : '❌ HIVE_ACTIVE_KEY not set'}`);
+  console.log(`   Admin:     ${ADMIN_SECRET        ? '✅ Protected'           : '⚠️  ADMIN_SECRET not set (endpoint disabled)'}`);
 });
