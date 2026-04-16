@@ -2644,8 +2644,26 @@
           toastTimer = setTimeout(() => el.classList.remove("show"), 2800);
         };
 
+        /* ── Prefs persistence helpers ── */
+        function _prefKey(name) {
+          return session?.username ? `hf_${name}_${session.username}` : `hf_${name}`;
+        }
+        function _loadPref(name, fallback) {
+          const v = localStorage.getItem(_prefKey(name));
+          return v !== null ? v : String(fallback);
+        }
+        function _savePref(name, val) {
+          localStorage.setItem(_prefKey(name), String(val));
+        }
+        function _applyPills(containerId, dataAttr, savedVal) {
+          document.getElementById(containerId).querySelectorAll(".pill").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset[dataAttr] === savedVal);
+          });
+        }
+
         /* ── AI config state ─────────── */
-        const aiCfg = { format: 5 };
+        const aiCfg = { format: Number(_loadPref("ai_fmt", 5)) };
+        _applyPills("ai-fmt-pills", "fmt", String(aiCfg.format));
 
         document
           .getElementById("ai-fmt-pills")
@@ -2658,6 +2676,7 @@
                 .forEach((p) => p.classList.remove("active"));
               btn.classList.add("active");
               aiCfg.format = Number(btn.dataset.fmt);
+              _savePref("ai_fmt", aiCfg.format);
             });
           });
 
@@ -2676,7 +2695,12 @@
           });
 
         /* ── PvP state ───────────────── */
-        const pvpCfg = { bet: 0, fmt: 5 };
+        const pvpCfg = {
+          bet: Number(_loadPref("pvp_bet", 0)),
+          fmt: Number(_loadPref("pvp_fmt", 5)),
+        };
+        _applyPills("pvp-bet-pills", "bet", String(pvpCfg.bet));
+        _applyPills("pvp-fmt-pills", "fmt", String(pvpCfg.fmt));
 
         // Enable pills and wire selection
         document
@@ -2691,6 +2715,7 @@
                 .forEach((p) => p.classList.remove("active"));
               btn.classList.add("active");
               pvpCfg.bet = Number(btn.dataset.bet);
+              _savePref("pvp_bet", pvpCfg.bet);
             });
           });
         document
@@ -2705,6 +2730,7 @@
                 .forEach((p) => p.classList.remove("active"));
               btn.classList.add("active");
               pvpCfg.fmt = Number(btn.dataset.fmt);
+              _savePref("pvp_fmt", pvpCfg.fmt);
             });
           });
         // Remove "Coming Soon" badge and enable button
