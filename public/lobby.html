@@ -2977,10 +2977,7 @@
             document.getElementById("pay-status").style.display = "block";
             document.getElementById("pay-status").textContent = `Wager: ${_matchData.wager} HIVE`;
             document.getElementById("pay-steps").style.display = "flex";
-            // Show manual button instead of auto-triggering Keychain.
-            // Auto-trigger causes both browsers to open Keychain simultaneously
-            // which freezes the machine. User clicks when ready.
-            document.getElementById("btn-send-wager").style.display = "inline-block";
+            setTimeout(window._sendKeychainTransfer, 600);
           } else {
             // ── Free match: redirect immediately ──
             overlay.classList.add("found");
