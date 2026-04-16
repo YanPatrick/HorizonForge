@@ -404,12 +404,20 @@ app.post('/api/migrate', async (_req, res) => {
         player2      TEXT,
         wager_hive   NUMERIC(10,3) NOT NULL DEFAULT 0,
         wager_type   TEXT        NOT NULL DEFAULT 'HIVE',
+        format       INT         NOT NULL DEFAULT 5,
         status       TEXT        NOT NULL DEFAULT 'waiting',
         winner       TEXT,
+        score_p1     INT         NOT NULL DEFAULT 0,
+        score_p2     INT         NOT NULL DEFAULT 0,
         created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
         resolved_at  TIMESTAMPTZ
       )
     `;
+
+    // Migrate: add new columns to existing matches table
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`.catch(() => {});
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`.catch(() => {});
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
@@ -557,8 +565,8 @@ function tryMatch() {
   };
   activeMatches.set(matchId, matchData);
 
-  sql`INSERT INTO matches (id, player1, player2, wager_hive, wager_type, status)
-      VALUES (${matchId}, ${u1}, ${u2}, ${e1.wager}, 'HIVE', ${initStatus})`
+  sql`INSERT INTO matches (id, player1, player2, wager_hive, wager_type, format, status)
+      VALUES (${matchId}, ${u1}, ${u2}, ${e1.wager}, 'HIVE', ${fmt}, ${initStatus})`
     .catch(err => console.error('[match DB insert]', err.message));
 
   e1.socket.join(matchId);
@@ -679,7 +687,9 @@ function resolveBattleRound(matchId) {
   io.to(matchId).emit('round_result', roundPayload);
 
   if (seriesOver) {
-    sql`UPDATE matches SET status='done', winner=${matchWinner}, resolved_at=now()
+    sql`UPDATE matches SET status='done', winner=${matchWinner},
+            score_p1=${m.scores[m.p1]}, score_p2=${m.scores[m.p2]},
+            resolved_at=now()
         WHERE id=${matchId}`
       .catch(err => console.error('[match update]', err.message));
 
@@ -739,6 +749,11 @@ function forfeitBattle(matchId, winner) {
     reason: 'forfeit',
   });
   if (seriesOver) {
+    sql`UPDATE matches SET status='done', winner=${winner},
+            score_p1=${m.scores[m.p1]}, score_p2=${m.scores[m.p2]},
+            resolved_at=now()
+        WHERE id=${matchId}`
+      .catch(err => console.error('[forfeit match update]', err.message));
     // Send prize to forfeit winner if match had a wager
     if (m.wager > 0 && HIVE_GAME_ACCOUNT) {
       const pot = m.wager * 2;
@@ -937,6 +952,46 @@ io.on('connection', socket => {
     }
   });
 });
+
+// ── Match history API ──────────────────────────────────────────────────────────
+// Returns last 20 completed matches for a given player (Hive ID).
+app.get('/api/matches', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ error: 'player is required' });
+  try {
+    const rows = await sql`
+      SELECT id, player1, player2, format, wager_hive, winner,
+             score_p1, score_p2, created_at, resolved_at
+        FROM matches
+       WHERE (player1 = ${player} OR player2 = ${player})
+         AND status = 'done'
+       ORDER BY resolved_at DESC
+       LIMIT 20
+    `;
+    res.json({ matches: rows });
+  } catch (err) {
+    console.error('[/api/matches]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Daily cleanup: remove match_teams older than 30 days ──────────────────────
+// Keeps the matches table (lightweight) forever for history.
+// Only purges the heavy team_json blobs that are no longer needed.
+async function runDailyCleanup() {
+  try {
+    const result = await sql`
+      DELETE FROM match_teams
+       WHERE submitted_at < now() - INTERVAL '30 days'
+    `;
+    console.log(`🧹 Cleanup: removed ${result.count ?? '?'} old match_teams rows`);
+  } catch (err) {
+    console.error('[cleanup]', err.message);
+  }
+}
+// Run once at startup then every 24 hours
+runDailyCleanup();
+setInterval(runDailyCleanup, 24 * 60 * 60 * 1000);
 
 // ── Start server ───────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
