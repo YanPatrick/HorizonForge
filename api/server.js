@@ -584,6 +584,7 @@ function tryMatch() {
     // Payment tracking (populated by wager_sent handler)
     payments:    { [u1]: false, [u2]: false },
     payoutPrefs: { [u1]: 'liquid', [u2]: 'liquid' },
+    merges:      { [u1]: 0, [u2]: 0 },
     teams: {},
     status: initStatus,
     createdAt: Date.now(),
@@ -739,6 +740,7 @@ function resolveBattleRound(matchId) {
     evs:   result.evs,
     umap:  result.umap,
     stats: result.stats,
+    merges: { [m.p1]: m.merges[m.p1] || 0, [m.p2]: m.merges[m.p2] || 0 },
   };
 
   // Store so a reconnecting player can receive it via rejoin_match
@@ -916,7 +918,7 @@ io.on('connection', socket => {
   });
 
   // Player submits their team for the current round
-  socket.on('submit_team', ({ matchId, board }) => {
+  socket.on('submit_team', ({ matchId, board, merges }) => {
     const m = activeMatches.get(matchId);
     if (!m) { socket.emit('error', { message: 'Match not found.' }); return; }
     if (m.status !== 'waiting_teams') { socket.emit('error', { message: 'Not accepting teams right now.' }); return; }
@@ -932,6 +934,7 @@ io.on('connection', socket => {
     }
 
     m.teams[connectedUser] = board;
+    if (typeof merges === 'number') m.merges[connectedUser] = merges;
 
     sql`INSERT INTO match_teams (match_id, player, battle_num, team_json)
         VALUES (${matchId}, ${connectedUser}, ${m.battleNum}, ${JSON.stringify(board)})`

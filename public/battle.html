@@ -3078,7 +3078,7 @@
           <div class="dr-stat-row">
             <div class="dr-val p" id="drs-merges">0</div>
             <div class="dr-stat-lbl">✨ Merges</div>
-            <div class="dr-val e">—</div>
+            <div class="dr-val e" id="drs-mergesE">—</div>
           </div>
         </div>
         <div class="dr-divider"></div>
@@ -3549,6 +3549,7 @@
           killsP: 0,
           killsE: 0,
           mergesP: 0,
+          mergesE: 0,
           battles: [],
         },
         lastBoardSnap: [],
@@ -4515,6 +4516,7 @@
             survP: pa.length,
             survE: ea.length,
             boardSnap: [...ps],
+            enemySnap: [...es],
           },
         };
       }
@@ -4623,7 +4625,7 @@
             `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
             "bbattle",
           );
-          pvp.socket.emit("submit_team", { matchId: pvp.matchId, board });
+          pvp.socket.emit("submit_team", { matchId: pvp.matchId, board, merges: G.duelStats.mergesP });
           return;
         }
 
@@ -4830,8 +4832,9 @@
         G.duelStats.killsP += stats.killsP;
         G.duelStats.killsE += stats.killsE;
         G.duelStats.battles.push({ winner: w });
-        // In PvP mode boardSnap isn't sent from server — keep the snap set from umap
+        // In PvP mode boardSnap/enemySnap aren't sent from server — keep the snap set from umap
         G.lastBoardSnap = stats.boardSnap || G.lastBoardSnap;
+        if (!window._PVP) G.lastEnemySnap = stats.enemySnap || G.lastEnemySnap;
 
         if (w === "p") {
           // In PvP mode score was already set by round_result handler
@@ -4923,6 +4926,12 @@
         document.getElementById("drs-killsP").textContent = G.duelStats.killsP;
         document.getElementById("drs-killsE").textContent = G.duelStats.killsE;
         document.getElementById("drs-merges").textContent = G.duelStats.mergesP;
+        const mergesEEl = document.getElementById("drs-mergesE");
+        if (window._PVP) {
+          mergesEEl.textContent = G.duelStats.mergesE;
+        } else {
+          mergesEEl.textContent = "—"; // AI doesn't merge
+        }
 
         function renderTeam(el, units) {
           el.innerHTML = "";
@@ -5170,6 +5179,12 @@
           G.lastBoardSnap = umapUnits.filter((u) => u.side === "p");
           G.lastEnemySnap = umapUnits.filter((u) => u.side === "e");
 
+          // Accumulate opponent's merges (server relays them from the opponent's submit_team)
+          const opponentName = isP1 ? data.p2 : data.p1;
+          if (data.merges && data.merges[opponentName] !== undefined) {
+            G.duelStats.mergesE = data.merges[opponentName];
+          }
+
           // Re-enable fight button (hidden while waiting)
           const fb = document.getElementById("bfight");
           if (fb) {
@@ -5259,6 +5274,7 @@
           killsP: 0,
           killsE: 0,
           mergesP: 0,
+          mergesE: 0,
           battles: [],
         };
         G.lastBoardSnap = [];
@@ -5387,6 +5403,7 @@
           killsP: 0,
           killsE: 0,
           mergesP: 0,
+          mergesE: 0,
           battles: [],
         };
         botInitDuel();
