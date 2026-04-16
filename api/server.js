@@ -63,10 +63,10 @@ async function hiveRpc(method, params) {
  * This uses condenser_api.get_account_history which is universally supported
  * by all Hive nodes (unlike get_transaction which requires an optional plugin).
  */
-async function verifyHivePayment(_txId, from, wager, matchId) {
+async function verifyHivePayment(_txId, from, wager, matchId, maxAttempts = 15) {
   const expectedPrefix = `battle_${matchId}_`;
   let lastErr;
-  for (let attempt = 0; attempt < 15; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       // Fetch last 50 ops from sender — enough to find a very recent transfer
       const history = await hiveRpc('condenser_api.get_account_history', [from, -1, 50]);
@@ -611,26 +611,52 @@ function tryMatch() {
   console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${e1.wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
 
   if (needsPayment) {
-    // Payment timeout: 2 min to confirm both wagers, then refund whoever paid
+    // Payment timeout: 2 min window. On expiry:
+    // 1. Block new wager_sent from being processed (set status to 'cancelling')
+    // 2. Wait 6s grace period for any in-progress blockchain verifications to finish
+    // 3. For any player still unregistered, do one final chain scan (3 attempts)
+    // 4. Refund everyone who paid (confirmed or found on-chain)
     setTimeout(async () => {
       const m = activeMatches.get(matchId);
       if (!m || m.status !== 'waiting_payments') return;
-      const unpaid = [u1, u2].filter(p => !m.payments[p]);
+      m.status = 'cancelling'; // block new wager_sent for this match
+      console.log(`⏰ Payment timeout for match ${matchId} — waiting 6s for in-progress verifications...`);
+
+      // Grace period: let any ongoing verifyHivePayment finish
+      await sleep(6000);
+
+      // Final chain scan for players not yet registered
+      for (const player of [u1, u2]) {
+        if (m.payments[player]) continue;
+        try {
+          const r = await verifyHivePayment('', player, m.wager, matchId, 3);
+          m.payments[player]    = true;
+          m.payoutPrefs[player] = r.payoutPref;
+          console.log(`🔍 Late payment found on-chain for ${player} — will refund`);
+        } catch {
+          // genuinely didn't pay
+        }
+      }
+
       const paid   = [u1, u2].filter(p =>  m.payments[p]);
-      console.log(`⏰ Payment timeout for match ${matchId} — unpaid: ${unpaid.join(', ')}`);
+      const unpaid = [u1, u2].filter(p => !m.payments[p]);
       activeMatches.delete(matchId);
+
       io.to(matchId).emit('match_cancelled', {
-        reason: `Payment timeout — ${unpaid.join(', ')} did not pay in time.${paid.length ? ' Refunding your wager...' : ''}`,
+        reason: unpaid.length
+          ? `Payment timeout — ${unpaid.join(', ')} did not pay.${paid.length ? ' Refunding your wager...' : ''}`
+          : 'Match cancelled. Refunding wagers...',
       });
-      // Refund players who already paid
+
       for (const player of paid) {
         const r = await refundHiveWager(player, m.wager, matchId);
         const sock = m.p1 === player ? m.s1 : m.s2;
         if (sock) {
-          if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: 'Opponent did not pay in time.' });
-          else      sock.emit('prize_error', { error: `Refund failed: ${r.error}` });
+          if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: unpaid.length ? 'Opponent did not pay in time.' : 'Match cancelled.' });
+          else      sock.emit('prize_error', { error: `Refund failed: ${r.error}. Contact support.` });
         }
       }
+      console.log(`⏰ Match ${matchId} cancelled | paid: [${paid.join(', ')}] refunded | unpaid: [${unpaid.join(', ')}]`);
     }, 120_000);
   } else {
     // No payment needed — arm team submission forfeit timer immediately
@@ -949,20 +975,32 @@ io.on('connection', socket => {
 
     try {
       const { payoutPref } = await verifyHivePayment(txId, connectedUser, m.wager, matchId);
-      m.payments[connectedUser]    = true;
-      m.payoutPrefs[connectedUser] = payoutPref;
+
+      // Re-fetch match — it may have been deleted or changed to 'cancelling' while
+      // we were waiting for blockchain confirmation (up to 45s).
+      const mNow = activeMatches.get(matchId);
+      if (!mNow || mNow.status === 'cancelling') {
+        // Match was cancelled during verification — the timeout handler will refund
+        console.log(`⚠️  Payment verified for ${connectedUser} but match ${matchId} already cancelling — timeout will refund`);
+        // Update payments on the original object so the timeout refund loop sees it
+        m.payments[connectedUser]    = true;
+        m.payoutPrefs[connectedUser] = payoutPref;
+        return;
+      }
+
+      mNow.payments[connectedUser]    = true;
+      mNow.payoutPrefs[connectedUser] = payoutPref;
       console.log(`✅ Payment confirmed: ${connectedUser} | pref: ${payoutPref}`);
 
       // Notify opponent
       socket.to(matchId).emit('opponent_paid', { username: connectedUser });
 
       // Check if both players have now paid
-      if (m.payments[m.p1] && m.payments[m.p2]) {
-        m.status = 'waiting_teams';
+      if (mNow.payments[mNow.p1] && mNow.payments[mNow.p2]) {
+        mNow.status = 'waiting_teams';
         io.to(matchId).emit('payments_confirmed', { matchId });
         console.log(`✅ Both players paid for match ${matchId} — starting match`);
-        // Arm the team submission forfeit timer now that payments are confirmed
-        armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
+        armForfeitTimer(matchId, mNow.p1, mNow.p2, ROUND_TIME_MS);
       } else {
         socket.emit('payment_accepted', { message: 'Wager confirmed! Waiting for opponent...' });
       }
