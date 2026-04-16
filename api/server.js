@@ -592,14 +592,22 @@ function tryMatch() {
     }, 120_000);
   } else {
     // No payment needed — arm team submission forfeit timer immediately
-    armForfeitTimer(matchId, u1, u2, 3 * 60 * 1000);
+    armForfeitTimer(matchId, u1, u2, ROUND_TIME_MS);
   }
 
   broadcastQueueSize();
 }
 
+const ROUND_TIME_MS = 2 * 60 * 1000; // 2 minutes per round
+
 function armForfeitTimer(matchId, u1, u2, ms) {
-  setTimeout(() => {
+  const m = activeMatches.get(matchId);
+  if (!m) return;
+  // Cancel any previously running timer for this match
+  if (m.forfeitTimer) clearTimeout(m.forfeitTimer);
+  // Notify clients so they can show a countdown
+  io.to(matchId).emit('round_timer', { ms });
+  m.forfeitTimer = setTimeout(() => {
     const m = activeMatches.get(matchId);
     if (!m || m.status !== 'waiting_teams') return;
     const missing = [u1, u2].filter(u => !m.teams[u]);
@@ -704,6 +712,8 @@ function resolveBattleRound(matchId) {
     // after the new battle has already started. The fresh round_result for the
     // new battle will be stored as soon as both teams are resolved.
     m.lastRoundResult = null;
+    // Reset the forfeit timer for the new round
+    armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
 }
 
@@ -729,12 +739,26 @@ function forfeitBattle(matchId, winner) {
     reason: 'forfeit',
   });
   if (seriesOver) {
+    // Send prize to forfeit winner if match had a wager
+    if (m.wager > 0 && HIVE_GAME_ACCOUNT) {
+      const pot = m.wager * 2;
+      const payoutPref = m.payoutPrefs[winner] || 'liquid';
+      sendHivePrize(winner, pot, payoutPref, matchId).then(result => {
+        if (result.ok) {
+          io.to(matchId).emit('prize_sent', { to: winner, amount: result.amount, type: result.payoutPref });
+        } else {
+          io.to(matchId).emit('prize_error', { error: result.error });
+        }
+      });
+    }
     activeMatches.delete(matchId);
   } else {
     m.battleNum++;
     m.teams = {};
     m.status = 'waiting_teams';
     m.lastRoundResult = null;
+    // Reset the forfeit timer for the new round
+    armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
 }
 
@@ -889,7 +913,7 @@ io.on('connection', socket => {
         io.to(matchId).emit('payments_confirmed', { matchId });
         console.log(`✅ Both players paid for match ${matchId} — starting match`);
         // Arm the team submission forfeit timer now that payments are confirmed
-        armForfeitTimer(matchId, m.p1, m.p2, 3 * 60 * 1000);
+        armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
       } else {
         socket.emit('payment_accepted', { message: 'Wager confirmed! Waiting for opponent...' });
       }
