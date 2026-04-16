@@ -5063,7 +5063,7 @@
           window.location.hostname === "127.0.0.1"
             ? "http://localhost:3000"
             : "";
-        pvp.socket = io(base);
+        pvp.socket = io(base, { transports: ['websocket'] });
 
         pvp.socket.on("connect", () => {
           pvp.socket.emit("rejoin_match", {

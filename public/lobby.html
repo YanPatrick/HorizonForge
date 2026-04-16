@@ -2740,7 +2740,9 @@
         pvpBtn.removeAttribute("disabled");
 
         /* ── Socket.io ───────────────── */
-        const socket = io();
+        // Force WebSocket transport — avoids HTTP long-polling which causes
+        // browser sluggishness while the socket is being established.
+        const socket = io({ transports: ['websocket'] });
 
         let _searchTimer = null;
         let _searchSec = 0;
@@ -2981,6 +2983,12 @@
           const reason = data?.message || data?.reason || "Payment verification failed.";
           _setPayStep("pay-step-verify", "error");
           _showPayError(reason);
+        });
+
+        socket.on("wager_refunded", (data) => {
+          // Server sent the wager back — close overlay and notify player
+          cancelSearch();
+          toast(`↩️ ${data.amount} HIVE refunded. ${data.reason || ""}`);
         });
 
         socket.on("queued", (data) => {

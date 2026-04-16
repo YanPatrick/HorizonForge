@@ -58,46 +58,71 @@ async function hiveRpc(method, params) {
  * - memo matches pattern: battle_{matchId}_liquid OR battle_{matchId}_stake
  * Retries for up to ~36 s to allow for block confirmation.
  * Returns { payoutPref: 'liquid'|'stake' } on success, throws on failure.
+ *
+ * Strategy: scan the sender's recent account history for a matching transfer.
+ * This uses condenser_api.get_account_history which is universally supported
+ * by all Hive nodes (unlike get_transaction which requires an optional plugin).
  */
-async function verifyHivePayment(txId, from, wager, matchId) {
+async function verifyHivePayment(_txId, from, wager, matchId) {
+  const expectedPrefix = `battle_${matchId}_`;
   let lastErr;
-  for (let attempt = 0; attempt < 12; attempt++) {
+  for (let attempt = 0; attempt < 15; attempt++) {
     try {
-      const tx = await hiveRpc('condenser_api.get_transaction', [txId]);
-      if (!tx || !tx.operations) throw new Error('tx_not_found');
+      // Fetch last 50 ops from sender — enough to find a very recent transfer
+      const history = await hiveRpc('condenser_api.get_account_history', [from, -1, 50]);
+      if (!Array.isArray(history)) throw new Error('tx_not_found');
 
-      const [opType, op] = tx.operations.find(([t]) => t === 'transfer') || [];
-      if (!opType) throw new Error('No transfer operation in tx');
-
-      if (op.from.toLowerCase() !== from.toLowerCase())
-        throw new Error(`Wrong sender: got ${op.from}`);
-      if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase())
-        throw new Error(`Wrong recipient: expected ${HIVE_GAME_ACCOUNT}, got ${op.to}`);
-
-      const sent = parseFloat(op.amount);
-      if (Math.abs(sent - wager) > 0.001)
-        throw new Error(`Wrong amount: expected ${wager}, got ${sent}`);
-
-      // Memo: battle_{matchId}_liquid  or  battle_{matchId}_stake
-      const expectedPrefix = `battle_${matchId}_`;
-      if (!op.memo.startsWith(expectedPrefix))
-        throw new Error(`Invalid memo: ${op.memo}`);
-
-      const payoutPref = op.memo.slice(expectedPrefix.length);
-      if (!['liquid', 'stake'].includes(payoutPref))
-        throw new Error(`Unknown payout pref in memo: ${payoutPref}`);
-
-      return { payoutPref };
+      // Walk history newest-first
+      for (let i = history.length - 1; i >= 0; i--) {
+        const [, entry] = history[i];
+        const [opType, op] = entry.op;
+        if (opType !== 'transfer') continue;
+        if (op.to.toLowerCase()   !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+        if (op.from.toLowerCase() !== from.toLowerCase()) continue;
+        const sent = parseFloat(op.amount);
+        if (Math.abs(sent - wager) > 0.001) continue;
+        if (!op.memo.startsWith(expectedPrefix)) continue;
+        const payoutPref = op.memo.slice(expectedPrefix.length);
+        if (!['liquid', 'stake'].includes(payoutPref)) continue;
+        // Found a valid matching transfer
+        console.log(`✅ Payment verified via account history: ${from} → ${HIVE_GAME_ACCOUNT} | ${op.amount} | ${op.memo}`);
+        return { payoutPref };
+      }
+      throw new Error('tx_not_found');
     } catch (err) {
       lastErr = err;
-      if (err.message === 'tx_not_found' || err.message.includes('unknown_hardfork')) {
+      if (err.message === 'tx_not_found') {
         await sleep(3000);
         continue;
       }
-      throw err; // non-retriable error
+      throw err; // non-retriable
     }
   }
-  throw new Error(`Payment verification timed out: ${lastErr?.message}`);
+  throw new Error(`Payment verification timed out after 45s: ${lastErr?.message}`);
+}
+
+/**
+ * Refund a wager back to a player (called on payment timeout or match cancellation).
+ */
+async function refundHiveWager(to, amount, matchId) {
+  if (!HIVE_GAME_ACCOUNT || !HIVE_ACTIVE_KEY) {
+    console.warn('[refund] Hive credentials not set — refund skipped');
+    return { ok: false, error: 'Server not configured for HIVE payments' };
+  }
+  try {
+    const key = HiveKey.fromString(HIVE_ACTIVE_KEY);
+    await hiveClient().broadcast.transfer({
+      from: HIVE_GAME_ACCOUNT,
+      to,
+      amount: `${parseFloat(amount).toFixed(3)} HIVE`,
+      memo: `Horizon Forge refund — match ${matchId} cancelled`,
+    }, key);
+    console.log(`↩️  Refund sent: ${amount} HIVE → ${to} | match ${matchId}`);
+    return { ok: true };
+  } catch (err) {
+    console.error(`[refund] Failed for ${to}:`, err.message);
+    return { ok: false, error: err.message };
+  }
 }
 
 /**
@@ -586,17 +611,26 @@ function tryMatch() {
   console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${e1.wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
 
   if (needsPayment) {
-    // Payment timeout: 2 min to confirm both wagers
-    setTimeout(() => {
+    // Payment timeout: 2 min to confirm both wagers, then refund whoever paid
+    setTimeout(async () => {
       const m = activeMatches.get(matchId);
       if (!m || m.status !== 'waiting_payments') return;
       const unpaid = [u1, u2].filter(p => !m.payments[p]);
-      io.to(matchId).emit('match_cancelled', {
-        reason: `Payment timeout — ${unpaid.join(', ')} did not confirm wager in time.`,
-        refundNeeded: [u1, u2].filter(p => m.payments[p]), // paid players need refund
-      });
-      activeMatches.delete(matchId);
+      const paid   = [u1, u2].filter(p =>  m.payments[p]);
       console.log(`⏰ Payment timeout for match ${matchId} — unpaid: ${unpaid.join(', ')}`);
+      activeMatches.delete(matchId);
+      io.to(matchId).emit('match_cancelled', {
+        reason: `Payment timeout — ${unpaid.join(', ')} did not pay in time.${paid.length ? ' Refunding your wager...' : ''}`,
+      });
+      // Refund players who already paid
+      for (const player of paid) {
+        const r = await refundHiveWager(player, m.wager, matchId);
+        const sock = m.p1 === player ? m.s1 : m.s2;
+        if (sock) {
+          if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: 'Opponent did not pay in time.' });
+          else      sock.emit('prize_error', { error: `Refund failed: ${r.error}` });
+        }
+      }
     }, 120_000);
   } else {
     // No payment needed — arm team submission forfeit timer immediately
