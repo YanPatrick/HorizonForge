@@ -2766,12 +2766,8 @@
         // browser sluggishness while the socket is being established.
         const socket = io({ transports: ['websocket'] });
 
-        // Pre-warm Hive Keychain connection as soon as the lobby loads.
-        // This triggers the extension to connect to Hive API nodes in background,
-        // so the connection is ready when requestTransfer is called later.
-        if (window.hive_keychain) {
-          window.hive_keychain.requestHandshake(() => {});
-        }
+        // Pre-warm Keychain when user starts searching (not at page load).
+        // Moved here so two browsers on the same machine don't warm up simultaneously.
 
         let _searchTimer = null;
         let _searchSec = 0;
@@ -2787,6 +2783,12 @@
         let _phraseTimer = null;
 
         function _startSearchUI() {
+          // Pre-warm Keychain here (user action context) so connection to
+          // Hive nodes is established before match_found fires.
+          if (window.hive_keychain && pvpCfg.bet > 0) {
+            window.hive_keychain.requestHandshake(() => {});
+          }
+
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("found");
           overlay.classList.add("open");
@@ -2892,7 +2894,7 @@
           document.getElementById("pay-status").textContent = "Payment failed";
         }
 
-        function _sendKeychainTransfer() {
+        window._sendKeychainTransfer = function _sendKeychainTransfer() {
           if (!_matchData) return;
           const { matchId, wager } = _matchData;
           const payoutPref = getPayoutPref();
