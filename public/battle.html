@@ -2489,6 +2489,80 @@
         flex-wrap: wrap;
       }
 
+      /* ── PvP submit state ── */
+      #dr-submitting {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin: 14px 0 4px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255, 200, 60, 0.06);
+        border: 1px solid rgba(255, 200, 60, 0.18);
+      }
+
+      #dr-submitting.visible {
+        display: flex;
+      }
+
+      #dr-submitting.done {
+        background: rgba(68, 220, 68, 0.07);
+        border-color: rgba(68, 220, 68, 0.22);
+      }
+
+      .dr-submit-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .dr-submit-spinner {
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 200, 60, 0.25);
+        border-top-color: #ffcc3c;
+        border-radius: 50%;
+        animation: drSpin 0.85s linear infinite;
+        flex-shrink: 0;
+      }
+
+      @keyframes drSpin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .dr-submit-spinner.done {
+        border: none;
+        animation: none;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+      }
+
+      .dr-submit-text {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        color: rgba(255, 200, 60, 0.85);
+        text-transform: uppercase;
+      }
+
+      #dr-submitting.done .dr-submit-text {
+        color: rgba(100, 230, 100, 0.9);
+      }
+
+      .dr-submit-sub {
+        font-size: 9.5px;
+        color: rgba(255, 255, 255, 0.35);
+        text-align: center;
+        line-height: 1.4;
+      }
+
       /* ════════════════════════════════════════
    HOW TO PLAY
    ════════════════════════════════════════ */
@@ -2997,6 +3071,19 @@
             <div class="dr-team-units" id="drt-e"></div>
           </div>
         </div>
+        <!-- PvP: submitting results banner (hidden until series ends in PvP) -->
+        <div id="dr-submitting">
+          <div class="dr-submit-row">
+            <div class="dr-submit-spinner" id="dr-spin"></div>
+            <div class="dr-submit-text" id="dr-submit-text">
+              Submitting results...
+            </div>
+          </div>
+          <div class="dr-submit-sub" id="dr-submit-sub">
+            Processing match outcome on the blockchain...
+          </div>
+        </div>
+
         <div class="dr-cta">
           <button class="btn gnbtn" id="dr-next-btn">🌟 Next Duel</button>
           <button
@@ -3142,6 +3229,7 @@
     </div>
 
     <!-- ══════════════════ GAME LOGIC ══════════════════ -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
       // ── Auth & battle config injected by lobby ──────────
       (function () {
@@ -3313,8 +3401,13 @@
           showStartScreen();
           // Auto-start when navigated from lobby with a pre-set format
           if (window._HF_BATTLE_CFG) {
-            startGame(window._HF_BATTLE_CFG.format);
+            const _cfg = window._HF_BATTLE_CFG;
             window._HF_BATTLE_CFG = null;
+            if (_cfg.mode === "pvp") {
+              pvpInit(_cfg);
+            } else {
+              startGame(_cfg.format || 5);
+            }
           }
         } catch (err) {
           console.error(err);
@@ -4477,6 +4570,39 @@
           log("❌ Place at least one fighter!", "lk");
           return;
         }
+
+        // ── PvP mode: submit team to server and wait ──────
+        if (window._PVP) {
+          const pvp = window._PVP;
+          // Prefix unit IDs with side token to prevent collisions in server umap.
+          // Both clients generate sequential IDs (u1, u2…) independently;
+          // without a prefix, umap[u1] from p1 would overwrite umap[u1] from p2.
+          const _pfx = pvp.isP1 ? "p1:" : "p2:";
+          pvp._idPrefix = _pfx;
+          const board = G.board.map((u) =>
+            u ? { ...u, id: _pfx + u.id } : null,
+          );
+          // Also prefix bench so merges/combos keep consistent IDs
+          G.bench = G.bench.map((u) => (u ? { ...u, id: _pfx + u.id } : null));
+          // Update board in-place so DOM render matches submitted IDs
+          G.board = G.board.map((u) => (u ? { ...u, id: _pfx + u.id } : null));
+          pvp._idsPrefixed = true;
+          const btn = document.getElementById("bfight");
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = "⏳ Waiting for opponent...";
+          }
+          G.phase = "waiting";
+          log("📤 Team submitted! Waiting for opponent...", "lr");
+          setBanner(
+            `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
+            "bbattle",
+          );
+          pvp.socket.emit("submit_team", { matchId: pvp.matchId, board });
+          return;
+        }
+
+        // ── AI mode ───────────────────────────────────────
         G.phase = "battle";
         G.enemy = G.duelEnemy.map((u) => (u ? { ...u } : null));
         G.fieldSel = null;
@@ -4679,14 +4805,16 @@
         G.duelStats.killsP += stats.killsP;
         G.duelStats.killsE += stats.killsE;
         G.duelStats.battles.push({ winner: w });
-        G.lastBoardSnap = stats.boardSnap || [];
+        // In PvP mode boardSnap isn't sent from server — keep the snap set from umap
+        G.lastBoardSnap = stats.boardSnap || G.lastBoardSnap;
 
         if (w === "p") {
-          G.duelScore.p++;
+          // In PvP mode score was already set by round_result handler
+          if (!window._PVP) G.duelScore.p++;
           G.lastBattleResult = "win";
           log(`🏆 Battle ${G.battleNum} won!`, "lr");
         } else {
-          G.duelScore.e++;
+          if (!window._PVP) G.duelScore.e++;
           G.lastBattleResult = "loss";
           log(`💔 Battle ${G.battleNum} lost!`, "lk");
         }
@@ -4717,8 +4845,16 @@
           );
           setTimeout(() => showDuelResult(pw), 500);
           nb.className = "btn gnbtn";
-          nb.textContent = "🌟 Next Duel";
-          nb.onclick = nextDuel;
+          if (window._PVP) {
+            nb.textContent = "🏠 Back to Lobby";
+            nb.onclick = () => {
+              if (window._PVP.socket) window._PVP.socket.disconnect();
+              window.location.href = "/lobby.html";
+            };
+          } else {
+            nb.textContent = "🌟 Next Duel";
+            nb.onclick = nextDuel;
+          }
         } else {
           const inc = betweenIncome();
           const sc = `${G.duelScore.p}–${G.duelScore.e}`;
@@ -4777,8 +4913,50 @@
               '<span style="font-size:11px;color:rgba(255,255,255,.25)">—</span>';
         }
         renderTeam(document.getElementById("drt-p"), G.lastBoardSnap);
-        renderTeam(document.getElementById("drt-e"), G.duelEnemy);
-        document.getElementById("dr-next-btn").onclick = nextDuel;
+        // In PvP use final-state enemy units from umap; fallback to initial board for AI
+        renderTeam(
+          document.getElementById("drt-e"),
+          G.lastEnemySnap || G.duelEnemy,
+        );
+
+        const subEl = document.getElementById("dr-submitting");
+        if (window._PVP) {
+          document.getElementById("dr-next-btn").textContent =
+            "🏠 Back to Lobby";
+          document.getElementById("dr-next-btn").onclick = () => {
+            if (window._PVP.socket) window._PVP.socket.disconnect();
+            window.location.href = "/lobby.html";
+          };
+
+          // Show "Submitting results..." banner (prep for Etapa 3 HIVE transfer)
+          const pvp = window._PVP;
+          subEl.classList.add("visible");
+          subEl.classList.remove("done");
+          document.getElementById("dr-spin").className = "dr-submit-spinner";
+          document.getElementById("dr-submit-text").textContent =
+            "Submitting results...";
+          const wagerLabel =
+            pvp.wager > 0
+              ? `${pvp.wager} HIVE will be transferred to the winner`
+              : "Friendly match — no wager to process";
+          document.getElementById("dr-submit-sub").textContent = wagerLabel;
+          // Mock: after 3s mark as done (real call happens in Etapa 3)
+          setTimeout(() => {
+            subEl.classList.add("done");
+            document.getElementById("dr-spin").className =
+              "dr-submit-spinner done";
+            document.getElementById("dr-spin").textContent = "✓";
+            document.getElementById("dr-submit-text").textContent =
+              "Results submitted!";
+            document.getElementById("dr-submit-sub").textContent =
+              pvp.wager > 0
+                ? "Transfer complete. Check your Hive wallet."
+                : "Match recorded.";
+          }, 3000);
+        } else {
+          subEl.classList.remove("visible");
+          document.getElementById("dr-next-btn").onclick = nextDuel;
+        }
         document.getElementById("duel-result").classList.add("open");
       }
 
@@ -4795,11 +4973,209 @@
 
       function confirmQuit() {
         closeQuitModal();
-        // If we came from lobby, go back to lobby; otherwise show start screen
+        if (window._PVP && window._PVP.socket) {
+          window._PVP.socket.disconnect();
+        }
         window.location.href = "/lobby.html";
       }
 
-      function startGame(fmt) {
+      // ═══════════════════════════════════════════════════
+      //  PvP MODE
+      // ═══════════════════════════════════════════════════
+
+      // Mirror board columns (col 0 ↔ col 2) for efield display.
+      // Both players build with col 2 = front (closest to VS on pfield).
+      // efield expects col 0 = front (closest to VS on efield).
+      // Mirroring converts between the two perspectives.
+      function mirrorBoard(board) {
+        if (!board) return Array(9).fill(null);
+        const result = Array(9).fill(null);
+        board.forEach((u, i) => {
+          if (!u) return;
+          result[Math.floor(i / 3) * 3 + (2 - (i % 3))] = { ...u };
+        });
+        return result;
+      }
+
+      // Flip simulate result so local player is always 'p' side
+      function pvpFlipResult({ evs, umap, stats }) {
+        const flippedUmap = {};
+        Object.entries(umap).forEach(([id, u]) => {
+          flippedUmap[id] = { ...u, side: u.side === "p" ? "e" : "p" };
+        });
+        return {
+          evs, // evs reference umap ids — sides resolved via umap
+          umap: flippedUmap,
+          stats: {
+            dmgP: stats.dmgE,
+            dmgE: stats.dmgP,
+            killsP: stats.killsE,
+            killsE: stats.killsP,
+            survP: stats.survE,
+            survE: stats.survP,
+          },
+        };
+      }
+
+      function pvpInit(cfg) {
+        const pvp = {
+          matchId: cfg.matchId,
+          opponent: cfg.opponent,
+          isP1: cfg.isP1,
+          format: cfg.format || 5,
+          wager: cfg.wager,
+          wagerType: cfg.wagerType,
+          socket: null,
+        };
+        window._PVP = pvp;
+
+        // Start the game immediately (no bot)
+        startGame(pvp.format, true /* pvpMode */);
+
+        // Connect socket and rejoin match
+        const base =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+            ? "http://localhost:3000"
+            : "";
+        pvp.socket = io(base);
+
+        pvp.socket.on("connect", () => {
+          pvp.socket.emit("rejoin_match", {
+            matchId: pvp.matchId,
+            username: window._HF_SESSION.username,
+          });
+        });
+
+        pvp.socket.on("rejoin_error", (data) => {
+          showToastBattle(data.message || "Match not found. Redirecting...");
+          setTimeout(() => {
+            window.location.href = "/lobby.html";
+          }, 2500);
+        });
+
+        // Sync state from server after reconnect — ensures battleNum and scores
+        // are correct even if the player missed one or more events.
+        pvp.socket.on("rejoin_ok", (data) => {
+          const isP1 = pvp.isP1;
+          G.battleNum = data.battleNum;
+          G.duelScore = {
+            p: isP1 ? data.scores[data.p1] : data.scores[data.p2],
+            e: isP1 ? data.scores[data.p2] : data.scores[data.p1],
+          };
+          updateHdr();
+          renderDuelBar();
+          log(`🔄 Reconnected — Battle ${data.battleNum}/${G.format}`, "lk");
+        });
+
+        pvp.socket.on("opponent_ready", () => {
+          showToastBattle("Opponent submitted their team!");
+        });
+
+        pvp.socket.on("opponent_disconnected", (data) => {
+          showToastBattle(`${data.username} disconnected. Waiting...`);
+        });
+
+        pvp.socket.on("match_cancelled", (data) => {
+          showToastBattle(data.reason || "Match cancelled.");
+          setTimeout(() => {
+            window.location.href = "/lobby.html";
+          }, 3000);
+        });
+
+        pvp.socket.on("round_result", (data) => {
+          // Determine local perspective
+          const isP1 = pvp.isP1;
+          const myBoard = isP1 ? data.p1Board : data.p2Board;
+          const enemyBoard = isP1 ? data.p2Board : data.p1Board;
+
+          // Mirror the enemy board for efield display:
+          // opponent built with col 2 as front (pfield), efield needs col 0 as front.
+          G.enemy = mirrorBoard(enemyBoard);
+          G.duelEnemy = mirrorBoard(enemyBoard);
+
+          // Build result from local perspective
+          let result = { evs: data.evs, umap: data.umap, stats: data.stats };
+          if (!isP1) result = pvpFlipResult(result);
+
+          const localWon = data.roundWinner === window._HF_SESSION.username;
+          result.winner = localWon ? "p" : "e";
+
+          // Sync battle number and score from server — source of truth for
+          // seriesOver detection in endBattle(), and for reconnection correctness.
+          G.battleNum = data.battleNum;
+          G.duelScore = {
+            p: isP1 ? data.scores[data.p1] : data.scores[data.p2],
+            e: isP1 ? data.scores[data.p2] : data.scores[data.p1],
+          };
+
+          // Snapshot final armies from umap for the result screen.
+          // After pvpFlipResult, side='p' = local player, side='e' = opponent.
+          const umapUnits = Object.values(result.umap);
+          G.lastBoardSnap = umapUnits.filter((u) => u.side === "p");
+          G.lastEnemySnap = umapUnits.filter((u) => u.side === "e");
+
+          // Re-enable fight button (hidden while waiting)
+          const fb = document.getElementById("bfight");
+          if (fb) {
+            fb.disabled = false;
+            fb.textContent = "START BATTLE";
+          }
+
+          G.phase = "battle";
+          render();
+
+          // Log start-of-battle abilities
+          log("⚔️ Battle begins!", "lr");
+          result.evs
+            .filter(
+              (e) =>
+                e.type === "ability" &&
+                e.tick === -1 &&
+                e.abilName !== "Chain Lightning",
+            )
+            .forEach((e) => {
+              const u = result.umap[e.uid];
+              log(
+                (ABILOG[e.abilName] || "✨ {n}: " + e.abilName).replace(
+                  "{n}",
+                  u ? nameTag(u) : "?",
+                ),
+                "lab",
+                true,
+              );
+            });
+
+          setBanner(
+            `⚔️ Battle ${data.battleNum}/${G.format} in progress...`,
+            "bbattle",
+          );
+          playback(result);
+        });
+
+        pvp.socket.on("prize_sent", (data) => {
+          const amount = data.amount ? `${parseFloat(data.amount).toFixed(3)} HIVE` : "prize";
+          const kind = data.type === "stake" ? "Hive Power" : "Liquid HIVE";
+          showToastBattle(`🏆 Prize sent! ${amount} as ${kind}.`);
+          log(`🏆 Prize: ${amount} (${kind}) → ${data.to}`, "lk");
+        });
+
+        pvp.socket.on("prize_error", (data) => {
+          showToastBattle(`⚠️ Prize delivery failed: ${data.error || "unknown error"}. Contact support.`);
+          log(`⚠️ Prize error: ${data.error || "unknown"}`, "lr");
+        });
+
+        pvp.socket.on("error", (data) => {
+          showToastBattle(data.message || "PvP error.");
+        });
+      }
+
+      // Small in-battle toast (log line fallback)
+      function showToastBattle(msg) {
+        log(`ℹ️ ${msg}`, "lk");
+      }
+
+      function startGame(fmt, pvpMode = false) {
         // Reset completo do estado para garantir partida limpa
         G.format = fmt;
         G.winsNeeded = fmt === 10 ? 6 : Math.ceil(fmt / 2);
@@ -4830,14 +5206,16 @@
           battles: [],
         };
         G.lastBoardSnap = [];
+        G.lastEnemySnap = null;
         document.getElementById("startscreen").style.display = "none";
         document.getElementById("game").style.display = "flex";
         document.getElementById("h-fmt").textContent = `BO${fmt}`;
-        // Limpa o log de partidas anteriores
         document.getElementById("log").innerHTML = "";
-        botInitDuel();
-        validateGameState();
-        G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+        if (!pvpMode) {
+          botInitDuel();
+          validateGameState();
+          G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+        }
         genShop();
         render();
         const logEl = document.getElementById("log");
@@ -4847,10 +5225,23 @@
           d.innerHTML = "&nbsp;";
           logEl.appendChild(d);
         }
-        log(
-          `⚔️ Format BO${fmt} | AI Opponent | Win ${G.winsNeeded} battles. You have ${START_GOLD()}💰.`,
-          "lr",
-        );
+        if (pvpMode) {
+          const pvp = window._PVP;
+          const opp = pvp?.opponent || "Opponent";
+          log(
+            `⚔️ PvP BO${fmt} | vs ${opp} | Win ${G.winsNeeded} battles. You have ${START_GOLD()}💰.`,
+            "lr",
+          );
+          log(
+            `ℹ️ Build your army, then click START BATTLE to submit your team.`,
+            "lk",
+          );
+        } else {
+          log(
+            `⚔️ Format BO${fmt} | AI Opponent | Win ${G.winsNeeded} battles. You have ${START_GOLD()}💰.`,
+            "lr",
+          );
+        }
       }
 
       function nextBattle() {
@@ -4863,9 +5254,34 @@
         G.fieldSel = null;
         G.fieldDrag = null;
         genShop();
-        botNextBattle(G.lastBattleResult === "win" ? "loss" : "win");
-        botRunTurn();
-        G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+        if (!window._PVP) {
+          botNextBattle(G.lastBattleResult === "win" ? "loss" : "win");
+          botRunTurn();
+          G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+        } else {
+          // Strip the round's ID prefix from board and bench so the next
+          // round starts with clean IDs and re-prefixes correctly on submit.
+          const pfx = window._PVP._idPrefix || "";
+          if (window._PVP._idsPrefixed && pfx) {
+            G.board = G.board.map((u) =>
+              u
+                ? {
+                    ...u,
+                    id: u.id.startsWith(pfx) ? u.id.slice(pfx.length) : u.id,
+                  }
+                : null,
+            );
+            G.bench = G.bench.map((u) =>
+              u
+                ? {
+                    ...u,
+                    id: u.id.startsWith(pfx) ? u.id.slice(pfx.length) : u.id,
+                  }
+                : null,
+            );
+            window._PVP._idsPrefixed = false;
+          }
+        }
         document.getElementById("bnext")?.remove();
         document.getElementById("bfight").style.display = "";
         const _logEl = document.getElementById("log");
@@ -4878,10 +5294,22 @@
         }
         render();
         updateHdr();
-        log(
-          `🔄 Battle ${G.battleNum}/${G.format} | Score: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | AI opponent upgraded!`,
-          "lr",
-        );
+        if (window._PVP) {
+          const pvp = window._PVP;
+          log(
+            `🔄 Battle ${G.battleNum}/${G.format} | Score: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | Build and submit your team!`,
+            "lr",
+          );
+          log(
+            `ℹ️ vs ${pvp.opponent} — place your heroes and click START BATTLE.`,
+            "lk",
+          );
+        } else {
+          log(
+            `🔄 Battle ${G.battleNum}/${G.format} | Score: ${G.duelScore.p}–${G.duelScore.e} | +${inc}💰 | AI opponent upgraded!`,
+            "lr",
+          );
+        }
       }
 
       function nextDuel() {
