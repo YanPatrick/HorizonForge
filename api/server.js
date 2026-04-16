@@ -141,8 +141,8 @@ async function sendHivePrize(winner, pot, payoutPref, matchId) {
   try {
     const key = HiveKey.fromString(HIVE_ACTIVE_KEY);
     if (payoutPref === 'stake') {
-      await hiveClient().broadcast.transferToVesting(
-        { from: HIVE_GAME_ACCOUNT, to: winner, amount: `${amount} HIVE` },
+      await hiveClient().broadcast.sendOperations(
+        [['transfer_to_vesting', { from: HIVE_GAME_ACCOUNT, to: winner, amount: `${amount} HIVE` }]],
         key
       );
     } else {
@@ -1047,7 +1047,8 @@ app.post('/api/admin/send-prize', async (req, res) => {
     const key = HiveKey.fromString(HIVE_ACTIVE_KEY);
     const amt = `${parseFloat(amount).toFixed(3)} HIVE`;
     if (type === 'stake') {
-      await hiveClient().broadcast.transferToVesting({ from: HIVE_GAME_ACCOUNT, to, amount: amt }, key);
+      await hiveClient().broadcast.sendOperations(
+        [['transfer_to_vesting', { from: HIVE_GAME_ACCOUNT, to, amount: amt }]], key);
     } else {
       await hiveClient().broadcast.transfer(
         { from: HIVE_GAME_ACCOUNT, to, amount: amt, memo: `Horizon Forge manual prize — match ${matchId}` }, key);
