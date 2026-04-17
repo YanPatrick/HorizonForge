@@ -121,132 +121,6 @@
       }
 
       /* ════════════════════════════════════════
-   START SCREEN
-   ════════════════════════════════════════ */
-      #startscreen {
-        position: fixed;
-        inset: 0;
-        background: linear-gradient(160deg, #03020e, #090520, #050414);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 300;
-      }
-
-      #ss-box {
-        background: linear-gradient(
-          160deg,
-          rgba(255, 255, 255, 0.04),
-          rgba(180, 150, 255, 0.04)
-        );
-        border: 1px solid rgba(200, 150, 255, 0.18);
-        border-radius: 24px;
-        padding: 44px 48px;
-        max-width: 500px;
-        width: 95%;
-        text-align: center;
-        box-shadow:
-          0 0 60px rgba(120, 60, 255, 0.12),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      }
-
-      .ss-title {
-        font-family: "Cinzel", serif;
-        font-size: 30px;
-        font-weight: 900;
-        background: linear-gradient(90deg, #ff88cc, #cc88ff, #88ccff, #88ffcc);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 8px;
-        letter-spacing: 1px;
-        filter: drop-shadow(0 0 20px rgba(180, 120, 255, 0.4));
-      }
-
-      .ss-sub {
-        font-size: 12.5px;
-        color: rgba(255, 255, 255, 0.5);
-        margin-bottom: 32px;
-        line-height: 1.8;
-      }
-
-      .ss-label {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: rgba(255, 255, 255, 0.3);
-        margin-bottom: 14px;
-      }
-
-      .format-btns {
-        display: flex;
-        gap: 14px;
-        justify-content: center;
-      }
-
-      .fmtbtn {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        padding: 18px 28px;
-        border-radius: 16px;
-        border: 2px solid;
-        cursor: pointer;
-        transition: all 0.25s;
-        background: rgba(255, 255, 255, 0.03);
-        min-width: 150px;
-      }
-
-      .fmtbtn:hover {
-        transform: translateY(-5px);
-        filter: brightness(1.25);
-      }
-
-      .fmtbtn.bo3 {
-        border-color: rgba(136, 204, 255, 0.4);
-        color: #88ccff;
-      }
-
-      .fmtbtn.bo3:hover {
-        background: rgba(136, 204, 255, 0.1);
-        box-shadow: 0 12px 32px rgba(136, 204, 255, 0.25);
-      }
-
-      .fmtbtn.bo5 {
-        border-color: rgba(255, 200, 50, 0.4);
-        color: #ffcc44;
-      }
-
-      .fmtbtn.bo5:hover {
-        background: rgba(255, 200, 50, 0.1);
-        box-shadow: 0 12px 32px rgba(255, 200, 50, 0.25);
-      }
-
-      .fmtbtn.bo10 {
-        border-color: rgba(255, 110, 55, 0.45);
-        color: #ff8844;
-      }
-
-      .fmtbtn.bo10:hover {
-        background: rgba(255, 110, 55, 0.1);
-        box-shadow: 0 12px 32px rgba(255, 110, 55, 0.28);
-      }
-
-      .fmtbtn-ico {
-        font-size: 30px;
-      }
-
-      .fmtbtn-title {
-        font-size: 15px;
-        font-weight: 800;
-      }
-
-      .fmtbtn-desc {
-        font-size: 10.5px;
-        opacity: 0.6;
-      }
-
       /* ════════════════════════════════════════
    GAME LAYOUT — full-height flex column
    ════════════════════════════════════════
@@ -360,20 +234,23 @@
         cursor: default;
       }
 
-      #h-timer {
+      #h-timer { display: none; }
+
+      #phase-timer {
         display: none;
-        padding: calc(3px * var(--s)) calc(9px * var(--s));
+        padding: calc(5px * var(--s)) calc(16px * var(--s));
         border-radius: 20px;
         font-weight: 700;
-        font-size: calc(10px * var(--s));
+        font-size: calc(14px * var(--s));
         background: rgba(255, 180, 30, 0.13);
         color: rgba(255, 210, 80, 0.95);
         border: 1px solid rgba(255, 180, 30, 0.4);
-        min-width: calc(46px * var(--s));
+        min-width: calc(80px * var(--s));
         text-align: center;
+        letter-spacing: 1px;
         transition: background 0.3s, color 0.3s, border-color 0.3s;
       }
-      #h-timer.timer-urgent {
+      #phase-timer.timer-urgent {
         background: rgba(255, 60, 60, 0.18);
         color: rgba(255, 100, 80, 1);
         border-color: rgba(255, 60, 60, 0.55);
@@ -1576,8 +1453,9 @@
 
       #ctrl {
         display: flex;
-        gap: calc(7px * var(--s));
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        gap: calc(6px * var(--s));
         flex-shrink: 0;
       }
 
@@ -2891,48 +2769,6 @@
   </head>
 
   <body>
-    <!-- ══════════════════ START SCREEN ══════════════════ -->
-    <div id="startscreen">
-      <div id="ss-box">
-        <div class="ss-title">⚔️ Horizon Forge</div>
-        <div class="ss-sub">
-          Fantasy Auto Battler — build your army,<br />forge merges and win epic
-          duels!
-        </div>
-        <div class="ss-label">Choose duel format</div>
-        <div class="format-btns">
-          <button class="fmtbtn bo3" onclick="startGame(3)">
-            <span class="fmtbtn-ico">⚔️</span
-            ><span class="fmtbtn-title">Best of 3</span
-            ><span class="fmtbtn-desc">Win 2 battles</span>
-          </button>
-          <button class="fmtbtn bo5" onclick="startGame(5)">
-            <span class="fmtbtn-ico">🏆</span
-            ><span class="fmtbtn-title">Best of 5</span
-            ><span class="fmtbtn-desc">Win 3 battles</span>
-          </button>
-          <button class="fmtbtn bo10" onclick="startGame(10)">
-            <span class="fmtbtn-ico">🔥</span
-            ><span class="fmtbtn-title">Best of 10</span
-            ><span class="fmtbtn-desc">Win 6 battles</span>
-          </button>
-        </div>
-        <div style="margin-top: 18px">
-          <a
-            href="/lobby.html"
-            style="
-              font-size: 11px;
-              color: rgba(160, 140, 220, 0.45);
-              text-decoration: none;
-            "
-            onmouseover="this.style.color = 'rgba(190,170,255,.75)'"
-            onmouseout="this.style.color = 'rgba(160,140,220,.45)'"
-            >← Back to Lobby</a
-          >
-        </div>
-      </div>
-    </div>
-
     <!-- ══════════════════ QUIT MODAL ══════════════════ -->
     <div
       id="quit-overlay"
@@ -3006,7 +2842,7 @@
         <div id="fields-row">
           <div class="fwrap">
             <div class="flbl flbl-row">
-              <span style="color: #88aaff">⚔ Your Army</span>
+              <span id="lbl-player" style="color: #88aaff">⚔ Your Army</span>
               <span id="army-count"></span>
             </div>
             <div class="field pf" id="pfield"></div>
@@ -3014,7 +2850,7 @@
           <div id="vs"><span class="vstxt">VS</span></div>
           <div class="fwrap">
             <div class="flbl" style="color: #ff8888">
-              ☠ Opponent (fixed this duel)
+              <span id="lbl-enemy">☠ Opponent</span>
             </div>
             <div class="field ef" id="efield"></div>
           </div>
@@ -3038,6 +2874,7 @@
             <button class="btn bbtn" id="bfight" onclick="startBattle()">
               ⚔️ Battle!
             </button>
+            <div id="phase-timer"></div>
           </div>
           <div id="log"></div>
         </div>
@@ -3331,37 +3168,15 @@
       // ═══════════════════════════════════════════════════
       //  LOADING / BOOTSTRAP
       // ═══════════════════════════════════════════════════
-      function showLoader(msg = "Loading game data...") {
-        document.getElementById("startscreen").innerHTML = `
-    <div style="text-align:center;color:rgba(255,255,255,.6);font-size:14px">
-      <div style="font-size:36px;margin-bottom:12px">⚔️</div>
-      <div style="font-size:22px;font-weight:900;background:linear-gradient(90deg,#ff88cc,#bb88ff,#88ccff);
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px">
-        Horizon Forge</div>
-      <div>${msg}</div>
-    </div>`;
+      let _loadOverlay = null;
+      function showLoader() {
+        _loadOverlay = document.createElement("div");
+        _loadOverlay.style.cssText = "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:rgba(255,255,255,.55);font-size:14px;text-align:center";
+        _loadOverlay.innerHTML = `<div><div style="font-size:36px;margin-bottom:12px">⚔️</div><div>Loading game data…</div></div>`;
+        document.body.appendChild(_loadOverlay);
       }
-      function showStartScreen() {
-        document.getElementById("startscreen").innerHTML = `
-    <div id="ss-box">
-      <div class="ss-title">⚔️ Horizon Forge</div>
-      <div class="ss-sub">Fantasy Auto Battler — build your army,<br>forge merges and win epic duels!</div>
-      <div class="ss-label">Choose duel format</div>
-      <div class="format-btns">
-        <button class="fmtbtn bo3" onclick="startGame(3)"><span class="fmtbtn-ico">⚔️</span><span class="fmtbtn-title">Best of 3</span><span class="fmtbtn-desc">Win 2 battles</span></button>
-        <button class="fmtbtn bo5" onclick="startGame(5)"><span class="fmtbtn-ico">🏆</span><span class="fmtbtn-title">Best of 5</span><span class="fmtbtn-desc">Win 3 battles</span></button>
-        <button class="fmtbtn bo10" onclick="startGame(10)"><span class="fmtbtn-ico">🔥</span><span class="fmtbtn-title">Best of 10</span><span class="fmtbtn-desc">Win 6 battles</span></button>
-      </div>
-    </div>`;
-      }
-      function showError(msg) {
-        document.getElementById("startscreen").innerHTML = `
-    <div style="text-align:center;color:#ff8888;font-size:13px;max-width:400px;padding:24px">
-      <div style="font-size:28px;margin-bottom:8px">⚠️</div>
-      <b>Could not connect to the server</b><br><br>
-      ${msg}<br><br>
-      <small style="opacity:.6">Make sure the API server is running and DATABASE_URL is set.</small>
-    </div>`;
+      function hideLoader() {
+        if (_loadOverlay) { _loadOverlay.remove(); _loadOverlay = null; }
       }
 
       function validateGameState() {
@@ -3423,8 +3238,7 @@
             };
           }
           CK = Object.keys(C);
-          showStartScreen();
-          // Auto-start when navigated from lobby with a pre-set format
+          hideLoader();
           if (window._HF_BATTLE_CFG) {
             const _cfg = window._HF_BATTLE_CFG;
             window._HF_BATTLE_CFG = null;
@@ -3433,10 +3247,18 @@
             } else {
               startGame(_cfg.format || 5);
             }
+          } else {
+            // No battle config — user landed here directly; send back to lobby
+            window.location.replace("/lobby.html");
           }
         } catch (err) {
           console.error(err);
-          showError(err.message);
+          hideLoader();
+          // Show a minimal error overlay so the user knows what went wrong
+          const ov = document.createElement("div");
+          ov.style.cssText = "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:#ff8888;font-size:13px;text-align:center;padding:24px";
+          ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>Could not connect to the server</b><br><br>${err.message}<br><br><a href="/lobby.html" style="color:#aa88ff">← Back to Lobby</a></div>`;
+          document.body.appendChild(ov);
         }
 
         // ── Drag campo → barracas (setup único) ──
@@ -4592,11 +4414,48 @@
         _tpPrev = [];
       }
 
+      // ── Global phase timer (AI mode) ──────────────────────────────────────
+      let _aiTimerInterval = null;
+
+      function startPhaseTimer(ms) {
+        if (window._PVP) return; // PvP uses server-driven timer inside pvpInit
+        stopPhaseTimer();
+        const el = document.getElementById("phase-timer");
+        if (!el) return;
+        el.style.display = "block";
+        let remaining = Math.ceil(ms / 1000);
+        function tick() {
+          const m = Math.floor(remaining / 60);
+          const s = remaining % 60;
+          el.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
+          el.classList.toggle("timer-urgent", remaining <= 30);
+          if (remaining <= 0) { stopPhaseTimer(); el.textContent = "⏱ 0:00"; }
+        }
+        tick();
+        _aiTimerInterval = setInterval(() => { remaining--; tick(); }, 1000);
+      }
+
+      function stopPhaseTimer() {
+        if (_aiTimerInterval) { clearInterval(_aiTimerInterval); _aiTimerInterval = null; }
+        const el = document.getElementById("phase-timer");
+        if (el) { el.style.display = "none"; el.classList.remove("timer-urgent"); }
+      }
+
+      function updateFieldLabels() {
+        const user = window._HF_SESSION?.username || "";
+        const pvp  = window._PVP;
+        const lp = document.getElementById("lbl-player");
+        const le = document.getElementById("lbl-enemy");
+        if (lp) lp.textContent = user ? `@${user}` : "⚔ Your Army";
+        if (le) le.textContent = pvp?.opponent ? `@${pvp.opponent}` : "☠ Bot";
+      }
+
       function startBattle() {
         if (!G.board.filter(Boolean).length) {
           log("❌ Place at least one fighter!", "lk");
           return;
         }
+        stopPhaseTimer();
 
         // ── PvP mode: submit team to server and wait ──────
         if (window._PVP) {
@@ -5107,9 +4966,9 @@
 
         function startRoundTimer(ms) {
           stopRoundTimer();
-          const el = document.getElementById("h-timer");
+          const el = document.getElementById("phase-timer");
           if (!el) return;
-          el.style.display = "inline-block";
+          el.style.display = "block";
           let remaining = Math.ceil(ms / 1000);
           function tick() {
             const m = Math.floor(remaining / 60);
@@ -5124,7 +4983,7 @@
 
         function stopRoundTimer() {
           if (_roundTimerInterval) { clearInterval(_roundTimerInterval); _roundTimerInterval = null; }
-          const el = document.getElementById("h-timer");
+          const el = document.getElementById("phase-timer");
           if (el) { el.style.display = "none"; el.classList.remove("timer-urgent"); }
         }
 
@@ -5279,7 +5138,6 @@
         };
         G.lastBoardSnap = [];
         G.lastEnemySnap = null;
-        document.getElementById("startscreen").style.display = "none";
         document.getElementById("game").style.display = "flex";
         document.getElementById("h-fmt").textContent = `BO${fmt}`;
         document.getElementById("log").innerHTML = "";
@@ -5290,6 +5148,8 @@
         }
         genShop();
         render();
+        updateFieldLabels();
+        startPhaseTimer(120000);
         const logEl = document.getElementById("log");
         for (let i = 0; i < 5; i++) {
           const d = document.createElement("div");
@@ -5301,7 +5161,7 @@
           const pvp = window._PVP;
           const opp = pvp?.opponent || "Opponent";
           log(
-            `⚔️ PvP BO${fmt} | vs ${opp} | Win ${G.winsNeeded} battles. You have ${START_GOLD()}💰.`,
+            `⚔️ PvP BO${fmt} | vs @${opp} | Win ${G.winsNeeded} battles. You have ${START_GOLD()}💰.`,
             "lr",
           );
           log(
@@ -5366,6 +5226,7 @@
         }
         render();
         updateHdr();
+        startPhaseTimer(120000);
         if (window._PVP) {
           const pvp = window._PVP;
           log(
