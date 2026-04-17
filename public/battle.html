@@ -1453,10 +1453,14 @@
 
       #ctrl {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: calc(6px * var(--s));
+        justify-content: center;
+        position: relative;
         flex-shrink: 0;
+      }
+      #phase-timer {
+        position: absolute;
+        right: calc(8px * var(--s));
       }
 
       /* ── SHOP (right) ── */
