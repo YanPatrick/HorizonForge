@@ -17,7 +17,7 @@ const HIVE_NODES = [
   'https://api.deathwing.me',
   'https://hive-api.arcange.eu',
 ];
-const PAYOUT_RATE = { liquid: 0.90, stake: 0.95 };
+const PAYOUT_RATE_FALLBACK = { liquid: 0.80, stake: 0.90 }; // fallback if DB unavailable
 
 // Lazy Hive client — only instantiated when credentials are present
 let _hive = null;
@@ -136,7 +136,14 @@ async function sendHivePrize(winner, pot, payoutPref, matchId) {
     console.warn('[prize] Hive credentials not set — prize skipped');
     return { ok: false, error: 'Server not configured for HIVE payments' };
   }
-  const rate   = PAYOUT_RATE[payoutPref] ?? 0.90;
+  let rate = PAYOUT_RATE_FALLBACK[payoutPref] ?? 0.80;
+  try {
+    const cfgKey = payoutPref === 'stake' ? 'percent_payout_stake' : 'percent_payout_liquid';
+    const [row] = await sql`SELECT value FROM horizon_forge_details WHERE key = ${cfgKey}`;
+    if (row) rate = Number(row.value) / 100;
+  } catch (e) {
+    console.warn('[prize] Could not fetch payout rate from DB — using fallback:', rate);
+  }
   const amount = (pot * rate).toFixed(3);
   try {
     const key = HiveKey.fromString(HIVE_ACTIVE_KEY);

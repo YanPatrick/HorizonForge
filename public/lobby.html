@@ -2569,6 +2569,20 @@
           });
         }
 
+        /* ── Fetch payout rates from DB ─ */
+        (async function fetchPayoutRates() {
+          try {
+            const r = await fetch("/api/config");
+            const { config } = await r.json();
+            const liq = config.percent_payout_liquid;
+            const stk = config.percent_payout_stake;
+            if (liq != null) document.getElementById("pct-liquid").textContent = `${liq}% payout`;
+            if (stk != null) document.getElementById("pct-stake").textContent  = `${stk}% payout`;
+          } catch {
+            // fallback text stays as-is if request fails
+          }
+        })();
+
         /* ── AI config state ─────────── */
         const aiCfg = { format: Number(_loadPref("ai_fmt", 5)) };
         _applyPills("ai-fmt-pills", "fmt", String(aiCfg.format));
@@ -3639,12 +3653,12 @@
               <button class="stg-pill" data-payout="liquid" onclick="selectPayout('liquid')">
                 <span class="stg-pill-ico">💧</span>
                 <span class="stg-pill-name">Hive Liquid</span>
-                <span class="stg-pill-pct">90% payout</span>
+                <span class="stg-pill-pct" id="pct-liquid">...% payout</span>
               </button>
               <button class="stg-pill" data-payout="stake" onclick="selectPayout('stake')">
                 <span class="stg-pill-ico">⚡</span>
                 <span class="stg-pill-name">Hive Power</span>
-                <span class="stg-pill-pct">95% payout</span>
+                <span class="stg-pill-pct" id="pct-stake">...% payout</span>
               </button>
             </div>
             <div class="stg-save-row">
