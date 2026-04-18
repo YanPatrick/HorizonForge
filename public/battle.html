@@ -51,7 +51,7 @@
       }
 
       body {
-        background: linear-gradient(160deg, #03020e, #090520, #050414);
+        background: url('/images/arena-forest.jpg') center / 100% 100% no-repeat fixed;
         color: #dde2ff;
         font-family: "Exo 2", system-ui, sans-serif;
         display: flex;
@@ -572,9 +572,7 @@
         padding: 0 calc(4px * var(--s));
         overflow: hidden;
         position: relative;
-        background-image: url('/images/arena-forest.jpg');
-        background-size: 100% 100%;
-        background-position: center;
+        background: transparent;
       }
 
       /* ── TURN ORDER PANEL (left column) ── */
@@ -1394,6 +1392,8 @@
         height: var(--bottom-h);
         flex-shrink: 0;
         overflow: visible;
+        background: rgba(4, 2, 18, 0.82);
+        backdrop-filter: blur(6px);
       }
 
       /* ── BARRACKS (left) ── */
