@@ -583,8 +583,9 @@
         display: flex;
         flex-direction: column;
         gap: calc(4px * var(--s));
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid rgba(200, 150, 255, 0.1);
+        background: rgba(5, 3, 20, 0.65);
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(200, 150, 255, 0.15);
         border-radius: calc(12px * var(--s));
         padding: calc(8px * var(--s)) calc(6px * var(--s));
         overflow: hidden;
@@ -783,6 +784,7 @@
         opacity: 0.4;
         text-align: center;
         font-weight: 700;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
       }
 
       .flbl-row {
@@ -856,7 +858,7 @@
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        filter: drop-shadow(0 0 8px rgba(255, 200, 100, 0.5));
+        filter: drop-shadow(0 0 8px rgba(255, 200, 100, 0.5)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
         z-index: 1;
       }
 
