@@ -573,7 +573,7 @@
         overflow: hidden;
         position: relative;
         background-image: url('/images/arena-forest.jpg');
-        background-size: cover;
+        background-size: 100% 100%;
         background-position: center;
       }
 
@@ -5615,7 +5615,11 @@
                 e.dataTransfer.setData("fromSlot", String(i));
                 e.dataTransfer.effectAllowed = "move";
                 G.fieldDrag = i;
-                setTimeout(() => el.classList.add("dragging"), 0);
+                clearAttackArrows();
+                setTimeout(() => {
+                  el.classList.add("dragging");
+                  document.querySelectorAll('#pfield .cell:not(.occ)').forEach(c => c.classList.add('dr'));
+                }, 0);
               });
               el.addEventListener("dragend", () => {
                 el.classList.remove("dragging");
@@ -6168,7 +6172,10 @@
                 e.dataTransfer.setData("benchCid", u.cid);
                 e.dataTransfer.effectAllowed = "move";
                 G.bsel = u.cid;
-                setTimeout(() => card.classList.add("dragging"), 0);
+                setTimeout(() => {
+                  card.classList.add("dragging");
+                  document.querySelectorAll('#pfield .cell:not(.occ)').forEach(c => c.classList.add('dr'));
+                }, 0);
               });
               card.addEventListener("dragend", () => {
                 card.classList.remove("dragging");
