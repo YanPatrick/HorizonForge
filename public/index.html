@@ -29,7 +29,7 @@
           #060213;
         font-family: "Exo 2", sans-serif;
         color: #fff;
-        overflow: hidden;
+        overflow-x: hidden;
       }
 
       /* ── Page center ── */
@@ -352,6 +352,10 @@
       .card-foot a:hover {
         color: rgba(175, 195, 255, 0.82);
         text-decoration: underline;
+      }
+      @media (max-width: 480px) {
+        .card { padding: 32px 22px 28px; }
+        .logo-name { font-size: 21px; letter-spacing: 2px; }
       }
     </style>
   </head>

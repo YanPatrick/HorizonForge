@@ -2,7 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>⚔️ Horizon Forge</title>
+    <title>Horizon Forge | Battle</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap");
 
@@ -234,7 +234,9 @@
         cursor: default;
       }
 
-      #h-timer { display: none; }
+      #h-timer {
+        display: none;
+      }
 
       #phase-timer {
         display: none;
@@ -248,7 +250,10 @@
         min-width: calc(80px * var(--s));
         text-align: center;
         letter-spacing: 1px;
-        transition: background 0.3s, color 0.3s, border-color 0.3s;
+        transition:
+          background 0.3s,
+          color 0.3s,
+          border-color 0.3s;
       }
       #phase-timer.timer-urgent {
         background: rgba(255, 60, 60, 0.18);
@@ -257,8 +262,13 @@
         animation: timer-pulse 0.8s ease-in-out infinite;
       }
       @keyframes timer-pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.55; }
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.55;
+        }
       }
 
       .suser {
@@ -1173,6 +1183,14 @@
       [data-uhp].hp-lo {
         color: #ff4444;
         text-shadow: 0 0 6px rgba(255, 40, 40, 0.5);
+      }
+
+      [data-uatk] {
+        transition: color 0.35s ease, text-shadow 0.35s ease;
+      }
+      [data-uatk].atk-fury {
+        color: #ff7755;
+        text-shadow: 0 0 8px rgba(255, 90, 50, 0.7);
       }
 
       .ustl {
@@ -3133,6 +3151,7 @@
 
       let C = {}; // character map keyed by cid
       let CK = []; // array of cid strings
+      let _deckPool = null; // cids restricted to active formation (null = all heroes)
       const LS = ["", "★", "★★", "★★★", "★★★★", "★★★★★"];
       const SELL = [0, 1, 2, 4, 7, 11];
       const BARRACKS_MAX = 5;
@@ -3176,12 +3195,16 @@
       let _loadOverlay = null;
       function showLoader() {
         _loadOverlay = document.createElement("div");
-        _loadOverlay.style.cssText = "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:rgba(255,255,255,.55);font-size:14px;text-align:center";
+        _loadOverlay.style.cssText =
+          "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:rgba(255,255,255,.55);font-size:14px;text-align:center";
         _loadOverlay.innerHTML = `<div><div style="font-size:36px;margin-bottom:12px">⚔️</div><div>Loading game data…</div></div>`;
         document.body.appendChild(_loadOverlay);
       }
       function hideLoader() {
-        if (_loadOverlay) { _loadOverlay.remove(); _loadOverlay = null; }
+        if (_loadOverlay) {
+          _loadOverlay.remove();
+          _loadOverlay = null;
+        }
       }
 
       function validateGameState() {
@@ -3247,6 +3270,9 @@
           if (window._HF_BATTLE_CFG) {
             const _cfg = window._HF_BATTLE_CFG;
             window._HF_BATTLE_CFG = null;
+            // Restrict shop pool to active formation if provided
+            const _fids = _cfg.formationHeroIds;
+            _deckPool = Array.isArray(_fids) && _fids.length ? [..._fids] : null;
             if (_cfg.mode === "pvp") {
               pvpInit(_cfg);
             } else {
@@ -3261,7 +3287,8 @@
           hideLoader();
           // Show a minimal error overlay so the user knows what went wrong
           const ov = document.createElement("div");
-          ov.style.cssText = "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:#ff8888;font-size:13px;text-align:center;padding:24px";
+          ov.style.cssText =
+            "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:#ff8888;font-size:13px;text-align:center;padding:24px";
           ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>Could not connect to the server</b><br><br>${err.message}<br><br><a href="/lobby.html" style="color:#aa88ff">← Back to Lobby</a></div>`;
           document.body.appendChild(ov);
         }
@@ -3344,6 +3371,12 @@
         u.skillPower = st.skill_power;
         u.id = "u" + ++_uid;
         return u;
+      }
+
+      // Player shop draws only from the active deck pool (formation), bot uses full CK
+      function playerRandCid() {
+        const pool = _deckPool || CK;
+        return pool[rnd(pool.length)];
       }
 
       // ═══════════════════════════════════════════════════
@@ -3487,21 +3520,21 @@
         const slots = [];
         const r = Math.random();
         if (r < HF.value_chance_combo3) {
-          const cid = randCid();
+          const cid = playerRandCid();
           slots.push(
             mkUnit(cid, 1),
             mkUnit(cid, 1),
             mkUnit(cid, 1),
-            mkUnit(randCid(), 1),
-            mkUnit(randCid(), 1),
+            mkUnit(playerRandCid(), 1),
+            mkUnit(playerRandCid(), 1),
           );
         } else if (r < HF.value_chance_combo3 + HF.value_chance_combo2) {
           const pos = Math.floor(Math.random() * 4),
-            cid = randCid();
+            cid = playerRandCid();
           for (let i = 0; i < 5; i++)
-            slots.push(mkUnit(i === pos || i === pos + 1 ? cid : randCid(), 1));
+            slots.push(mkUnit(i === pos || i === pos + 1 ? cid : playerRandCid(), 1));
         } else {
-          for (let i = 0; i < 5; i++) slots.push(mkUnit(randCid(), 1));
+          for (let i = 0; i < 5; i++) slots.push(mkUnit(playerRandCid(), 1));
         }
         G.shop = slots;
         _detectCombos();
@@ -3619,7 +3652,7 @@
       function _slideShop(idx) {
         if (idx < 0 || idx >= 5) return; // Proteção
         for (let i = idx; i < 4; i++) G.shop[i] = G.shop[i + 1];
-        G.shop[4] = mkUnit(randCid(), 1);
+        G.shop[4] = mkUnit(playerRandCid(), 1);
         _detectCombos();
       }
 
@@ -3663,7 +3696,7 @@
           .sort((a, b) => b - a)
           .forEach((i) => {
             for (let j = i; j < 4; j++) G.shop[j] = G.shop[j + 1];
-            G.shop[4] = mkUnit(randCid(), 1);
+            G.shop[4] = mkUnit(playerRandCid(), 1);
           });
         _detectCombos();
         render();
@@ -4434,21 +4467,33 @@
           const s = remaining % 60;
           el.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
           el.classList.toggle("timer-urgent", remaining <= 30);
-          if (remaining <= 0) { stopPhaseTimer(); el.textContent = "⏱ 0:00"; }
+          if (remaining <= 0) {
+            stopPhaseTimer();
+            el.textContent = "⏱ 0:00";
+          }
         }
         tick();
-        _aiTimerInterval = setInterval(() => { remaining--; tick(); }, 1000);
+        _aiTimerInterval = setInterval(() => {
+          remaining--;
+          tick();
+        }, 1000);
       }
 
       function stopPhaseTimer() {
-        if (_aiTimerInterval) { clearInterval(_aiTimerInterval); _aiTimerInterval = null; }
+        if (_aiTimerInterval) {
+          clearInterval(_aiTimerInterval);
+          _aiTimerInterval = null;
+        }
         const el = document.getElementById("phase-timer");
-        if (el) { el.style.display = "none"; el.classList.remove("timer-urgent"); }
+        if (el) {
+          el.style.display = "none";
+          el.classList.remove("timer-urgent");
+        }
       }
 
       function updateFieldLabels() {
         const user = window._HF_SESSION?.username || "";
-        const pvp  = window._PVP;
+        const pvp = window._PVP;
         const lp = document.getElementById("lbl-player");
         const le = document.getElementById("lbl-enemy");
         if (lp) lp.textContent = user ? `@${user}` : "⚔ Your Army";
@@ -4489,7 +4534,11 @@
             `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
             "bbattle",
           );
-          pvp.socket.emit("submit_team", { matchId: pvp.matchId, board, merges: G.duelStats.mergesP });
+          pvp.socket.emit("submit_team", {
+            matchId: pvp.matchId,
+            board,
+            merges: G.duelStats.mergesP,
+          });
           return;
         }
 
@@ -4609,6 +4658,15 @@
           }
         }
 
+        function updAtk(u) {
+          const el = gEl(u);
+          if (!el) return;
+          const atkNum = el.querySelector("[data-uatk]");
+          if (!atkNum) return;
+          atkNum.textContent = u.atk;
+          atkNum.classList.add("atk-fury");
+        }
+
         function frame() {
           if (fi >= tks.length) {
             hideTurnPanel();
@@ -4628,6 +4686,7 @@
               !seen.has(ev.uid + ev.abilName)
             ) {
               seen.add(ev.uid + ev.abilName);
+              if (ev.abilName === "Fury" && u) updAtk(u);
               log(
                 (ABILOG[ev.abilName] || "✨ {n}: " + ev.abilName).replace(
                   "{n}",
@@ -4936,7 +4995,7 @@
           window.location.hostname === "127.0.0.1"
             ? "http://localhost:3000"
             : "";
-        pvp.socket = io(base, { transports: ['websocket'] });
+        pvp.socket = io(base, { transports: ["websocket"] });
 
         pvp.socket.on("connect", () => {
           pvp.socket.emit("rejoin_match", {
@@ -4980,16 +5039,28 @@
             const s = remaining % 60;
             el.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
             el.classList.toggle("timer-urgent", remaining <= 30);
-            if (remaining <= 0) { stopRoundTimer(); el.textContent = "⏱ 0:00"; }
+            if (remaining <= 0) {
+              stopRoundTimer();
+              el.textContent = "⏱ 0:00";
+            }
           }
           tick();
-          _roundTimerInterval = setInterval(() => { remaining--; tick(); }, 1000);
+          _roundTimerInterval = setInterval(() => {
+            remaining--;
+            tick();
+          }, 1000);
         }
 
         function stopRoundTimer() {
-          if (_roundTimerInterval) { clearInterval(_roundTimerInterval); _roundTimerInterval = null; }
+          if (_roundTimerInterval) {
+            clearInterval(_roundTimerInterval);
+            _roundTimerInterval = null;
+          }
           const el = document.getElementById("phase-timer");
-          if (el) { el.style.display = "none"; el.classList.remove("timer-urgent"); }
+          if (el) {
+            el.style.display = "none";
+            el.classList.remove("timer-urgent");
+          }
         }
 
         pvp.socket.on("round_timer", (data) => {
@@ -5089,14 +5160,18 @@
         });
 
         pvp.socket.on("prize_sent", (data) => {
-          const amount = data.amount ? `${parseFloat(data.amount).toFixed(3)} HIVE` : "prize";
+          const amount = data.amount
+            ? `${parseFloat(data.amount).toFixed(3)} HIVE`
+            : "prize";
           const kind = data.type === "stake" ? "Hive Power" : "Liquid HIVE";
           showToastBattle(`🏆 Prize sent! ${amount} as ${kind}.`);
           log(`🏆 Prize: ${amount} (${kind}) → ${data.to}`, "lk");
         });
 
         pvp.socket.on("prize_error", (data) => {
-          showToastBattle(`⚠️ Prize delivery failed: ${data.error || "unknown error"}. Contact support.`);
+          showToastBattle(
+            `⚠️ Prize delivery failed: ${data.error || "unknown error"}. Contact support.`,
+          );
           log(`⚠️ Prize error: ${data.error || "unknown"}`, "lr");
         });
 
@@ -5179,6 +5254,9 @@
             "lr",
           );
         }
+        if (_deckPool) {
+          log(`🛡️ Deck active — recruitment shows only your formation heroes.`, "lk");
+        }
       }
 
       function nextBattle() {
@@ -5196,6 +5274,8 @@
           botRunTurn();
           G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
         } else {
+          // Hide opponent's board during shop phase — only revealed when battle starts.
+          G.duelEnemy = Array(9).fill(null);
           // Strip the round's ID prefix from board and bench so the next
           // round starts with clean IDs and re-prefixes correctly on submit.
           const pfx = window._PVP._idPrefix || "";
@@ -5493,7 +5573,7 @@
             const hpBonus = auraBonus[i] || 0;
             const hpDisplay = hpBonus > 0 ? u.hp + hpBonus : u.hp;
             const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}" data-uhp>${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv">${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
+            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}" data-uhp>${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv" data-uatk>${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
 
             const tipHtml = generateSkillTooltipHtml(u);
             el.addEventListener("dragstart", () => SkillTip.hide());
@@ -5750,19 +5830,21 @@
         },
         sacred_aura: {
           name: "Sacred Aura",
-          desc: "At battle start, grants adjacent allies a max HP bonus. Buff persists even if paladin dies.",
+          desc: "At battle start, grants adjacent allies, max HP bonus. Buff persists even paladin dies.",
           format: (skillPower, level) => {
             return `Adjacent allies gain +${Math.floor(skillPower * 100)}% max HP bonus`;
           },
         },
         chain_lightning: {
           name: "Chain Lightning",
-          desc: "Horizontal line attack, 3 tiles. The attack hits the primary target dealing 100% damage; subsequent targets receive reduced damage.",
+          desc: "Horizontal line attack. Full damage on first target. Subsequent targets receive reduced damage.",
           format: (skillPower, level, atk) => {
             const dmg1 = atk;
             const dmg2 = Math.floor(atk * skillPower);
             const dmg3 = Math.floor((atk * skillPower) / 2);
-            return `1º target: ${dmg1}. 2º target: ${dmg2} (${Math.floor(skillPower * 100)}%). 3º target: ${dmg3} (${Math.floor(skillPower * 50)}%)`;
+            return `1º target: ${dmg1}<br>
+                    2º target: ${dmg2} (${Math.floor(skillPower * 100)}%)<br>
+                    3º target: ${dmg3} (${Math.floor(skillPower * 50)}%)`;
           },
         },
         fury: {
@@ -5813,16 +5895,16 @@
         const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
 
         return `
-          <div class="stp-header">
-            <span class="stp-icon">${icon}</span>
-            <span class="stp-name">${skillInfo.name}</span>
-          </div>
-          <div class="stp-divider"></div>
-          <div class="stp-desc">${skillInfo.desc}</div>
-          <div class="stp-power">
-            <span class="stp-power-label">Current Effect</span>
-            <span class="stp-power-value">${calculatedValue}</span>
-          </div>`;
+                <div class="stp-header">
+                  <span class="stp-icon">${icon}</span>
+                  <span class="stp-name">${skillInfo.name}</span>
+                </div>
+                <div class="stp-divider"></div>
+                <div class="stp-desc">${skillInfo.desc}</div>
+                <div class="stp-power">
+                  <span class="stp-power-label">Current Effect</span>
+                  <span class="stp-power-value">${calculatedValue}</span>
+                </div>`;
       }
 
       const SkillTip = (() => {

@@ -493,9 +493,57 @@ app.post('/api/migrate', async (_req, res) => {
       )
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS formations (
+        player      TEXT NOT NULL,
+        slot        INT  NOT NULL CHECK (slot BETWEEN 1 AND 3),
+        name        TEXT NOT NULL DEFAULT '',
+        hero_ids    JSONB NOT NULL DEFAULT '[]',
+        updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (player, slot)
+      )
+    `;
+
     res.json({ ok: true, message: 'Migration complete.' });
   } catch (err) {
     console.error('[/api/migrate]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/formations?player=X
+ */
+app.get('/api/formations', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  try {
+    const rows = await sql`SELECT slot, name, hero_ids FROM formations WHERE player = ${player} ORDER BY slot`;
+    res.json({ ok: true, formations: rows });
+  } catch (err) {
+    console.error('[/api/formations GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * PUT /api/formations
+ * Body: { player, slot, name, hero_ids }
+ */
+app.put('/api/formations', async (req, res) => {
+  const { player, slot, name, hero_ids } = req.body;
+  if (!player || !slot) return res.status(400).json({ ok: false, error: 'player and slot required' });
+  if (slot < 1 || slot > 3) return res.status(400).json({ ok: false, error: 'slot must be 1-3' });
+  try {
+    await sql`
+      INSERT INTO formations (player, slot, name, hero_ids, updated_at)
+      VALUES (${player}, ${slot}, ${name ?? ''}, ${JSON.stringify(hero_ids ?? [])}, now())
+      ON CONFLICT (player, slot) DO UPDATE
+        SET name = EXCLUDED.name, hero_ids = EXCLUDED.hero_ids, updated_at = now()
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/formations PUT]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
