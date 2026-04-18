@@ -661,21 +661,21 @@ function tryMatch() {
     format: fmt,
     needsPayment,
     gameAccount: HIVE_GAME_ACCOUNT,
-    timeLimitMs: needsPayment ? 120_000 : 3 * 60 * 1000,
+    timeLimitMs: needsPayment ? 30_000 : 3 * 60 * 1000,
   });
 
   console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${e1.wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
 
   if (needsPayment) {
-    // Payment timeout: 2 min window. On expiry:
-    // 1. Block new wager_sent from being processed (set status to 'cancelling')
-    // 2. Wait 6s grace period for any in-progress blockchain verifications to finish
-    // 3. For any player still unregistered, do one final chain scan (3 attempts)
-    // 4. Refund everyone who paid (confirmed or found on-chain)
+    // Payment timeout: 30s window. On expiry:
+    // 1. Block new wager_sent (set status to 'cancelling')
+    // 2. Wait 6s grace period for any in-progress blockchain verifications
+    // 3. Final chain scan for unpaid players (3 attempts)
+    // 4. Refund paid players; re-queue unpaid players to restart matchmaking
     setTimeout(async () => {
       const m = activeMatches.get(matchId);
       if (!m || m.status !== 'waiting_payments') return;
-      m.status = 'cancelling'; // block new wager_sent for this match
+      m.status = 'cancelling';
       console.log(`⏰ Payment timeout for match ${matchId} — waiting 6s for in-progress verifications...`);
 
       // Grace period: let any ongoing verifyHivePayment finish
@@ -700,20 +700,40 @@ function tryMatch() {
 
       io.to(matchId).emit('match_cancelled', {
         reason: unpaid.length
-          ? `Payment timeout — ${unpaid.join(', ')} did not pay.${paid.length ? ' Refunding your wager...' : ''}`
+          ? `Payment timeout — ${unpaid.join(', ')} did not confirm in time.${paid.length ? ' Refunding your wager...' : ''}`
           : 'Match cancelled. Refunding wagers...',
       });
 
+      // Re-queue players who didn't pay — send them back to matchmaking
+      for (const player of unpaid) {
+        const sock = m.p1 === player ? m.s1 : m.s2;
+        if (sock && sock.connected) {
+          matchQueue.set(player, {
+            socket: sock,
+            wager:  m.wager,
+            wagerType: 'HIVE',
+            format: m.format,
+            joinedAt: Date.now(),
+          });
+          sock.emit('requeued', { queueSize: matchQueue.size });
+        }
+      }
+      if (unpaid.length) {
+        tryMatch();
+        broadcastQueueSize();
+      }
+
+      // Refund players who already paid
       for (const player of paid) {
         const r = await refundHiveWager(player, m.wager, matchId);
         const sock = m.p1 === player ? m.s1 : m.s2;
         if (sock) {
-          if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: unpaid.length ? 'Opponent did not pay in time.' : 'Match cancelled.' });
+          if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: unpaid.length ? 'Opponent did not confirm payment in time.' : 'Match cancelled.' });
           else      sock.emit('prize_error', { error: `Refund failed: ${r.error}. Contact support.` });
         }
       }
-      console.log(`⏰ Match ${matchId} cancelled | paid: [${paid.join(', ')}] refunded | unpaid: [${unpaid.join(', ')}]`);
-    }, 120_000);
+      console.log(`⏰ Match ${matchId} cancelled | paid: [${paid.join(', ')}] refunded | unpaid: [${unpaid.join(', ')}] requeued`);
+    }, 30_000);
   } else {
     // No payment needed — arm team submission forfeit timer immediately
     armForfeitTimer(matchId, u1, u2, ROUND_TIME_MS);

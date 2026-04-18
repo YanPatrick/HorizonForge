@@ -1842,6 +1842,23 @@
         min-height: 18px;
         text-align: center;
       }
+      #pay-countdown {
+        font-size: 11px;
+        color: rgba(255, 160, 60, 0.85);
+        letter-spacing: 0.4px;
+        margin: 2px 0 6px;
+        text-align: center;
+        transition: color 0.3s;
+      }
+      #pay-countdown.urgent {
+        color: rgba(255, 60, 60, 1);
+        font-weight: bold;
+        animation: pulse-urgent 0.6s ease-in-out infinite alternate;
+      }
+      @keyframes pulse-urgent {
+        from { opacity: 0.7; }
+        to   { opacity: 1; }
+      }
       #pay-steps {
         display: none;
         flex-direction: column;
@@ -2631,7 +2648,7 @@
                     ><button class="pill active" data-fmt="5">BO5</button></span
                   >
                   <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="10">BO10</button></span
+                    ><button class="pill" data-fmt="7">BO7</button></span
                   >
                 </div>
               </div>
@@ -2694,8 +2711,8 @@
                     </button></span
                   >
                   <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="10" disabled>
-                      BO10
+                    ><button class="pill" data-fmt="7" disabled>
+                      BO7
                     </button></span
                   >
                 </div>
@@ -2751,7 +2768,7 @@
                 format determines how many victories are needed:<br />
                 <span class="gr-hl">> BO3</span> (best of 3, need 2 wins)<br />
                 <span class="gr-hl">> BO5</span> (best of 5, need 3 wins)<br />
-                <span class="gr-hl">> BO10</span> (best of 10, need 6 wins).
+                <span class="gr-hl">> BO7</span> (best of 7, need 4 wins).
               </p>
 
               <div class="gr-section-title">⚔️ What is a Duel?</div>
@@ -3596,6 +3613,7 @@
         <div class="search-dots"><span></span><span></span><span></span></div>
         <!-- payment flow UI (hidden until needsPayment) -->
         <div id="pay-status"></div>
+        <div id="pay-countdown" style="display:none;"></div>
         <button
           id="btn-send-wager"
           onclick="_sendKeychainTransfer()"
@@ -3685,10 +3703,12 @@
             if (d.result && d.result[0]) {
               document.getElementById("hive-bal-val").textContent =
                 d.result[0].balance;
+              return parseFloat(d.result[0].balance);
             }
           } catch {
             /* silent */
           }
+          return null;
         }
 
         /* ── Logout ──────────────────── */
@@ -4101,6 +4121,17 @@
             toast("⚠️ Nenhum deck selecionado. Monte uma formação primeiro!");
             return;
           }
+          if (pvpCfg.bet > 0) {
+            const balance = await fetchBalance(session.username);
+            if (balance === null) {
+              toast("⚠️ Não foi possível verificar seu saldo. Tente novamente.");
+              return;
+            }
+            if (balance < pvpCfg.bet) {
+              toast(`⚠️ Saldo insuficiente! Você tem ${balance.toFixed(3)} HIVE, mas a aposta é de ${pvpCfg.bet} HIVE.`);
+              return;
+            }
+          }
           _startSearchUI();
           socket.emit("join_queue", {
             username: session.username,
@@ -4118,6 +4149,29 @@
 
         // ── active match data used across payment handlers ──
         let _matchData = null;
+        let _payCountdownInterval = null;
+
+        function _startPayCountdown(seconds) {
+          _clearPayCountdown();
+          const el = document.getElementById("pay-countdown");
+          el.style.display = "block";
+          let remaining = seconds;
+          function _tick() {
+            el.textContent = `⏳ Confirm in Keychain — ${remaining}s remaining`;
+            el.classList.toggle("urgent", remaining <= 10);
+            if (remaining <= 0) { _clearPayCountdown(); }
+            remaining--;
+          }
+          _tick();
+          _payCountdownInterval = setInterval(_tick, 1000);
+        }
+
+        function _clearPayCountdown() {
+          clearInterval(_payCountdownInterval);
+          _payCountdownInterval = null;
+          const el = document.getElementById("pay-countdown");
+          if (el) { el.style.display = "none"; el.classList.remove("urgent"); }
+        }
 
         function _saveAndRedirect() {
           if (!_matchData) return;
@@ -4261,6 +4315,7 @@
             document.getElementById("pay-status").textContent =
               `Wager: ${_matchData.wager} HIVE`;
             document.getElementById("pay-steps").style.display = "flex";
+            _startPayCountdown(30);
             setTimeout(window._sendKeychainTransfer, 600);
           } else {
             // ── Free match: redirect immediately ──
@@ -4296,6 +4351,7 @@
 
         socket.on("payments_confirmed", () => {
           // both payments verified → go to battle
+          _clearPayCountdown();
           _setPayStep("pay-step-opponent", "done");
           document.getElementById("pay-status").textContent =
             "Both payments confirmed!";
@@ -4310,9 +4366,36 @@
         });
 
         socket.on("wager_refunded", (data) => {
-          // Server sent the wager back — close overlay and notify player
+          _clearPayCountdown();
           cancelSearch();
           toast(`↩️ ${data.amount} HIVE refunded. ${data.reason || ""}`);
+        });
+
+        socket.on("match_cancelled", (data) => {
+          _clearPayCountdown();
+          const overlay = document.getElementById("search-overlay");
+          if (overlay.classList.contains("paying")) {
+            overlay.classList.remove("paying");
+            overlay.classList.remove("open");
+            document.getElementById("pay-status").style.display = "none";
+            document.getElementById("pay-steps").style.display = "none";
+            document.getElementById("pay-error").style.display = "none";
+            document.getElementById("btn-retry-pay").style.display = "none";
+            document.getElementById("btn-send-wager").style.display = "none";
+            ["pay-step-send", "pay-step-verify", "pay-step-opponent"].forEach(
+              (id) => _setPayStep(id, ""),
+            );
+            _matchData = null;
+          }
+        });
+
+        socket.on("requeued", (data) => {
+          // Opponent didn't confirm — we're back in the queue automatically
+          _stopSearchUI();
+          toast("⚠️ Oponente não confirmou o pagamento. Buscando novo adversário...");
+          _startSearchUI();
+          const el = document.getElementById("search-queue");
+          if (el && data.queueSize != null) el.textContent = `Players in queue: ${data.queueSize}`;
         });
 
         socket.on("queued", (data) => {
@@ -4364,6 +4447,7 @@
         /* ── Search overlay cancel ───── */
         window.cancelSearch = function () {
           _stopSearchUI();
+          _clearPayCountdown();
           const overlay = document.getElementById("search-overlay");
           overlay.classList.remove("open", "found", "paying");
           document.getElementById("search-timer").style.display = "";
@@ -4734,10 +4818,10 @@
               desc: "A duel of up to 5 battles. More room to adapt your strategy.",
               wins: 3,
             },
-            10: {
-              name: "Best of 10",
-              desc: "A full duel of up to 10 battles. The ultimate test of strategy.",
-              wins: 6,
+            7: {
+              name: "Best of 7",
+              desc: "A full duel of up to 7 battles. The ultimate test of strategy.",
+              wins: 4,
             },
           };
 
