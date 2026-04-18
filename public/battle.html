@@ -51,7 +51,7 @@
       }
 
       body {
-        background: url('/images/arena-forest.jpg') center / 100% 100% no-repeat fixed;
+        background: #060310;
         color: #dde2ff;
         font-family: "Exo 2", system-ui, sans-serif;
         display: flex;
@@ -3364,6 +3364,11 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
+      const ARENAS = ['arena-forest', 'arena-desert', 'arena-snow'];
+      const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
+      document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
+      document.body.style.backgroundSize = '100% 100%';
+
       let G = {
         format: 3,
         winsNeeded: 2,
