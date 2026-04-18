@@ -572,7 +572,9 @@
         padding: 0 calc(4px * var(--s));
         overflow: hidden;
         position: relative;
-        /* <-- ADICIONADO: Necessário para segurar o painel absoluto */
+        background-image: url('/images/arena-forest.jpg');
+        background-size: cover;
+        background-position: center;
       }
 
       /* ── TURN ORDER PANEL (left column) ── */
@@ -809,27 +811,15 @@
       }
 
       .pf {
-        background: linear-gradient(
-          160deg,
-          rgba(60, 100, 220, 0.07),
-          rgba(40, 80, 160, 0.04)
-        );
-        border: 1px solid rgba(80, 130, 255, 0.25);
-        box-shadow:
-          0 0 40px rgba(60, 100, 255, 0.06),
-          inset 0 0 20px rgba(60, 100, 255, 0.03);
+        background: transparent;
+        border: none;
+        box-shadow: none;
       }
 
       .ef {
-        background: linear-gradient(
-          160deg,
-          rgba(180, 40, 40, 0.07),
-          rgba(120, 20, 20, 0.04)
-        );
-        border: 1px solid rgba(220, 80, 80, 0.25);
-        box-shadow:
-          0 0 40px rgba(200, 60, 60, 0.06),
-          inset 0 0 20px rgba(200, 60, 60, 0.03);
+        background: transparent;
+        border: none;
+        box-shadow: none;
       }
 
       /* ── VS DIVIDER ── */
