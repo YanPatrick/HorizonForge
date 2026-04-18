@@ -879,27 +879,58 @@
       }
 
       .cell.dr {
-        border-color: rgba(136, 204, 255, 0.6);
-        background: rgba(136, 204, 255, 0.1);
-        animation: pc 0.9s infinite;
+        border-color: transparent;
+        background: transparent;
+        animation: none;
       }
 
-      @keyframes pc {
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 rgba(136, 204, 255, 0.35);
-        }
+      .cell.dr::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(18px * var(--s));
+        height: calc(18px * var(--s));
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(160, 220, 255, 0.95) 0%,
+          rgba(80, 160, 255, 0.6) 50%,
+          rgba(40, 100, 255, 0.0) 100%
+        );
+        box-shadow:
+          0 0 calc(8px * var(--s)) rgba(120, 200, 255, 0.9),
+          0 0 calc(16px * var(--s)) rgba(80, 150, 255, 0.4);
+        animation: orbFloat 1.4s ease-in-out infinite;
+        pointer-events: none;
+      }
 
+      @keyframes orbFloat {
+        0%, 100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0.75;
+        }
         50% {
-          box-shadow: 0 0 0 6px rgba(136, 204, 255, 0.08);
+          transform: translate(-50%, -58%) scale(1.15);
+          opacity: 1;
         }
       }
 
       .cell.dnd-over {
-        border-color: rgba(136, 204, 255, 0.85) !important;
-        background: rgba(136, 204, 255, 0.14) !important;
-        box-shadow: 0 0 0 2px rgba(136, 204, 255, 0.4);
+        border-color: transparent !important;
+        background: rgba(136, 204, 255, 0.08) !important;
+        box-shadow: none;
         animation: none;
+      }
+
+      .cell.dnd-over::after {
+        opacity: 1 !important;
+        transform: translate(-50%, -50%) scale(1.4) !important;
+        animation: none !important;
+        box-shadow:
+          0 0 calc(14px * var(--s)) rgba(120, 200, 255, 1),
+          0 0 calc(28px * var(--s)) rgba(80, 150, 255, 0.6) !important;
       }
 
       .cell.target-preview {
@@ -1006,7 +1037,7 @@
 
       .cell.field-sel {
         border-color: rgba(255, 200, 80, 0.95) !important;
-        background: rgba(255, 200, 80, 0.12) !important;
+        background: transparent !important;
         box-shadow: 0 0 0 3px rgba(255, 200, 80, 0.35);
         animation: fsel 0.7s ease-in-out infinite;
       }
