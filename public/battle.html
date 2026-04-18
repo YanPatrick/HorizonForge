@@ -148,13 +148,23 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: calc(12px * var(--s));
         width: 100%;
-        padding: calc(3px * var(--s)) calc(16px * var(--s));
+        padding: calc(4px * var(--s)) calc(16px * var(--s));
         background: linear-gradient(90deg, rgba(25, 12, 60, 0.95), rgba(12, 6, 35, 0.95), rgba(25, 12, 60, 0.95));
         border: 1px solid rgba(150, 100, 255, 0.35);
         border-radius: var(--r);
         flex-shrink: 0;
         box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+      }
+
+      .hdr-mid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: calc(3px * var(--s));
+        flex: 1;
+        min-width: 0;
       }
 
       .htitle {
@@ -430,20 +440,6 @@
       }
 
       /* ── DUEL BAR ── */
-      #duelbar {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        padding: calc(2px * var(--s)) calc(14px * var(--s));
-        background: rgba(10, 6, 28, 0.93);
-        border: 1px solid rgba(150, 100, 255, 0.3);
-        border-radius: var(--r);
-        font-size: calc(10px * var(--s));
-        flex-shrink: 0;
-      }
-
       .duelbar-center {
         display: flex;
         align-items: center;
@@ -501,14 +497,13 @@
 
       /* ── BANNER ── */
       #banner {
-        width: 100%;
         text-align: center;
-        font-size: calc(11px * var(--s));
+        font-size: calc(10px * var(--s));
         font-weight: 600;
-        padding: calc(2px * var(--s));
-        border-radius: calc(8px * var(--s));
-        flex-shrink: 0;
+        padding: calc(2px * var(--s)) calc(8px * var(--s));
+        border-radius: calc(6px * var(--s));
         letter-spacing: 0.2px;
+        max-width: 100%;
       }
 
       .bshop {
@@ -2822,38 +2817,22 @@
       <!-- HEADER -->
       <div id="hdr">
         <span class="htitle">Horizon Forge</span>
+        <div class="hdr-mid">
+          <div class="duelbar-center">
+            <span class="dscore-label">You</span>
+            <div class="dscore" id="dots-p"></div>
+            <span class="duel-vs">⚔</span>
+            <div class="dscore" id="dots-e"></div>
+            <span class="dscore-label">Enemy</span>
+          </div>
+          <div id="banner" class="bshop">🛍️ Analyze the enemy, buy cards and build your army!</div>
+        </div>
         <div class="hstats">
-          <span class="sb sr" id="h-duel">Duel 1</span>
-
-          <span class="sb sg" id="h-gold">💰 7</span>
           <span class="sb sfmt" id="h-fmt">BO3</span>
-          <!-- <button class="htp-btn" onclick="openHowTo()">📖 How to Play</button> -->
           <span id="h-timer">⏱ 2:00</span>
-          <button
-            class="htp-btn hback-btn"
-            onclick="openQuitModal()"
-            title="Back to Lobby"
-          >
-            ← Lobby
-          </button>
+          <button class="htp-btn hback-btn" onclick="openQuitModal()" title="Back to Lobby">← Lobby</button>
           <span class="sb suser" id="h-user" style="display: none"></span>
         </div>
-      </div>
-
-      <!-- DUEL BAR -->
-      <div id="duelbar">
-        <div class="duelbar-center">
-          <span class="dscore-label">You</span>
-          <div class="dscore" id="dots-p"></div>
-          <span class="duel-vs">⚔</span>
-          <div class="dscore" id="dots-e"></div>
-          <span class="dscore-label">Enemy</span>
-        </div>
-      </div>
-
-      <!-- BANNER -->
-      <div id="banner" class="bshop">
-        🛍️ Analyze the enemy, buy cards and build your army!
       </div>
 
       <!-- ══════════════════ ARENA ══════════════════ -->
@@ -2908,7 +2887,7 @@
         <!-- RIGHT: Recruitment -->
         <div id="shopwrap">
           <div class="sec-hdr">
-            <span class="sec-title recruit-title">Recruitment</span>
+            <span class="sec-title recruit-title">Recruitment <span class="sb sg" id="h-gold">💰 7</span></span>
             <div class="recruit-controls">
               <button class="rrbtn" id="breroll" onclick="rerollShop()">
                 New Recruitment (2💰)
@@ -6216,7 +6195,6 @@
       }
 
       function updateHdr() {
-        document.getElementById("h-duel").textContent = `Duel ${G.duelNum}`;
         document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
       }
 
