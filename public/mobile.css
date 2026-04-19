@@ -45,7 +45,11 @@
   #game, #duel-result, #quit-overlay { display: none !important; }
 }
 
-/* ── Portrait mobile layout (360–480px touch) ── */
+/* ══════════════════════════════════════════
+   BATTLE MOBILE OVERRIDES
+   Aplica apenas a battle.html em touch portrait
+   ══════════════════════════════════════════ */
+
 @media (max-width: 480px) and (pointer: coarse) {
 
   /* Scale factor: shrinks all calc(Xpx * var(--s)) dimensions */
@@ -445,7 +449,7 @@
     border-top: 1px solid rgba(180, 130, 255, 0.14);
     backdrop-filter: blur(18px);
     z-index: 99;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     align-items: stretch;
   }
 
@@ -487,7 +491,7 @@
 
   /* ── Lobby wrap: padding para não ficar atrás das tabs ── */
   .lobby-wrap {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ── Banner expand: sempre visível ── */
