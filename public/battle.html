@@ -2,7 +2,9 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Horizon Forge | Battle</title>
+    <link rel="stylesheet" href="/mobile.css" />
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap");
 
@@ -146,11 +148,13 @@
       /* ── HEADER ── */
       #hdr {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        gap: calc(12px * var(--s));
+        gap: calc(4px * var(--s));
+        max-width: 520px;
         width: 100%;
-        padding: calc(4px * var(--s)) calc(16px * var(--s));
+        margin: 0 auto;
+        padding: calc(6px * var(--s)) calc(16px * var(--s));
         background: linear-gradient(90deg, rgba(25, 12, 60, 0.95), rgba(12, 6, 35, 0.95), rgba(25, 12, 60, 0.95));
         border: 1px solid rgba(150, 100, 255, 0.35);
         border-radius: var(--r);
@@ -158,24 +162,22 @@
         box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
       }
 
-      .hdr-mid {
+      .hdr-row-top {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: calc(3px * var(--s));
-        flex: 1;
-        min-width: 0;
+        justify-content: center;
+        gap: calc(8px * var(--s));
+        flex-wrap: wrap;
+        width: 100%;
       }
 
-      .htitle {
-        font-family: "Cinzel", serif;
-        font-size: calc(13px * var(--s));
-        font-weight: 900;
-        background: linear-gradient(90deg, #ff88cc, #cc88ff, #88ccff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: 0.5px;
+      .hdr-row-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: calc(6px * var(--s));
+        flex-wrap: wrap;
+        width: 100%;
       }
 
       .hstats {
@@ -247,9 +249,10 @@
         border-radius: 20px;
         font-weight: 700;
         font-size: calc(14px * var(--s));
-        background: rgba(255, 180, 30, 0.13);
-        color: rgba(255, 210, 80, 0.95);
-        border: 1px solid rgba(255, 180, 30, 0.4);
+        background: rgba(12, 6, 35, 0.92);
+        color: rgba(255, 210, 80, 1);
+        border: 1px solid rgba(255, 180, 30, 0.6);
+        box-shadow: 0 0 10px rgba(255, 180, 30, 0.2), inset 0 0 8px rgba(255, 180, 30, 0.05);
         min-width: calc(80px * var(--s));
         text-align: center;
         letter-spacing: 1px;
@@ -259,9 +262,10 @@
           border-color 0.3s;
       }
       #phase-timer.timer-urgent {
-        background: rgba(255, 60, 60, 0.18);
+        background: rgba(30, 6, 6, 0.92);
         color: rgba(255, 100, 80, 1);
-        border-color: rgba(255, 60, 60, 0.55);
+        border-color: rgba(255, 60, 60, 0.7);
+        box-shadow: 0 0 12px rgba(255, 60, 60, 0.35), inset 0 0 8px rgba(255, 60, 60, 0.08);
         animation: timer-pulse 0.8s ease-in-out infinite;
       }
       @keyframes timer-pulse {
@@ -441,9 +445,19 @@
 
       /* ── DUEL BAR ── */
       .duelbar-center {
-        display: flex;
+        display: grid;
+        grid-template-columns: 1fr auto auto auto 1fr;
         align-items: center;
-        gap: calc(10px * var(--s));
+        gap: calc(6px * var(--s));
+        width: 100%;
+      }
+
+      .duelbar-center #h-user {
+        justify-self: end;
+      }
+
+      .duelbar-center #lbl-score-enemy {
+        justify-self: start;
       }
 
       .dscore {
@@ -554,10 +568,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: calc(10px * var(--s));
+        gap: 0;
         flex: 1 1 0;
         min-height: 0;
-        padding: 0 calc(4px * var(--s));
+        padding: 0;
         overflow: hidden;
         position: relative;
         background: transparent;
@@ -750,15 +764,15 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: calc(8px * var(--s));
-        flex: 1 1 0;
-        min-width: 0;
+        gap: 0;
+        flex-shrink: 0;
       }
 
       /* ── FIELD WRAPPER (label + grid) ── */
       .fwrap {
         display: flex;
         flex-direction: column;
+        align-items: center;
         gap: calc(4px * var(--s));
         flex-shrink: 0;
       }
@@ -771,6 +785,7 @@
         text-align: center;
         font-weight: 700;
         text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+        width: 100%;
       }
 
       .flbl-row {
@@ -778,6 +793,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 0 calc(2px * var(--s));
+        width: 100%;
       }
 
       #army-count {
@@ -816,36 +832,53 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-width: calc(30px * var(--s));
+        width: calc(48px * var(--s));
+        align-self: stretch;
         position: relative;
         flex-shrink: 0;
+        z-index: 2;
       }
 
       #vs::before {
         content: "";
         position: absolute;
-        top: 0;
-        bottom: 0;
+        top: 8%;
+        bottom: 8%;
         left: 50%;
+        transform: translateX(-50%);
         width: 1px;
         background: linear-gradient(
           to bottom,
-          transparent,
-          rgba(255, 200, 100, 0.4),
-          transparent
+          transparent 0%,
+          rgba(255, 180, 60, 0.55) 25%,
+          rgba(255, 200, 100, 0.75) 50%,
+          rgba(255, 180, 60, 0.55) 75%,
+          transparent 100%
         );
+        box-shadow: 0 0 6px rgba(255, 180, 60, 0.3);
       }
 
       .vstxt {
         font-family: "Cinzel", serif;
-        font-size: calc(16px * var(--s));
+        font-size: calc(13px * var(--s));
         font-weight: 900;
-        background: linear-gradient(180deg, #ffcc44, #ff8844);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        filter: drop-shadow(0 0 8px rgba(255, 200, 100, 0.5)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+        color: #ffdd66;
+        text-shadow: 0 0 12px rgba(255, 200, 60, 0.9), 0 0 24px rgba(255, 150, 30, 0.5);
+        position: relative;
         z-index: 1;
+        padding: calc(5px * var(--s)) calc(9px * var(--s));
+        letter-spacing: 1px;
+      }
+
+      .vstxt::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(8, 4, 24, 0.88);
+        border: 1px solid rgba(255, 180, 60, 0.45);
+        border-radius: 20px;
+        box-shadow: 0 0 14px rgba(255, 180, 60, 0.2), inset 0 0 8px rgba(255, 180, 60, 0.05);
+        z-index: -1;
       }
 
       /* ── CELL ── */
@@ -1469,6 +1502,8 @@
         flex: 1 1 0;
         min-width: 0;
         max-width: var(--center-max-w);
+        width: 100%;
+        margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -1479,13 +1514,9 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        position: relative;
+        gap: calc(8px * var(--s));
         flex-shrink: 0;
         width: 100%;
-      }
-      #phase-timer {
-        position: absolute;
-        right: calc(8px * var(--s));
       }
 
       /* ── SHOP (right) ── */
@@ -2093,8 +2124,15 @@
       .bbtn {
         background: linear-gradient(135deg, #c42222, #ff4422);
         color: #fff;
+        font-size: calc(14px * var(--s));
+        letter-spacing: 1px;
         box-shadow: 0 5px 18px rgba(255, 60, 30, 0.4);
         border: 1px solid rgba(255, 120, 80, 0.3);
+      }
+
+      .bbtn:hover:not(:disabled) {
+        box-shadow: 0 5px 24px rgba(255, 60, 30, 0.55), 0 0 18px rgba(255, 80, 40, 0.5), 0 0 6px rgba(255, 140, 80, 0.4);
+        border-color: rgba(255, 160, 100, 0.7);
       }
 
       .nbtn {
@@ -2816,22 +2854,20 @@
     <div id="game">
       <!-- HEADER -->
       <div id="hdr">
-        <span class="htitle">Horizon Forge</span>
-        <div class="hdr-mid">
+        <div class="hdr-row-top">
           <div class="duelbar-center">
-            <span class="dscore-label">You</span>
+            <span class="sb suser" id="h-user">@you</span>
             <div class="dscore" id="dots-p"></div>
             <span class="duel-vs">⚔</span>
             <div class="dscore" id="dots-e"></div>
-            <span class="dscore-label">Enemy</span>
+            <span class="dscore-label" id="lbl-score-enemy">Enemy</span>
           </div>
-          <div id="banner" class="bshop">🛍️ Analyze the enemy, buy cards and build your army!</div>
         </div>
-        <div class="hstats">
+        <div class="hdr-row-bottom">
           <span class="sb sfmt" id="h-fmt">BO3</span>
           <span id="h-timer">⏱ 2:00</span>
+          <div id="banner" class="bshop">🛍️ Analyze the enemy, buy cards and build your army!</div>
           <button class="htp-btn hback-btn" onclick="openQuitModal()" title="Back to Lobby">← Lobby</button>
-          <span class="sb suser" id="h-user" style="display: none"></span>
         </div>
       </div>
 
@@ -2877,7 +2913,7 @@
         <div id="center-col">
           <div id="ctrl">
             <button class="btn bbtn" id="bfight" onclick="startBattle()">
-              ⚔️ Battle!
+              Battle!
             </button>
             <div id="phase-timer"></div>
           </div>
@@ -4483,8 +4519,16 @@
         const pvp = window._PVP;
         const lp = document.getElementById("lbl-player");
         const le = document.getElementById("lbl-enemy");
-        if (lp) lp.textContent = user ? `@${user}` : "⚔ Your Army";
-        if (le) le.textContent = pvp?.opponent ? `@${pvp.opponent}` : "☠ Bot";
+        const lse = document.getElementById("lbl-score-enemy");
+        if (lp) {
+          lp.textContent = "";
+          lp.parentElement.style.display = "none";
+        }
+        if (le) {
+          le.textContent = "";
+          le.parentElement.style.display = "none";
+        }
+        if (lse) lse.textContent = pvp?.opponent ? `@${pvp.opponent}` : "Enemy";
       }
 
       function startBattle() {
@@ -6232,12 +6276,11 @@
       document.addEventListener("DOMContentLoaded", () => {
         initGame(); // async: auto-start happens inside after data loads
         // Show username badge in header
-        if (window._HF_SESSION) {
-          const uEl = document.getElementById("h-user");
-          if (uEl) {
-            uEl.textContent = "@" + window._HF_SESSION.username;
-            uEl.style.display = "";
-          }
+        const uEl = document.getElementById("h-user");
+        if (uEl) {
+          uEl.textContent = window._HF_SESSION?.username
+            ? "@" + window._HF_SESSION.username
+            : "@you";
         }
       });
     </script>
@@ -6289,5 +6332,6 @@
         </marker>
       </defs>
     </svg>
+    <script src="/mobile.js" defer></script>
   </body>
 </html>
