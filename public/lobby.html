@@ -3761,7 +3761,7 @@
           document
             .getElementById("nav-btn-settings")
             .classList.toggle("active", id === "view-settings");
-          const navKey = id.replace("view-", "");
+          const navKey = id.slice("view-".length);
           document.querySelectorAll(".mbt-tab").forEach((t) => {
             t.classList.toggle("active", t.dataset.nav === navKey);
           });
