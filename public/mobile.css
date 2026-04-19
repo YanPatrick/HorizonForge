@@ -372,34 +372,38 @@
 
   /* Dimensão dos bench cards */
   .bcard {
+    width: 50px !important;
+    min-width: 50px !important;
     max-width: 50px !important;
     padding: 5px 3px 4px !important;
   }
 
   /* Ícone menor */
-  .cico {
+  .scard .cico,
+  .bcard .cico {
     font-size: 20px !important;
     margin-top: 2px !important;
   }
 
   /* Nome menor */
-  .cnm {
+  .scard .cnm,
+  .bcard .cnm {
     font-size: 7px !important;
     margin-top: 1px !important;
   }
 
   /* Stats inline: HP + ATK, ocultar VEL */
-  .csts {
+  .scard .csts {
     flex-direction: row !important;
     gap: 2px !important;
     padding: 1px 2px !important;
     margin-top: 2px !important;
   }
 
-  .csts .cst:nth-child(3) { display: none !important; }
+  .scard .csts .cst:nth-child(3) { display: none !important; }
 
-  .cstv { font-size: 7px !important; }
-  .cstl { font-size: 5px !important; }
+  .scard .cstv { font-size: 7px !important; }
+  .scard .cstl { font-size: 5px !important; }
 }
 
 /* Tighter scale for very small phones (flattened from nested @media) */
