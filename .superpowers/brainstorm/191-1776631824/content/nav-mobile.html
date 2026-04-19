@@ -1,0 +1,217 @@
+<style>
+  .phones { display: flex; gap: 28px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+  .phone-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .phone-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; }
+
+  .phone {
+    width: 200px; height: 360px;
+    background: #060213;
+    border-radius: 20px;
+    border: 2px solid #2a2040;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    font-family: "Segoe UI", sans-serif;
+  }
+
+  /* CURRENT — broken */
+  .nav-broken {
+    height: 44px; background: rgba(6,3,20,0.95);
+    border-bottom: 1px solid rgba(180,130,255,0.14);
+    display: flex; align-items: center;
+    padding: 0 8px; gap: 4px; overflow: hidden;
+  }
+  .nav-broken .logo { font-size: 9px; font-weight: 900; color: #ffd700; white-space: nowrap; flex-shrink: 0; }
+  .nav-broken .btns { display: flex; gap: 2px; flex-shrink: 0; }
+  .nav-broken .btn { font-size: 6px; font-weight: 700; color: rgba(190,170,240,0.6); padding: 3px 4px; background: none; border: none; white-space: nowrap; }
+  .nav-broken .btn.active { color: #ffd700; }
+  .nav-broken .right { display: flex; gap: 3px; flex-shrink: 0; align-items: center; }
+  .nav-broken .hive { font-size: 6px; color: #ffc; border: 1px solid rgba(200,150,30,0.4); border-radius: 99px; padding: 2px 5px; white-space: nowrap; }
+  .nav-broken .user { font-size: 6px; color: rgba(200,185,245,0.8); border: 1px solid rgba(130,100,220,0.35); border-radius: 99px; padding: 2px 5px; white-space: nowrap; }
+  .nav-broken .exit { font-size: 6px; color: rgba(255,100,100,0.9); border: 1px solid rgba(220,50,50,0.4); border-radius: 5px; padding: 2px 4px; background: rgba(180,20,20,0.2); }
+  .broken-label { position: absolute; top: 50px; left: 0; right: 0; text-align: center; font-size: 9px; color: #ff6666; font-weight: 700; }
+  .overflow-arrow { font-size: 14px; position: absolute; right: 4px; top: 14px; color: #ff6666; }
+
+  /* OPTION A — Hamburger */
+  .nav-a {
+    height: 50px; background: rgba(6,3,20,0.95);
+    border-bottom: 1px solid rgba(180,130,255,0.14);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+  }
+  .nav-a .logo { font-size: 11px; font-weight: 900; color: #ffd700; }
+  .nav-a .right { display: flex; align-items: center; gap: 8px; }
+  .nav-a .user-pill { font-size: 9px; color: rgba(200,185,245,0.8); border: 1px solid rgba(130,100,220,0.35); border-radius: 99px; padding: 3px 8px; }
+  .nav-a .burger { width: 22px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+  .nav-a .burger div { height: 2px; background: rgba(190,170,240,0.7); border-radius: 1px; }
+  .drawer { position: absolute; top: 50px; left: 0; right: 0; background: rgba(10,6,30,0.98); border-bottom: 1px solid rgba(130,80,255,0.2); padding: 12px 0; z-index: 10; }
+  .drawer-item { padding: 10px 20px; font-size: 11px; font-weight: 700; color: rgba(190,170,240,0.7); letter-spacing: 1px; text-transform: uppercase; border-left: 2px solid transparent; }
+  .drawer-item.active { color: #ffd700; border-left-color: #ffd700; }
+  .content-a { padding: 16px; font-size: 10px; color: rgba(255,255,255,0.2); text-align: center; margin-top: 120px; }
+
+  /* OPTION B — Bottom tabs */
+  .nav-b-top {
+    height: 50px; background: rgba(6,3,20,0.95);
+    border-bottom: 1px solid rgba(180,130,255,0.14);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+  }
+  .nav-b-top .logo { font-size: 11px; font-weight: 900; color: #ffd700; }
+  .nav-b-top .right { display: flex; align-items: center; gap: 6px; }
+  .nav-b-top .hive { font-size: 9px; color: #ffc; border: 1px solid rgba(200,150,30,0.4); border-radius: 99px; padding: 3px 8px; }
+  .nav-b-top .user-pill { font-size: 9px; color: rgba(200,185,245,0.8); border: 1px solid rgba(130,100,220,0.35); border-radius: 99px; padding: 3px 8px; }
+  .content-b { flex: 1; padding: 12px; font-size: 10px; color: rgba(255,255,255,0.2); text-align: center; margin-top: 30px; }
+  .nav-b-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 56px; background: rgba(6,3,20,0.97);
+    border-top: 1px solid rgba(180,130,255,0.14);
+    display: flex; align-items: center; justify-content: space-around;
+    padding: 0 4px;
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
+  .tab .ico { font-size: 15px; }
+  .tab .lbl { font-size: 7px; font-weight: 700; color: rgba(190,170,240,0.5); letter-spacing: 0.5px; text-transform: uppercase; }
+  .tab.active .lbl { color: #ffd700; }
+  .tab.active .ico { filter: drop-shadow(0 0 6px rgba(255,215,0,0.6)); }
+
+  /* OPTION C — 2-row compact */
+  .nav-c-row1 {
+    height: 38px; background: rgba(6,3,20,0.98);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px;
+    border-bottom: 1px solid rgba(130,80,255,0.1);
+  }
+  .nav-c-row1 .logo { font-size: 10px; font-weight: 900; color: #ffd700; }
+  .nav-c-row1 .right { display: flex; gap: 5px; align-items: center; }
+  .nav-c-row1 .hive { font-size: 8px; color: #ffc; border: 1px solid rgba(200,150,30,0.4); border-radius: 99px; padding: 2px 6px; }
+  .nav-c-row1 .user { font-size: 8px; color: rgba(200,185,245,0.8); border: 1px solid rgba(130,100,220,0.35); border-radius: 99px; padding: 2px 6px; }
+  .nav-c-row1 .exit { font-size: 8px; color: rgba(255,100,100,0.9); border: 1px solid rgba(220,50,50,0.4); border-radius: 5px; padding: 2px 5px; background: rgba(180,20,20,0.2); }
+  .nav-c-row2 {
+    height: 34px; background: rgba(6,3,20,0.95);
+    border-bottom: 1px solid rgba(180,130,255,0.14);
+    display: flex; align-items: center; justify-content: center; gap: 2px;
+    padding: 0 8px;
+  }
+  .nav-c-btn { font-size: 8px; font-weight: 800; color: rgba(190,170,240,0.55); padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.8px; border: none; background: none; }
+  .nav-c-btn.active { color: #ffd700; background: rgba(255,215,0,0.06); }
+  .content-c { padding: 16px; font-size: 10px; color: rgba(255,255,255,0.2); text-align: center; margin-top: 20px; }
+
+  .note { font-size: 10px; color: rgba(255,255,255,0.4); max-width: 180px; text-align: center; line-height: 1.4; }
+  .rec { font-size: 10px; font-weight: 700; color: #66ffaa; }
+</style>
+
+<h2>Nav mobile — qual padrão?</h2>
+<p class="subtitle">O nav atual tem logo + 5 links + saldo + badge + exit — estoura em qualquer celular</p>
+
+<div class="phones">
+
+  <!-- CURRENT (broken) -->
+  <div class="phone-col">
+    <div class="phone-label">ATUAL (quebrado)</div>
+    <div class="phone">
+      <div class="nav-broken">
+        <span class="logo">⚔️ HORIZON FORGE</span>
+        <div class="btns">
+          <span class="btn">BATTLE</span>
+          <span class="btn">GRIM.</span>
+          <span class="btn">HEROES</span>
+          <span class="btn">FORM.</span>
+          <span class="btn">SET.</span>
+        </div>
+        <div class="right">
+          <span class="hive">🍯2.5</span>
+          <span class="user">@shiftrox</span>
+          <span class="exit">Exit</span>
+        </div>
+        <span class="overflow-arrow">→✂</span>
+      </div>
+      <div class="broken-label">⚠ tudo comprimido / cortado</div>
+    </div>
+  </div>
+
+  <!-- OPTION A: Hamburger -->
+  <div class="phone-col">
+    <div class="phone-label">A — Hamburger</div>
+    <div class="phone" style="position:relative">
+      <div class="nav-a">
+        <span class="logo">⚔️ HORIZON FORGE</span>
+        <div class="right">
+          <span class="user-pill">@shiftrox</span>
+          <div class="burger"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div class="drawer">
+        <div class="drawer-item active">⚔ Battle</div>
+        <div class="drawer-item">📖 Grimoire</div>
+        <div class="drawer-item">🦸 Heroes</div>
+        <div class="drawer-item">🏰 Formation</div>
+        <div class="drawer-item">⚙ Settings</div>
+      </div>
+      <div class="content-a">conteúdo principal</div>
+    </div>
+    <p class="note">Nav oculta. Tap ≡ para abrir. Tira espaço quando aberta.</p>
+  </div>
+
+  <!-- OPTION B: Bottom tabs -->
+  <div class="phone-col">
+    <div class="phone-label">B — Bottom Tabs <span class="rec">★ recom.</span></div>
+    <div class="phone" style="position:relative;display:flex;flex-direction:column">
+      <div class="nav-b-top">
+        <span class="logo">⚔️ HORIZON FORGE</span>
+        <div class="right">
+          <span class="hive">🍯 2.50</span>
+          <span class="user-pill">@shiftrox</span>
+        </div>
+      </div>
+      <div class="content-b">conteúdo principal</div>
+      <div class="nav-b-bottom">
+        <div class="tab active"><span class="ico">⚔️</span><span class="lbl">Battle</span></div>
+        <div class="tab"><span class="ico">📖</span><span class="lbl">Grimoire</span></div>
+        <div class="tab"><span class="ico">🦸</span><span class="lbl">Heroes</span></div>
+        <div class="tab"><span class="ico">🏰</span><span class="lbl">Form.</span></div>
+        <div class="tab"><span class="ico">⚙️</span><span class="lbl">Config</span></div>
+      </div>
+    </div>
+    <p class="note">Nav sempre visível embaixo. Logo + saldo em cima. Padrão mobile clássico.</p>
+  </div>
+
+  <!-- OPTION C: 2-row -->
+  <div class="phone-col">
+    <div class="phone-label">C — 2 linhas</div>
+    <div class="phone">
+      <div class="nav-c-row1">
+        <span class="logo">⚔️ HF</span>
+        <div class="right">
+          <span class="hive">🍯2.5</span>
+          <span class="user">@shiftrox</span>
+          <span class="exit">Exit</span>
+        </div>
+      </div>
+      <div class="nav-c-row2">
+        <button class="nav-c-btn active">Battle</button>
+        <button class="nav-c-btn">Grimoire</button>
+        <button class="nav-c-btn">Heroes</button>
+        <button class="nav-c-btn">Form.</button>
+        <button class="nav-c-btn">Config</button>
+      </div>
+      <div class="content-c">conteúdo principal</div>
+    </div>
+    <p class="note">Header de 2 linhas. Mais simples de implementar. 72px de altura total.</p>
+  </div>
+
+</div>
+
+<div class="options" style="max-width:480px;margin:0 auto">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Hamburger</h3><p>Nav oculta, ≡ para abrir drawer lateral</p></div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Bottom Tabs ★</h3><p>Nav fixa no rodapé, logo + saldo no topo</p></div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content"><h3>Duas linhas</h3><p>Header compacto em 2 rows, mais simples</p></div>
+  </div>
+</div>
