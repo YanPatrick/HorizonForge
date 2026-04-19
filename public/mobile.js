@@ -55,4 +55,72 @@
     syncFab();
   }
 
+  /* ─── Tap-select cell highlight ────────────────────────────
+     battle.html handles the actual swap via G.fieldSel.
+     mobile.js tracks selection independently (mSel) and adds
+     CSS classes for visual feedback after each render() call.
+
+     Classes added to #pfield .cell elements:
+       .m-selected   — gold border on the selected cell
+       .m-valid-drop — green tint on valid destination cells
+
+     window.render is global (function declaration in non-module
+     <script>) — safe to wrap after defer load.
+  ─────────────────────────────────────────────────────────── */
+  var mSel = null; // index (data-i) of selected pfield cell, or null
+
+  function applyHighlight() {
+    var cells = document.querySelectorAll('#pfield .cell');
+    cells.forEach(function (cell) {
+      cell.classList.remove('m-selected', 'm-valid-drop');
+    });
+    if (mSel === null) return;
+    cells.forEach(function (cell) {
+      var idx = parseInt(cell.getAttribute('data-i'), 10);
+      if (idx === mSel) {
+        cell.classList.add('m-selected');
+      } else {
+        cell.classList.add('m-valid-drop');
+      }
+    });
+  }
+
+  // Wrap window.render to re-apply highlights after every render cycle
+  var _origRender = window.render;
+  if (typeof _origRender === 'function') {
+    window.render = function () {
+      _origRender.apply(this, arguments);
+      applyHighlight();
+    };
+  }
+
+  // Event delegation: track selection on pfield clicks
+  document.addEventListener('click', function (e) {
+    var cell = e.target.closest('#pfield .cell');
+
+    if (!cell) {
+      // Clicked outside pfield — clear selection
+      if (mSel !== null) {
+        mSel = null;
+        applyHighlight();
+      }
+      return;
+    }
+
+    var idx = parseInt(cell.getAttribute('data-i'), 10);
+
+    if (mSel === null) {
+      // Select occupied cell only
+      if (cell.classList.contains('occ')) {
+        mSel = idx;
+      }
+    } else {
+      // Any second click on pfield = swap completed or cancelled by battle.html
+      mSel = null;
+    }
+    // applyHighlight() will run via the wrapped render() that battle.html calls
+    // after its own click handler. Call it here too for instant feedback.
+    applyHighlight();
+  }, false);
+
 })();
