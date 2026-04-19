@@ -53,11 +53,6 @@
     --s: 0.85;
   }
 
-  /* Tighter scale for very small phones */
-  @media (max-width: 380px) {
-    :root { --s: 0.78; }
-  }
-
   /* ── Arena: stack fields vertically ── */
   #arena-wrap {
     flex-direction: column;
@@ -140,7 +135,7 @@
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
-    gap: calc(var(--bcard-gap));
+    gap: var(--bcard-gap);
     padding-bottom: 4px; /* prevent shadow clip */
   }
 
@@ -231,4 +226,9 @@
     background: rgba(100, 200, 100, 0.2) !important;
     border: 2px solid rgba(100, 200, 100, 0.5) !important;
   }
+}
+
+/* Tighter scale for very small phones (flattened from nested @media) */
+@media (max-width: 380px) and (pointer: coarse) {
+  :root { --s: 0.78; }
 }
