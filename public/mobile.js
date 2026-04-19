@@ -11,48 +11,64 @@
      The CSS shows/hides it based on orientation media query.
      We just inject the DOM element here.
   ─────────────────────────────────────────────────────────── */
-  var overlay = document.createElement('div');
-  overlay.id = 'mobile-rotate-msg';
-  overlay.innerHTML =
+  var rotateOverlay = document.createElement('div');
+  rotateOverlay.id = 'mobile-rotate-msg';
+  rotateOverlay.innerHTML =
     '<div class="mrm-icon">📱</div>' +
     '<p>Rotate your device to portrait to play</p>';
-  document.body.appendChild(overlay);
+  document.body.appendChild(rotateOverlay);
 
-  /* ─── FAB Battle button ────────────────────────────────────
-     Mirrors the hidden #bfight button (inside #center-col).
-     MutationObserver keeps disabled state and text in sync.
+  /* ─── Log overlay ──────────────────────────────────────────
+     Slide-up overlay that holds the battle log (#log).
+     #log is moved here from #center-col on DOMContentLoaded.
+     mobile.css hides #log globally; #mobile-log-overlay #log
+     overrides that to display it inside the overlay.
   ─────────────────────────────────────────────────────────── */
-  var fab = document.createElement('button');
-  fab.id = 'mobile-fab';
-  fab.className = 'btn bbtn'; // reuse battle.html button styles
-  fab.textContent = 'Battle!';
-  fab.setAttribute('type', 'button');
-  fab.addEventListener('click', function () {
-    if (typeof startBattle === 'function') startBattle();
-  });
-  document.body.appendChild(fab);
+  var logOverlay = document.createElement('div');
+  logOverlay.id = 'mobile-log-overlay';
+  logOverlay.innerHTML =
+    '<div class="mlo-header">' +
+      '<span class="mlo-title">Battle Log</span>' +
+      '<button id="mobile-log-close" type="button">✕</button>' +
+    '</div>';
+  document.body.appendChild(logOverlay);
 
-  // Sync FAB state once #bfight is available (render() creates it)
-  function syncFab() {
-    var bfight = document.getElementById('bfight');
-    if (!bfight) return;
+  function setupLog() {
+    var log = document.getElementById('log');
+    if (log) logOverlay.appendChild(log);
 
-    // Initial sync
-    fab.disabled = bfight.disabled;
-    fab.textContent = bfight.textContent || 'Battle!';
-
-    // Keep in sync as battle.html updates #bfight
-    new MutationObserver(function () {
-      fab.disabled = bfight.disabled;
-      fab.textContent = bfight.textContent || 'Battle!';
-    }).observe(bfight, { attributes: true, childList: true, subtree: true });
+    var closeBtn = document.getElementById('mobile-log-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        logOverlay.classList.remove('open');
+      });
+    }
   }
 
-  // #bfight exists in HTML but render() may update its state on DOMContentLoaded
+  /* ─── Log toggle button in header ─────────────────────────
+     Appended to #hdr so it sits next to existing header items.
+  ─────────────────────────────────────────────────────────── */
+  function injectLogBtn() {
+    var hdr = document.getElementById('hdr');
+    if (!hdr) return;
+    var btn = document.createElement('button');
+    btn.id = 'mobile-log-btn';
+    btn.setAttribute('type', 'button');
+    btn.textContent = '▼ Log';
+    btn.addEventListener('click', function () {
+      logOverlay.classList.toggle('open');
+    });
+    hdr.appendChild(btn);
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncFab);
+    document.addEventListener('DOMContentLoaded', function () {
+      setupLog();
+      injectLogBtn();
+    });
   } else {
-    syncFab();
+    setupLog();
+    injectLogBtn();
   }
 
   /* ─── Tap-select cell highlight ────────────────────────────
@@ -118,8 +134,6 @@
       // Any second click on pfield = swap completed or cancelled by battle.html
       mSel = null;
     }
-    // applyHighlight() will run via the wrapped render() that battle.html calls
-    // after its own click handler. Call it here too for instant feedback.
     applyHighlight();
   }, false);
 

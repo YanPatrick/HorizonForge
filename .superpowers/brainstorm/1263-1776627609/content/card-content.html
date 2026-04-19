@@ -1,0 +1,155 @@
+<style>
+  .phone-frame {
+    width: 200px;
+    background: #0a0520;
+    border-radius: 20px;
+    border: 2px solid #333;
+    padding: 12px 8px;
+    font-family: "Segoe UI", sans-serif;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+  .section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #66ee99;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .cards-row {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .card-base {
+    border-radius: 8px;
+    border: 1.5px solid;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 5px 4px 4px;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+  }
+  /* CURRENT STATE */
+  .card-full {
+    width: 72px;
+    border-color: #8855ff;
+  }
+  .card-ico { font-size: 22px; margin-top: 3px; }
+  .card-nm { font-size: 7px; font-weight: 800; color: #dde; margin-top: 2px; text-align: center; }
+  .card-role { font-size: 5.5px; color: rgba(255,255,255,0.4); }
+  .card-stats { display: flex; gap: 3px; margin-top: 3px; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px 4px; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-v { font-size: 7px; font-weight: 800; color: #dde; }
+  .stat-l { font-size: 5px; color: rgba(255,255,255,0.3); }
+  .card-abi { font-size: 5.5px; color: #ffc; border: 1px solid rgba(255,200,50,0.3); border-radius: 3px; padding: 1px 3px; margin-top: 2px; width: 100%; text-align: center; background: rgba(255,200,50,0.06); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-action { font-size: 5.5px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .price-badge { font-size: 7px; color: #ffd700; font-weight: 700; align-self: flex-start; margin-bottom: 2px; }
+
+  /* DIVIDER */
+  .vs-divider {
+    text-align: center;
+    color: rgba(255,255,255,0.2);
+    font-size: 11px;
+    margin: 6px 0;
+  }
+
+  .comparison-wrap {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+  }
+  .col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .col-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+</style>
+
+<h2>O que manter visível nos cards mobile?</h2>
+<p class="subtitle">Cada card de herói tem várias camadas de info. O que você quer preservar?</p>
+
+<div class="comparison-wrap">
+  <div class="col">
+    <div class="col-title">ATUAL (cheio)</div>
+    <div class="phone-frame">
+      <div class="section-label">Recruitment</div>
+      <div class="cards-row">
+        <div class="card-base card-full">
+          <div class="price-badge">2💰</div>
+          <div class="card-ico">🏹</div>
+          <div class="card-nm">Archer</div>
+          <div class="card-role">Dps</div>
+          <div class="card-stats">
+            <div class="stat"><span class="stat-v">360</span><span class="stat-l">HP</span></div>
+            <div class="stat"><span class="stat-v">88</span><span class="stat-l">ATK</span></div>
+            <div class="stat"><span class="stat-v">5.00</span><span class="stat-l">VEL</span></div>
+          </div>
+          <div class="card-abi">⚡ Precise Shot</div>
+          <div class="card-action">Comprar</div>
+        </div>
+        <div class="card-base card-full">
+          <div class="price-badge">2💰</div>
+          <div class="card-ico">🛡️</div>
+          <div class="card-nm">Paladin</div>
+          <div class="card-role">Tank</div>
+          <div class="card-stats">
+            <div class="stat"><span class="stat-v">687</span><span class="stat-l">HP</span></div>
+            <div class="stat"><span class="stat-v">88</span><span class="stat-l">ATK</span></div>
+            <div class="stat"><span class="stat-v">2.00</span><span class="stat-l">VEL</span></div>
+          </div>
+          <div class="card-abi">✨ Sacred Aura</div>
+          <div class="card-action">Comprar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="col-title">OPÇÕES — o que manter?</div>
+
+    <div class="options" data-multiselect>
+      <div class="option" data-choice="keep-icon" onclick="toggleSelect(this)">
+        <div class="letter">A</div>
+        <div class="content">
+          <h3>Ícone grande</h3>
+          <p>Emoji do herói bem visível</p>
+        </div>
+      </div>
+      <div class="option" data-choice="keep-name" onclick="toggleSelect(this)">
+        <div class="letter">B</div>
+        <div class="content">
+          <h3>Nome do herói</h3>
+          <p>"Archer", "Paladin"…</p>
+        </div>
+      </div>
+      <div class="option" data-choice="keep-stats" onclick="toggleSelect(this)">
+        <div class="letter">C</div>
+        <div class="content">
+          <h3>Stats (HP/ATK/VEL)</h3>
+          <p>Números de combate</p>
+        </div>
+      </div>
+      <div class="option" data-choice="keep-skill" onclick="toggleSelect(this)">
+        <div class="letter">D</div>
+        <div class="content">
+          <h3>Habilidade</h3>
+          <p>"Precise Shot", "Sacred Aura"…</p>
+        </div>
+      </div>
+    </div>
+    <p class="subtitle" style="font-size:11px;margin-top:8px;">Selecione tudo que deve permanecer visível no card</p>
+  </div>
+</div>

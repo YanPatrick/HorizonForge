@@ -1,0 +1,265 @@
+<style>
+  .phone { width: 190px; background: #0a0520; border-radius: 18px; border: 2px solid #2a2040; padding: 10px 8px; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+  .sec-lbl { font-size: 8px; font-weight: 700; letter-spacing: 1px; color: #66ee99; margin-bottom: 5px; text-transform: uppercase; }
+  .sec-gold { color: #ffd700; }
+  .cards-row { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 6px; }
+  .card { border-radius: 7px; border: 1.5px solid; display: flex; flex-direction: column; align-items: center; flex-shrink: 0; background: rgba(120,80,255,0.08); }
+
+  /* A: --s: 0.65 */
+  .card-a { width: 69px; padding: 5px 4px 4px; border-color: #8855ff; }
+  .card-a .price { font-size: 7px; color: #ffd700; font-weight: 700; align-self: flex-start; }
+  .card-a .ico { font-size: 20px; margin: 3px 0 2px; }
+  .card-a .nm { font-size: 6.5px; font-weight: 800; color: #dde; text-align: center; }
+  .card-a .role { font-size: 5px; color: rgba(255,255,255,0.35); }
+  .card-a .stats { display: flex; gap: 3px; margin-top: 3px; background: rgba(0,0,0,0.3); border-radius: 3px; padding: 2px 3px; }
+  .card-a .abi { font-size: 5.5px; color: #ffc; border: 1px solid rgba(255,200,50,0.3); border-radius: 3px; padding: 1px 3px; margin-top: 2px; width: 100%; text-align: center; background: rgba(255,200,50,0.06); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-a .st { display: flex; flex-direction: column; align-items: center; }
+  .card-a .stv { font-size: 6.5px; font-weight: 800; color: #dde; }
+  .card-a .stl { font-size: 4.5px; color: rgba(255,255,255,0.3); }
+
+  /* B: --s: 0.55, font clamp, no badge */
+  .card-b { width: 58px; padding: 4px 3px 3px; border-color: #8855ff; }
+  .card-b .price { font-size: 7px; color: #ffd700; font-weight: 700; align-self: flex-start; }
+  .card-b .ico { font-size: 17px; margin: 2px 0 1px; }
+  .card-b .nm { font-size: 7px; font-weight: 800; color: #dde; text-align: center; }
+  .card-b .stats { display: flex; gap: 2px; margin-top: 2px; background: rgba(0,0,0,0.3); border-radius: 3px; padding: 1px 2px; }
+  .card-b .st { display: flex; flex-direction: column; align-items: center; }
+  .card-b .stv { font-size: 7px; font-weight: 800; color: #dde; }
+  .card-b .stl { font-size: 5px; color: rgba(255,255,255,0.3); }
+
+  /* C: mini pill style */
+  .card-c { width: 52px; padding: 6px 3px 5px; border-color: #8855ff; }
+  .card-c .ico { font-size: 20px; }
+  .card-c .nm { font-size: 7px; font-weight: 800; color: #dde; text-align: center; margin-top: 2px; }
+  .card-c .hp-bar { width: 40px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 3px; overflow: hidden; }
+  .card-c .hp-fill { height: 100%; background: #66ffaa; border-radius: 2px; }
+  .card-c .atk { font-size: 6.5px; color: #ff9966; font-weight: 700; margin-top: 1px; }
+  .card-c .price { font-size: 7px; color: #ffd700; font-weight: 700; margin-top: 2px; }
+
+  /* bench card styles */
+  .bcard-a { width: 64px; padding: 5px 4px 4px; border-color: #55aaff; }
+  .bcard-b { width: 54px; padding: 4px 3px 3px; border-color: #55aaff; }
+  .bcard-c { width: 50px; padding: 6px 3px 5px; border-color: #55aaff; }
+
+  .tag { display: inline-block; font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: 700; margin-bottom: 8px; }
+  .tag-a { background: rgba(255,200,50,0.12); border: 1px solid rgba(255,200,50,0.35); color: #ffd700; }
+  .tag-b { background: rgba(100,220,255,0.1); border: 1px solid rgba(100,220,255,0.3); color: #88eeff; }
+  .tag-c { background: rgba(200,100,255,0.1); border: 1px solid rgba(200,100,255,0.3); color: #cc88ff; }
+
+  .approach-wrap { display: flex; gap: 24px; justify-content: center; align-items: flex-start; flex-wrap: wrap; padding: 16px 8px; }
+  .approach-col { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+  .note { font-size: 10px; color: rgba(255,255,255,0.45); max-width: 180px; text-align: center; line-height: 1.4; }
+  .dim { font-size: 9px; color: rgba(255,255,255,0.3); }
+</style>
+
+<h2>3 abordagens para reduzir os cards</h2>
+<p class="subtitle">Cada uma tem um trade-off diferente. Veja e escolha.</p>
+
+<div class="approach-wrap">
+
+  <!-- APPROACH A -->
+  <div class="approach-col">
+    <div class="tag tag-a">A — Conservadora</div>
+    <div class="phone">
+      <div class="sec-lbl sec-gold">Recruitment</div>
+      <div class="cards-row">
+        <div class="card card-a">
+          <div class="price">2💰</div>
+          <div class="ico">🏹</div>
+          <div class="nm">Archer</div>
+          <div class="stats">
+            <div class="st"><span class="stv">360</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">5.0</span><span class="stl">VEL</span></div>
+          </div>
+          <div class="abi">⚡ Precise Shot</div>
+        </div>
+        <div class="card card-a" style="border-color:#5588ff">
+          <div class="price">2💰</div>
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="stats">
+            <div class="st"><span class="stv">687</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">2.0</span><span class="stl">VEL</span></div>
+          </div>
+          <div class="abi">✨ Sacred Aura</div>
+        </div>
+        <div class="card card-a" style="border-color:#cc55ff">
+          <div class="price">3💰</div>
+          <div class="ico">🗡️</div>
+          <div class="nm">Assass.</div>
+          <div class="stats">
+            <div class="st"><span class="stv">313</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">112</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">6.0</span><span class="stl">VEL</span></div>
+          </div>
+          <div class="abi">🔪 Sneak</div>
+        </div>
+      </div>
+      <div class="sec-lbl" style="margin-top:6px">Barracks</div>
+      <div class="cards-row">
+        <div class="card bcard-a" style="border-color:#55aaff">
+          <div class="ico">⚔️</div>
+          <div class="nm">Knight</div>
+          <div class="stats">
+            <div class="st"><span class="stv">512</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">95</span><span class="stl">ATK</span></div>
+          </div>
+          <div class="abi">🛡 Iron Def.</div>
+        </div>
+      </div>
+    </div>
+    <p class="dim">card: 69px wide</p>
+    <p class="note">Só corrige o bug de cascade + ajusta --s para 0.65. Mantém habilidade. Menor esforço.</p>
+  </div>
+
+  <!-- APPROACH B -->
+  <div class="approach-col">
+    <div class="tag tag-b">B — Recomendada ★</div>
+    <div class="phone">
+      <div class="sec-lbl sec-gold">Recruitment</div>
+      <div class="cards-row">
+        <div class="card card-b">
+          <div class="price">2💰</div>
+          <div class="ico">🏹</div>
+          <div class="nm">Archer</div>
+          <div class="stats">
+            <div class="st"><span class="stv">360</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">5.0</span><span class="stl">VEL</span></div>
+          </div>
+        </div>
+        <div class="card card-b" style="border-color:#5588ff">
+          <div class="price">2💰</div>
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="stats">
+            <div class="st"><span class="stv">687</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">2.0</span><span class="stl">VEL</span></div>
+          </div>
+        </div>
+        <div class="card card-b" style="border-color:#5588ff">
+          <div class="price">2💰</div>
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="stats">
+            <div class="st"><span class="stv">687</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">2.0</span><span class="stl">VEL</span></div>
+          </div>
+        </div>
+        <div class="card card-b" style="border-color:#cc55ff">
+          <div class="price">3💰</div>
+          <div class="ico">🗡️</div>
+          <div class="nm">Assass.</div>
+          <div class="stats">
+            <div class="st"><span class="stv">313</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">112</span><span class="stl">ATK</span></div>
+            <div class="st"><span class="stv">6.0</span><span class="stl">VEL</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sec-lbl" style="margin-top:6px">Barracks</div>
+      <div class="cards-row">
+        <div class="card bcard-b" style="border-color:#55aaff">
+          <div class="ico">⚔️</div>
+          <div class="nm">Knight</div>
+          <div class="stats">
+            <div class="st"><span class="stv">512</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">95</span><span class="stl">ATK</span></div>
+          </div>
+        </div>
+        <div class="card bcard-b" style="border-color:#55aaff">
+          <div class="ico">🏹</div>
+          <div class="nm">Archer</div>
+          <div class="stats">
+            <div class="st"><span class="stv">360</span><span class="stl">HP</span></div>
+            <div class="st"><span class="stv">88</span><span class="stl">ATK</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="dim">card: 58px wide</p>
+    <p class="note">Corrige cascade, --s: 0.55, oculta habilidade e role. Font mínimo 7px. Remove a badge. Melhor equilíbrio.</p>
+  </div>
+
+  <!-- APPROACH C -->
+  <div class="approach-col">
+    <div class="tag tag-c">C — Ultra compacta</div>
+    <div class="phone">
+      <div class="sec-lbl sec-gold">Recruitment</div>
+      <div class="cards-row">
+        <div class="card card-c">
+          <div class="ico">🏹</div>
+          <div class="nm">Archer</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:52%"></div></div>
+          <div class="atk">88⚔</div>
+          <div class="price">2💰</div>
+        </div>
+        <div class="card card-c" style="border-color:#5588ff">
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:100%"></div></div>
+          <div class="atk">88⚔</div>
+          <div class="price">2💰</div>
+        </div>
+        <div class="card card-c" style="border-color:#5588ff">
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:100%"></div></div>
+          <div class="atk">88⚔</div>
+          <div class="price">2💰</div>
+        </div>
+        <div class="card card-c" style="border-color:#cc55ff">
+          <div class="ico">🗡️</div>
+          <div class="nm">Assass.</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:45%"></div></div>
+          <div class="atk">112⚔</div>
+          <div class="price">3💰</div>
+        </div>
+      </div>
+      <div class="sec-lbl" style="margin-top:6px">Barracks</div>
+      <div class="cards-row">
+        <div class="card bcard-c" style="border-color:#55aaff">
+          <div class="ico">⚔️</div>
+          <div class="nm">Knight</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:74%"></div></div>
+          <div class="atk">95⚔</div>
+        </div>
+        <div class="card bcard-c" style="border-color:#55aaff">
+          <div class="ico">🏹</div>
+          <div class="nm">Archer</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:52%"></div></div>
+          <div class="atk">88⚔</div>
+        </div>
+        <div class="card bcard-c" style="border-color:#55aaff">
+          <div class="ico">🛡️</div>
+          <div class="nm">Paladin</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:100%"></div></div>
+          <div class="atk">88⚔</div>
+        </div>
+      </div>
+    </div>
+    <p class="dim">card: 52px wide</p>
+    <p class="note">Redesign completo: ícone + nome + barra de HP + ATK inline. Exige mais CSS, mas fica bem menor.</p>
+  </div>
+
+</div>
+
+<div class="options" style="max-width:500px;margin:0 auto">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content"><h3>Conservadora — menos mudança</h3><p>Só corrige o bug + ajuste de --s. Mantém habilidade visível.</p></div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content"><h3>Recomendada — equilíbrio ideal ★</h3><p>Bug fix + --s:0.55 + remove habilidade/role + font mínimo 7px.</p></div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content"><h3>Ultra compacta — redesign</h3><p>Barra de HP visual + ATK inline. Mais trabalho mas muito menor.</p></div>
+  </div>
+</div>
