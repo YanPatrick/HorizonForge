@@ -108,4 +108,45 @@
   #turnpanel {
     display: none !important;
   }
+
+  /* ── Bottom zone: vertical stack ── */
+  #bottom-zone {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Leave room at bottom for FAB (64px button + 16px gap + safe-area) */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+    gap: 8px;
+  }
+
+  /* Hide the center column (Battle btn lives in FAB, log is hidden) */
+  #center-col {
+    display: none;
+  }
+
+  /* Barracks and Shop: full width */
+  #benchwrap,
+  #shopwrap {
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Bench and Shop card rows: horizontal scroll */
+  #benchrow,
+  #shoprow {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    gap: calc(var(--bcard-gap));
+    padding-bottom: 4px; /* prevent shadow clip */
+  }
+
+  /* Hide scrollbars — content still scrolls via touch */
+  #benchrow::-webkit-scrollbar,
+  #shoprow::-webkit-scrollbar {
+    display: none;
+  }
 }
