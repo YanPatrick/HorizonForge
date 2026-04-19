@@ -2549,42 +2549,246 @@
           gap: 5px;
         }
       }
+
+      /* ═══════════════════════════════════════════════
+         LOBBY LAYOUT REDESIGN — RESPONSIVE (no mobile.css)
+         ═══════════════════════════════════════════════ */
+
+      /* TopNav: right-align items only, no logo space */
+      .topnav { justify-content: flex-end; }
+      .nav-center { display: none !important; }
+      .nav-logo { display: none !important; }
+
+      /* Lobby wrap: fixed between topnav (58px) and bottom nav (60px) */
+      .lobby-wrap {
+        position: fixed !important;
+        top: 58px;
+        bottom: 60px;
+        left: 0;
+        right: 0;
+        overflow: hidden;
+        min-height: unset !important;
+        display: block !important;
+      }
+
+      /* Each view fills the lobby-wrap */
+      .lv { width: 100%; height: 100%; }
+      .lv.active {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Scrollable, centered column container */
+      .view-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .view-scroll::-webkit-scrollbar { width: 4px; }
+      .view-scroll::-webkit-scrollbar-track { background: transparent; }
+      .view-scroll::-webkit-scrollbar-thumb {
+        background: rgba(180, 130, 255, 0.22);
+        border-radius: 4px;
+      }
+
+      /* Centered column within scroll */
+      .view-col {
+        width: 100%;
+        max-width: 488px;
+        padding: 16px 16px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      /* ── Bottom navigation (always visible) ── */
+      .mobile-bottom-tabs {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(6, 3, 20, 0.97);
+        border-top: 1px solid rgba(180, 130, 255, 0.14);
+        backdrop-filter: blur(18px);
+        z-index: 100;
+        align-items: stretch;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .mbt-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        padding: 4px 0;
+        color: rgba(190, 170, 240, 0.45);
+        transition: color 0.15s;
+        font-family: "Exo 2", sans-serif;
+      }
+      .mbt-tab:hover { color: rgba(210, 190, 255, 0.7); }
+      .mbt-tab.active { color: #ffd700; }
+      .mbt-ico { font-size: 18px; line-height: 1; }
+      .mbt-tab.active .mbt-ico {
+        filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
+      }
+      .mbt-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* ── Duel view title ── */
+      .duel-title {
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        text-align: center;
+        color: rgba(200, 180, 255, 0.5);
+        margin-bottom: 14px;
+        padding-top: 4px;
+      }
+
+      /* ── Cards: always expanded, full-width, no hover lift ── */
+      .banner-expand {
+        max-height: none !important;
+        opacity: 1 !important;
+        transition: none !important;
+      }
+      .banner {
+        width: 100%;
+        margin-bottom: 14px;
+        cursor: default;
+      }
+      .banner-ai:hover,
+      .banner-pvp:hover { transform: none !important; }
+
+      /* ── Banner title row with info icon ── */
+      .banner-title-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .banner-title-row .banner-title { margin-bottom: 0; }
+
+      /* ── Info icon tooltip trigger ── */
+      .info-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-style: normal;
+        cursor: pointer;
+        flex-shrink: 0;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        background: rgba(140, 100, 255, 0.18);
+        border: 1px solid rgba(140, 100, 255, 0.38);
+        color: rgba(180, 155, 255, 0.75);
+        transition: all 0.15s;
+        font-family: "Exo 2", sans-serif;
+        font-weight: 700;
+      }
+      .info-trigger:hover,
+      .info-trigger.tip-active {
+        background: rgba(140, 100, 255, 0.35);
+        color: rgba(210, 190, 255, 0.95);
+      }
+      .banner-pvp .info-trigger {
+        background: rgba(200, 140, 30, 0.18);
+        border-color: rgba(220, 160, 40, 0.38);
+        color: rgba(255, 200, 100, 0.75);
+      }
+      .banner-pvp .info-trigger:hover,
+      .banner-pvp .info-trigger.tip-active {
+        background: rgba(200, 140, 30, 0.35);
+        color: rgba(255, 220, 130, 0.95);
+      }
+
+      /* ── Description tooltip popup ── */
+      #desc-tooltip {
+        position: fixed;
+        z-index: 9999;
+        background: rgba(10, 6, 28, 0.97);
+        border: 1px solid rgba(160, 120, 255, 0.35);
+        border-radius: 10px;
+        padding: 10px 14px;
+        width: 230px;
+        max-width: calc(100vw - 32px);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+        box-shadow: 0 10px 32px rgba(0,0,0,0.6), 0 0 18px rgba(130,80,255,0.14);
+        font-size: 12px;
+        line-height: 1.65;
+        color: rgba(200, 185, 255, 0.85);
+      }
+      #desc-tooltip.visible { opacity: 1; }
+
+      /* ── Override old view heights for new fixed layout ── */
+      #view-home {
+        min-height: unset !important;
+        padding: 0 !important;
+        align-items: stretch !important;
+      }
+      #view-grimoire,
+      #view-heroes,
+      #view-formation {
+        height: 100% !important;
+        padding-top: 0 !important;
+        box-sizing: border-box !important;
+      }
+      #view-settings {
+        height: 100% !important;
+        padding-top: 0 !important;
+        overflow-y: auto !important;
+      }
+
+      /* ── Nav right: shrink gracefully on narrow screens ── */
+      @media (max-width: 430px) {
+        .hive-bal { padding: 5px 10px; font-size: 11.5px; gap: 5px; }
+        .nav-user-badge { padding: 3px 8px 3px 4px; font-size: 11.5px; gap: 5px; }
+        .nav-avatar { width: 22px; height: 22px; }
+        .btn-exit { padding: 5px 11px; font-size: 11.5px; }
+        .nav-right { gap: 5px; }
+      }
+      @media (max-width: 330px) {
+        .hive-bal { padding: 4px 8px; font-size: 10px; gap: 4px; }
+        .nav-user-badge { padding: 3px 6px 3px 4px; font-size: 10px; gap: 4px; }
+        .nav-avatar { width: 20px; height: 20px; }
+        .btn-exit { padding: 4px 8px; font-size: 10px; }
+        .nav-right { gap: 4px; }
+      }
     </style>
-    <link rel="stylesheet" href="/mobile.css" />
   </head>
   <body>
     <!-- ── TOP NAV ─────────────────────── -->
     <nav class="topnav">
-      <a class="nav-logo" href="/lobby.html">
-        <span class="nav-logo-ico">⚔️</span>
-        <span class="nav-logo-name">HORIZON FORGE</span>
-      </a>
-
-      <div class="nav-center">
-        <button class="nav-link" id="nav-btn-grimoire" onclick="openGrimoire()">
-          Grimoire
-        </button>
-        <button
-          class="nav-link"
-          id="nav-btn-formation"
-          onclick="openFormation()"
-        >
-          Formation
-        </button>
-        <button
-          class="nav-link active"
-          id="nav-btn-home"
-          onclick="showView('view-home')"
-        >
-          Duel
-        </button>
-        <button class="nav-link" id="nav-btn-heroes" onclick="openHeroes()">
-          Heroes
-        </button>
-        <button class="nav-link" id="nav-btn-settings" onclick="openSettings()">
-          Settings
-        </button>
-      </div>
+      <!-- Hidden nav buttons kept for JS compatibility -->
+      <button id="nav-btn-grimoire" style="display:none"></button>
+      <button id="nav-btn-formation" style="display:none"></button>
+      <button id="nav-btn-home" style="display:none"></button>
+      <button id="nav-btn-heroes" style="display:none"></button>
+      <button id="nav-btn-settings" style="display:none"></button>
 
       <div class="nav-right">
         <div class="hive-bal" id="hive-bal">
@@ -2592,11 +2796,7 @@
             src="images/hive-logo.png"
             width="14"
             height="12"
-            style="
-              display: inline-block;
-              vertical-align: middle;
-              image-rendering: crisp-edges;
-            "
+            style="display:inline-block;vertical-align:middle;image-rendering:crisp-edges;"
             alt="HIVE"
           />
           <span id="hive-bal-val">— HIVE</span>
@@ -2613,118 +2813,91 @@
 
     <!-- ── LOBBY ──────────────────────── -->
     <div class="lobby-wrap">
-      <!-- ═══ HOME VIEW ═══ -->
+      <!-- ═══ HOME VIEW (DUEL) ═══ -->
       <div id="view-home" class="lv active">
-        <p class="lobby-title">Choose your Battle Mode</p>
+        <div class="view-scroll">
+          <div class="view-col">
+            <p class="duel-title">Battle Mode</p>
 
-        <div class="banners-grid">
-          <!-- ── AI BANNER ── -->
-          <section class="banner banner-ai">
-            <div class="banner-sphere">
-              <div class="sph-ring r1"></div>
-              <div class="sph-ring r2"></div>
-              <div class="sph-ring r3"></div>
-              <span class="sph-core">🤖</span>
-            </div>
+            <!-- ── AI CARD ── -->
+            <section class="banner banner-ai">
+              <div class="banner-sphere" style="width:120px;height:120px;margin:0 auto 14px;">
+                <div class="sph-ring r1"></div>
+                <div class="sph-ring r2"></div>
+                <div class="sph-ring r3"></div>
+                <span class="sph-core">🤖</span>
+              </div>
 
-            <div class="banner-preview">
-              <span class="banner-type-badge">⚔️ Solo</span>
-              <h2 class="banner-title">BATTLE VS AI</h2>
-              <p class="banner-desc">
-                Test your strategies against our intelligent bot. No bets, no
-                risk — pure tactics. Perfect for learning the mechanics.
-              </p>
-            </div>
-
-            <div class="banner-expand">
-              <div class="cfg-divider"></div>
-
-              <div class="cfg-row">
-                <span class="cfg-lbl">Format</span>
-                <div class="pills" id="ai-fmt-pills">
-                  <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="3">BO3</button></span
-                  >
-                  <span class="fmt-wrap"
-                    ><button class="pill active" data-fmt="5">BO5</button></span
-                  >
-                  <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="7">BO7</button></span
-                  >
+              <div class="banner-preview">
+                <span class="banner-type-badge">⚔️ Solo</span>
+                <div class="banner-title-row">
+                  <h2 class="banner-title">BATTLE VS AI</h2>
+                  <button class="info-trigger" id="info-ai"
+                    data-tip="Test your strategies against our intelligent bot. No bets, no risk — pure tactics. Perfect for learning the mechanics."
+                    aria-label="More info">i</button>
                 </div>
               </div>
 
-              <button class="btn-action btn-start" id="btn-ai-battle">
-                ▶ START BATTLE
-              </button>
-            </div>
-          </section>
+              <div class="banner-expand">
+                <div class="cfg-divider"></div>
+                <div class="cfg-row">
+                  <span class="cfg-lbl">Format</span>
+                  <div class="pills" id="ai-fmt-pills">
+                    <span class="fmt-wrap"><button class="pill" data-fmt="3">BO3</button></span>
+                    <span class="fmt-wrap"><button class="pill active" data-fmt="5">BO5</button></span>
+                    <span class="fmt-wrap"><button class="pill" data-fmt="7">BO7</button></span>
+                  </div>
+                </div>
+                <button class="btn-action btn-start" id="btn-ai-battle">▶ START BATTLE</button>
+              </div>
+            </section>
 
-          <!-- ── VS DIVIDER ── -->
-          <div class="vs-col">
-            <span class="vs-badge"></span>
+            <!-- ── PvP CARD ── -->
+            <section class="banner banner-pvp">
+              <div class="banner-sphere" style="width:120px;height:120px;margin:0 auto 14px;">
+                <div class="sph-ring r1"></div>
+                <div class="sph-ring r2"></div>
+                <div class="sph-ring r3"></div>
+                <span class="sph-core">⚔️</span>
+              </div>
+
+              <div class="banner-preview">
+                <span class="banner-type-badge">🏆 PvP Arena</span>
+                <div class="banner-title-row">
+                  <h2 class="banner-title">CHALLENGE PLAYERS</h2>
+                  <button class="info-trigger" id="info-pvp"
+                    data-tip="Bet HIVE against real players. The winner takes most of the pot. Sharpen your deck and enter the arena."
+                    aria-label="More info">i</button>
+                </div>
+              </div>
+
+              <div class="banner-expand">
+                <div class="cfg-divider"></div>
+                <div class="cfg-row">
+                  <span class="cfg-lbl">Bet</span>
+                  <div class="pills" id="pvp-bet-pills">
+                    <button class="pill active" data-bet="0" disabled>Free</button>
+                    <button class="pill" data-bet="1" disabled>1 HIVE</button>
+                    <button class="pill" data-bet="5" disabled>5 HIVE</button>
+                    <button class="pill" data-bet="10" disabled>10 HIVE</button>
+                  </div>
+                </div>
+                <div class="cfg-row">
+                  <span class="cfg-lbl">Format</span>
+                  <div class="pills" id="pvp-fmt-pills">
+                    <span class="fmt-wrap"><button class="pill" data-fmt="3" disabled>BO3</button></span>
+                    <span class="fmt-wrap"><button class="pill active" data-fmt="5" disabled>BO5</button></span>
+                    <span class="fmt-wrap"><button class="pill" data-fmt="7" disabled>BO7</button></span>
+                  </div>
+                </div>
+                <button class="btn-action btn-find" id="btn-pvp-find" disabled>
+                  <span class="btn-soon-badge">Coming Soon</span>
+                  🔍 FIND MATCH
+                </button>
+              </div>
+            </section>
+
           </div>
-
-          <!-- ── PvP BANNER ── -->
-          <section class="banner banner-pvp">
-            <div class="banner-sphere">
-              <div class="sph-ring r1"></div>
-              <div class="sph-ring r2"></div>
-              <div class="sph-ring r3"></div>
-              <span class="sph-core">⚔️</span>
-            </div>
-
-            <div class="banner-preview">
-              <span class="banner-type-badge">🏆 PvP Arena</span>
-              <h2 class="banner-title">CHALLENGE PLAYERS</h2>
-              <p class="banner-desc">
-                Bet HIVE against real players. The winner takes most of the pot.
-                Sharpen your deck and enter the arena.
-              </p>
-            </div>
-
-            <div class="banner-expand">
-              <div class="cfg-divider"></div>
-
-              <div class="cfg-row">
-                <span class="cfg-lbl">Bet</span>
-                <div class="pills" id="pvp-bet-pills">
-                  <button class="pill active" data-bet="0" disabled>
-                    Free
-                  </button>
-                  <button class="pill" data-bet="1" disabled>1 HIVE</button>
-                  <button class="pill" data-bet="5" disabled>5 HIVE</button>
-                  <button class="pill" data-bet="10" disabled>10 HIVE</button>
-                </div>
-              </div>
-
-              <div class="cfg-row">
-                <span class="cfg-lbl">Format</span>
-                <div class="pills" id="pvp-fmt-pills">
-                  <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="3" disabled>
-                      BO3
-                    </button></span
-                  >
-                  <span class="fmt-wrap"
-                    ><button class="pill active" data-fmt="5" disabled>
-                      BO5
-                    </button></span
-                  >
-                  <span class="fmt-wrap"
-                    ><button class="pill" data-fmt="7" disabled>
-                      BO7
-                    </button></span
-                  >
-                </div>
-              </div>
-
-              <button class="btn-action btn-find" id="btn-pvp-find" disabled>
-                <span class="btn-soon-badge">Coming Soon</span>
-                🔍 FIND MATCH
-              </button>
-            </div>
-          </section>
         </div>
       </div>
       <!-- /view-home -->
@@ -3591,10 +3764,6 @@
       </div>
       <!-- /view-settings -->
       <nav class="mobile-bottom-tabs" id="mobile-bottom-tabs">
-        <button type="button" class="mbt-tab active" data-nav="home" onclick="showView('view-home')">
-          <span class="mbt-ico">⚔️</span>
-          <span class="mbt-lbl">Duel</span>
-        </button>
         <button type="button" class="mbt-tab" data-nav="grimoire" onclick="openGrimoire()">
           <span class="mbt-ico">📖</span>
           <span class="mbt-lbl">Grimoire</span>
@@ -3602,6 +3771,10 @@
         <button type="button" class="mbt-tab" data-nav="formation" onclick="openFormation()">
           <span class="mbt-ico">🏰</span>
           <span class="mbt-lbl">Formation</span>
+        </button>
+        <button type="button" class="mbt-tab active" data-nav="home" onclick="showView('view-home')">
+          <span class="mbt-ico">⚔️</span>
+          <span class="mbt-lbl">Duel</span>
         </button>
         <button type="button" class="mbt-tab" data-nav="heroes" onclick="openHeroes()">
           <span class="mbt-ico">🦸</span>
@@ -3672,6 +3845,9 @@
 
     <!-- ── TOAST ────────────────────── -->
     <div class="toast" id="toast"></div>
+
+    <!-- ── DESC TOOLTIP ─────────────── -->
+    <div id="desc-tooltip"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -4888,6 +5064,75 @@
             );
           });
         })();
+
+        /* ── Description tooltip (info-trigger) ─────────────── */
+        (function () {
+          const tip = document.getElementById("desc-tooltip");
+          let longPressTimer = null;
+
+          function showTip(trigger) {
+            const text = trigger.dataset.tip;
+            if (!text) return;
+            tip.textContent = text;
+            trigger.classList.add("tip-active");
+
+            const rect = trigger.getBoundingClientRect();
+            const tipW = 230;
+            const margin = 8;
+            let left = rect.left + rect.width / 2 - tipW / 2;
+            left = Math.max(margin, Math.min(left, window.innerWidth - tipW - margin));
+
+            let top = rect.top - 10;
+            tip.style.left = left + "px";
+            tip.style.top = "0px";
+            tip.style.opacity = "0";
+            tip.classList.add("visible");
+            const tipH = tip.offsetHeight;
+            top = rect.top - tipH - 6;
+            if (top < margin) top = rect.bottom + 6;
+            tip.style.top = top + "px";
+            tip.style.opacity = "";
+          }
+
+          function hideTip(trigger) {
+            tip.classList.remove("visible");
+            if (trigger) trigger.classList.remove("tip-active");
+          }
+
+          document.querySelectorAll(".info-trigger").forEach((trigger) => {
+            /* Desktop: hover */
+            trigger.addEventListener("mouseenter", () => showTip(trigger));
+            trigger.addEventListener("mouseleave", () => hideTip(trigger));
+
+            /* Mobile: long-press (500ms) */
+            trigger.addEventListener("touchstart", (e) => {
+              e.preventDefault();
+              longPressTimer = setTimeout(() => showTip(trigger), 500);
+            }, { passive: false });
+            trigger.addEventListener("touchend", () => {
+              clearTimeout(longPressTimer);
+              setTimeout(() => hideTip(trigger), 1500);
+            });
+            trigger.addEventListener("touchcancel", () => {
+              clearTimeout(longPressTimer);
+              hideTip(trigger);
+            });
+
+            /* Desktop click toggle for accessibility */
+            trigger.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (tip.classList.contains("visible")) {
+                hideTip(trigger);
+              } else {
+                showTip(trigger);
+              }
+            });
+          });
+
+          /* Click outside closes tip */
+          document.addEventListener("click", () => hideTip(null));
+        })();
+
       })();
     </script>
   </body>
