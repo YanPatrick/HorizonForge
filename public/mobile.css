@@ -410,3 +410,129 @@
 @media (max-width: 380px) and (pointer: coarse) {
   :root { --s: 0.44; }
 }
+
+/* ══════════════════════════════════════════
+   LOBBY MOBILE OVERRIDES
+   Aplica apenas a lobby.html em touch portrait
+   ══════════════════════════════════════════ */
+
+/* Bottom tabs: ocultas por padrão (desktop) */
+.mobile-bottom-tabs { display: none; }
+
+@media (max-width: 480px) and (pointer: coarse) {
+
+  /* ── TopNav: ocultar centro e direita ── */
+  .topnav .nav-center,
+  .topnav .hive-bal,
+  .topnav .btn-exit {
+    display: none !important;
+  }
+
+  .topnav {
+    padding: 0 14px;
+    justify-content: space-between;
+  }
+
+  /* ── Bottom Tabs ── */
+  .mobile-bottom-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: rgba(6, 3, 20, 0.97);
+    border-top: 1px solid rgba(180, 130, 255, 0.14);
+    backdrop-filter: blur(18px);
+    z-index: 99;
+    padding-bottom: env(safe-area-inset-bottom);
+    align-items: stretch;
+  }
+
+  .mbt-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 4px 0;
+  }
+
+  .mbt-ico {
+    font-size: 18px;
+  }
+
+  .mbt-lbl {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(190, 170, 240, 0.45);
+    font-family: "Exo 2", system-ui, sans-serif;
+  }
+
+  .mbt-tab.active .mbt-lbl {
+    color: #ffd700;
+  }
+
+  .mbt-tab.active .mbt-ico {
+    filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
+  }
+
+  /* ── Lobby wrap: padding para não ficar atrás das tabs ── */
+  .lobby-wrap {
+    padding-bottom: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  /* ── Banner expand: sempre visível ── */
+  .banner-expand {
+    max-height: none !important;
+    opacity: 1 !important;
+    overflow: visible !important;
+  }
+
+  /* ── Desabilitar hover transform em touch ── */
+  .banner-ai:hover,
+  .banner-pvp:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* ── Sphere menor ── */
+  .banner-sphere {
+    width: 80px !important;
+    height: 80px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .banner-ai .sph-ring.r1,
+  .banner-pvp .sph-ring.r1 {
+    width: 80px !important;
+    height: 80px !important;
+    margin: -40px 0 0 -40px !important;
+  }
+
+  .banner-ai .sph-ring.r2,
+  .banner-pvp .sph-ring.r2 {
+    width: 60px !important;
+    height: 60px !important;
+    margin: -30px 0 0 -30px !important;
+  }
+
+  .banner-ai .sph-ring.r3,
+  .banner-pvp .sph-ring.r3 {
+    width: 40px !important;
+    height: 40px !important;
+    margin: -20px 0 0 -20px !important;
+  }
+
+  .banner-sphere .sph-core {
+    font-size: 22px !important;
+  }
+}
