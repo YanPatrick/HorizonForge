@@ -1485,288 +1485,11 @@
         margin-top: 14px;
       }
 
-      #hero-search {
-        flex: 1;
-        min-width: 140px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(180, 130, 255, 0.22);
-        border-radius: 8px;
-        padding: 7px 12px;
-        color: rgba(255, 240, 200, 0.9);
-        font-size: 13px;
-        font-family: "Exo 2", sans-serif;
-        outline: none;
-        transition: border-color 0.18s;
-      }
-      #hero-search::placeholder {
-        color: rgba(255, 255, 255, 0.28);
-      }
-      #hero-search:focus {
-        border-color: rgba(180, 130, 255, 0.5);
-      }
-      .hrf-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        color: rgba(255, 255, 255, 0.45);
-        border-radius: 999px;
-        padding: 5px 15px;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.16s;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        font-family: "Exo 2", sans-serif;
-      }
-      .hrf-btn:hover {
-        opacity: 0.85;
-      }
-      .hrf-btn.active[data-role="all"] {
-        background: rgba(180, 130, 255, 0.18);
-        border-color: rgba(180, 130, 255, 0.45);
-        color: #cc99ff;
-      }
-      .hrf-btn.active[data-role="tank"] {
-        background: rgba(255, 165, 40, 0.15);
-        border-color: rgba(255, 165, 40, 0.4);
-        color: #ffaa44;
-      }
-      .hrf-btn.active[data-role="dps"] {
-        background: rgba(255, 100, 80, 0.15);
-        border-color: rgba(255, 100, 80, 0.35);
-        color: #ff9977;
-      }
-      .hrf-btn.active[data-role="support"] {
-        background: rgba(100, 200, 100, 0.15);
-        border-color: rgba(100, 200, 100, 0.35);
-        color: #66ee88;
-      }
-      .heroes-main {
-        display: flex;
-        flex: 1;
-        overflow: hidden;
-      }
-      #hh-list {
-        width: 210px;
-        flex-shrink: 0;
-        overflow-y: auto;
-        border-right: 1px solid rgba(180, 130, 255, 0.12);
-        padding: 10px 8px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-      }
-      #hh-list::-webkit-scrollbar {
-        width: 4px;
-      }
-      #hh-list::-webkit-scrollbar-thumb {
-        background: rgba(180, 130, 255, 0.3);
-        border-radius: 2px;
-      }
-      .hh-card {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 9px 11px;
-        border-radius: 10px;
-        border: 1px solid rgba(180, 130, 255, 0.13);
-        background: rgba(255, 255, 255, 0.025);
-        cursor: pointer;
-        transition: all 0.15s;
-      }
-      .hh-card:hover {
-        background: rgba(180, 130, 255, 0.08);
-        border-color: rgba(180, 130, 255, 0.28);
-      }
-      .hh-card.active {
-        background: rgba(180, 130, 255, 0.16);
-        border-color: rgba(180, 130, 255, 0.5);
-        box-shadow: 0 0 14px rgba(180, 130, 255, 0.12);
-      }
-      .hh-card-ico {
-        font-size: 22px;
-        flex-shrink: 0;
-        width: 28px;
-        text-align: center;
-      }
-      .hh-card-info {
-        min-width: 0;
-      }
-      .hh-card-name {
-        font-size: 13px;
-        font-weight: 700;
-        color: rgba(255, 240, 200, 0.9);
-        margin-bottom: 3px;
-      }
-      .hh-card-role {
-        font-size: 10px;
-        font-weight: 700;
-        padding: 1px 8px;
-        border-radius: 999px;
-        display: inline-block;
-        margin-bottom: 3px;
-      }
-      .hh-card-skill {
-        font-size: 11px;
-        color: rgba(200, 180, 230, 0.45);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
       .hh-empty {
         padding: 24px 12px;
         text-align: center;
         color: rgba(255, 255, 255, 0.28);
         font-size: 13px;
-      }
-      #heroes-loading {
-        padding: 32px;
-        text-align: center;
-        color: rgba(255, 255, 255, 0.35);
-        font-size: 13px;
-      }
-      #hh-detail {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px 24px;
-      }
-      #hh-detail::-webkit-scrollbar {
-        width: 4px;
-      }
-      #hh-detail::-webkit-scrollbar-thumb {
-        background: rgba(180, 130, 255, 0.3);
-        border-radius: 2px;
-      }
-      .hd-placeholder {
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: rgba(255, 255, 255, 0.2);
-        font-size: 14px;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .hd-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 18px;
-      }
-      .hd-ico {
-        font-size: 46px;
-      }
-      .hd-name {
-        font-family: "Cinzel", serif;
-        font-size: 22px;
-        font-weight: 700;
-        color: rgba(255, 240, 200, 0.95);
-        margin-bottom: 7px;
-      }
-      .hd-role-badge {
-        font-size: 11px;
-        font-weight: 700;
-        padding: 3px 12px;
-        border-radius: 999px;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-      }
-      .hd-skill-box {
-        background: rgba(180, 130, 255, 0.06);
-        border: 1px solid rgba(180, 130, 255, 0.2);
-        border-radius: 10px;
-        padding: 13px 16px;
-        margin-bottom: 12px;
-      }
-      .hd-skill-name {
-        font-size: 14px;
-        font-weight: 700;
-        color: rgba(255, 210, 80, 0.9);
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .hd-skill-type {
-        font-size: 11px;
-        font-weight: 400;
-        color: rgba(180, 130, 255, 0.75);
-        background: rgba(180, 130, 255, 0.12);
-        padding: 2px 9px;
-        border-radius: 999px;
-      }
-      .hd-skill-desc {
-        font-size: 13px;
-        color: rgba(200, 185, 230, 0.72);
-        line-height: 1.65;
-      }
-      .hd-targeting {
-        font-size: 12px;
-        color: rgba(200, 185, 230, 0.45);
-        margin-bottom: 16px;
-      }
-      .hd-targeting strong {
-        color: rgba(180, 130, 255, 0.85);
-      }
-      .hd-table-section-title {
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: rgba(180, 130, 255, 0.6);
-        margin-bottom: 8px;
-      }
-      .hd-table-wrap {
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid rgba(180, 130, 255, 0.2);
-      }
-      .hd-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 13px;
-      }
-      .hd-table thead tr {
-        background: rgba(180, 130, 255, 0.1);
-      }
-      .hd-table th {
-        padding: 9px 14px;
-        text-align: center;
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        color: rgba(200, 180, 255, 0.6);
-        font-weight: 700;
-        border-bottom: 1px solid rgba(180, 130, 255, 0.2);
-        font-family: "Exo 2", sans-serif;
-      }
-      .hd-table th:first-child {
-        text-align: left;
-      }
-      .hd-table td {
-        padding: 9px 14px;
-        text-align: center;
-        color: rgba(230, 220, 255, 0.8);
-        border-bottom: 1px solid rgba(180, 130, 255, 0.08);
-      }
-      .hd-table td:first-child {
-        text-align: left;
-      }
-      .hd-table tbody tr:last-child td {
-        border-bottom: none;
-      }
-      .hd-table tbody tr:hover {
-        background: rgba(180, 130, 255, 0.06);
-      }
-      .hd-lv {
-        font-weight: 700;
-        color: rgba(255, 210, 80, 0.9);
-        font-size: 12px;
-        white-space: nowrap;
-      }
-      .hd-sp {
-        color: rgba(180, 130, 255, 0.9);
-        font-weight: 600;
       }
       /* ── search timer & queue ── */
       .search-timer {
@@ -1965,8 +1688,7 @@
         padding: 80px 24px 40px;
       }
 
-      #view-grimoire,
-      #view-heroes {
+      #view-grimoire {
         height: 100vh;
         padding-top: 58px;
         box-sizing: border-box;
@@ -2071,31 +1793,9 @@
         border-radius: 3px;
       }
 
-      /* Heroes content inside wiki */
-      #view-heroes .wiki-content {
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-      #view-heroes .heroes-main {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-      }
-      #view-heroes #hh-list {
-        flex-shrink: 0;
-      }
-      #view-heroes #hh-detail {
-        flex: 1;
-        overflow-y: auto;
-        padding: 20px 28px;
-      }
-
       /* Mobile wiki */
       @media (max-width: 700px) {
-        #view-grimoire,
-        #view-heroes {
+        #view-grimoire {
           height: auto;
           overflow: visible;
         }
@@ -2134,23 +1834,6 @@
         }
         .wiki-search-wrap {
           width: 100%;
-        }
-        #view-heroes .wiki-content {
-          overflow: visible;
-        }
-        #view-heroes .heroes-main {
-          flex-direction: column;
-          overflow: visible;
-        }
-        #view-heroes #hh-list {
-          width: 100%;
-          border-right: none;
-          border-bottom: 1px solid rgba(180, 130, 255, 0.12);
-          overflow-y: visible;
-          max-height: none;
-        }
-        #view-heroes #hh-detail {
-          overflow: visible;
         }
       }
 
@@ -2274,7 +1957,8 @@
       }
 
       /* Deck-editing mode: suppress hover glow and detail interactions */
-      #form-hero-grid.fhc-editing-mode .form-hero-card:hover:not(.fhc-disabled) {
+      #form-hero-grid.fhc-editing-mode
+        .form-hero-card:hover:not(.fhc-disabled) {
         transform: none;
         box-shadow: none;
         border-color: rgba(140, 100, 255, 0.18);
@@ -2916,7 +2600,6 @@
         align-items: stretch !important;
       }
       #view-grimoire,
-      #view-heroes,
       #view-formation {
         height: 100% !important;
         padding-top: 0 !important;
@@ -3604,7 +3287,6 @@
       <button id="nav-btn-grimoire" style="display: none"></button>
       <button id="nav-btn-formation" style="display: none"></button>
       <button id="nav-btn-home" style="display: none"></button>
-      <button id="nav-btn-heroes" style="display: none"></button>
       <button id="nav-btn-settings" style="display: none"></button>
 
       <div class="nav-right">
@@ -4352,65 +4034,6 @@
       </div>
       <!-- /view-grimoire -->
 
-      <!-- ═══ HEROES VIEW ═══ -->
-      <div id="view-heroes" class="lv">
-        <div class="wiki-layout">
-          <aside class="wiki-sidebar">
-            <div class="wiki-category">Filter by Role</div>
-            <div class="wiki-search-wrap">
-              <input
-                type="text"
-                id="hero-search"
-                placeholder="🔍 Search hero…"
-                oninput="filterHeroes()"
-              />
-            </div>
-            <button
-              class="wiki-item active"
-              data-role="all"
-              onclick="setHeroFilter('all')"
-            >
-              All Heroes
-            </button>
-            <button
-              class="wiki-item"
-              data-role="tank"
-              onclick="setHeroFilter('tank')"
-            >
-              🛡️ Tank
-            </button>
-            <button
-              class="wiki-item"
-              data-role="dps"
-              onclick="setHeroFilter('dps')"
-            >
-              ⚔️ DPS
-            </button>
-            <button
-              class="wiki-item"
-              data-role="support"
-              onclick="setHeroFilter('support')"
-            >
-              💚 Support
-            </button>
-          </aside>
-          <div class="wiki-content">
-            <div class="heroes-main">
-              <div id="hh-list">
-                <div id="heroes-loading">⏳ Loading heroes…</div>
-              </div>
-              <div id="hh-detail">
-                <div class="hd-placeholder">
-                  <span style="font-size: 36px; opacity: 0.4">🧙</span>
-                  <span>Select a hero to see details</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- /view-heroes -->
-
       <!-- ═══ FORMATION VIEW ═══ -->
       <div id="view-formation" class="lv">
         <div class="fv-wrap">
@@ -4653,15 +4276,6 @@
         <button
           type="button"
           class="mbt-tab"
-          data-nav="heroes"
-          onclick="openHeroes()"
-        >
-          <span class="mbt-ico">🦸</span>
-          <span class="mbt-lbl">Heroes</span>
-        </button>
-        <button
-          type="button"
-          class="mbt-tab"
           data-nav="settings"
           onclick="openSettings()"
         >
@@ -4857,9 +4471,6 @@
             .getElementById("nav-btn-grimoire")
             .classList.toggle("active", id === "view-grimoire");
           document
-            .getElementById("nav-btn-heroes")
-            .classList.toggle("active", id === "view-heroes");
-          document
             .getElementById("nav-btn-formation")
             .classList.toggle("active", id === "view-formation");
           document
@@ -4923,11 +4534,8 @@
         // Keep grTab as alias for backward compat
         window.grTab = window.grNav;
 
-        /* ── Heroes ──────────────────────── */
-        let _heroData = null,
-          _heroFilter = "all",
-          _heroSearch = "",
-          _heroSelected = null;
+        /* ── Heroes shared state ──────── */
+        let _heroData = null;
 
         function _roleCategory(role) {
           if (!role) return "dps";
@@ -4935,133 +4543,6 @@
           if (r === "tank" || r === "paladin") return "tank";
           if (r === "support") return "support";
           return "dps";
-        }
-
-        window.openHeroes = async function () {
-          showView("view-heroes");
-          if (_heroData) {
-            _renderHeroList();
-            return;
-          }
-          try {
-            const res = await fetch("/api/characters");
-            const d = await res.json();
-            if (d.ok) {
-              const order = { tank: 0, dps: 1, support: 2 };
-              _heroData = d.characters.sort(
-                (a, b) =>
-                  (order[_roleCategory(a.role)] ?? 3) -
-                  (order[_roleCategory(b.role)] ?? 3),
-              );
-            }
-          } catch (e) {
-            /* silent */
-          }
-          const ld = document.getElementById("heroes-loading");
-          if (ld) ld.remove();
-          _renderHeroList();
-        };
-
-        window.closeHeroes = function () {
-          showView("view-home");
-        };
-
-        window.setHeroFilter = function (role) {
-          _heroFilter = role;
-          document
-            .querySelectorAll("#view-heroes .wiki-item[data-role]")
-            .forEach((b) =>
-              b.classList.toggle("active", b.dataset.role === role),
-            );
-          _renderHeroList();
-        };
-
-        window.filterHeroes = function () {
-          _heroSearch = document
-            .getElementById("hero-search")
-            .value.toLowerCase();
-          _renderHeroList();
-        };
-
-        function _renderHeroList() {
-          if (!_heroData) return;
-          const list = document.getElementById("hh-list");
-          const filtered = _heroData.filter((h) => {
-            const matchRole =
-              _heroFilter === "all" || _roleCategory(h.role) === _heroFilter;
-            const matchSearch =
-              !_heroSearch || h.name.toLowerCase().includes(_heroSearch);
-            return matchRole && matchSearch;
-          });
-          list.innerHTML = "";
-          if (!filtered.length) {
-            list.innerHTML = '<div class="hh-empty">No heroes found</div>';
-            return;
-          }
-          filtered.forEach((h) => {
-            const cat = _roleCategory(h.role);
-            const label =
-              cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
-            const div = document.createElement("div");
-            div.className =
-              "hh-card" + (_heroSelected?.cid === h.cid ? " active" : "");
-            div.onclick = () => _selectHero(h);
-            div.innerHTML = `<div class="hh-card-ico">${h.icon}</div>
-              <div class="hh-card-info">
-                <div class="hh-card-name">${h.name}</div>
-                <div class="hh-card-role role-${cat}">${label}</div>
-                <div class="hh-card-skill">${h.skill.name}</div>
-              </div>`;
-            list.appendChild(div);
-          });
-        }
-
-        function _selectHero(h) {
-          _heroSelected = h;
-          _renderHeroList();
-          const cat = _roleCategory(h.role);
-          const label =
-            cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
-          const stars = ["★", "★★", "★★★", "★★★★", "★★★★★"];
-          const fmtSP = (v) =>
-            v < 1
-              ? `${Math.floor(v * 100)}%`
-              : `×${(Math.floor(v * 100) / 100).toFixed(2)}`;
-          let rows = "";
-          for (let lv = 1; lv <= 5; lv++) {
-            const st = h.levels[lv];
-            if (!st) continue;
-            rows += `<tr>
-              <td class="hd-lv">${stars[lv - 1]}</td>
-              <td>${st.max_hp}</td>
-              <td>${st.atk}</td>
-              <td>${Number(st.atk_speed).toFixed(2)}</td>
-              <td>${Math.floor(st.crit_chance * 100)}%</td>
-              <td>×${Number(st.crit_rate).toFixed(2)}</td>
-              <td class="hd-sp">${fmtSP(st.skill_power)}</td>
-            </tr>`;
-          }
-          document.getElementById("hh-detail").innerHTML = `
-            <div class="hd-header">
-              <div class="hd-ico">${h.icon}</div>
-              <div class="hd-meta">
-                <div class="hd-name">${h.name}</div>
-                <span class="hd-role-badge role-${cat}">${label}</span>
-              </div>
-            </div>
-            <div class="hd-skill-box">
-              <div class="hd-skill-name">${h.skill.name}<span class="hd-skill-type">${h.skill.type}</span></div>
-              <div class="hd-skill-desc">${h.skill.description}</div>
-            </div>
-            <div class="hd-table-section-title">Stats by Level</div>
-            <div class="hd-table-wrap">
-              <table class="hd-table">
-                <thead><tr>
-                  <th>Level</th><th>HP</th><th>ATK</th><th>SPD</th><th>Crit%</th><th>Crit×</th><th>Skill Power</th>
-                </tr></thead>
-                <tbody>${rows}</tbody>
-              </table>
-            </div>`;
         }
 
         /* ── Toast ───────────────────── */
@@ -5874,7 +5355,8 @@
           _activeFormSlot = idx;
           _editingOpen = true;
           closeHeroDetail();
-          document.getElementById("form-hero-grid")
+          document
+            .getElementById("form-hero-grid")
             ?.classList.add("fhc-editing-mode");
           _renderDeckCards();
           _renderSlideSlots();
@@ -5888,7 +5370,8 @@
 
         window.closeDeckSlot = function () {
           _editingOpen = false;
-          document.getElementById("form-hero-grid")
+          document
+            .getElementById("form-hero-grid")
             ?.classList.remove("fhc-editing-mode");
           const panel = document.getElementById("fv-slide-panel");
           if (panel) panel.classList.remove("open");
@@ -5906,6 +5389,11 @@
             const countEl = document.getElementById(`form-tab-count-${i}`);
             const iconsEl = document.getElementById(`form-tab-icons-${i}`);
             if (!tab) return;
+            if (session.mode === "guest" && i !== 0) {
+              tab.style.display = "none";
+              return;
+            }
+            tab.style.display = "";
             tab.classList.toggle(
               "fdc-active",
               _editingOpen && i === _activeFormSlot,
@@ -6010,10 +5498,12 @@
               <button class="fhc-info-btn" aria-label="Hero info">i</button>
               <div class="form-hc-ico">${h.icon}</div>
               <div class="form-hc-name">${h.name}</div>`;
-            card.querySelector(".fhc-info-btn").addEventListener("click", (e) => {
-              e.stopPropagation();
-              openHeroDetail(h.cid);
-            });
+            card
+              .querySelector(".fhc-info-btn")
+              .addEventListener("click", (e) => {
+                e.stopPropagation();
+                openHeroDetail(h.cid);
+              });
             grid.appendChild(card);
           });
           if (!filtered.length) {
@@ -6029,10 +5519,11 @@
           const hp = lv1.max_hp ?? "—";
           const atk = lv1.atk ?? "—";
           const spd = lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : "—";
-          const crit =
-            lv1.crit_chance != null
-              ? (lv1.crit_chance * 100).toFixed(0) + "%"
-              : "—";
+          const fmtSP = (v) =>
+            v < 1
+              ? `${Math.floor(v * 100)}%`
+              : `×${(Math.floor(v * 100) / 100).toFixed(2)}`;
+          const sp = lv1.skill_power != null ? fmtSP(lv1.skill_power) : "—";
 
           const levelKeys = Object.keys(h.levels || {})
             .map(Number)
@@ -6044,8 +5535,7 @@
                 <td>${lv}</td>
                 <td>${s.max_hp}</td>
                 <td>${s.atk}</td>
-                <td>${s.atk_speed != null ? s.atk_speed.toFixed(1) : "—"}</td>
-                <td>${s.crit_chance != null ? (s.crit_chance * 100).toFixed(0) + "%" : "—"}</td>
+                <td>${s.skill_power != null ? fmtSP(s.skill_power) : "—"}</td>
               </tr>`;
             })
             .join("");
@@ -6072,16 +5562,16 @@
                 <span class="hf-stat-value">${spd}</span>
               </div>
               <div class="hf-detail-stat">
-                <span class="hf-stat-label">💥 CRIT</span>
-                <span class="hf-stat-value">${crit}</span>
+                <span class="hf-stat-label">✨ SP</span>
+                <span class="hf-stat-value">${sp}</span>
               </div>
             </div>
-            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)"><span class="hf-l2-label">Ver stats completos</span><span class="hf-l2-chevron">▾</span></button>
+            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)"><span class="hf-l2-label">View full stats</span><span class="hf-l2-chevron">▾</span></button>
             <div class="hf-detail-l2">
               <table class="hf-detail-l2-table">
                 <thead>
                   <tr>
-                    <th>Nível</th><th>HP</th><th>ATK</th><th>SPD</th><th>CRIT</th>
+                    <th>Level</th><th>HP</th><th>ATK</th><th>Skill Power</th>
                   </tr>
                 </thead>
                 <tbody>${tableRows}</tbody>
@@ -6105,7 +5595,9 @@
             const drawer = document.getElementById("hf-hero-drawer");
             drawer.classList.add("hf-open");
             drawer.setAttribute("aria-hidden", "false");
-            document.getElementById("hf-hero-sheet")?.setAttribute("aria-hidden", "true");
+            document
+              .getElementById("hf-hero-sheet")
+              ?.setAttribute("aria-hidden", "true");
           } else {
             document.getElementById("hf-sheet-ico").textContent = h.icon;
             document.getElementById("hf-sheet-name").textContent = h.name;
@@ -6113,7 +5605,9 @@
             const sheet = document.getElementById("hf-hero-sheet");
             sheet.classList.add("hf-open");
             sheet.setAttribute("aria-hidden", "false");
-            document.getElementById("hf-hero-drawer")?.setAttribute("aria-hidden", "true");
+            document
+              .getElementById("hf-hero-drawer")
+              ?.setAttribute("aria-hidden", "true");
           }
           document
             .getElementById("hf-detail-backdrop")
@@ -6142,11 +5636,11 @@
           if (isExpanded) {
             l2.classList.remove("expanded");
             chevron.classList.remove("expanded");
-            btn.querySelector(".hf-l2-label").textContent = "Ver stats completos";
+            btn.querySelector(".hf-l2-label").textContent = "View full stats";
           } else {
             l2.classList.add("expanded");
             chevron.classList.add("expanded");
-            btn.querySelector(".hf-l2-label").textContent = "Recolher";
+            btn.querySelector(".hf-l2-label").textContent = "Collapse";
           }
         };
 
@@ -6284,7 +5778,7 @@
               tip.innerHTML =
                 `<span class="fmt-tip-name">${d.name}</span>` +
                 `<span class="fmt-tip-desc">${d.desc}</span>` +
-                `<span class="fmt-tip-win">🏆 First to win ${d.wins} battles wins</span>`;
+                `<span class="fmt-tip-win">First to win ${d.wins} battles wins</span>`;
 
               const r = btn.getBoundingClientRect();
               const TIP_W = 192;
@@ -6417,29 +5911,59 @@
     </script>
 
     <!-- ── Hero Detail Backdrop ── -->
-    <div class="hf-detail-backdrop" id="hf-detail-backdrop" onclick="closeHeroDetail()"></div>
+    <div
+      class="hf-detail-backdrop"
+      id="hf-detail-backdrop"
+      onclick="closeHeroDetail()"
+    ></div>
 
     <!-- ── Hero Detail Drawer (desktop right-side) ── -->
-    <div class="hf-hero-drawer" id="hf-hero-drawer" role="dialog" aria-modal="true" aria-label="Hero Details" aria-hidden="true">
+    <div
+      class="hf-hero-drawer"
+      id="hf-hero-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hero Details"
+      aria-hidden="true"
+    >
       <div class="hf-detail-close-row">
         <div class="hf-detail-hero-header" id="hf-drawer-header">
           <span class="hf-detail-ico" id="hf-drawer-ico"></span>
           <span class="hf-detail-hero-name" id="hf-drawer-name"></span>
         </div>
-        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+        <button
+          class="hf-detail-close-btn"
+          onclick="closeHeroDetail()"
+          aria-label="Close"
+        >
+          ✕
+        </button>
       </div>
       <div class="hf-detail-scroll" id="hf-drawer-body"></div>
     </div>
 
     <!-- ── Hero Detail Sheet (mobile bottom) ── -->
-    <div class="hf-hero-sheet" id="hf-hero-sheet" role="dialog" aria-modal="true" aria-label="Hero Details" aria-hidden="true">
+    <div
+      class="hf-hero-sheet"
+      id="hf-hero-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hero Details"
+      aria-hidden="true"
+    >
       <div class="hf-sheet-handle"></div>
       <div class="hf-detail-close-row">
         <div class="hf-detail-hero-header" id="hf-sheet-header">
           <span class="hf-detail-ico" id="hf-sheet-ico"></span>
           <span class="hf-detail-hero-name" id="hf-sheet-name"></span>
         </div>
-        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+        <button
+          class="hf-detail-close-btn"
+          onclick="closeHeroDetail()"
+          aria-label="Close"
+        >
+          ✕
+        </button>
       </div>
       <div class="hf-detail-scroll" id="hf-sheet-body"></div>
     </div>
