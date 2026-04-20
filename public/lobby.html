@@ -5806,6 +5806,12 @@
         let _editingOpen = false;
 
         window.openFormation = async function () {
+          if (!window._hfDetailEscBound) {
+            window._hfDetailEscBound = true;
+            document.addEventListener("keydown", function (e) {
+              if (e.key === "Escape") closeHeroDetail();
+            });
+          }
           showView("view-formation");
           _editingOpen = false;
           const panel = document.getElementById("fv-slide-panel");
