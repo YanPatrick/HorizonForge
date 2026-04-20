@@ -2859,6 +2859,60 @@
       }
 
       /* ════════════════════════════════════════
+   PHASE 3 — HERO PORTRAIT ZONE
+   ════════════════════════════════════════ */
+
+      /* Portrait container — wraps .cico in shop/bench cards.
+         Set --portrait-url on the element when AI portrait is ready. */
+      .cportrait {
+        width: 100%;
+        height: calc(52px * var(--s));
+        border-radius: calc(8px * var(--s));
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background-image: var(--portrait-url, none);
+        background-size: cover;
+        background-position: center top;
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+          inset 0 -14px 22px rgba(0, 0, 0, 0.45);
+      }
+
+      /* Gradient overlay — always on, softens icon and blends future portrait */
+      .cportrait::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          180deg,
+          rgba(0, 0, 0, 0.04) 0%,
+          rgba(0, 0, 0, 0.52) 100%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Icon inside portrait zone — centered, larger, grounded shadow */
+      .cportrait .cico {
+        margin-top: 0 !important;
+        font-size: calc(34px * var(--s)) !important;
+        position: relative;
+        z-index: 1;
+        filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.85)) !important;
+        line-height: 1;
+      }
+
+      /* ── Battlefield unit: enhanced icon presentation ── */
+      .uico {
+        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.75));
+      }
+
+      /* ════════════════════════════════════════
    PHASE 2 — BATTLEFIELD VISUAL DEPTH
    ════════════════════════════════════════ */
 
@@ -6242,7 +6296,7 @@
                 ? "pcombo"
                 : "pnew";
 
-          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
+          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
 
           let el = domById[u.id];
           const isNew = !el;
@@ -6345,7 +6399,7 @@
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cico">${u.ico}</div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="sell = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Sell +${SELL[u.lv]}💰</div>`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="sell = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Sell +${SELL[u.lv]}💰</div>`;
 
             if (active) {
               card.addEventListener("click", () => {
