@@ -2859,6 +2859,65 @@
       }
 
       /* ════════════════════════════════════════
+   PHASE 4 — COMBAT VFX
+   ════════════════════════════════════════ */
+
+      /* Crit pop: gold scale burst on the unit element */
+      .unit.vfx-crit {
+        animation: vfx-crit-pop 0.45s cubic-bezier(0.22, 0.68, 0, 1.3) forwards;
+      }
+      @keyframes vfx-crit-pop {
+        0%   { transform: scale(1);    filter: brightness(1); }
+        25%  { transform: scale(1.35); filter: brightness(2.2) sepia(1) hue-rotate(-20deg) saturate(4); }
+        60%  { transform: scale(0.92); filter: brightness(1.4); }
+        100% { transform: scale(1);    filter: brightness(1); }
+      }
+
+      /* Heal flash: green glow */
+      .unit.vfx-heal {
+        animation: vfx-heal-glow 0.5s ease forwards;
+      }
+      @keyframes vfx-heal-glow {
+        0%   { filter: brightness(1); box-shadow: none; }
+        30%  { filter: brightness(1.6) hue-rotate(80deg) saturate(2.5); box-shadow: 0 0 18px 6px rgba(60,220,100,0.7); }
+        100% { filter: brightness(1); box-shadow: none; }
+      }
+
+      /* Skill burst: violet ring */
+      .unit.vfx-skill {
+        animation: vfx-skill-burst 0.55s ease forwards;
+      }
+      @keyframes vfx-skill-burst {
+        0%   { filter: brightness(1); box-shadow: none; }
+        20%  { filter: brightness(2.0) hue-rotate(220deg) saturate(3); box-shadow: 0 0 22px 8px rgba(160,80,255,0.75); }
+        70%  { filter: brightness(1.2); box-shadow: 0 0 8px 2px rgba(160,80,255,0.3); }
+        100% { filter: brightness(1); box-shadow: none; }
+      }
+
+      /* Floating damage / heal numbers */
+      .dmg-float {
+        position: fixed;
+        pointer-events: none;
+        font-family: 'Cinzel Decorative', serif;
+        font-weight: 700;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        z-index: 9999;
+        animation: dmg-float-up 0.9s ease forwards;
+        white-space: nowrap;
+        line-height: 1;
+      }
+      .dmg-float.dmg  { font-size: 15px; color: #ff4444; }
+      .dmg-float.crit { font-size: 20px; color: #ffd700; text-shadow: 0 0 10px rgba(255,200,0,0.9), 0 2px 6px rgba(0,0,0,0.8); }
+      .dmg-float.heal { font-size: 14px; color: #44ee88; }
+
+      @keyframes dmg-float-up {
+        0%   { opacity: 1;   transform: translateY(0)   scale(1); }
+        15%  { opacity: 1;   transform: translateY(-6px) scale(1.15); }
+        80%  { opacity: 0.8; transform: translateY(-36px) scale(1); }
+        100% { opacity: 0;   transform: translateY(-48px) scale(0.85); }
+      }
+
+      /* ════════════════════════════════════════
    PHASE 3 — HERO PORTRAIT ZONE
    ════════════════════════════════════════ */
 
@@ -4875,6 +4934,25 @@
             `#${u.side === "p" ? "p" : "e"}field [data-uid="${u.id}"]`,
           );
         }
+
+        // Phase 4 VFX helpers
+        function flashUnit(el, cls) {
+          el.classList.remove(cls);
+          void el.offsetWidth;
+          el.classList.add(cls);
+          setTimeout(() => el.classList.remove(cls), 600);
+        }
+        function spawnFloat(el, text, type) {
+          const r = el.getBoundingClientRect();
+          const d = document.createElement("span");
+          d.className = "dmg-float " + type;
+          d.textContent = text;
+          d.style.left = (r.left + r.width * 0.5 - 12) + "px";
+          d.style.top  = (r.top  + r.height * 0.2) + "px";
+          document.body.appendChild(d);
+          setTimeout(() => d.remove(), 950);
+        }
+
         function updHp(u, isHeal = false) {
           const el = gEl(u);
           if (!el) return;
@@ -4932,6 +5010,8 @@
             ) {
               seen.add(ev.uid + ev.abilName);
               if (ev.abilName === "Fury" && u) updAtk(u);
+              const eSkill = u && gEl(u);
+              if (eSkill) flashUnit(eSkill, "vfx-skill");
               log(
                 (ABILOG[ev.abilName] || "✨ {n}: " + ev.abilName).replace(
                   "{n}",
@@ -4943,6 +5023,11 @@
             } else if (ev.type === "heal" && t) {
               dHp[t.id] = Math.min(t.maxHp, dHp[t.id] + ev.amt);
               updHp(t, true);
+              const eHeal = gEl(t);
+              if (eHeal) {
+                flashUnit(eHeal, "vfx-heal");
+                spawnFloat(eHeal, "+" + ev.amt, "heal");
+              }
               log(
                 `${uTag(u)} <span class="lheal">heals</span> ${uTag(t)} <span class="lheal">+${ev.amt} HP</span>`,
                 "lab",
@@ -4953,9 +5038,15 @@
               updHp(t);
               const e2 = gEl(t);
               if (e2) {
-                e2.classList.remove("hit");
-                void e2.offsetWidth;
-                e2.classList.add("hit");
+                if (ev.isCrit) {
+                  flashUnit(e2, "vfx-crit");
+                  spawnFloat(e2, "✦" + ev.amt, "crit");
+                } else {
+                  e2.classList.remove("hit");
+                  void e2.offsetWidth;
+                  e2.classList.add("hit");
+                  spawnFloat(e2, "−" + ev.amt, "dmg");
+                }
               }
               const who = uTag(u),
                 whom = uTag(t);
