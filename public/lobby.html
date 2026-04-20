@@ -2686,6 +2686,8 @@
         margin-bottom: 10px;
       }
       .banner-title-row .banner-title { margin-bottom: 0; }
+      /* Override align-self: flex-start so badge centers in the row */
+      .banner-title-row .banner-type-badge { align-self: center; margin-bottom: 0; }
 
       /* ── Info icon tooltip trigger ── */
       .info-trigger {
@@ -2723,6 +2725,12 @@
         background: rgba(200, 140, 30, 0.35);
         color: rgba(255, 220, 130, 0.95);
       }
+
+      /* ── Sphere rings: scaled down slightly ── */
+      .banner .sph-ring.r1 { width: 132px; height: 132px; margin: -66px 0 0 -66px; }
+      .banner .sph-ring.r2 { width: 98px;  height: 98px;  margin: -49px 0 0 -49px; }
+      .banner .sph-ring.r3 { width: 65px;  height: 65px;  margin: -32px 0 0 -32px; }
+      .banner .sph-core    { font-size: 30px; }
 
       /* ── Description tooltip popup ── */
       #desc-tooltip {
@@ -2829,9 +2837,8 @@
               </div>
 
               <div class="banner-preview">
-                <span class="banner-type-badge">⚔️ Solo</span>
                 <div class="banner-title-row">
-                  <h2 class="banner-title">BATTLE VS AI</h2>
+                  <span class="banner-type-badge">⚔️ Solo</span>
                   <button class="info-trigger" id="info-ai"
                     data-tip="Test your strategies against our intelligent bot. No bets, no risk — pure tactics. Perfect for learning the mechanics."
                     aria-label="More info">i</button>
@@ -2862,9 +2869,8 @@
               </div>
 
               <div class="banner-preview">
-                <span class="banner-type-badge">🏆 PvP Arena</span>
                 <div class="banner-title-row">
-                  <h2 class="banner-title">CHALLENGE PLAYERS</h2>
+                  <span class="banner-type-badge">🏆 PvP Arena</span>
                   <button class="info-trigger" id="info-pvp"
                     data-tip="Bet HIVE against real players. The winner takes most of the pot. Sharpen your deck and enter the arena."
                     aria-label="More info">i</button>
