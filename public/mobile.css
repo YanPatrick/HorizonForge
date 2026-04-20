@@ -52,137 +52,253 @@
 
 @media (max-width: 480px) and (pointer: coarse) {
 
-  /* Scale factor: shrinks all calc(Xpx * var(--s)) dimensions */
+  /* Mild scale — only affects decorative calc() sizes, not layout */
   :root {
-    --s: 0.50;
+    --s: 0.78;
   }
 
-  /* ── Arena: stack fields vertically ── */
-  #arena-wrap {
-    flex-direction: column !important;
-    overflow: visible;
+  /* ── Safe area ── */
+  #game {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* ══ HEADER: single compact 44px pill row ══ */
+  #hdr {
+    flex-direction: row !important;
     align-items: center !important;
+    justify-content: space-between !important;
+    max-width: 100% !important;
+    padding: 0 12px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    border-radius: 0 0 10px 10px !important;
   }
 
+  .hdr-row-top,
+  .hdr-row-bottom {
+    flex: 0 0 auto !important;
+    flex-wrap: nowrap !important;
+    gap: 5px !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide verbose stat badges, keep gold + round + score */
+  .hstats { display: none !important; }
+
+  #banner {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 120px !important;
+    font-size: 10px !important;
+  }
+
+  #phase-timer {
+    font-size: 12px !important;
+    padding: 3px 10px !important;
+    min-width: 56px !important;
+  }
+
+  /* ══ ARENA: fills remaining vertical space between header and bottom-zone ══ */
+  #arena-wrap {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* Turn panel hidden — no space on portrait */
+  #turnpanel { display: none !important; }
+
+  /* Fields row: vertical column, fills arena */
   #fields-row {
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0 !important;
-    width: 100%;
+    width: 100% !important;
   }
 
-  /* Each field wrapper takes full width */
+  /* Order: enemy top, VS middle, player bottom */
+  #fields-row > .fwrap:first-child { order: 3 !important; }
+  #vs                               { order: 2 !important; }
+  #fields-row > .fwrap:last-child   { order: 1 !important; }
+
+  /* ── Field wrappers: equal share of vertical space ── */
   .fwrap {
-    width: 100%;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
   }
 
-  /* Reorder: efield (last .fwrap) on top, VS middle, pfield (first .fwrap) on bottom */
-  #fields-row > .fwrap:first-child { order: 3; }
-  #vs                               { order: 2; }
-  #fields-row > .fwrap:last-child   { order: 1; }
+  /* ── Battlefield grid: square, sized by fwrap height ── */
+  .field {
+    height: 100% !important;
+    width: auto !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    aspect-ratio: 1 / 1 !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 4px !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
+    border-radius: 10px !important;
+  }
 
-  /* VS separator: horizontal line instead of vertical */
+  /* ── Cells: fill their grid area ── */
+  .cell {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+
+  /* Cards inside cells must not overflow */
+  .cell > div {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Drop orbs: fixed size regardless of --s */
+  .cell.dr::after {
+    width: 20px !important;
+    height: 20px !important;
+    box-shadow:
+      0 0 10px rgba(120, 200, 255, 0.9),
+      0 0 22px rgba(80, 150, 255, 0.5) !important;
+  }
+
+  /* ── VS divider: horizontal line + badge ── */
   #vs {
-    width: 100%;
-    height: 28px;
+    width: 100% !important;
+    height: 22px !important;
     flex-direction: row !important;
-    align-items: center;
-    justify-content: center;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
   #vs::before {
-    top: 50%;
-    bottom: auto;
-    left: 8%;
-    right: 8%;
-    width: auto;
-    height: 1px;
-    transform: none;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 6% !important;
+    right: 6% !important;
+    width: auto !important;
+    height: 1px !important;
+    transform: none !important;
     background: linear-gradient(
       to right,
       transparent 0%,
-      rgba(255, 180, 60, 0.55) 25%,
-      rgba(255, 200, 100, 0.75) 50%,
-      rgba(255, 180, 60, 0.55) 75%,
+      rgba(255, 180, 60, 0.45) 20%,
+      rgba(255, 200, 100, 0.65) 50%,
+      rgba(255, 180, 60, 0.45) 80%,
       transparent 100%
-    );
+    ) !important;
   }
 
-  /* Hide turn order panel (secondary info, no space on mobile) */
-  #turnpanel {
-    display: none !important;
+  .vstxt {
+    font-size: 9px !important;
+    letter-spacing: 2px !important;
   }
 
-  /* ── Bottom zone: vertical stack ── */
+  /* ══ BOTTOM ZONE: compact, capped height, never crushes battlefield ══ */
   #bottom-zone {
     flex-direction: column !important;
     height: auto !important;
-    overflow-y: auto;
-    overflow-x: hidden;
-    gap: 6px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+    max-height: clamp(210px, 36dvh, 300px) !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
+    gap: 3px !important;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 4px) !important;
   }
 
-  /* Reorder bottom zone: center-col (Battle+Timer), then Barracks, then Shop */
+  /* Battle button + timer: single row, shown first */
   #center-col {
-    order: 1;
+    order: 1 !important;
     display: flex !important;
     width: 100% !important;
     max-width: none !important;
     flex: 0 0 auto !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    align-self: auto;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 4px 12px !important;
+    align-self: auto !important;
   }
 
-  #benchwrap {
-    order: 2;
+  /* Battle button: prominent, touch-friendly 44px */
+  .bbtn {
+    flex: 1 1 auto !important;
+    height: 44px !important;
+    font-size: 14px !important;
+    max-width: 220px !important;
+  }
+
+  /* Log: hidden, accessible via slide-up overlay */
+  #log { display: none !important; }
+
+  /* Shop: second */
+  #shopwrap {
+    order: 2 !important;
     width: 100% !important;
     max-width: none !important;
-    flex-shrink: 1;
-    align-self: auto;
-    /* Force expanded state */
+    flex-shrink: 0 !important;
+  }
+
+  /* Barracks: third */
+  #benchwrap {
+    order: 3 !important;
+    width: 100% !important;
+    max-width: none !important;
+    flex-shrink: 1 !important;
+    align-self: auto !important;
     max-height: none !important;
     transition: none !important;
   }
 
-  #shopwrap {
-    order: 3;
-    width: 100% !important;
-    max-width: none !important;
-    flex-shrink: 0;
-  }
-
-  /* Show bench row regardless of .expanded class */
+  /* Always show bench content */
   #benchwrap #benchrow,
   #benchwrap .bench-msg {
     opacity: 1 !important;
     pointer-events: auto !important;
   }
 
-  /* Bench card row: horizontal scroll */
+  /* ── Horizontal scroll rows ── */
   #benchrow {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
-    gap: var(--bcard-gap);
-    padding-bottom: 4px;
+    gap: 4px !important;
+    padding-bottom: 4px !important;
   }
+  #benchrow::-webkit-scrollbar { display: none; }
 
-  #benchrow::-webkit-scrollbar {
-    display: none;
-  }
-
-  .bcard {
-    flex: 0 0 auto;
-    width: var(--bcard-w);
-  }
-
-  /* Shop card row: override absolute positioning for horizontal scroll */
   #shoprow {
     display: flex !important;
     flex-direction: row !important;
@@ -191,30 +307,68 @@
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch;
     height: auto !important;
-    min-height: calc(var(--card-h, 80px) + 8px);
-    gap: var(--bcard-gap, 6px);
-    padding-bottom: 4px;
-    position: relative;
+    gap: 4px !important;
+    padding-bottom: 4px !important;
+    position: static !important;
   }
+  #shoprow::-webkit-scrollbar { display: none; }
 
-  #shoprow::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Make shop cards flow in DOM order (ignore JS-set left positioning) */
+  /* ── Cards: fixed sizes, no JS-positioned left/top ── */
   .scard {
     position: static !important;
     left: auto !important;
     top: auto !important;
-    flex-shrink: 0;
-    width: var(--card-w);
-    min-width: var(--card-w);
+    flex: 0 0 auto !important;
+    width: 58px !important;
+    min-width: 58px !important;
+    max-width: 58px !important;
+    padding: 5px 4px 4px !important;
   }
 
-  /* ── Hide log — accessible via overlay toggle ── */
-  #log {
+  .bcard {
+    flex: 0 0 auto !important;
+    width: 54px !important;
+    min-width: 54px !important;
+    max-width: 54px !important;
+    padding: 5px 4px 4px !important;
+  }
+
+  /* Hide non-essential card elements */
+  .scard .crole,
+  .scard .cabi,
+  .scard .caction,
+  .bcard .crole,
+  .bcard .cabi,
+  .bcard .bsell-hint,
+  .bcard .bprog {
     display: none !important;
   }
+
+  .scard .cico,
+  .bcard .cico {
+    font-size: 22px !important;
+    margin-top: 2px !important;
+  }
+
+  .scard .cnm,
+  .bcard .cnm {
+    font-size: 7.5px !important;
+    margin-top: 1px !important;
+  }
+
+  /* Stats: horizontal row, hide speed */
+  .scard .csts {
+    flex-direction: row !important;
+    gap: 2px !important;
+    padding: 1px 2px !important;
+    margin-top: 2px !important;
+  }
+  .scard .csts .cst:nth-child(3) { display: none !important; }
+
+  .scard .cstv,
+  .bcard .cstv { font-size: 7px !important; }
+  .scard .cstl,
+  .bcard .cstl { font-size: 5px !important; }
 
   /* ── Log overlay (injected by mobile.js) ── */
   #mobile-log-overlay {
@@ -269,7 +423,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* ── Log toggle button (injected into #hdr) ── */
+  /* ── Log toggle button injected into #hdr by mobile.js ── */
   #mobile-log-btn {
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -285,34 +439,21 @@
     font-family: "Exo 2", system-ui, sans-serif;
   }
 
-  /* ── Header: compact ── */
-  #hdr {
-    padding: 6px 10px;
-    gap: 3px;
-    max-width: 100%;
+  /* ── Tap-select highlight classes (applied by mobile.js) ── */
+  .m-selected {
+    border: 2px solid #ffd700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
   }
 
-  #hdr .hdr-row-bottom {
-    gap: 4px;
-    flex-wrap: nowrap;
-    overflow: hidden;
+  .m-valid-drop {
+    background: rgba(100, 200, 100, 0.2) !important;
+    border: 2px solid rgba(100, 200, 100, 0.5) !important;
   }
 
-  /* Banner: one line, ellipsis if too long */
-  #banner {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 160px;
-    font-size: 11px;
-  }
+  /* ── Kill hover tooltips (stuck on touch devices) ── */
+  .skill-tip { display: none !important; }
 
-  /* ── Safe areas for game container ── */
-  #game {
-    padding-top: env(safe-area-inset-top);
-  }
-
-  /* ── Duel result screen: full width, safe areas ── */
+  /* ── Duel result screen ── */
   #duel-result {
     width: 100%;
     max-width: 100vw;
@@ -328,91 +469,23 @@
     max-height: 100dvh;
     overflow-y: auto;
   }
+}
 
-  /* ── Kill hover tooltips — touch never fires mouseleave so they get stuck ── */
-  .skill-tip {
-    display: none !important;
+/* Very small phones: slightly tighter cards, no scale hack */
+@media (max-width: 380px) and (pointer: coarse) {
+  #bottom-zone {
+    max-height: clamp(190px, 34dvh, 270px) !important;
   }
-
-  /* ── Larger drop-target orbs — calc(18px*--s) becomes too small at 0.50 ── */
-  .cell.dr::after {
-    width: 20px !important;
-    height: 20px !important;
-    box-shadow:
-      0 0 10px rgba(120, 200, 255, 0.9),
-      0 0 22px rgba(80, 150, 255, 0.5) !important;
-  }
-
-  /* ── Tap-select highlight classes (applied by mobile.js) ── */
-  .m-selected {
-    border: 2px solid #ffd700 !important;
-    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
-  }
-
-  .m-valid-drop {
-    background: rgba(100, 200, 100, 0.2) !important;
-    border: 2px solid rgba(100, 200, 100, 0.5) !important;
-  }
-
-  /* ── Ultra-compact cards ── */
-
-  /* Ocultar elementos não essenciais */
-  .scard .crole,
-  .scard .cabi,
-  .scard .caction { display: none !important; }
-
-  .bcard .crole,
-  .bcard .cabi,
-  .bcard .bsell-hint,
-  .bcard .bprog { display: none !important; }
-
-  /* Dimensões fixas dos shop cards */
   .scard {
     width: 52px !important;
     min-width: 52px !important;
     max-width: 52px !important;
-    padding: 4px 3px 3px !important;
   }
-
-  /* Dimensão dos bench cards */
   .bcard {
-    width: 50px !important;
-    min-width: 50px !important;
-    max-width: 50px !important;
-    padding: 5px 3px 4px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
   }
-
-  /* Ícone menor */
-  .scard .cico,
-  .bcard .cico {
-    font-size: 20px !important;
-    margin-top: 2px !important;
-  }
-
-  /* Nome menor */
-  .scard .cnm,
-  .bcard .cnm {
-    font-size: 7px !important;
-    margin-top: 1px !important;
-  }
-
-  /* Stats inline: HP + ATK, ocultar VEL */
-  .scard .csts {
-    flex-direction: row !important;
-    gap: 2px !important;
-    padding: 1px 2px !important;
-    margin-top: 2px !important;
-  }
-
-  .scard .csts .cst:nth-child(3) { display: none !important; }
-
-  .scard .cstv { font-size: 7px !important; }
-  .scard .cstl { font-size: 5px !important; }
-}
-
-/* Tighter scale for very small phones (flattened from nested @media) */
-@media (max-width: 380px) and (pointer: coarse) {
-  :root { --s: 0.44; }
 }
 
 /* ══════════════════════════════════════════
