@@ -3367,6 +3367,44 @@
     display: none !important;
   }
 }
+
+/* Mobile bottom sheet */
+.hf-hero-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 65vh;
+  background: rgba(8, 4, 24, 0.99);
+  border-top: 1.5px solid rgba(140, 100, 255, 0.3);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.65);
+  z-index: 801;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.28s ease;
+  overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.hf-hero-sheet.hf-open {
+  transform: translateY(0);
+}
+.hf-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(140, 100, 255, 0.3);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+/* On desktop the sheet is never shown — drawer takes over */
+@media (min-width: 641px) {
+  .hf-hero-sheet {
+    display: none !important;
+  }
+}
     </style>
   </head>
   <body>
