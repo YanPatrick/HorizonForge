@@ -7,6 +7,13 @@
   var MQ = window.matchMedia('(max-width: 480px) and (pointer: coarse)');
   if (!MQ.matches) return;
 
+  /* ─── Signal vertical layout to combat engine ─────────────────
+     window.mobileVertical is read by battle.html targeting logic
+     to flip row-search order: pfield row 0 (player front) attacks
+     efield row 2 (enemy front) — Clash Royale player-at-bottom.
+  ─────────────────────────────────────────────────────────── */
+  window.mobileVertical = true;
+
   /* ─── Rotate overlay ───────────────────────────────────────
      The CSS shows/hides it based on orientation media query.
      We just inject the DOM element here.

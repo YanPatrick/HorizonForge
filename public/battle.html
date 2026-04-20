@@ -4229,11 +4229,15 @@
             })[0];
           };
 
-          // Ordem de busca: linha própria → linhas adjacentes por proximidade
-          if (unitRow === 0) {
+          // Ordem de busca: linha própria → linhas adjacentes por proximidade.
+          // No mobile vertical (player embaixo, inimigo em cima) as linhas são espelhadas:
+          // pfield row 0 = frente do player (topo, perto do VS) ↔ efield row 2 = frente inimiga.
+          // Por isso invertemos o índice de busca com (2 - unitRow) quando mobileVertical.
+          const searchRow = window.mobileVertical ? (2 - unitRow) : unitRow;
+          if (searchRow === 0) {
             return bestInRow(0) || bestInRow(1) || bestInRow(2) || null;
           }
-          if (unitRow === 2) {
+          if (searchRow === 2) {
             return bestInRow(2) || bestInRow(1) || bestInRow(0) || null;
           }
           // Linha B: própria primeiro, depois A e C aleatório
@@ -5530,17 +5534,29 @@
         const sR = srcEl.getBoundingClientRect();
         const tR = tgtEl.getBoundingClientRect();
 
-        // Decide anchor sides: if target is to the right, exit right/enter left; else invert
-        const toRight = tR.left >= sR.left;
-        const x1 = toRight ? sR.right - 3 : sR.left + 3;
-        const x2 = toRight ? tR.left + 3 : tR.right - 3;
-        const y1 = sR.top + sR.height * 0.5;
-        const y2 = tR.top + tR.height * 0.5;
+        let x1, y1, x2, y2, mx, my;
 
-        // Quadratic bezier — arc curves up a little
-        const mx = (x1 + x2) / 2;
-        const arc = Math.abs(x2 - x1) * 0.2;
-        const my = (y1 + y2) / 2 - arc;
+        if (window.mobileVertical) {
+          // Vertical layout: anchor top/bottom based on whether target is above or below
+          const toTop = tR.top < sR.top;
+          x1 = sR.left + sR.width * 0.5;
+          x2 = tR.left + tR.width * 0.5;
+          y1 = toTop ? sR.top + 3 : sR.bottom - 3;
+          y2 = toTop ? tR.bottom - 3 : tR.top + 3;
+          // Arc curves sideways
+          mx = (x1 + x2) / 2 + Math.abs(y2 - y1) * 0.15;
+          my = (y1 + y2) / 2;
+        } else {
+          // Horizontal layout: anchor left/right based on whether target is to the right
+          const toRight = tR.left >= sR.left;
+          x1 = toRight ? sR.right - 3 : sR.left + 3;
+          x2 = toRight ? tR.left + 3 : tR.right - 3;
+          y1 = sR.top + sR.height * 0.5;
+          y2 = tR.top + tR.height * 0.5;
+          // Arc curves up a little
+          mx = (x1 + x2) / 2;
+          my = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.2;
+        }
 
         const path = document.createElementNS(
           "http://www.w3.org/2000/svg",
