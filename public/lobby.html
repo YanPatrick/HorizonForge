@@ -2684,10 +2684,12 @@
         align-items: center;
         gap: 8px;
         margin-bottom: 10px;
+        flex-wrap: wrap;
       }
       .banner-title-row .banner-title { margin-bottom: 0; }
       /* Override align-self: flex-start so badge centers in the row */
       .banner-title-row .banner-type-badge { align-self: center; margin-bottom: 0; }
+      .banner-title-row .info-trigger { flex-shrink: 0; }
 
       /* ── Info icon tooltip trigger ── */
       .info-trigger {
@@ -2737,20 +2739,76 @@
         position: fixed;
         z-index: 9999;
         background: rgba(10, 6, 28, 0.97);
-        border: 1px solid rgba(160, 120, 255, 0.35);
-        border-radius: 10px;
-        padding: 10px 14px;
-        width: 230px;
+        border: 1px solid rgba(160, 120, 255, 0.3);
+        border-radius: 12px;
+        padding: 12px 14px 14px;
+        width: 260px;
         max-width: calc(100vw - 32px);
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.15s ease;
-        box-shadow: 0 10px 32px rgba(0,0,0,0.6), 0 0 18px rgba(130,80,255,0.14);
-        font-size: 12px;
-        line-height: 1.65;
-        color: rgba(200, 185, 255, 0.85);
+        box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(130,80,255,0.12);
+        font-family: "Exo 2", sans-serif;
       }
       #desc-tooltip.visible { opacity: 1; }
+
+      .tip-title {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        color: rgba(220, 205, 255, 0.95);
+        margin-bottom: 4px;
+      }
+      .tip-body {
+        font-size: 11px;
+        line-height: 1.6;
+        color: rgba(175, 158, 230, 0.72);
+        margin-bottom: 10px;
+      }
+      .tip-section {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: rgba(200, 175, 255, 0.55);
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(160, 120, 255, 0.14);
+      }
+      .tip-section + .tip-section,
+      .tip-rows + .tip-section {
+        margin-top: 9px;
+      }
+      .tip-rows { display: flex; flex-direction: column; gap: 4px; }
+      .tip-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: 11px;
+        line-height: 1.5;
+        color: rgba(185, 168, 240, 0.8);
+      }
+      .tip-key {
+        font-size: 10px;
+        font-weight: 800;
+        padding: 1px 6px;
+        border-radius: 5px;
+        background: rgba(140, 100, 255, 0.15);
+        border: 1px solid rgba(140, 100, 255, 0.25);
+        color: rgba(200, 178, 255, 0.9);
+        flex-shrink: 0;
+        letter-spacing: 0.3px;
+      }
+      #desc-tooltip[data-theme="pvp"] .tip-key {
+        background: rgba(220, 150, 30, 0.15);
+        border-color: rgba(220, 150, 30, 0.28);
+        color: rgba(255, 205, 100, 0.9);
+      }
+      #desc-tooltip[data-theme="pvp"] .tip-section {
+        border-bottom-color: rgba(220, 150, 30, 0.14);
+        color: rgba(220, 185, 100, 0.5);
+      }
+      #desc-tooltip[data-theme="pvp"] { border-color: rgba(220, 150, 30, 0.28); }
 
       /* ── Override old view heights for new fixed layout ── */
       #view-home {
@@ -2769,6 +2827,305 @@
         height: 100% !important;
         padding-top: 0 !important;
         overflow-y: auto !important;
+      }
+
+      /* ═══════════════════════════════════════
+         HF SELECT — Custom floating dropdown
+         ═══════════════════════════════════════ */
+
+      .hf-select { display: inline-block; }
+
+      .hf-sel-trigger {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 7px 12px;
+        border-radius: 8px;
+        border: 1.5px solid;
+        font-family: "Exo 2", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+        background: rgba(255, 255, 255, 0.04);
+        -webkit-tap-highlight-color: transparent;
+        min-width: 72px;
+      }
+      /* AI card theme */
+      .banner-ai .hf-sel-trigger {
+        border-color: rgba(140, 100, 255, 0.35);
+        color: rgba(200, 180, 255, 0.88);
+      }
+      .banner-ai .hf-sel-trigger:hover,
+      .banner-ai .hf-select.sel-open .hf-sel-trigger {
+        border-color: rgba(165, 115, 255, 0.65);
+        color: rgba(225, 210, 255, 0.96);
+        background: rgba(110, 70, 255, 0.15);
+        box-shadow: 0 0 10px rgba(110, 70, 255, 0.2);
+      }
+      /* PvP card theme */
+      .banner-pvp .hf-sel-trigger {
+        border-color: rgba(220, 150, 30, 0.35);
+        color: rgba(255, 200, 100, 0.88);
+      }
+      .banner-pvp .hf-sel-trigger:hover,
+      .banner-pvp .hf-select.sel-open .hf-sel-trigger {
+        border-color: rgba(235, 165, 40, 0.65);
+        color: rgba(255, 220, 120, 0.96);
+        background: rgba(200, 130, 28, 0.15);
+        box-shadow: 0 0 10px rgba(200, 130, 28, 0.18);
+      }
+      .hf-sel-value { flex: 1; }
+      .hf-sel-chevron {
+        font-size: 10px;
+        opacity: 0.6;
+        transition: transform 0.2s;
+        flex-shrink: 0;
+      }
+      .hf-select.sel-open .hf-sel-chevron { transform: rotate(180deg); }
+
+      /* Floating dropdown panel — body-level, position:fixed */
+      #hf-float-dd {
+        position: fixed;
+        z-index: 9998;
+        display: none;
+        flex-direction: column;
+        background: rgba(10, 6, 28, 0.98);
+        border: 1.5px solid rgba(140, 100, 255, 0.32);
+        border-radius: 10px;
+        padding: 4px;
+        box-shadow:
+          0 10px 32px rgba(0, 0, 0, 0.65),
+          0 0 20px rgba(130, 80, 255, 0.12);
+        backdrop-filter: blur(12px);
+      }
+      #hf-float-dd.dd-open {
+        display: flex;
+        animation: hf-dd-in 0.14s ease both;
+      }
+      #hf-float-dd[data-theme="pvp"] {
+        border-color: rgba(220, 150, 30, 0.32);
+        box-shadow:
+          0 10px 32px rgba(0, 0, 0, 0.65),
+          0 0 20px rgba(200, 130, 28, 0.12);
+      }
+      @keyframes hf-dd-in {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0);   }
+      }
+
+      /* Dropdown option items */
+      .hf-sel-opt {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        border-radius: 7px;
+        padding: 10px 14px;
+        font-family: "Exo 2", sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.12s;
+        color: rgba(190, 175, 240, 0.65);
+        white-space: nowrap;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .hf-sel-opt:hover {
+        background: rgba(140, 100, 255, 0.12);
+        color: rgba(215, 200, 255, 0.92);
+      }
+      .hf-sel-opt.active {
+        color: #ffd700;
+        background: rgba(255, 215, 0, 0.08);
+        font-weight: 700;
+      }
+      #hf-float-dd[data-theme="pvp"] .hf-sel-opt:hover {
+        background: rgba(200, 130, 28, 0.12);
+        color: rgba(255, 215, 120, 0.92);
+      }
+
+      /* ══════════════════════════════════════════
+         GRIMOIRE — MOBILE-FIRST RESPONSIVE LAYOUT
+         ══════════════════════════════════════════ */
+
+      /* Mobile chapter bar (hidden on desktop) */
+      .gr-mobile-bar {
+        display: none;
+        flex-shrink: 0;
+        padding: 10px 12px;
+        background: rgba(6, 3, 20, 0.92);
+        border-bottom: 1px solid rgba(220, 175, 60, 0.15);
+      }
+      .gr-topics-btn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        background: rgba(220, 175, 60, 0.07);
+        border: 1.5px solid rgba(220, 175, 60, 0.22);
+        border-radius: 10px;
+        padding: 9px 14px;
+        color: rgba(255, 215, 100, 0.9);
+        font-family: "Exo 2", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: left;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.15s;
+      }
+      .gr-topics-btn:active { background: rgba(220, 175, 60, 0.13); }
+      .gr-topics-btn-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .gr-topics-btn-label {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .gr-topics-chevron {
+        font-size: 11px;
+        opacity: 0.6;
+        flex-shrink: 0;
+        transition: transform 0.2s;
+      }
+
+      /* Full-screen topics overlay (position: fixed — bypasses lobby-wrap overflow) */
+      .gr-topics-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 500;
+        background: rgba(4, 2, 14, 0.72);
+        backdrop-filter: blur(4px);
+        align-items: flex-end;
+      }
+      .gr-topics-overlay.open { display: flex; }
+
+      /* Bottom-sheet panel */
+      .gr-topics-panel {
+        width: 100%;
+        background: rgba(8, 5, 22, 0.99);
+        border-top: 1.5px solid rgba(220, 175, 60, 0.2);
+        border-radius: 20px 20px 0 0;
+        max-height: 72vh;
+        overflow-y: auto;
+        animation: gr-panel-up 0.26s cubic-bezier(0.22, 0.68, 0, 1.12) both;
+      }
+      @keyframes gr-panel-up {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+      }
+      .gr-topics-panel::-webkit-scrollbar { width: 3px; }
+      .gr-topics-panel::-webkit-scrollbar-thumb {
+        background: rgba(220, 175, 60, 0.2);
+        border-radius: 3px;
+      }
+
+      /* Panel header */
+      .gr-tp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+        position: sticky;
+        top: 0;
+        background: rgba(8, 5, 22, 0.99);
+        z-index: 1;
+      }
+      .gr-tp-title {
+        font-family: "Cinzel", serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: rgba(255, 215, 100, 0.85);
+      }
+      .gr-tp-close {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: rgba(200, 185, 255, 0.7);
+        font-size: 13px;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.15s;
+      }
+      .gr-tp-close:hover { background: rgba(255, 80, 80, 0.18); color: #ff8888; }
+
+      /* Overlay group headers */
+      .gr-tp-group {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.8px;
+        color: rgba(255, 255, 255, 0.28);
+        padding: 14px 20px 5px;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      /* Overlay chapter items */
+      .gr-tp-item {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        background: none;
+        border: none;
+        border-left: 3px solid transparent;
+        color: rgba(200, 185, 240, 0.62);
+        font-size: 14px;
+        font-family: "Exo 2", sans-serif;
+        font-weight: 500;
+        padding: 13px 20px;
+        cursor: pointer;
+        text-align: left;
+        -webkit-tap-highlight-color: transparent;
+        transition: all 0.12s;
+      }
+      .gr-tp-item:hover,
+      .gr-tp-item:active { background: rgba(255, 255, 255, 0.04); }
+      .gr-tp-item.active {
+        color: #ffd700;
+        border-left-color: rgba(255, 215, 0, 0.55);
+        background: rgba(255, 215, 0, 0.05);
+        font-weight: 600;
+      }
+
+      /* Desktop: sidebar visible, mobile bar hidden */
+      @media (min-width: 641px) {
+        .gr-mobile-bar { display: none !important; }
+        .gr-topics-overlay { display: none !important; }
+      }
+
+      /* Mobile: sidebar hidden, mobile bar shown */
+      @media (max-width: 640px) {
+        .gr-mobile-bar { display: flex; flex-direction: column; }
+        #view-grimoire .wiki-sidebar { display: none !important; }
+        #view-grimoire .wiki-layout { flex-direction: column; overflow: hidden; }
+        #view-grimoire .wiki-content { padding: 18px 14px 32px; }
+
+        /* Arena: horizontal scroll when narrow */
+        .gr-arena-wrap {
+          overflow-x: auto;
+          padding-bottom: 6px;
+          -webkit-overflow-scrolling: touch;
+          margin: 0 -4px;
+          padding-left: 4px;
+          padding-right: 4px;
+        }
+        .gr-arena { min-width: 290px; margin: 10px 0; }
       }
 
       /* ── Nav right: shrink gracefully on narrow screens ── */
@@ -2839,22 +3196,19 @@
               <div class="banner-preview">
                 <div class="banner-title-row">
                   <span class="banner-type-badge">⚔️ Solo</span>
+                  <div class="hf-select" id="ai-fmt-select">
+                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="hf-sel-value">BO5</span>
+                      <span class="hf-sel-chevron">▾</span>
+                    </button>
+                  </div>
                   <button class="info-trigger" id="info-ai"
-                    data-tip="Test your strategies against our intelligent bot. No bets, no risk — pure tactics. Perfect for learning the mechanics."
-                    aria-label="More info">i</button>
+                    data-tip-id="ai" aria-label="More info">i</button>
                 </div>
               </div>
 
               <div class="banner-expand">
                 <div class="cfg-divider"></div>
-                <div class="cfg-row">
-                  <span class="cfg-lbl">Format</span>
-                  <div class="pills" id="ai-fmt-pills">
-                    <span class="fmt-wrap"><button class="pill" data-fmt="3">BO3</button></span>
-                    <span class="fmt-wrap"><button class="pill active" data-fmt="5">BO5</button></span>
-                    <span class="fmt-wrap"><button class="pill" data-fmt="7">BO7</button></span>
-                  </div>
-                </div>
                 <button class="btn-action btn-start" id="btn-ai-battle">▶ START BATTLE</button>
               </div>
             </section>
@@ -2871,31 +3225,25 @@
               <div class="banner-preview">
                 <div class="banner-title-row">
                   <span class="banner-type-badge">🏆 PvP Arena</span>
+                  <div class="hf-select" id="pvp-bet-select">
+                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="hf-sel-value">Free</span>
+                      <span class="hf-sel-chevron">▾</span>
+                    </button>
+                  </div>
+                  <div class="hf-select" id="pvp-fmt-select">
+                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                      <span class="hf-sel-value">BO5</span>
+                      <span class="hf-sel-chevron">▾</span>
+                    </button>
+                  </div>
                   <button class="info-trigger" id="info-pvp"
-                    data-tip="Bet HIVE against real players. The winner takes most of the pot. Sharpen your deck and enter the arena."
-                    aria-label="More info">i</button>
+                    data-tip-id="pvp" aria-label="More info">i</button>
                 </div>
               </div>
 
               <div class="banner-expand">
                 <div class="cfg-divider"></div>
-                <div class="cfg-row">
-                  <span class="cfg-lbl">Bet</span>
-                  <div class="pills" id="pvp-bet-pills">
-                    <button class="pill active" data-bet="0" disabled>Free</button>
-                    <button class="pill" data-bet="1" disabled>1 HIVE</button>
-                    <button class="pill" data-bet="5" disabled>5 HIVE</button>
-                    <button class="pill" data-bet="10" disabled>10 HIVE</button>
-                  </div>
-                </div>
-                <div class="cfg-row">
-                  <span class="cfg-lbl">Format</span>
-                  <div class="pills" id="pvp-fmt-pills">
-                    <span class="fmt-wrap"><button class="pill" data-fmt="3" disabled>BO3</button></span>
-                    <span class="fmt-wrap"><button class="pill active" data-fmt="5" disabled>BO5</button></span>
-                    <span class="fmt-wrap"><button class="pill" data-fmt="7" disabled>BO7</button></span>
-                  </div>
-                </div>
                 <button class="btn-action btn-find" id="btn-pvp-find" disabled>
                   <span class="btn-soon-badge">Coming Soon</span>
                   🔍 FIND MATCH
@@ -2910,6 +3258,18 @@
 
       <!-- ═══ GRIMOIRE VIEW ═══ -->
       <div id="view-grimoire" class="lv">
+
+        <!-- Mobile chapter bar (hidden ≥641px via CSS) -->
+        <div class="gr-mobile-bar">
+          <button class="gr-topics-btn" onclick="grOpenTopics()">
+            <span class="gr-topics-btn-left">
+              <span>📖</span>
+              <span class="gr-topics-btn-label" id="gr-mobile-label">Basics</span>
+            </span>
+            <span class="gr-topics-chevron">▾</span>
+          </button>
+        </div>
+
         <div class="wiki-layout">
           <aside class="wiki-sidebar">
             <div class="wiki-category">How to Play</div>
@@ -3175,56 +3535,40 @@
                 <span class="gr-hl" style="color: #c88cff">Back</span>.
               </p>
 
-              <div class="gr-arena">
-                <div>
-                  <p
-                    style="
-                      font-size: 11px;
-                      color: rgba(200, 160, 60, 0.6);
-                      text-align: center;
-                      margin-bottom: 6px;
-                      font-family: &quot;Cinzel&quot;, serif;
-                      letter-spacing: 1px;
-                    "
-                  >
-                    YOUR ARMY
-                  </p>
-                  <div class="gr-arena-side">
-                    <div class="gr-arena-cell back">A-Back</div>
-                    <div class="gr-arena-cell mid">A-Mid</div>
-                    <div class="gr-arena-cell front">A-Front</div>
-                    <div class="gr-arena-cell back">B-Back</div>
-                    <div class="gr-arena-cell mid">B-Mid</div>
-                    <div class="gr-arena-cell front">B-Front</div>
-                    <div class="gr-arena-cell back">C-Back</div>
-                    <div class="gr-arena-cell mid">C-Mid</div>
-                    <div class="gr-arena-cell front">C-Front</div>
+              <div class="gr-arena-wrap">
+                <div class="gr-arena">
+                  <div>
+                    <p style="font-size:11px;color:rgba(200,160,60,0.6);text-align:center;margin-bottom:6px;font-family:'Cinzel',serif;letter-spacing:1px;">
+                      YOUR ARMY
+                    </p>
+                    <div class="gr-arena-side">
+                      <div class="gr-arena-cell back">A-Back</div>
+                      <div class="gr-arena-cell mid">A-Mid</div>
+                      <div class="gr-arena-cell front">A-Front</div>
+                      <div class="gr-arena-cell back">B-Back</div>
+                      <div class="gr-arena-cell mid">B-Mid</div>
+                      <div class="gr-arena-cell front">B-Front</div>
+                      <div class="gr-arena-cell back">C-Back</div>
+                      <div class="gr-arena-cell mid">C-Mid</div>
+                      <div class="gr-arena-cell front">C-Front</div>
+                    </div>
                   </div>
-                </div>
-                <div class="gr-arena-vs">VS</div>
-                <div>
-                  <p
-                    style="
-                      font-size: 11px;
-                      color: rgba(200, 160, 60, 0.6);
-                      text-align: center;
-                      margin-bottom: 6px;
-                      font-family: &quot;Cinzel&quot;, serif;
-                      letter-spacing: 1px;
-                    "
-                  >
-                    OPPONENT
-                  </p>
-                  <div class="gr-arena-side">
-                    <div class="gr-arena-cell front">A-Front</div>
-                    <div class="gr-arena-cell mid">A-Mid</div>
-                    <div class="gr-arena-cell back">A-Back</div>
-                    <div class="gr-arena-cell front">B-Front</div>
-                    <div class="gr-arena-cell mid">B-Mid</div>
-                    <div class="gr-arena-cell back">B-Back</div>
-                    <div class="gr-arena-cell front">C-Front</div>
-                    <div class="gr-arena-cell mid">C-Mid</div>
-                    <div class="gr-arena-cell back">C-Back</div>
+                  <div class="gr-arena-vs">VS</div>
+                  <div>
+                    <p style="font-size:11px;color:rgba(200,160,60,0.6);text-align:center;margin-bottom:6px;font-family:'Cinzel',serif;letter-spacing:1px;">
+                      OPPONENT
+                    </p>
+                    <div class="gr-arena-side">
+                      <div class="gr-arena-cell front">A-Front</div>
+                      <div class="gr-arena-cell mid">A-Mid</div>
+                      <div class="gr-arena-cell back">A-Back</div>
+                      <div class="gr-arena-cell front">B-Front</div>
+                      <div class="gr-arena-cell mid">B-Mid</div>
+                      <div class="gr-arena-cell back">B-Back</div>
+                      <div class="gr-arena-cell front">C-Front</div>
+                      <div class="gr-arena-cell mid">C-Mid</div>
+                      <div class="gr-arena-cell back">C-Back</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3855,6 +4199,27 @@
     <!-- ── DESC TOOLTIP ─────────────── -->
     <div id="desc-tooltip"></div>
 
+    <!-- ── GRIMOIRE TOPICS OVERLAY (fixed, bypasses lobby-wrap overflow) ── -->
+    <div class="gr-topics-overlay" id="gr-topics-overlay" onclick="grCloseTopics()">
+      <div class="gr-topics-panel" onclick="event.stopPropagation()">
+        <div class="gr-tp-header">
+          <span class="gr-tp-title">📖 GRIMOIRE</span>
+          <button class="gr-tp-close" onclick="grCloseTopics()">✕</button>
+        </div>
+
+        <div class="gr-tp-group">How to Play</div>
+        <button class="gr-tp-item active" data-gr-ch="0" onclick="grNavMobile(0)">📖 Basics</button>
+        <button class="gr-tp-item" data-gr-ch="1" onclick="grNavMobile(1)">🛡️ Formation</button>
+        <button class="gr-tp-item" data-gr-ch="3" onclick="grNavMobile(3)">⚔️ Battlefield</button>
+        <button class="gr-tp-item" data-gr-ch="6" onclick="grNavMobile(6)">💡 Strategies</button>
+
+        <div class="gr-tp-group">Mechanics</div>
+        <button class="gr-tp-item" data-gr-ch="2" onclick="grNavMobile(2)">💰 Gold &amp; Recruit</button>
+        <button class="gr-tp-item" data-gr-ch="4" onclick="grNavMobile(4)">✨ Combos</button>
+        <button class="gr-tp-item" data-gr-ch="5" onclick="grNavMobile(5)">⭐ Fusion</button>
+      </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
       (function () {
@@ -3951,6 +4316,16 @@
         };
 
         /* ── Grimoire ────────────────── */
+        const GR_LABELS = {
+          0: 'Basics',
+          1: 'Formation',
+          2: 'Gold & Recruit',
+          3: 'Battlefield',
+          4: 'Combos',
+          5: 'Fusion',
+          6: 'Strategies',
+        };
+
         window.openGrimoire = function () {
           showView("view-grimoire");
         };
@@ -3958,16 +4333,36 @@
           showView("view-home");
         };
         window.grNav = function (idx) {
-          // Match sidebar button by data-ch (chapter index), not DOM position
+          // Sidebar items (desktop)
           document
             .querySelectorAll("#view-grimoire .wiki-item[data-ch]")
             .forEach((t) =>
               t.classList.toggle("active", Number(t.dataset.ch) === idx),
             );
+          // Chapter content
           document
             .querySelectorAll("#gr-wiki-content .gr-chapter")
             .forEach((c, i) => c.classList.toggle("active", i === idx));
+          // Mobile bar label
+          const lbl = document.getElementById("gr-mobile-label");
+          if (lbl) lbl.textContent = GR_LABELS[idx] ?? "";
+          // Overlay items active state
+          document
+            .querySelectorAll(".gr-tp-item[data-gr-ch]")
+            .forEach((t) =>
+              t.classList.toggle("active", Number(t.dataset.grCh) === idx),
+            );
           document.getElementById("gr-wiki-content").scrollTop = 0;
+        };
+        window.grOpenTopics = function () {
+          document.getElementById("gr-topics-overlay").classList.add("open");
+        };
+        window.grCloseTopics = function () {
+          document.getElementById("gr-topics-overlay").classList.remove("open");
+        };
+        window.grNavMobile = function (idx) {
+          grNav(idx);
+          grCloseTopics();
         };
         // Keep grTab as alias for backward compat
         window.grTab = window.grNav;
@@ -4166,21 +4561,108 @@
           }
         })();
 
+        /* ── HF Select — floating dropdown manager ───────────────────
+           Works inside overflow:hidden containers by using position:fixed
+           and getBoundingClientRect() to place the panel in viewport space.
+        ─────────────────────────────────────────────────────────────── */
+        (function () {
+          const dd = document.createElement("div");
+          dd.id = "hf-float-dd";
+          document.body.appendChild(dd);
+          let _activeTrigger = null;
+
+          function _close() {
+            if (_activeTrigger) {
+              _activeTrigger.setAttribute("aria-expanded", "false");
+              _activeTrigger.closest(".hf-select")?.classList.remove("sel-open");
+              _activeTrigger = null;
+            }
+            dd.classList.remove("dd-open");
+          }
+
+          window._hfSelectOpen = function (trigger, opts, currentVal, theme, onChange) {
+            if (_activeTrigger === trigger) { _close(); return; }
+            _close();
+            _activeTrigger = trigger;
+            trigger.setAttribute("aria-expanded", "true");
+            trigger.closest(".hf-select")?.classList.add("sel-open");
+
+            dd.dataset.theme = theme || "";
+            dd.innerHTML = "";
+
+            opts.forEach(({ val, label }) => {
+              const btn = document.createElement("button");
+              btn.className = "hf-sel-opt" + (String(val) === String(currentVal) ? " active" : "");
+              btn.type = "button";
+              btn.textContent = label;
+              btn.setAttribute("role", "option");
+              btn.setAttribute("aria-selected", String(val) === String(currentVal));
+              btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                trigger.querySelector(".hf-sel-value").textContent = label;
+                onChange(val);
+                _close();
+              });
+              btn.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); btn.click(); }
+                if (e.key === "Escape") { _close(); trigger.focus(); }
+                if (e.key === "ArrowDown") { e.preventDefault(); btn.nextElementSibling?.focus(); }
+                if (e.key === "ArrowUp")   { e.preventDefault(); btn.previousElementSibling?.focus(); }
+              });
+              dd.appendChild(btn);
+            });
+
+            /* Measure height before positioning */
+            dd.style.cssText = "visibility:hidden;display:flex;flex-direction:column;";
+            const ddH = dd.scrollHeight;
+            const ddW = Math.max(trigger.offsetWidth, 120);
+            dd.style.cssText = "";
+
+            const r = trigger.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - r.bottom - 8;
+            const top = spaceBelow >= ddH ? r.bottom + 4 : r.top - ddH - 4;
+            let left = r.left;
+            if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+            if (left < 8) left = 8;
+
+            dd.style.cssText = `top:${top}px;left:${left}px;min-width:${ddW}px;`;
+            dd.classList.add("dd-open");
+          };
+
+          document.addEventListener("click", _close);
+          window.addEventListener("resize", _close);
+          window.addEventListener("scroll", _close, true);
+        })();
+
+        /* ── Option definitions ─────────── */
+        const FMT_OPTS = [
+          { val: 3, label: "BO3" },
+          { val: 5, label: "BO5" },
+          { val: 7, label: "BO7" },
+        ];
+        const BET_OPTS = [
+          { val: 0,  label: "Free"    },
+          { val: 1,  label: "1 HIVE"  },
+          { val: 5,  label: "5 HIVE"  },
+          { val: 10, label: "10 HIVE" },
+        ];
+
+        function _setSelectLabel(id, opts, val) {
+          const sel = document.getElementById(id);
+          if (!sel) return;
+          const match = opts.find((o) => String(o.val) === String(val));
+          if (match) sel.querySelector(".hf-sel-value").textContent = match.label;
+        }
+
         /* ── AI config state ─────────── */
         const aiCfg = { format: Number(_loadPref("ai_fmt", 5)) };
-        _applyPills("ai-fmt-pills", "fmt", String(aiCfg.format));
+        _setSelectLabel("ai-fmt-select", FMT_OPTS, aiCfg.format);
 
-        document
-          .getElementById("ai-fmt-pills")
-          .querySelectorAll(".pill")
-          .forEach((btn) => {
-            btn.addEventListener("click", () => {
-              document
-                .getElementById("ai-fmt-pills")
-                .querySelectorAll(".pill")
-                .forEach((p) => p.classList.remove("active"));
-              btn.classList.add("active");
-              aiCfg.format = Number(btn.dataset.fmt);
+        document.getElementById("ai-fmt-select").querySelector(".hf-sel-trigger")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            window._hfSelectOpen(e.currentTarget, FMT_OPTS, aiCfg.format, "ai", (val) => {
+              aiCfg.format = Number(val);
               _savePref("ai_fmt", aiCfg.format);
             });
           });
@@ -4210,40 +4692,27 @@
           bet: Number(_loadPref("pvp_bet", 0)),
           fmt: Number(_loadPref("pvp_fmt", 5)),
         };
-        _applyPills("pvp-bet-pills", "bet", String(pvpCfg.bet));
-        _applyPills("pvp-fmt-pills", "fmt", String(pvpCfg.fmt));
+        _setSelectLabel("pvp-bet-select", BET_OPTS, pvpCfg.bet);
+        _setSelectLabel("pvp-fmt-select", FMT_OPTS, pvpCfg.fmt);
 
-        // Enable pills and wire selection
-        document
-          .getElementById("pvp-bet-pills")
-          .querySelectorAll(".pill")
-          .forEach((btn) => {
-            btn.removeAttribute("disabled");
-            btn.addEventListener("click", () => {
-              document
-                .getElementById("pvp-bet-pills")
-                .querySelectorAll(".pill")
-                .forEach((p) => p.classList.remove("active"));
-              btn.classList.add("active");
-              pvpCfg.bet = Number(btn.dataset.bet);
+        document.getElementById("pvp-bet-select").querySelector(".hf-sel-trigger")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            window._hfSelectOpen(e.currentTarget, BET_OPTS, pvpCfg.bet, "pvp", (val) => {
+              pvpCfg.bet = Number(val);
               _savePref("pvp_bet", pvpCfg.bet);
             });
           });
-        document
-          .getElementById("pvp-fmt-pills")
-          .querySelectorAll(".pill")
-          .forEach((btn) => {
-            btn.removeAttribute("disabled");
-            btn.addEventListener("click", () => {
-              document
-                .getElementById("pvp-fmt-pills")
-                .querySelectorAll(".pill")
-                .forEach((p) => p.classList.remove("active"));
-              btn.classList.add("active");
-              pvpCfg.fmt = Number(btn.dataset.fmt);
+
+        document.getElementById("pvp-fmt-select").querySelector(".hf-sel-trigger")
+          .addEventListener("click", (e) => {
+            e.stopPropagation();
+            window._hfSelectOpen(e.currentTarget, FMT_OPTS, pvpCfg.fmt, "pvp", (val) => {
+              pvpCfg.fmt = Number(val);
               _savePref("pvp_fmt", pvpCfg.fmt);
             });
           });
+
         // Remove "Coming Soon" badge and enable button
         const pvpBtn = document.getElementById("btn-pvp-find");
         const soonBadge = pvpBtn.querySelector(".btn-soon-badge");
@@ -5075,68 +5544,92 @@
         (function () {
           const tip = document.getElementById("desc-tooltip");
           let longPressTimer = null;
+          let _activeTrigger = null;
+
+          const TIPS = {
+            ai: {
+              theme: "ai",
+              html: `
+                <div class="tip-title">⚔️ Solo Battle</div>
+                <div class="tip-body">Face the AI bot. No bets, no risk. Great for learning the game mechanics.</div>
+                <div class="tip-section">🎯 Format — Best of N</div>
+                <div class="tip-rows">
+                  <div class="tip-row"><span class="tip-key">BO3</span><span>First to win 2 rounds</span></div>
+                  <div class="tip-row"><span class="tip-key">BO5</span><span>First to win 3 rounds</span></div>
+                  <div class="tip-row"><span class="tip-key">BO7</span><span>First to win 4 rounds</span></div>
+                </div>`,
+            },
+            pvp: {
+              theme: "pvp",
+              html: `
+                <div class="tip-title">🏆 PvP Arena</div>
+                <div class="tip-body">Challenge real players online. The winner takes most of the pot.</div>
+                <div class="tip-section">💰 Bet HIVE</div>
+                <div class="tip-rows">
+                  <div class="tip-row"><span class="tip-key">Free</span><span>Casual match</span></div>
+                  <div class="tip-row"><span class="tip-key">1 / 5 / 10</span><span>Wager HIVE tokens</span></div>
+                </div>
+                <div class="tip-section">🎯 Format — Best of N</div>
+                <div class="tip-rows">
+                  <div class="tip-row"><span class="tip-key">BO3</span><span>First to win 2 rounds</span></div>
+                  <div class="tip-row"><span class="tip-key">BO5</span><span>First to win 3 rounds</span></div>
+                  <div class="tip-row"><span class="tip-key">BO7</span><span>First to win 4 rounds</span></div>
+                </div>`,
+            },
+          };
 
           function showTip(trigger) {
-            const text = trigger.dataset.tip;
-            if (!text) return;
-            tip.textContent = text;
+            const id = trigger.dataset.tipId;
+            const entry = TIPS[id];
+            if (!entry) return;
+            tip.innerHTML = entry.html;
+            tip.dataset.theme = entry.theme;
+            _activeTrigger = trigger;
             trigger.classList.add("tip-active");
 
-            const rect = trigger.getBoundingClientRect();
-            const tipW = 230;
+            const tipW = 260;
             const margin = 8;
+            tip.style.cssText = `visibility:hidden;display:block;width:${tipW}px;`;
+            const tipH = tip.offsetHeight;
+            tip.style.cssText = "";
+
+            const rect = trigger.getBoundingClientRect();
             let left = rect.left + rect.width / 2 - tipW / 2;
             left = Math.max(margin, Math.min(left, window.innerWidth - tipW - margin));
-
-            let top = rect.top - 10;
-            tip.style.left = left + "px";
-            tip.style.top = "0px";
-            tip.style.opacity = "0";
-            tip.classList.add("visible");
-            const tipH = tip.offsetHeight;
-            top = rect.top - tipH - 6;
+            let top = rect.top - tipH - 6;
             if (top < margin) top = rect.bottom + 6;
+
+            tip.style.left = left + "px";
             tip.style.top = top + "px";
-            tip.style.opacity = "";
+            tip.classList.add("visible");
           }
 
-          function hideTip(trigger) {
+          function hideTip() {
             tip.classList.remove("visible");
-            if (trigger) trigger.classList.remove("tip-active");
+            if (_activeTrigger) { _activeTrigger.classList.remove("tip-active"); _activeTrigger = null; }
           }
 
           document.querySelectorAll(".info-trigger").forEach((trigger) => {
-            /* Desktop: hover */
             trigger.addEventListener("mouseenter", () => showTip(trigger));
-            trigger.addEventListener("mouseleave", () => hideTip(trigger));
+            trigger.addEventListener("mouseleave", hideTip);
 
-            /* Mobile: long-press (500ms) */
             trigger.addEventListener("touchstart", (e) => {
               e.preventDefault();
               longPressTimer = setTimeout(() => showTip(trigger), 500);
             }, { passive: false });
             trigger.addEventListener("touchend", () => {
               clearTimeout(longPressTimer);
-              setTimeout(() => hideTip(trigger), 1500);
+              setTimeout(hideTip, 1800);
             });
-            trigger.addEventListener("touchcancel", () => {
-              clearTimeout(longPressTimer);
-              hideTip(trigger);
-            });
+            trigger.addEventListener("touchcancel", () => { clearTimeout(longPressTimer); hideTip(); });
 
-            /* Desktop click toggle for accessibility */
             trigger.addEventListener("click", (e) => {
               e.stopPropagation();
-              if (tip.classList.contains("visible")) {
-                hideTip(trigger);
-              } else {
-                showTip(trigger);
-              }
+              tip.classList.contains("visible") && _activeTrigger === trigger ? hideTip() : showTip(trigger);
             });
           });
 
-          /* Click outside closes tip */
-          document.addEventListener("click", () => hideTip(null));
+          document.addEventListener("click", hideTip);
         })();
 
       })();
