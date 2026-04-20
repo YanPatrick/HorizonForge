@@ -5992,13 +5992,13 @@
               (!isSelected && isFull && _editingOpen ? " fhc-disabled" : "");
             if (_editingOpen && (isSelected || !isFull)) {
               card.onclick = () => _toggleFormHero(h.cid);
+            } else if (!_editingOpen) {
+              card.onclick = () => openHeroDetail(h.cid);
             }
-            const cat = _roleCategory(h.role);
-            const label =
-              cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
-            card.innerHTML = `<div class="form-hc-ico">${h.icon}</div>
-              <div class="form-hc-name">${h.name}</div>
-              <div class="form-hc-role role-${cat}">${label}</div>`;
+            card.innerHTML = `
+              <button class="fhc-info-btn" onclick="event.stopPropagation(); openHeroDetail('${h.cid}')" aria-label="Hero info">i</button>
+              <div class="form-hc-ico">${h.icon}</div>
+              <div class="form-hc-name">${h.name}</div>`;
             grid.appendChild(card);
           });
           if (!filtered.length) {
