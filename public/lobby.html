@@ -6271,5 +6271,33 @@
         })();
       })();
     </script>
+
+    <!-- ── Hero Detail Backdrop ── -->
+    <div class="hf-detail-backdrop" id="hf-detail-backdrop" onclick="closeHeroDetail()"></div>
+
+    <!-- ── Hero Detail Drawer (desktop right-side) ── -->
+    <div class="hf-hero-drawer" id="hf-hero-drawer" role="dialog" aria-modal="true" aria-label="Hero Details">
+      <div class="hf-detail-close-row">
+        <div class="hf-detail-hero-header" id="hf-drawer-header">
+          <span class="hf-detail-ico" id="hf-drawer-ico"></span>
+          <span class="hf-detail-hero-name" id="hf-drawer-name"></span>
+        </div>
+        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+      </div>
+      <div class="hf-detail-scroll" id="hf-drawer-body"></div>
+    </div>
+
+    <!-- ── Hero Detail Sheet (mobile bottom) ── -->
+    <div class="hf-hero-sheet" id="hf-hero-sheet" role="dialog" aria-modal="true" aria-label="Hero Details">
+      <div class="hf-sheet-handle"></div>
+      <div class="hf-detail-close-row">
+        <div class="hf-detail-hero-header" id="hf-sheet-header">
+          <span class="hf-detail-ico" id="hf-sheet-ico"></span>
+          <span class="hf-detail-hero-name" id="hf-sheet-name"></span>
+        </div>
+        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+      </div>
+      <div class="hf-detail-scroll" id="hf-sheet-body"></div>
+    </div>
   </body>
 </html>
