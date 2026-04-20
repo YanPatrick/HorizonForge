@@ -6127,6 +6127,21 @@
           if (backdrop) backdrop.classList.remove("hf-open");
         };
 
+        window.toggleHeroDetailL2 = function (btn) {
+          const l2 = btn.nextElementSibling;
+          const chevron = btn.querySelector(".hf-l2-chevron");
+          const isExpanded = l2.classList.contains("expanded");
+          if (isExpanded) {
+            l2.classList.remove("expanded");
+            chevron.classList.remove("expanded");
+            btn.childNodes[0].textContent = "Ver stats completos ";
+          } else {
+            l2.classList.add("expanded");
+            chevron.classList.add("expanded");
+            btn.childNodes[0].textContent = "Recolher ";
+          }
+        };
+
         function _toggleFormHero(cid) {
           if (!_editingOpen) return;
           const f = _formations[_activeFormSlot];
