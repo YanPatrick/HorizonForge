@@ -2280,6 +2280,39 @@
         border-color: rgba(140, 100, 255, 0.18);
         background: rgba(255, 255, 255, 0.04);
       }
+      /* ── Info button on hero card ── */
+      .fhc-info-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: rgba(140, 100, 255, 0.18);
+        border: 1px solid rgba(140, 100, 255, 0.38);
+        color: rgba(180, 155, 255, 0.75);
+        font-family: "Exo 2", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        font-style: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        z-index: 1;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .fhc-info-btn:hover {
+        background: rgba(140, 100, 255, 0.35);
+        color: rgba(210, 190, 255, 0.95);
+      }
+      /* Hide info button in deck-editing mode */
+      #form-hero-grid.fhc-editing-mode .fhc-info-btn {
+        opacity: 0;
+        pointer-events: none;
+      }
       .form-hero-card.fhc-selected {
         border-color: rgba(80, 210, 110, 0.55);
         background: rgba(50, 180, 70, 0.1);
