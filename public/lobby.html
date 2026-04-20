@@ -5303,6 +5303,15 @@
           if (savedDefault !== null) _defaultFormSlot = Number(savedDefault);
           if (!_formationsLoaded && session.mode !== "guest") {
             await _loadFormations();
+          } else if (session.mode === "guest" && !_formationsLoaded) {
+            const raw = sessionStorage.getItem("hf_guest_formation");
+            if (raw) {
+              try {
+                const saved = JSON.parse(raw);
+                _formations[0].hero_ids = saved.hero_ids || [];
+              } catch { /* silent */ }
+            }
+            _formationsLoaded = true;
           }
           if (!_heroData) {
             try {
