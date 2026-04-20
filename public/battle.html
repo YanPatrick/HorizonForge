@@ -38,12 +38,12 @@
         --cell-h: calc(108px * var(--s));
         --field-gap: calc(4px * var(--s));
         --field-pad: calc(8px * var(--s));
-        --bottom-h: calc(220px * var(--s));
-        --bench-w: calc(590px * var(--s));
-        --shop-w: calc(590px * var(--s));
-        --card-w: calc(106px * var(--s));
+        --bottom-h: calc(200px * var(--s));
+        --bench-w: calc(540px * var(--s));
+        --shop-w: calc(500px * var(--s));
+        --card-w: calc(90px * var(--s));
         --card-gap: calc(6px * var(--s));
-        --bcard-w: calc(96px * var(--s));
+        --bcard-w: calc(82px * var(--s));
         --bcard-gap: calc(6px * var(--s));
         --center-max-w: calc(420px * var(--s));
       }
@@ -2859,6 +2859,52 @@
       }
 
       /* ════════════════════════════════════════
+   PHASE 5 — SHOP ANIMATIONS
+   ════════════════════════════════════════ */
+
+      /* Shop card: gold burst flash on purchase click */
+      .scard.scard-buy-flash {
+        animation: scard-buy-burst 0.35s ease forwards;
+      }
+      @keyframes scard-buy-burst {
+        0%   { filter: brightness(1)   saturate(1); transform: scale(1); }
+        25%  { filter: brightness(3.5) saturate(0) sepia(1) hue-rotate(-20deg); transform: scale(1.08); }
+        60%  { filter: brightness(1.8) saturate(2); transform: scale(0.97); }
+        100% { filter: brightness(1);  transform: scale(1); }
+      }
+
+      /* Shop reroll: newly generated cards shimmer in */
+      .scard.scard-new {
+        animation: scard-enter-new 0.42s cubic-bezier(0.22, 0.68, 0, 1.15) both;
+      }
+      @keyframes scard-enter-new {
+        0%   { filter: brightness(2.8) saturate(0); transform: scaleY(0.88); }
+        45%  { filter: brightness(1.5) saturate(1.5); }
+        100% { filter: brightness(1);  transform: scaleY(1); }
+      }
+
+      /* New bench card entrance (brand-new recruit, not a stack) */
+      .bcard.bcard-enter {
+        animation: bcard-enter-in 0.42s cubic-bezier(0.22, 0.68, 0, 1.2) both;
+      }
+      @keyframes bcard-enter-in {
+        0%   { opacity: 0; transform: scale(0.62) translateY(10px); filter: brightness(2.5) saturate(0); }
+        55%  { opacity: 1; filter: brightness(1.4); }
+        100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+      }
+
+      /* Bench card sell exit: red shrink-fade */
+      .bcard.bcard-sell-exit {
+        animation: bcard-sell-out 0.22s ease forwards;
+        pointer-events: none !important;
+      }
+      @keyframes bcard-sell-out {
+        0%   { opacity: 1; transform: scale(1);    filter: brightness(1); }
+        35%  { opacity: 0.8; transform: scale(1.05); filter: brightness(1.8) hue-rotate(340deg) saturate(0.4); }
+        100% { opacity: 0; transform: scale(0.72) translateY(8px); filter: brightness(0.5); }
+      }
+
+      /* ════════════════════════════════════════
    PHASE 4 — COMBAT VFX
    ════════════════════════════════════════ */
 
@@ -3935,6 +3981,8 @@
           const newUnit = mkUnit(card.cid, 1);
           newUnit.stack = 1;
           G.bench.push(newUnit);
+          if (!G._newBenchCids) G._newBenchCids = new Set();
+          G._newBenchCids.add(card.cid);
           if (!silent) log(`🛒 Recruited ${card.name} for ${cost}💰`, "ll");
         }
         return true;
@@ -3956,6 +4004,8 @@
           log(`❌ Need ${cost}💰! You have ${G.gold}💰`, "lk");
           return;
         }
+        const shopEl = document.querySelector(`#shoprow .scard[data-uid="${card.id}"]`);
+        if (shopEl) shopEl.classList.add("scard-buy-flash");
         if (!_addToBench(card, cost, false)) return;
         G.gold -= cost;
         _slideShop(idx);
@@ -3976,6 +4026,10 @@
           log("❌ Barracks full!", "lk");
           return;
         }
+        combo.idxs.forEach((ci) => {
+          const el = document.querySelector(`#shoprow .scard[data-uid="${G.shop[ci]?.id}"]`);
+          if (el) el.classList.add("scard-buy-flash");
+        });
         G.gold -= cost;
         for (let k = 0; k < combo.type; k++)
           _addToBench({ cid, ico: C[cid].ico, name: C[cid].name }, 0, k > 0);
@@ -4006,11 +4060,13 @@
 
         const u = G.bench[idx],
           val = SELL[u.lv];
+        const sellEl = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
+        if (sellEl) sellEl.classList.add("bcard-sell-exit");
         G.gold += val;
         G.bench.splice(idx, 1);
         if (G.bsel === cid) G.bsel = null;
-        render();
         log(`💸 Sold ${u.name} ${LS[u.lv]} for ${val}💰`, "la");
+        setTimeout(() => render(), 230);
       }
 
       function betweenIncome() {
@@ -6400,7 +6456,8 @@
             row.appendChild(el);
             el.offsetWidth;
           }
-          el.className = `scard${isCombo ? " combo-card" : ""}${isAtMax ? " maxed" : canBuy ? " buyable" : " broke"}`;
+          el.className = `scard${isCombo ? " combo-card" : ""}${isAtMax ? " maxed" : canBuy ? " buyable" : " broke"}${isNew ? " scard-new" : ""}`;
+          if (isNew) el.style.animationDelay = (i * 55) + "ms";
           el.innerHTML = inner;
           el.style.background = cc.bg;
           el.style.borderColor = isCombo ? "#44ff88" : cc.col;
@@ -6469,11 +6526,14 @@
           m.textContent = "Barracks empty — drag cards from Recruitment";
           row.appendChild(m);
         } else {
-          G.bench.forEach((u) => {
+          G.bench.forEach((u, bi) => {
             const cc = C[u.cid],
               isSel = G.bsel === u.cid;
+            const isNewRecruit = G._newBenchCids && G._newBenchCids.has(u.cid);
+            if (isNewRecruit) G._newBenchCids.delete(u.cid);
             const card = document.createElement("div");
-            card.className = `bcard${isSel ? " bsel" : ""}`;
+            card.className = `bcard${isSel ? " bsel" : ""}${isNewRecruit ? " bcard-enter" : ""}`;
+            if (isNewRecruit) card.style.animationDelay = (bi * 40) + "ms";
             card.dataset.cid = u.cid;
             card.style.cssText = `background:${cc.bg};border-color:${isSel ? "#88ccff" : cc.col}`;
             const dotColor =
