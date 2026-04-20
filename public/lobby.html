@@ -2274,7 +2274,7 @@
       }
 
       /* Deck-editing mode: suppress hover glow and detail interactions */
-      #form-hero-grid.fhc-editing-mode .form-hero-card:hover {
+      #form-hero-grid.fhc-editing-mode .form-hero-card:hover:not(.fhc-disabled) {
         transform: none;
         box-shadow: none;
         border-color: rgba(140, 100, 255, 0.18);
