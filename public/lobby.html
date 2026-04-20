@@ -317,7 +317,7 @@
         position: relative;
         border-radius: 20px;
         border: 1.5px solid rgba(120, 80, 255, 0.25);
-        padding: 32px 28px 14px;
+        padding: 22px 22px 12px;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -539,7 +539,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 12px;
+        padding: 3px 10px;
         border-radius: 999px;
         font-size: 9.5px;
         font-weight: 800;
@@ -583,7 +583,7 @@
       /* ── Config section ── */
       .cfg-divider {
         height: 1px;
-        margin-bottom: 18px;
+        margin-bottom: 10px;
       }
       .banner-ai .cfg-divider {
         background: linear-gradient(
@@ -740,10 +740,10 @@
       /* ── Action buttons ── */
       .btn-action {
         width: 100%;
-        padding: 15px;
+        padding: 12px;
         border-radius: 13px;
         font-family: "Cinzel", serif;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
         letter-spacing: 1.8px;
         cursor: pointer;
@@ -1856,8 +1856,12 @@
         animation: pulse-urgent 0.6s ease-in-out infinite alternate;
       }
       @keyframes pulse-urgent {
-        from { opacity: 0.7; }
-        to   { opacity: 1; }
+        from {
+          opacity: 0.7;
+        }
+        to {
+          opacity: 1;
+        }
       }
       #pay-steps {
         display: none;
@@ -2555,9 +2559,15 @@
          ═══════════════════════════════════════════════ */
 
       /* TopNav: right-align items only, no logo space */
-      .topnav { justify-content: flex-end; }
-      .nav-center { display: none !important; }
-      .nav-logo { display: none !important; }
+      .topnav {
+        justify-content: flex-end;
+      }
+      .nav-center {
+        display: none !important;
+      }
+      .nav-logo {
+        display: none !important;
+      }
 
       /* Lobby wrap: fixed between topnav (58px) and bottom nav (60px) */
       .lobby-wrap {
@@ -2572,7 +2582,10 @@
       }
 
       /* Each view fills the lobby-wrap */
-      .lv { width: 100%; height: 100%; }
+      .lv {
+        width: 100%;
+        height: 100%;
+      }
       .lv.active {
         display: flex;
         flex-direction: column;
@@ -2589,8 +2602,12 @@
         flex-direction: column;
         align-items: center;
       }
-      .view-scroll::-webkit-scrollbar { width: 4px; }
-      .view-scroll::-webkit-scrollbar-track { background: transparent; }
+      .view-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .view-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
       .view-scroll::-webkit-scrollbar-thumb {
         background: rgba(180, 130, 255, 0.22);
         border-radius: 4px;
@@ -2638,9 +2655,16 @@
         transition: color 0.15s;
         font-family: "Exo 2", sans-serif;
       }
-      .mbt-tab:hover { color: rgba(210, 190, 255, 0.7); }
-      .mbt-tab.active { color: #ffd700; }
-      .mbt-ico { font-size: 18px; line-height: 1; }
+      .mbt-tab:hover {
+        color: rgba(210, 190, 255, 0.7);
+      }
+      .mbt-tab.active {
+        color: #ffd700;
+      }
+      .mbt-ico {
+        font-size: 18px;
+        line-height: 1;
+      }
       .mbt-tab.active .mbt-ico {
         filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
       }
@@ -2676,20 +2700,29 @@
         cursor: default;
       }
       .banner-ai:hover,
-      .banner-pvp:hover { transform: none !important; }
+      .banner-pvp:hover {
+        transform: none !important;
+      }
 
       /* ── Banner title row with info icon ── */
       .banner-title-row {
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         flex-wrap: wrap;
       }
-      .banner-title-row .banner-title { margin-bottom: 0; }
+      .banner-title-row .banner-title {
+        margin-bottom: 0;
+      }
       /* Override align-self: flex-start so badge centers in the row */
-      .banner-title-row .banner-type-badge { align-self: center; margin-bottom: 0; }
-      .banner-title-row .info-trigger { flex-shrink: 0; }
+      .banner-title-row .banner-type-badge {
+        align-self: center;
+        margin-bottom: 0;
+      }
+      .banner-title-row .info-trigger {
+        flex-shrink: 0;
+      }
 
       /* ── Info icon tooltip trigger ── */
       .info-trigger {
@@ -2729,10 +2762,24 @@
       }
 
       /* ── Sphere rings: scaled down slightly ── */
-      .banner .sph-ring.r1 { width: 132px; height: 132px; margin: -66px 0 0 -66px; }
-      .banner .sph-ring.r2 { width: 98px;  height: 98px;  margin: -49px 0 0 -49px; }
-      .banner .sph-ring.r3 { width: 65px;  height: 65px;  margin: -32px 0 0 -32px; }
-      .banner .sph-core    { font-size: 30px; }
+      .banner .sph-ring.r1 {
+        width: 132px;
+        height: 132px;
+        margin: -66px 0 0 -66px;
+      }
+      .banner .sph-ring.r2 {
+        width: 98px;
+        height: 98px;
+        margin: -49px 0 0 -49px;
+      }
+      .banner .sph-ring.r3 {
+        width: 65px;
+        height: 65px;
+        margin: -32px 0 0 -32px;
+      }
+      .banner .sph-core {
+        font-size: 30px;
+      }
 
       /* ── Description tooltip popup ── */
       #desc-tooltip {
@@ -2747,10 +2794,14 @@
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.15s ease;
-        box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(130,80,255,0.12);
+        box-shadow:
+          0 12px 36px rgba(0, 0, 0, 0.65),
+          0 0 20px rgba(130, 80, 255, 0.12);
         font-family: "Exo 2", sans-serif;
       }
-      #desc-tooltip.visible { opacity: 1; }
+      #desc-tooltip.visible {
+        opacity: 1;
+      }
 
       .tip-title {
         font-size: 12px;
@@ -2779,7 +2830,11 @@
       .tip-rows + .tip-section {
         margin-top: 9px;
       }
-      .tip-rows { display: flex; flex-direction: column; gap: 4px; }
+      .tip-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
       .tip-row {
         display: flex;
         align-items: baseline;
@@ -2808,7 +2863,9 @@
         border-bottom-color: rgba(220, 150, 30, 0.14);
         color: rgba(220, 185, 100, 0.5);
       }
-      #desc-tooltip[data-theme="pvp"] { border-color: rgba(220, 150, 30, 0.28); }
+      #desc-tooltip[data-theme="pvp"] {
+        border-color: rgba(220, 150, 30, 0.28);
+      }
 
       /* ── Override old view heights for new fixed layout ── */
       #view-home {
@@ -2833,24 +2890,26 @@
          HF SELECT — Custom floating dropdown
          ═══════════════════════════════════════ */
 
-      .hf-select { display: inline-block; }
+      .hf-select {
+        display: inline-block;
+      }
 
       .hf-sel-trigger {
         display: flex;
         align-items: center;
-        gap: 7px;
-        padding: 7px 12px;
+        gap: 6px;
+        padding: 5px 10px;
         border-radius: 8px;
         border: 1.5px solid;
         font-family: "Exo 2", sans-serif;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
         cursor: pointer;
         transition: all 0.15s;
         white-space: nowrap;
         background: rgba(255, 255, 255, 0.04);
         -webkit-tap-highlight-color: transparent;
-        min-width: 72px;
+        min-width: 62px;
       }
       /* AI card theme */
       .banner-ai .hf-sel-trigger {
@@ -2876,14 +2935,18 @@
         background: rgba(200, 130, 28, 0.15);
         box-shadow: 0 0 10px rgba(200, 130, 28, 0.18);
       }
-      .hf-sel-value { flex: 1; }
+      .hf-sel-value {
+        flex: 1;
+      }
       .hf-sel-chevron {
         font-size: 10px;
         opacity: 0.6;
         transition: transform 0.2s;
         flex-shrink: 0;
       }
-      .hf-select.sel-open .hf-sel-chevron { transform: rotate(180deg); }
+      .hf-select.sel-open .hf-sel-chevron {
+        transform: rotate(180deg);
+      }
 
       /* Floating dropdown panel — body-level, position:fixed */
       #hf-float-dd {
@@ -2911,8 +2974,14 @@
           0 0 20px rgba(200, 130, 28, 0.12);
       }
       @keyframes hf-dd-in {
-        from { opacity: 0; transform: translateY(-4px); }
-        to   { opacity: 1; transform: translateY(0);   }
+        from {
+          opacity: 0;
+          transform: translateY(-4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       /* Dropdown option items */
@@ -2976,7 +3045,9 @@
         -webkit-tap-highlight-color: transparent;
         transition: background 0.15s;
       }
-      .gr-topics-btn:active { background: rgba(220, 175, 60, 0.13); }
+      .gr-topics-btn:active {
+        background: rgba(220, 175, 60, 0.13);
+      }
       .gr-topics-btn-left {
         display: flex;
         align-items: center;
@@ -3006,7 +3077,9 @@
         backdrop-filter: blur(4px);
         align-items: flex-end;
       }
-      .gr-topics-overlay.open { display: flex; }
+      .gr-topics-overlay.open {
+        display: flex;
+      }
 
       /* Bottom-sheet panel */
       .gr-topics-panel {
@@ -3019,10 +3092,18 @@
         animation: gr-panel-up 0.26s cubic-bezier(0.22, 0.68, 0, 1.12) both;
       }
       @keyframes gr-panel-up {
-        from { transform: translateY(100%); opacity: 0; }
-        to   { transform: translateY(0);    opacity: 1; }
+        from {
+          transform: translateY(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
       }
-      .gr-topics-panel::-webkit-scrollbar { width: 3px; }
+      .gr-topics-panel::-webkit-scrollbar {
+        width: 3px;
+      }
       .gr-topics-panel::-webkit-scrollbar-thumb {
         background: rgba(220, 175, 60, 0.2);
         border-radius: 3px;
@@ -3062,7 +3143,10 @@
         -webkit-tap-highlight-color: transparent;
         transition: background 0.15s;
       }
-      .gr-tp-close:hover { background: rgba(255, 80, 80, 0.18); color: #ff8888; }
+      .gr-tp-close:hover {
+        background: rgba(255, 80, 80, 0.18);
+        color: #ff8888;
+      }
 
       /* Overlay group headers */
       .gr-tp-group {
@@ -3095,7 +3179,9 @@
         transition: all 0.12s;
       }
       .gr-tp-item:hover,
-      .gr-tp-item:active { background: rgba(255, 255, 255, 0.04); }
+      .gr-tp-item:active {
+        background: rgba(255, 255, 255, 0.04);
+      }
       .gr-tp-item.active {
         color: #ffd700;
         border-left-color: rgba(255, 215, 0, 0.55);
@@ -3105,16 +3191,30 @@
 
       /* Desktop: sidebar visible, mobile bar hidden */
       @media (min-width: 641px) {
-        .gr-mobile-bar { display: none !important; }
-        .gr-topics-overlay { display: none !important; }
+        .gr-mobile-bar {
+          display: none !important;
+        }
+        .gr-topics-overlay {
+          display: none !important;
+        }
       }
 
       /* Mobile: sidebar hidden, mobile bar shown */
       @media (max-width: 640px) {
-        .gr-mobile-bar { display: flex; flex-direction: column; }
-        #view-grimoire .wiki-sidebar { display: none !important; }
-        #view-grimoire .wiki-layout { flex-direction: column; overflow: hidden; }
-        #view-grimoire .wiki-content { padding: 18px 14px 32px; }
+        .gr-mobile-bar {
+          display: flex;
+          flex-direction: column;
+        }
+        #view-grimoire .wiki-sidebar {
+          display: none !important;
+        }
+        #view-grimoire .wiki-layout {
+          flex-direction: column;
+          overflow: hidden;
+        }
+        #view-grimoire .wiki-content {
+          padding: 18px 14px 32px;
+        }
 
         /* Arena: horizontal scroll when narrow */
         .gr-arena-wrap {
@@ -3125,23 +3225,58 @@
           padding-left: 4px;
           padding-right: 4px;
         }
-        .gr-arena { min-width: 290px; margin: 10px 0; }
+        .gr-arena {
+          min-width: 290px;
+          margin: 10px 0;
+        }
       }
 
       /* ── Nav right: shrink gracefully on narrow screens ── */
       @media (max-width: 430px) {
-        .hive-bal { padding: 5px 10px; font-size: 11.5px; gap: 5px; }
-        .nav-user-badge { padding: 3px 8px 3px 4px; font-size: 11.5px; gap: 5px; }
-        .nav-avatar { width: 22px; height: 22px; }
-        .btn-exit { padding: 5px 11px; font-size: 11.5px; }
-        .nav-right { gap: 5px; }
+        .hive-bal {
+          padding: 5px 10px;
+          font-size: 11.5px;
+          gap: 5px;
+        }
+        .nav-user-badge {
+          padding: 3px 8px 3px 4px;
+          font-size: 11.5px;
+          gap: 5px;
+        }
+        .nav-avatar {
+          width: 22px;
+          height: 22px;
+        }
+        .btn-exit {
+          padding: 5px 11px;
+          font-size: 11.5px;
+        }
+        .nav-right {
+          gap: 5px;
+        }
       }
       @media (max-width: 330px) {
-        .hive-bal { padding: 4px 8px; font-size: 10px; gap: 4px; }
-        .nav-user-badge { padding: 3px 6px 3px 4px; font-size: 10px; gap: 4px; }
-        .nav-avatar { width: 20px; height: 20px; }
-        .btn-exit { padding: 4px 8px; font-size: 10px; }
-        .nav-right { gap: 4px; }
+        .hive-bal {
+          padding: 4px 8px;
+          font-size: 10px;
+          gap: 4px;
+        }
+        .nav-user-badge {
+          padding: 3px 6px 3px 4px;
+          font-size: 10px;
+          gap: 4px;
+        }
+        .nav-avatar {
+          width: 20px;
+          height: 20px;
+        }
+        .btn-exit {
+          padding: 4px 8px;
+          font-size: 10px;
+        }
+        .nav-right {
+          gap: 4px;
+        }
       }
     </style>
   </head>
@@ -3149,11 +3284,11 @@
     <!-- ── TOP NAV ─────────────────────── -->
     <nav class="topnav">
       <!-- Hidden nav buttons kept for JS compatibility -->
-      <button id="nav-btn-grimoire" style="display:none"></button>
-      <button id="nav-btn-formation" style="display:none"></button>
-      <button id="nav-btn-home" style="display:none"></button>
-      <button id="nav-btn-heroes" style="display:none"></button>
-      <button id="nav-btn-settings" style="display:none"></button>
+      <button id="nav-btn-grimoire" style="display: none"></button>
+      <button id="nav-btn-formation" style="display: none"></button>
+      <button id="nav-btn-home" style="display: none"></button>
+      <button id="nav-btn-heroes" style="display: none"></button>
+      <button id="nav-btn-settings" style="display: none"></button>
 
       <div class="nav-right">
         <div class="hive-bal" id="hive-bal">
@@ -3161,7 +3296,11 @@
             src="images/hive-logo.png"
             width="14"
             height="12"
-            style="display:inline-block;vertical-align:middle;image-rendering:crisp-edges;"
+            style="
+              display: inline-block;
+              vertical-align: middle;
+              image-rendering: crisp-edges;
+            "
             alt="HIVE"
           />
           <span id="hive-bal-val">— HIVE</span>
@@ -3186,7 +3325,10 @@
 
             <!-- ── AI CARD ── -->
             <section class="banner banner-ai">
-              <div class="banner-sphere" style="width:120px;height:120px;margin:0 auto 14px;">
+              <div
+                class="banner-sphere"
+                style="width: 120px; height: 120px; margin: 0 auto 10px"
+              >
                 <div class="sph-ring r1"></div>
                 <div class="sph-ring r2"></div>
                 <div class="sph-ring r3"></div>
@@ -3195,27 +3337,43 @@
 
               <div class="banner-preview">
                 <div class="banner-title-row">
-                  <span class="banner-type-badge">⚔️ Solo</span>
+                  <span class="banner-type-badge">Solo</span>
                   <div class="hf-select" id="ai-fmt-select">
-                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <button
+                      class="hf-sel-trigger"
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded="false"
+                    >
                       <span class="hf-sel-value">BO5</span>
                       <span class="hf-sel-chevron">▾</span>
                     </button>
                   </div>
-                  <button class="info-trigger" id="info-ai"
-                    data-tip-id="ai" aria-label="More info">i</button>
+                  <button
+                    class="info-trigger"
+                    id="info-ai"
+                    data-tip-id="ai"
+                    aria-label="More info"
+                  >
+                    i
+                  </button>
                 </div>
               </div>
 
               <div class="banner-expand">
                 <div class="cfg-divider"></div>
-                <button class="btn-action btn-start" id="btn-ai-battle">▶ START BATTLE</button>
+                <button class="btn-action btn-start" id="btn-ai-battle">
+                  ▶ START BATTLE
+                </button>
               </div>
             </section>
 
             <!-- ── PvP CARD ── -->
             <section class="banner banner-pvp">
-              <div class="banner-sphere" style="width:120px;height:120px;margin:0 auto 14px;">
+              <div
+                class="banner-sphere"
+                style="width: 120px; height: 120px; margin: 0 auto 10px"
+              >
                 <div class="sph-ring r1"></div>
                 <div class="sph-ring r2"></div>
                 <div class="sph-ring r3"></div>
@@ -3224,21 +3382,37 @@
 
               <div class="banner-preview">
                 <div class="banner-title-row">
-                  <span class="banner-type-badge">🏆 PvP Arena</span>
+                  <span class="banner-type-badge">PVP</span>
                   <div class="hf-select" id="pvp-bet-select">
-                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <button
+                      class="hf-sel-trigger"
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded="false"
+                    >
                       <span class="hf-sel-value">Free</span>
                       <span class="hf-sel-chevron">▾</span>
                     </button>
                   </div>
                   <div class="hf-select" id="pvp-fmt-select">
-                    <button class="hf-sel-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <button
+                      class="hf-sel-trigger"
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded="false"
+                    >
                       <span class="hf-sel-value">BO5</span>
                       <span class="hf-sel-chevron">▾</span>
                     </button>
                   </div>
-                  <button class="info-trigger" id="info-pvp"
-                    data-tip-id="pvp" aria-label="More info">i</button>
+                  <button
+                    class="info-trigger"
+                    id="info-pvp"
+                    data-tip-id="pvp"
+                    aria-label="More info"
+                  >
+                    i
+                  </button>
                 </div>
               </div>
 
@@ -3250,7 +3424,6 @@
                 </button>
               </div>
             </section>
-
           </div>
         </div>
       </div>
@@ -3258,13 +3431,14 @@
 
       <!-- ═══ GRIMOIRE VIEW ═══ -->
       <div id="view-grimoire" class="lv">
-
         <!-- Mobile chapter bar (hidden ≥641px via CSS) -->
         <div class="gr-mobile-bar">
           <button class="gr-topics-btn" onclick="grOpenTopics()">
             <span class="gr-topics-btn-left">
               <span>📖</span>
-              <span class="gr-topics-btn-label" id="gr-mobile-label">Basics</span>
+              <span class="gr-topics-btn-label" id="gr-mobile-label"
+                >Basics</span
+              >
             </span>
             <span class="gr-topics-chevron">▾</span>
           </button>
@@ -3538,7 +3712,16 @@
               <div class="gr-arena-wrap">
                 <div class="gr-arena">
                   <div>
-                    <p style="font-size:11px;color:rgba(200,160,60,0.6);text-align:center;margin-bottom:6px;font-family:'Cinzel',serif;letter-spacing:1px;">
+                    <p
+                      style="
+                        font-size: 11px;
+                        color: rgba(200, 160, 60, 0.6);
+                        text-align: center;
+                        margin-bottom: 6px;
+                        font-family: &quot;Cinzel&quot;, serif;
+                        letter-spacing: 1px;
+                      "
+                    >
                       YOUR ARMY
                     </p>
                     <div class="gr-arena-side">
@@ -3555,7 +3738,16 @@
                   </div>
                   <div class="gr-arena-vs">VS</div>
                   <div>
-                    <p style="font-size:11px;color:rgba(200,160,60,0.6);text-align:center;margin-bottom:6px;font-family:'Cinzel',serif;letter-spacing:1px;">
+                    <p
+                      style="
+                        font-size: 11px;
+                        color: rgba(200, 160, 60, 0.6);
+                        text-align: center;
+                        margin-bottom: 6px;
+                        font-family: &quot;Cinzel&quot;, serif;
+                        letter-spacing: 1px;
+                      "
+                    >
                       OPPONENT
                     </p>
                     <div class="gr-arena-side">
@@ -4114,23 +4306,48 @@
       </div>
       <!-- /view-settings -->
       <nav class="mobile-bottom-tabs" id="mobile-bottom-tabs">
-        <button type="button" class="mbt-tab" data-nav="grimoire" onclick="openGrimoire()">
+        <button
+          type="button"
+          class="mbt-tab"
+          data-nav="grimoire"
+          onclick="openGrimoire()"
+        >
           <span class="mbt-ico">📖</span>
           <span class="mbt-lbl">Grimoire</span>
         </button>
-        <button type="button" class="mbt-tab" data-nav="formation" onclick="openFormation()">
+        <button
+          type="button"
+          class="mbt-tab"
+          data-nav="formation"
+          onclick="openFormation()"
+        >
           <span class="mbt-ico">🏰</span>
           <span class="mbt-lbl">Formation</span>
         </button>
-        <button type="button" class="mbt-tab active" data-nav="home" onclick="showView('view-home')">
+        <button
+          type="button"
+          class="mbt-tab active"
+          data-nav="home"
+          onclick="showView('view-home')"
+        >
           <span class="mbt-ico">⚔️</span>
           <span class="mbt-lbl">Duel</span>
         </button>
-        <button type="button" class="mbt-tab" data-nav="heroes" onclick="openHeroes()">
+        <button
+          type="button"
+          class="mbt-tab"
+          data-nav="heroes"
+          onclick="openHeroes()"
+        >
           <span class="mbt-ico">🦸</span>
           <span class="mbt-lbl">Heroes</span>
         </button>
-        <button type="button" class="mbt-tab" data-nav="settings" onclick="openSettings()">
+        <button
+          type="button"
+          class="mbt-tab"
+          data-nav="settings"
+          onclick="openSettings()"
+        >
           <span class="mbt-ico">⚙️</span>
           <span class="mbt-lbl">Config</span>
         </button>
@@ -4159,7 +4376,7 @@
         <div class="search-dots"><span></span><span></span><span></span></div>
         <!-- payment flow UI (hidden until needsPayment) -->
         <div id="pay-status"></div>
-        <div id="pay-countdown" style="display:none;"></div>
+        <div id="pay-countdown" style="display: none"></div>
         <button
           id="btn-send-wager"
           onclick="_sendKeychainTransfer()"
@@ -4200,7 +4417,11 @@
     <div id="desc-tooltip"></div>
 
     <!-- ── GRIMOIRE TOPICS OVERLAY (fixed, bypasses lobby-wrap overflow) ── -->
-    <div class="gr-topics-overlay" id="gr-topics-overlay" onclick="grCloseTopics()">
+    <div
+      class="gr-topics-overlay"
+      id="gr-topics-overlay"
+      onclick="grCloseTopics()"
+    >
       <div class="gr-topics-panel" onclick="event.stopPropagation()">
         <div class="gr-tp-header">
           <span class="gr-tp-title">📖 GRIMOIRE</span>
@@ -4208,15 +4429,33 @@
         </div>
 
         <div class="gr-tp-group">How to Play</div>
-        <button class="gr-tp-item active" data-gr-ch="0" onclick="grNavMobile(0)">📖 Basics</button>
-        <button class="gr-tp-item" data-gr-ch="1" onclick="grNavMobile(1)">🛡️ Formation</button>
-        <button class="gr-tp-item" data-gr-ch="3" onclick="grNavMobile(3)">⚔️ Battlefield</button>
-        <button class="gr-tp-item" data-gr-ch="6" onclick="grNavMobile(6)">💡 Strategies</button>
+        <button
+          class="gr-tp-item active"
+          data-gr-ch="0"
+          onclick="grNavMobile(0)"
+        >
+          📖 Basics
+        </button>
+        <button class="gr-tp-item" data-gr-ch="1" onclick="grNavMobile(1)">
+          🛡️ Formation
+        </button>
+        <button class="gr-tp-item" data-gr-ch="3" onclick="grNavMobile(3)">
+          ⚔️ Battlefield
+        </button>
+        <button class="gr-tp-item" data-gr-ch="6" onclick="grNavMobile(6)">
+          💡 Strategies
+        </button>
 
         <div class="gr-tp-group">Mechanics</div>
-        <button class="gr-tp-item" data-gr-ch="2" onclick="grNavMobile(2)">💰 Gold &amp; Recruit</button>
-        <button class="gr-tp-item" data-gr-ch="4" onclick="grNavMobile(4)">✨ Combos</button>
-        <button class="gr-tp-item" data-gr-ch="5" onclick="grNavMobile(5)">⭐ Fusion</button>
+        <button class="gr-tp-item" data-gr-ch="2" onclick="grNavMobile(2)">
+          💰 Gold &amp; Recruit
+        </button>
+        <button class="gr-tp-item" data-gr-ch="4" onclick="grNavMobile(4)">
+          ✨ Combos
+        </button>
+        <button class="gr-tp-item" data-gr-ch="5" onclick="grNavMobile(5)">
+          ⭐ Fusion
+        </button>
       </div>
     </div>
 
@@ -4317,13 +4556,13 @@
 
         /* ── Grimoire ────────────────── */
         const GR_LABELS = {
-          0: 'Basics',
-          1: 'Formation',
-          2: 'Gold & Recruit',
-          3: 'Battlefield',
-          4: 'Combos',
-          5: 'Fusion',
-          6: 'Strategies',
+          0: "Basics",
+          1: "Formation",
+          2: "Gold & Recruit",
+          3: "Battlefield",
+          4: "Combos",
+          5: "Fusion",
+          6: "Strategies",
         };
 
         window.openGrimoire = function () {
@@ -4574,14 +4813,25 @@
           function _close() {
             if (_activeTrigger) {
               _activeTrigger.setAttribute("aria-expanded", "false");
-              _activeTrigger.closest(".hf-select")?.classList.remove("sel-open");
+              _activeTrigger
+                .closest(".hf-select")
+                ?.classList.remove("sel-open");
               _activeTrigger = null;
             }
             dd.classList.remove("dd-open");
           }
 
-          window._hfSelectOpen = function (trigger, opts, currentVal, theme, onChange) {
-            if (_activeTrigger === trigger) { _close(); return; }
+          window._hfSelectOpen = function (
+            trigger,
+            opts,
+            currentVal,
+            theme,
+            onChange,
+          ) {
+            if (_activeTrigger === trigger) {
+              _close();
+              return;
+            }
             _close();
             _activeTrigger = trigger;
             trigger.setAttribute("aria-expanded", "true");
@@ -4592,11 +4842,16 @@
 
             opts.forEach(({ val, label }) => {
               const btn = document.createElement("button");
-              btn.className = "hf-sel-opt" + (String(val) === String(currentVal) ? " active" : "");
+              btn.className =
+                "hf-sel-opt" +
+                (String(val) === String(currentVal) ? " active" : "");
               btn.type = "button";
               btn.textContent = label;
               btn.setAttribute("role", "option");
-              btn.setAttribute("aria-selected", String(val) === String(currentVal));
+              btn.setAttribute(
+                "aria-selected",
+                String(val) === String(currentVal),
+              );
               btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 trigger.querySelector(".hf-sel-value").textContent = label;
@@ -4604,16 +4859,29 @@
                 _close();
               });
               btn.addEventListener("keydown", (e) => {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); btn.click(); }
-                if (e.key === "Escape") { _close(); trigger.focus(); }
-                if (e.key === "ArrowDown") { e.preventDefault(); btn.nextElementSibling?.focus(); }
-                if (e.key === "ArrowUp")   { e.preventDefault(); btn.previousElementSibling?.focus(); }
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  btn.click();
+                }
+                if (e.key === "Escape") {
+                  _close();
+                  trigger.focus();
+                }
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  btn.nextElementSibling?.focus();
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  btn.previousElementSibling?.focus();
+                }
               });
               dd.appendChild(btn);
             });
 
             /* Measure height before positioning */
-            dd.style.cssText = "visibility:hidden;display:flex;flex-direction:column;";
+            dd.style.cssText =
+              "visibility:hidden;display:flex;flex-direction:column;";
             const ddH = dd.scrollHeight;
             const ddW = Math.max(trigger.offsetWidth, 120);
             dd.style.cssText = "";
@@ -4622,7 +4890,8 @@
             const spaceBelow = window.innerHeight - r.bottom - 8;
             const top = spaceBelow >= ddH ? r.bottom + 4 : r.top - ddH - 4;
             let left = r.left;
-            if (left + ddW > window.innerWidth - 8) left = window.innerWidth - ddW - 8;
+            if (left + ddW > window.innerWidth - 8)
+              left = window.innerWidth - ddW - 8;
             if (left < 8) left = 8;
 
             dd.style.cssText = `top:${top}px;left:${left}px;min-width:${ddW}px;`;
@@ -4641,9 +4910,9 @@
           { val: 7, label: "BO7" },
         ];
         const BET_OPTS = [
-          { val: 0,  label: "Free"    },
-          { val: 1,  label: "1 HIVE"  },
-          { val: 5,  label: "5 HIVE"  },
+          { val: 0, label: "Free" },
+          { val: 1, label: "1 HIVE" },
+          { val: 5, label: "5 HIVE" },
           { val: 10, label: "10 HIVE" },
         ];
 
@@ -4651,20 +4920,29 @@
           const sel = document.getElementById(id);
           if (!sel) return;
           const match = opts.find((o) => String(o.val) === String(val));
-          if (match) sel.querySelector(".hf-sel-value").textContent = match.label;
+          if (match)
+            sel.querySelector(".hf-sel-value").textContent = match.label;
         }
 
         /* ── AI config state ─────────── */
         const aiCfg = { format: Number(_loadPref("ai_fmt", 5)) };
         _setSelectLabel("ai-fmt-select", FMT_OPTS, aiCfg.format);
 
-        document.getElementById("ai-fmt-select").querySelector(".hf-sel-trigger")
+        document
+          .getElementById("ai-fmt-select")
+          .querySelector(".hf-sel-trigger")
           .addEventListener("click", (e) => {
             e.stopPropagation();
-            window._hfSelectOpen(e.currentTarget, FMT_OPTS, aiCfg.format, "ai", (val) => {
-              aiCfg.format = Number(val);
-              _savePref("ai_fmt", aiCfg.format);
-            });
+            window._hfSelectOpen(
+              e.currentTarget,
+              FMT_OPTS,
+              aiCfg.format,
+              "ai",
+              (val) => {
+                aiCfg.format = Number(val);
+                _savePref("ai_fmt", aiCfg.format);
+              },
+            );
           });
 
         /* ── Start AI Battle ─────────── */
@@ -4695,22 +4973,38 @@
         _setSelectLabel("pvp-bet-select", BET_OPTS, pvpCfg.bet);
         _setSelectLabel("pvp-fmt-select", FMT_OPTS, pvpCfg.fmt);
 
-        document.getElementById("pvp-bet-select").querySelector(".hf-sel-trigger")
+        document
+          .getElementById("pvp-bet-select")
+          .querySelector(".hf-sel-trigger")
           .addEventListener("click", (e) => {
             e.stopPropagation();
-            window._hfSelectOpen(e.currentTarget, BET_OPTS, pvpCfg.bet, "pvp", (val) => {
-              pvpCfg.bet = Number(val);
-              _savePref("pvp_bet", pvpCfg.bet);
-            });
+            window._hfSelectOpen(
+              e.currentTarget,
+              BET_OPTS,
+              pvpCfg.bet,
+              "pvp",
+              (val) => {
+                pvpCfg.bet = Number(val);
+                _savePref("pvp_bet", pvpCfg.bet);
+              },
+            );
           });
 
-        document.getElementById("pvp-fmt-select").querySelector(".hf-sel-trigger")
+        document
+          .getElementById("pvp-fmt-select")
+          .querySelector(".hf-sel-trigger")
           .addEventListener("click", (e) => {
             e.stopPropagation();
-            window._hfSelectOpen(e.currentTarget, FMT_OPTS, pvpCfg.fmt, "pvp", (val) => {
-              pvpCfg.fmt = Number(val);
-              _savePref("pvp_fmt", pvpCfg.fmt);
-            });
+            window._hfSelectOpen(
+              e.currentTarget,
+              FMT_OPTS,
+              pvpCfg.fmt,
+              "pvp",
+              (val) => {
+                pvpCfg.fmt = Number(val);
+                _savePref("pvp_fmt", pvpCfg.fmt);
+              },
+            );
           });
 
         // Remove "Coming Soon" badge and enable button
@@ -4802,11 +5096,15 @@
           if (pvpCfg.bet > 0) {
             const balance = await fetchBalance(session.username);
             if (balance === null) {
-              toast("⚠️ Não foi possível verificar seu saldo. Tente novamente.");
+              toast(
+                "⚠️ Não foi possível verificar seu saldo. Tente novamente.",
+              );
               return;
             }
             if (balance < pvpCfg.bet) {
-              toast(`⚠️ Saldo insuficiente! Você tem ${balance.toFixed(3)} HIVE, mas a aposta é de ${pvpCfg.bet} HIVE.`);
+              toast(
+                `⚠️ Saldo insuficiente! Você tem ${balance.toFixed(3)} HIVE, mas a aposta é de ${pvpCfg.bet} HIVE.`,
+              );
               return;
             }
           }
@@ -4837,7 +5135,9 @@
           function _tick() {
             el.textContent = `⏳ Confirm in Keychain — ${remaining}s remaining`;
             el.classList.toggle("urgent", remaining <= 10);
-            if (remaining <= 0) { _clearPayCountdown(); }
+            if (remaining <= 0) {
+              _clearPayCountdown();
+            }
             remaining--;
           }
           _tick();
@@ -4848,7 +5148,10 @@
           clearInterval(_payCountdownInterval);
           _payCountdownInterval = null;
           const el = document.getElementById("pay-countdown");
-          if (el) { el.style.display = "none"; el.classList.remove("urgent"); }
+          if (el) {
+            el.style.display = "none";
+            el.classList.remove("urgent");
+          }
         }
 
         function _saveAndRedirect() {
@@ -5070,10 +5373,13 @@
         socket.on("requeued", (data) => {
           // Opponent didn't confirm — we're back in the queue automatically
           _stopSearchUI();
-          toast("⚠️ Oponente não confirmou o pagamento. Buscando novo adversário...");
+          toast(
+            "⚠️ Oponente não confirmou o pagamento. Buscando novo adversário...",
+          );
           _startSearchUI();
           const el = document.getElementById("search-queue");
-          if (el && data.queueSize != null) el.textContent = `Players in queue: ${data.queueSize}`;
+          if (el && data.queueSize != null)
+            el.textContent = `Players in queue: ${data.queueSize}`;
         });
 
         socket.on("queued", (data) => {
@@ -5595,7 +5901,10 @@
 
             const rect = trigger.getBoundingClientRect();
             let left = rect.left + rect.width / 2 - tipW / 2;
-            left = Math.max(margin, Math.min(left, window.innerWidth - tipW - margin));
+            left = Math.max(
+              margin,
+              Math.min(left, window.innerWidth - tipW - margin),
+            );
             let top = rect.top - tipH - 6;
             if (top < margin) top = rect.bottom + 6;
 
@@ -5606,32 +5915,43 @@
 
           function hideTip() {
             tip.classList.remove("visible");
-            if (_activeTrigger) { _activeTrigger.classList.remove("tip-active"); _activeTrigger = null; }
+            if (_activeTrigger) {
+              _activeTrigger.classList.remove("tip-active");
+              _activeTrigger = null;
+            }
           }
 
           document.querySelectorAll(".info-trigger").forEach((trigger) => {
             trigger.addEventListener("mouseenter", () => showTip(trigger));
             trigger.addEventListener("mouseleave", hideTip);
 
-            trigger.addEventListener("touchstart", (e) => {
-              e.preventDefault();
-              longPressTimer = setTimeout(() => showTip(trigger), 500);
-            }, { passive: false });
+            trigger.addEventListener(
+              "touchstart",
+              (e) => {
+                e.preventDefault();
+                longPressTimer = setTimeout(() => showTip(trigger), 500);
+              },
+              { passive: false },
+            );
             trigger.addEventListener("touchend", () => {
               clearTimeout(longPressTimer);
               setTimeout(hideTip, 1800);
             });
-            trigger.addEventListener("touchcancel", () => { clearTimeout(longPressTimer); hideTip(); });
+            trigger.addEventListener("touchcancel", () => {
+              clearTimeout(longPressTimer);
+              hideTip();
+            });
 
             trigger.addEventListener("click", (e) => {
               e.stopPropagation();
-              tip.classList.contains("visible") && _activeTrigger === trigger ? hideTip() : showTip(trigger);
+              tip.classList.contains("visible") && _activeTrigger === trigger
+                ? hideTip()
+                : showTip(trigger);
             });
           });
 
           document.addEventListener("click", hideTip);
         })();
-
       })();
     </script>
   </body>
