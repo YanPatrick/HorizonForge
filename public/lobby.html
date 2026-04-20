@@ -5691,7 +5691,17 @@
 
         window.saveDeck = async function () {
           if (session.mode === "guest") {
-            toast("Formations require a Hive account. 🏆");
+            const f = _formations[0];
+            if (f.hero_ids.length !== 8) {
+              toast(`⚠️ Select exactly 8 heroes (${f.hero_ids.length}/8).`);
+              return;
+            }
+            sessionStorage.setItem(
+              "hf_guest_formation",
+              JSON.stringify({ hero_ids: f.hero_ids }),
+            );
+            toast("Deck pronto! (sessão apenas — crie uma conta para salvar 🏆)");
+            closeDeckSlot();
             return;
           }
           const f = _formations[_activeFormSlot];
