@@ -6028,7 +6028,7 @@
             .sort((a, b) => a - b);
           const tableRows = levelKeys
             .map((lv) => {
-              const s = h.levels[lv];
+              const s = h.levels[lv] || {};
               return `<tr>
                 <td>${lv}</td>
                 <td>${s.max_hp}</td>
@@ -6097,6 +6097,7 @@
             const drawer = document.getElementById("hf-hero-drawer");
             drawer.classList.add("hf-open");
             drawer.setAttribute("aria-hidden", "false");
+            document.getElementById("hf-hero-sheet")?.setAttribute("aria-hidden", "true");
           } else {
             document.getElementById("hf-sheet-ico").textContent = h.icon;
             document.getElementById("hf-sheet-name").textContent = h.name;
@@ -6104,6 +6105,7 @@
             const sheet = document.getElementById("hf-hero-sheet");
             sheet.classList.add("hf-open");
             sheet.setAttribute("aria-hidden", "false");
+            document.getElementById("hf-hero-drawer")?.setAttribute("aria-hidden", "true");
           }
           document
             .getElementById("hf-detail-backdrop")
