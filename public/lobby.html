@@ -2267,9 +2267,18 @@
         user-select: none;
       }
       .form-hero-card:hover:not(.fhc-disabled) {
-        border-color: rgba(170, 128, 255, 0.45);
-        background: rgba(140, 100, 255, 0.1);
-        transform: translateY(-2px);
+        border-color: rgba(170, 128, 255, 0.55);
+        background: rgba(140, 100, 255, 0.12);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 18px rgba(140, 100, 255, 0.28);
+      }
+
+      /* Deck-editing mode: suppress hover glow and detail interactions */
+      #form-hero-grid.fhc-editing-mode .form-hero-card:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: rgba(140, 100, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
       }
       .form-hero-card.fhc-selected {
         border-color: rgba(80, 210, 110, 0.55);
