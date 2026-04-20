@@ -5309,7 +5309,9 @@
               try {
                 const saved = JSON.parse(raw);
                 _formations[0].hero_ids = saved.hero_ids || [];
-              } catch { /* silent */ }
+              } catch {
+                /* silent */
+              }
             }
             _formationsLoaded = true;
           }
@@ -5700,7 +5702,7 @@
               "hf_guest_formation",
               JSON.stringify({ hero_ids: f.hero_ids }),
             );
-            toast("Deck pronto! (sessão apenas — crie uma conta para salvar 🏆)");
+            toast("Deck ready! (session only — create an account to save)");
             closeDeckSlot();
             return;
           }

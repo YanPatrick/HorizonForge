@@ -705,7 +705,7 @@ Insert immediately after the `window.closeHeroDetail` block:
 
 - [ ] **Step 2: Verify in browser**
 
-Open a hero detail panel. Click "Ver stats completos" → table expands with level progression data. Click "Recolher" → table collapses.
+Open a hero detail panel. Click "View full stats" → table expands with level progression data. Click "Collapse" → table collapses.
 
 - [ ] **Step 3: Commit**
 

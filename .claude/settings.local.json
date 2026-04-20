@@ -39,7 +39,11 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('scripts',{}\\)\\)\")",
       "Bash(gh pr create --title 'feat\\(formation\\): hero card interaction system with drawer and bottom sheet' --body ' *)",
       "Bash(where gh *)",
-      "Bash(winget list *)"
+      "Bash(winget list *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(git merge *)",
+      "Bash(git branch *)"
     ]
   }
 }

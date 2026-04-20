@@ -2,7 +2,10 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>Horizon Forge | Battle</title>
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap");
@@ -154,7 +157,12 @@
         width: 100%;
         margin: 0 auto;
         padding: calc(6px * var(--s)) calc(16px * var(--s));
-        background: linear-gradient(90deg, rgba(25, 12, 60, 0.95), rgba(12, 6, 35, 0.95), rgba(25, 12, 60, 0.95));
+        background: linear-gradient(
+          90deg,
+          rgba(25, 12, 60, 0.95),
+          rgba(12, 6, 35, 0.95),
+          rgba(25, 12, 60, 0.95)
+        );
         border: 1px solid rgba(150, 100, 255, 0.35);
         border-radius: var(--r);
         flex-shrink: 0;
@@ -251,7 +259,9 @@
         background: rgba(12, 6, 35, 0.92);
         color: rgba(255, 210, 80, 1);
         border: 1px solid rgba(255, 180, 30, 0.6);
-        box-shadow: 0 0 10px rgba(255, 180, 30, 0.2), inset 0 0 8px rgba(255, 180, 30, 0.05);
+        box-shadow:
+          0 0 10px rgba(255, 180, 30, 0.2),
+          inset 0 0 8px rgba(255, 180, 30, 0.05);
         min-width: calc(80px * var(--s));
         text-align: center;
         letter-spacing: 1px;
@@ -264,7 +274,9 @@
         background: rgba(30, 6, 6, 0.92);
         color: rgba(255, 100, 80, 1);
         border-color: rgba(255, 60, 60, 0.7);
-        box-shadow: 0 0 12px rgba(255, 60, 60, 0.35), inset 0 0 8px rgba(255, 60, 60, 0.08);
+        box-shadow:
+          0 0 12px rgba(255, 60, 60, 0.35),
+          inset 0 0 8px rgba(255, 60, 60, 0.08);
         animation: timer-pulse 0.8s ease-in-out infinite;
       }
       @keyframes timer-pulse {
@@ -862,7 +874,9 @@
         font-size: calc(13px * var(--s));
         font-weight: 900;
         color: #ffdd66;
-        text-shadow: 0 0 12px rgba(255, 200, 60, 0.9), 0 0 24px rgba(255, 150, 30, 0.5);
+        text-shadow:
+          0 0 12px rgba(255, 200, 60, 0.9),
+          0 0 24px rgba(255, 150, 30, 0.5);
         position: relative;
         z-index: 1;
         padding: calc(5px * var(--s)) calc(9px * var(--s));
@@ -876,7 +890,9 @@
         background: rgba(8, 4, 24, 0.88);
         border: 1px solid rgba(255, 180, 60, 0.45);
         border-radius: 20px;
-        box-shadow: 0 0 14px rgba(255, 180, 60, 0.2), inset 0 0 8px rgba(255, 180, 60, 0.05);
+        box-shadow:
+          0 0 14px rgba(255, 180, 60, 0.2),
+          inset 0 0 8px rgba(255, 180, 60, 0.05);
         z-index: -1;
       }
 
@@ -905,7 +921,7 @@
       }
 
       .cell.dr::after {
-        content: '';
+        content: "";
         position: absolute;
         top: 50%;
         left: 50%;
@@ -917,7 +933,7 @@
           circle,
           rgba(160, 220, 255, 0.95) 0%,
           rgba(80, 160, 255, 0.6) 50%,
-          rgba(40, 100, 255, 0.0) 100%
+          rgba(40, 100, 255, 0) 100%
         );
         box-shadow:
           0 0 calc(8px * var(--s)) rgba(120, 200, 255, 0.9),
@@ -927,7 +943,8 @@
       }
 
       @keyframes orbFloat {
-        0%, 100% {
+        0%,
+        100% {
           transform: translate(-50%, -50%) scale(1);
           opacity: 0.75;
         }
@@ -1227,7 +1244,9 @@
       }
 
       [data-uatk] {
-        transition: color 0.35s ease, text-shadow 0.35s ease;
+        transition:
+          color 0.35s ease,
+          text-shadow 0.35s ease;
       }
       [data-uatk].atk-fury {
         color: #ff7755;
@@ -1419,7 +1438,11 @@
       #benchwrap {
         width: var(--bench-w);
         flex-shrink: 0;
-        background: linear-gradient(160deg, rgba(30, 15, 80, 0.92), rgba(15, 8, 45, 0.92));
+        background: linear-gradient(
+          160deg,
+          rgba(30, 15, 80, 0.92),
+          rgba(15, 8, 45, 0.92)
+        );
         border: 1px solid rgba(120, 80, 255, 0.35);
         border-radius: calc(12px * var(--s));
         padding: calc(7px * var(--s)) calc(8px * var(--s));
@@ -1522,7 +1545,11 @@
       #shopwrap {
         width: var(--shop-w);
         flex-shrink: 0;
-        background: linear-gradient(160deg, rgba(15, 40, 15, 0.92), rgba(8, 25, 8, 0.92));
+        background: linear-gradient(
+          160deg,
+          rgba(15, 40, 15, 0.92),
+          rgba(8, 25, 8, 0.92)
+        );
         border: 1px solid rgba(80, 160, 80, 0.35);
         border-radius: calc(12px * var(--s));
         padding: calc(7px * var(--s)) calc(8px * var(--s));
@@ -2130,7 +2157,10 @@
       }
 
       .bbtn:hover:not(:disabled) {
-        box-shadow: 0 5px 24px rgba(255, 60, 30, 0.55), 0 0 18px rgba(255, 80, 40, 0.5), 0 0 6px rgba(255, 140, 80, 0.4);
+        box-shadow:
+          0 5px 24px rgba(255, 60, 30, 0.55),
+          0 0 18px rgba(255, 80, 40, 0.5),
+          0 0 6px rgba(255, 140, 80, 0.4);
         border-color: rgba(255, 160, 100, 0.7);
       }
 
@@ -2156,7 +2186,11 @@
         flex: 1 1 0;
         min-height: 0;
         overflow-y: auto;
-        background: linear-gradient(160deg, rgba(4, 2, 18, 0.93), rgba(8, 4, 24, 0.93));
+        background: linear-gradient(
+          160deg,
+          rgba(4, 2, 18, 0.93),
+          rgba(8, 4, 24, 0.93)
+        );
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: calc(10px * var(--s));
         padding: calc(6px * var(--s)) calc(12px * var(--s));
@@ -2866,8 +2900,16 @@
         <div class="hdr-row-bottom">
           <span class="sb sfmt" id="h-fmt">BO3</span>
           <span id="h-timer">⏱ 2:00</span>
-          <div id="banner" class="bshop">🛍️ Analyze the enemy, buy cards and build your army!</div>
-          <button class="htp-btn hback-btn" onclick="openQuitModal()" title="Back to Lobby">← Lobby</button>
+          <div id="banner" class="bshop">
+            🛍️ Analyze the enemy, buy cards and build your army!
+          </div>
+          <button
+            class="htp-btn hback-btn"
+            onclick="openQuitModal()"
+            title="Back to Lobby"
+          >
+            ← Lobby
+          </button>
         </div>
       </div>
 
@@ -2923,7 +2965,9 @@
         <!-- RIGHT: Recruitment -->
         <div id="shopwrap">
           <div class="sec-hdr">
-            <span class="sec-title recruit-title">Recruitment <span class="sb sg" id="h-gold">💰 7</span></span>
+            <span class="sec-title recruit-title"
+              >Recruitment <span class="sb sg" id="h-gold">💰 7</span></span
+            >
             <div class="recruit-controls">
               <button class="rrbtn" id="breroll" onclick="rerollShop()">
                 New Recruitment (2💰)
@@ -3290,7 +3334,8 @@
             window._HF_BATTLE_CFG = null;
             // Restrict shop pool to active formation if provided
             const _fids = _cfg.formationHeroIds;
-            _deckPool = Array.isArray(_fids) && _fids.length ? [..._fids] : null;
+            _deckPool =
+              Array.isArray(_fids) && _fids.length ? [..._fids] : null;
             if (_cfg.mode === "pvp") {
               pvpInit(_cfg);
             } else {
@@ -3400,10 +3445,10 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
-      const ARENAS = ['arena-forest', 'arena-desert', 'arena-snow'];
+      const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
       const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
       document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
-      document.body.style.backgroundSize = '100% 100%';
+      document.body.style.backgroundSize = "100% 100%";
 
       let G = {
         format: 3,
@@ -3555,7 +3600,9 @@
           const pos = Math.floor(Math.random() * 4),
             cid = playerRandCid();
           for (let i = 0; i < 5; i++)
-            slots.push(mkUnit(i === pos || i === pos + 1 ? cid : playerRandCid(), 1));
+            slots.push(
+              mkUnit(i === pos || i === pos + 1 ? cid : playerRandCid(), 1),
+            );
         } else {
           for (let i = 0; i < 5; i++) slots.push(mkUnit(playerRandCid(), 1));
         }
@@ -5286,7 +5333,10 @@
           );
         }
         if (_deckPool) {
-          log(`🛡️ Deck active — recruitment shows only your formation heroes.`, "lk");
+          log(
+            `🛡️ Deck active — recruitment shows only your formation heroes.`,
+            "lk",
+          );
         }
       }
 
@@ -5626,7 +5676,9 @@
                 clearAttackArrows();
                 setTimeout(() => {
                   el.classList.add("dragging");
-                  document.querySelectorAll('#pfield .cell:not(.occ)').forEach(c => c.classList.add('dr'));
+                  document
+                    .querySelectorAll("#pfield .cell:not(.occ)")
+                    .forEach((c) => c.classList.add("dr"));
                 }, 0);
               });
               el.addEventListener("dragend", () => {
@@ -6182,7 +6234,9 @@
                 G.bsel = u.cid;
                 setTimeout(() => {
                   card.classList.add("dragging");
-                  document.querySelectorAll('#pfield .cell:not(.occ)').forEach(c => c.classList.add('dr'));
+                  document
+                    .querySelectorAll("#pfield .cell:not(.occ)")
+                    .forEach((c) => c.classList.add("dr"));
                 }, 0);
               });
               card.addEventListener("dragend", () => {
