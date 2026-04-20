@@ -6076,10 +6076,7 @@
                 <span class="hf-stat-value">${crit}</span>
               </div>
             </div>
-            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)">
-              Ver stats completos
-              <span class="hf-l2-chevron">▾</span>
-            </button>
+            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)"><span class="hf-l2-label">Ver stats completos</span><span class="hf-l2-chevron">▾</span></button>
             <div class="hf-detail-l2">
               <table class="hf-detail-l2-table">
                 <thead>
@@ -6145,11 +6142,11 @@
           if (isExpanded) {
             l2.classList.remove("expanded");
             chevron.classList.remove("expanded");
-            btn.childNodes[0].textContent = "Ver stats completos ";
+            btn.querySelector(".hf-l2-label").textContent = "Ver stats completos";
           } else {
             l2.classList.add("expanded");
             chevron.classList.add("expanded");
-            btn.childNodes[0].textContent = "Recolher ";
+            btn.querySelector(".hf-l2-label").textContent = "Recolher";
           }
         };
 
