@@ -5996,9 +5996,13 @@
               card.onclick = () => openHeroDetail(h.cid);
             }
             card.innerHTML = `
-              <button class="fhc-info-btn" onclick="event.stopPropagation(); openHeroDetail('${h.cid}')" aria-label="Hero info">i</button>
+              <button class="fhc-info-btn" aria-label="Hero info">i</button>
               <div class="form-hc-ico">${h.icon}</div>
               <div class="form-hc-name">${h.name}</div>`;
+            card.querySelector(".fhc-info-btn").addEventListener("click", (e) => {
+              e.stopPropagation();
+              openHeroDetail(h.cid);
+            });
             grid.appendChild(card);
           });
           if (!filtered.length) {
