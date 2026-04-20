@@ -1101,10 +1101,11 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: calc(3px * var(--s)) calc(3px * var(--s)) calc(28px * var(--s));
-        border: 2px solid;
+        padding: calc(3px * var(--s)) calc(5px * var(--s)) calc(4px * var(--s));
+        border: 1px solid rgba(255, 255, 255, 0.15);
         position: relative;
-        overflow: hidden;
+        top: -2px;
+        overflow: visible;
         transition: transform 0.15s;
         cursor: grab;
       }
@@ -1113,12 +1114,28 @@
         content: "";
         position: absolute;
         inset: 0;
+        border-radius: calc(7px * var(--s));
         background: linear-gradient(
           160deg,
-          rgba(255, 255, 255, 0.06) 0%,
+          rgba(255, 255, 255, 0.10) 0%,
           transparent 60%
         );
         pointer-events: none;
+      }
+
+      .unit::after {
+        content: "";
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 65%;
+        height: 12px;
+        background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35), transparent 70%);
+        filter: blur(5px);
+        opacity: 0.7;
+        pointer-events: none;
+        z-index: -1;
       }
 
       .unit:hover {
@@ -1142,17 +1159,17 @@
 
       .uhb {
         width: 90%;
-        height: calc(5px * var(--s));
-        background: rgba(0, 0, 0, 0.6);
-        border-radius: 3px;
+        height: calc(6px * var(--s));
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 999px;
         margin-top: calc(3px * var(--s));
         overflow: hidden;
       }
 
       .uhf {
         height: 100%;
-        border-radius: 3px;
-        transition: width 0.4s ease, filter 0.4s ease;
+        border-radius: 999px;
+        transition: width 0.25s ease-out, filter 0.4s ease;
       }
 
       .uhf.hi {
@@ -1178,10 +1195,9 @@
       }
 
       .ucabi {
-        position: absolute;
-        bottom: calc(4px * var(--s));
-        left: calc(4px * var(--s));
-        right: calc(4px * var(--s));
+        position: static;
+        width: calc(100% - calc(8px * var(--s)));
+        margin-top: calc(4px * var(--s));
         font-size: calc(8px * var(--s));
         font-weight: 700;
         text-align: center;
@@ -1258,9 +1274,12 @@
 
       .uprog {
         position: absolute;
-        bottom: calc(22px * var(--s));
-        right: calc(5px * var(--s));
+        top: calc(14px * var(--s));
+        right: calc(4px * var(--s));
+        bottom: auto;
+        left: auto;
         display: flex;
+        flex-direction: column;
         gap: calc(2px * var(--s));
         align-items: center;
       }
@@ -1453,6 +1472,7 @@
 
       #benchwrap.expanded {
         max-height: var(--bottom-h);
+        overflow: visible;
         transition: max-height 0.35s cubic-bezier(0.22, 0.68, 0, 1.1);
       }
 
@@ -1548,16 +1568,19 @@
         );
         border: 1px solid rgba(80, 160, 80, 0.35);
         border-radius: calc(12px * var(--s));
-        padding: calc(7px * var(--s)) calc(8px * var(--s));
+        padding: calc(5px * var(--s)) calc(8px * var(--s));
         box-shadow: 0 0 24px rgba(60, 180, 60, 0.08);
         display: flex;
         flex-direction: column;
+        align-self: flex-end;
+        overflow: visible;
       }
 
       #shoprow {
         position: relative;
         width: 100%;
-        flex: 1;
+        flex: 0 0 auto;
+        height: calc(128px * var(--s));
         overflow: visible;
       }
 
@@ -1573,7 +1596,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: calc(8px * var(--s)) calc(7px * var(--s)) calc(6px * var(--s));
+        padding: calc(6px * var(--s)) calc(6px * var(--s)) calc(5px * var(--s));
         gap: calc(2px * var(--s));
         position: absolute;
         top: 0;
@@ -1780,6 +1803,10 @@
         justify-content: space-around;
       }
 
+      .scard .csts {
+        display: none;
+      }
+
       .cst {
         display: flex;
         flex-direction: column;
@@ -1830,17 +1857,7 @@
       }
 
       .caction {
-        font-size: calc(7px * var(--s));
-        font-weight: 700;
-        text-align: center;
-        width: 100%;
-        height: 14px;
-        line-height: 14px;
-        border-radius: 5px;
-        opacity: 0;
-        transition: opacity 0.2s;
-        margin-top: calc(1px * var(--s));
-        pointer-events: none;
+        display: none;
       }
 
       .scard.buyable:hover .caction {
@@ -1886,7 +1903,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: calc(6px * var(--s)) calc(5px * var(--s)) calc(5px * var(--s));
+        padding: calc(5px * var(--s)) calc(4px * var(--s)) calc(4px * var(--s));
         gap: calc(2px * var(--s));
         position: relative;
         cursor: pointer;
@@ -1945,11 +1962,15 @@
       }
 
       .bprog {
+        position: absolute;
+        top: 14px;
+        right: 4px;
+        left: auto;
         display: flex;
-        gap: 3px;
-        justify-content: center;
-        margin-top: 4px;
+        flex-direction: column;
+        gap: 2px;
         align-items: center;
+        margin-top: 0;
       }
 
       .blvl {
@@ -1981,31 +2002,30 @@
       }
 
       .bprog-label {
-        font-size: calc(6.5px * var(--s));
-        font-weight: 700;
-        margin-left: 2px;
-        opacity: 0.65;
+        display: none;
       }
 
       .bsell-hint {
+        position: absolute;
+        top: 3px;
+        left: 3px;
         font-size: calc(7px * var(--s));
-        font-weight: 700;
-        text-align: center;
-        width: 100%;
-        height: 13px;
-        line-height: 13px;
-        border-radius: 5px;
-        opacity: 0;
-        transition: opacity 0.2s;
-        margin-top: 1px;
-        pointer-events: none;
-        color: #ff8888;
+        font-weight: 800;
+        line-height: 1.4;
+        white-space: nowrap;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 4px;
+        padding: 1px 3px;
+        opacity: 0.8;
+        pointer-events: auto;
+        cursor: pointer;
+        color: #ffdd55;
+        transition: opacity 0.15s, filter 0.15s;
       }
 
       .bcard:hover .bsell-hint {
         opacity: 1;
-        pointer-events: auto;
-        cursor: pointer;
+        filter: brightness(1.25);
       }
 
       .bcard.new-copy {
@@ -3093,6 +3113,38 @@
         box-shadow:
           inset 0 -8px 18px rgba(0, 0, 0, 0.38),
           inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      }
+
+      /* ── Battle piece role auras — subtle class-based glow ── */
+      .unit[data-cid="mage"],
+      .unit[data-cid="archmage"] {
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 0 16px rgba(90, 50, 255, 0.28);
+      }
+
+      .unit[data-cid="healer"] {
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 0 16px rgba(50, 220, 100, 0.26);
+      }
+
+      .unit[data-cid="paladin"],
+      .unit[data-cid="knight"],
+      .unit[data-cid="barbarian"] {
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 0 16px rgba(255, 180, 0, 0.22);
+      }
+
+      .unit[data-cid="assassin"] {
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.07),
+          0 0 16px rgba(160, 50, 200, 0.25);
       }
 
       /* ── Low HP warning state ── */
@@ -6373,9 +6425,9 @@
           parseFloat(
             getComputedStyle(document.documentElement).getPropertyValue("--s"),
           ) || 1;
-        const cardW = Math.round(106 * s),
+        const cardW = Math.round(90 * s),
           gap = Math.round(6 * s);
-        const shopWrapInner = Math.round(590 * s) - Math.round(7 * s) * 2;
+        const shopWrapInner = Math.round(500 * s) - Math.round(8 * s) * 2;
         const contW = shopWrapInner;
 
         const domById = {};
@@ -6546,7 +6598,7 @@
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}<div class="bsell-hint" title="sell = +${SELL[u.lv]}💰">💸 ${u.stack > 1 ? "⚠️ " : ""}Sell +${SELL[u.lv]}💰</div>`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="bsell-hint" title="Sell +${SELL[u.lv]}💰">${u.stack > 1 ? "⚠️" : "💰"}+${SELL[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
 
             if (active) {
               card.addEventListener("click", () => {

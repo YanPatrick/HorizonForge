@@ -266,6 +266,8 @@
     width: 100% !important;
     max-width: none !important;
     flex-shrink: 0 !important;
+    align-self: stretch !important;
+    overflow: visible !important;
   }
 
   /* Barracks: third */

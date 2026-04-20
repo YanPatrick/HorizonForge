@@ -44,7 +44,12 @@
       "Bash(git pull *)",
       "Bash(git merge *)",
       "Bash(git branch *)",
-      "Bash(git tag *)"
+      "Bash(git tag *)",
+      "Bash(cat)",
+      "Read(//tmp/**)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }
