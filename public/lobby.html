@@ -6010,6 +6010,121 @@
           }
         }
 
+        function _buildDetailBodyHTML(h) {
+          const cat = _roleCategory(h.role);
+          const label =
+            cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
+          const lv1 = h.levels[1] || {};
+          const hp = lv1.max_hp ?? "—";
+          const atk = lv1.atk ?? "—";
+          const spd = lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : "—";
+          const crit =
+            lv1.crit_chance != null
+              ? (lv1.crit_chance * 100).toFixed(0) + "%"
+              : "—";
+
+          const levelKeys = Object.keys(h.levels || {})
+            .map(Number)
+            .sort((a, b) => a - b);
+          const tableRows = levelKeys
+            .map((lv) => {
+              const s = h.levels[lv];
+              return `<tr>
+                <td>${lv}</td>
+                <td>${s.max_hp}</td>
+                <td>${s.atk}</td>
+                <td>${s.atk_speed != null ? s.atk_speed.toFixed(1) : "—"}</td>
+                <td>${s.crit_chance != null ? (s.crit_chance * 100).toFixed(0) + "%" : "—"}</td>
+              </tr>`;
+            })
+            .join("");
+
+          return `
+            <div class="hf-detail-role-wrap">
+              <span class="gr-hero-role role-${cat}">${label}</span>
+            </div>
+            <div class="hf-detail-section-label">Skill</div>
+            <div class="hf-detail-skill-name">✦ ${h.skill?.name ?? "—"}</div>
+            <div class="hf-detail-skill-desc">${h.skill?.description ?? ""}</div>
+            <div class="hf-detail-section-label">Base Stats (Lv 1)</div>
+            <div class="hf-detail-stats">
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">❤️ HP</span>
+                <span class="hf-stat-value">${hp}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">⚔️ ATK</span>
+                <span class="hf-stat-value">${atk}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">⚡ SPD</span>
+                <span class="hf-stat-value">${spd}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">💥 CRIT</span>
+                <span class="hf-stat-value">${crit}</span>
+              </div>
+            </div>
+            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)">
+              Ver stats completos
+              <span class="hf-l2-chevron">▾</span>
+            </button>
+            <div class="hf-detail-l2">
+              <table class="hf-detail-l2-table">
+                <thead>
+                  <tr>
+                    <th>Nível</th><th>HP</th><th>ATK</th><th>SPD</th><th>CRIT</th>
+                  </tr>
+                </thead>
+                <tbody>${tableRows}</tbody>
+              </table>
+            </div>`;
+        }
+
+        window.openHeroDetail = function (cid) {
+          if (_editingOpen) return;
+          if (!_heroData) return;
+          const h = _heroData.find((x) => String(x.cid) === String(cid));
+          if (!h) return;
+
+          const body = _buildDetailBodyHTML(h);
+          const isDesktop = window.innerWidth > 640;
+
+          if (isDesktop) {
+            document.getElementById("hf-drawer-ico").textContent = h.icon;
+            document.getElementById("hf-drawer-name").textContent = h.name;
+            document.getElementById("hf-drawer-body").innerHTML = body;
+            const drawer = document.getElementById("hf-hero-drawer");
+            drawer.classList.add("hf-open");
+            drawer.setAttribute("aria-hidden", "false");
+          } else {
+            document.getElementById("hf-sheet-ico").textContent = h.icon;
+            document.getElementById("hf-sheet-name").textContent = h.name;
+            document.getElementById("hf-sheet-body").innerHTML = body;
+            const sheet = document.getElementById("hf-hero-sheet");
+            sheet.classList.add("hf-open");
+            sheet.setAttribute("aria-hidden", "false");
+          }
+          document
+            .getElementById("hf-detail-backdrop")
+            .classList.add("hf-open");
+        };
+
+        window.closeHeroDetail = function () {
+          const drawer = document.getElementById("hf-hero-drawer");
+          const sheet = document.getElementById("hf-hero-sheet");
+          const backdrop = document.getElementById("hf-detail-backdrop");
+          if (drawer) {
+            drawer.classList.remove("hf-open");
+            drawer.setAttribute("aria-hidden", "true");
+          }
+          if (sheet) {
+            sheet.classList.remove("hf-open");
+            sheet.setAttribute("aria-hidden", "true");
+          }
+          if (backdrop) backdrop.classList.remove("hf-open");
+        };
+
         function _toggleFormHero(cid) {
           if (!_editingOpen) return;
           const f = _formations[_activeFormSlot];
