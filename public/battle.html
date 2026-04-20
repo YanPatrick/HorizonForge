@@ -2857,6 +2857,114 @@
         text-shadow: 0 0 14px rgba(110, 188, 255, 0.6);
         line-height: 1.45;
       }
+
+      /* ════════════════════════════════════════
+   PHASE 2 — BATTLEFIELD VISUAL DEPTH
+   ════════════════════════════════════════ */
+
+      /* Field needs position:relative for ::before overlay */
+      .field {
+        position: relative;
+      }
+
+      /* Atmospheric fog anchored to the bottom of each field */
+      .field::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        background: radial-gradient(
+          ellipse 92% 40% at 50% 100%,
+          rgba(16, 8, 52, 0.6) 0%,
+          transparent 70%
+        );
+        z-index: 0;
+      }
+
+      /* Cells sit above the fog layer */
+      .cell {
+        z-index: 1;
+      }
+
+      /* Per-slot terrain: very subtle radial gradient ground */
+      .cell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(
+          ellipse at 50% 88%,
+          rgba(50, 30, 110, 0.07) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      /* Anchor aura — base glow beneath each placed hero */
+      .cell.occ::after {
+        content: "";
+        position: absolute;
+        bottom: 5px;
+        left: 12%;
+        width: 76%;
+        height: 10px;
+        border-radius: 50%;
+        background: radial-gradient(
+          ellipse,
+          rgba(110, 80, 245, 0.55) 0%,
+          rgba(60, 40, 180, 0.18) 55%,
+          transparent 78%
+        );
+        filter: blur(3px);
+        pointer-events: none;
+        animation: anchor-pulse 2.4s ease-in-out infinite;
+      }
+
+      @keyframes anchor-pulse {
+        0%,
+        100% {
+          opacity: 0.5;
+          transform: scaleX(1);
+        }
+        50% {
+          opacity: 0.88;
+          transform: scaleX(1.14);
+        }
+      }
+
+      /* Units: inner bottom shadow adds grounded depth */
+      .unit {
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.07);
+      }
+
+      /* ── Low HP warning state ── */
+      .unit.low-hp {
+        border-color: rgba(255, 55, 55, 0.85) !important;
+        box-shadow:
+          inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+          0 0 12px rgba(255, 40, 40, 0.45),
+          inset 0 0 10px rgba(255, 0, 0, 0.12) !important;
+        animation: low-hp-throb 1.1s ease-in-out infinite;
+      }
+
+      @keyframes low-hp-throb {
+        0%,
+        100% {
+          box-shadow:
+            inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+            0 0 8px rgba(255, 40, 40, 0.35),
+            inset 0 0 8px rgba(255, 0, 0, 0.1);
+        }
+        50% {
+          box-shadow:
+            inset 0 -8px 18px rgba(0, 0, 0, 0.38),
+            0 0 22px rgba(255, 40, 40, 0.72),
+            inset 0 0 16px rgba(255, 0, 0, 0.22);
+        }
+      }
     </style>
     <link rel="stylesheet" href="/mobile.css" />
   </head>
@@ -4722,6 +4830,7 @@
           const r = cur / u.maxHp;
           b.style.width = `${r * 100}%`;
           b.className = "uhf " + (r < 0.3 ? "lo" : r < 0.6 ? "mid" : "hi");
+          el.classList.toggle("low-hp", r < 0.3);
           const hpNum = el.querySelector("[data-uhp]");
           if (hpNum) {
             hpNum.textContent = Math.round(cur);
