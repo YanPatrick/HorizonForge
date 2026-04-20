@@ -2267,9 +2267,51 @@
         user-select: none;
       }
       .form-hero-card:hover:not(.fhc-disabled) {
-        border-color: rgba(170, 128, 255, 0.45);
-        background: rgba(140, 100, 255, 0.1);
-        transform: translateY(-2px);
+        border-color: rgba(170, 128, 255, 0.55);
+        background: rgba(140, 100, 255, 0.12);
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 0 18px rgba(140, 100, 255, 0.28);
+      }
+
+      /* Deck-editing mode: suppress hover glow and detail interactions */
+      #form-hero-grid.fhc-editing-mode .form-hero-card:hover:not(.fhc-disabled) {
+        transform: none;
+        box-shadow: none;
+        border-color: rgba(140, 100, 255, 0.18);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      /* ── Info button on hero card ── */
+      .fhc-info-btn {
+        position: absolute;
+        top: 5px;
+        left: 5px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: rgba(140, 100, 255, 0.18);
+        border: 1px solid rgba(140, 100, 255, 0.38);
+        color: rgba(180, 155, 255, 0.75);
+        font-family: "Exo 2", sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        font-style: normal;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        z-index: 1;
+        line-height: 1;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .fhc-info-btn:hover {
+        background: rgba(140, 100, 255, 0.35);
+        color: rgba(210, 190, 255, 0.95);
+      }
+      /* Hide info button in deck-editing mode */
+      #form-hero-grid.fhc-editing-mode .fhc-info-btn {
+        opacity: 0;
+        pointer-events: none;
       }
       .form-hero-card.fhc-selected {
         border-color: rgba(80, 210, 110, 0.55);
@@ -3277,6 +3319,281 @@
         .nav-right {
           gap: 4px;
         }
+      }
+
+      /* ══════════════════════════════
+         HERO DETAIL PANELS
+      ══════════════════════════════ */
+
+      /* Shared backdrop */
+      .hf-detail-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 800;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .hf-detail-backdrop.hf-open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Desktop right-side drawer */
+      .hf-hero-drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 340px;
+        background: rgba(8, 4, 24, 0.99);
+        border-left: 1.5px solid rgba(140, 100, 255, 0.3);
+        box-shadow: -12px 0 48px rgba(0, 0, 0, 0.65);
+        z-index: 801;
+        display: flex;
+        flex-direction: column;
+        transform: translateX(100%);
+        transition: transform 0.25s cubic-bezier(0.34, 1.06, 0.64, 1);
+        overflow: hidden;
+      }
+      .hf-hero-drawer.hf-open {
+        transform: translateX(0);
+      }
+
+      /* On mobile the drawer is never shown — bottom sheet takes over */
+      @media (max-width: 640px) {
+        .hf-hero-drawer {
+          display: none !important;
+        }
+      }
+
+      /* Mobile bottom sheet */
+      .hf-hero-sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 65vh;
+        background: rgba(8, 4, 24, 0.99);
+        border-top: 1.5px solid rgba(140, 100, 255, 0.3);
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.65);
+        z-index: 801;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(100%);
+        transition: transform 0.28s ease;
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      .hf-hero-sheet.hf-open {
+        transform: translateY(0);
+      }
+      .hf-sheet-handle {
+        width: 36px;
+        height: 4px;
+        background: rgba(140, 100, 255, 0.3);
+        border-radius: 2px;
+        margin: 10px auto 0;
+        flex-shrink: 0;
+      }
+
+      /* On desktop the sheet is never shown — drawer takes over */
+      @media (min-width: 641px) {
+        .hf-hero-sheet {
+          display: none !important;
+        }
+      }
+
+      /* ── Shared inner content (used by both drawer and sheet) ── */
+      .hf-detail-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px 20px 24px;
+      }
+      .hf-detail-scroll::-webkit-scrollbar {
+        width: 4px;
+      }
+      .hf-detail-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .hf-detail-scroll::-webkit-scrollbar-thumb {
+        background: rgba(140, 100, 255, 0.3);
+        border-radius: 4px;
+      }
+
+      /* Close button row */
+      .hf-detail-close-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px 8px;
+        flex-shrink: 0;
+        border-bottom: 1px solid rgba(140, 100, 255, 0.1);
+      }
+      .hf-detail-close-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(200, 190, 240, 0.7);
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .hf-detail-close-btn:hover {
+        background: rgba(140, 100, 255, 0.18);
+        color: rgba(220, 210, 255, 0.95);
+      }
+
+      /* Hero header (icon + name) */
+      .hf-detail-hero-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .hf-detail-ico {
+        font-size: 36px;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+      .hf-detail-hero-name {
+        font-family: "Cinzel", serif;
+        font-size: 16px;
+        font-weight: 700;
+        color: rgba(240, 230, 255, 0.95);
+        letter-spacing: 0.5px;
+      }
+      .hf-detail-role-wrap {
+        margin-top: 14px;
+      }
+
+      /* Skill section */
+      .hf-detail-section-label {
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: rgba(140, 100, 255, 0.6);
+        margin-bottom: 6px;
+        margin-top: 16px;
+      }
+      .hf-detail-skill-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: rgba(255, 210, 80, 0.9);
+        margin-bottom: 4px;
+      }
+      .hf-detail-skill-desc {
+        font-size: 12px;
+        color: rgba(195, 180, 235, 0.65);
+        line-height: 1.55;
+      }
+
+      /* Stats 2x2 grid */
+      .hf-detail-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .hf-detail-stat {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(140, 100, 255, 0.14);
+        border-radius: 8px;
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .hf-stat-label {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(140, 100, 255, 0.55);
+      }
+      .hf-stat-value {
+        font-size: 15px;
+        font-weight: 700;
+        color: rgba(230, 220, 255, 0.92);
+        font-family: "Exo 2", sans-serif;
+      }
+
+      /* Level 2 expand button */
+      .hf-detail-l2-btn {
+        width: 100%;
+        margin-top: 16px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        background: rgba(140, 100, 255, 0.08);
+        border: 1px solid rgba(140, 100, 255, 0.22);
+        color: rgba(180, 155, 255, 0.8);
+        font-family: "Exo 2", sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: left;
+        transition: all 0.15s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .hf-detail-l2-btn:hover {
+        background: rgba(140, 100, 255, 0.15);
+        border-color: rgba(140, 100, 255, 0.4);
+      }
+      .hf-l2-chevron {
+        font-size: 10px;
+        transition: transform 0.2s ease;
+      }
+      .hf-l2-chevron.expanded {
+        transform: rotate(180deg);
+      }
+
+      /* Level 2 stats table */
+      .hf-detail-l2 {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.25s ease;
+      }
+      .hf-detail-l2.expanded {
+        max-height: 400px;
+      }
+      .hf-detail-l2-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-family: "Exo 2", sans-serif;
+        font-size: 11px;
+      }
+      .hf-detail-l2-table th {
+        text-align: left;
+        padding: 4px 6px;
+        color: rgba(140, 100, 255, 0.6);
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        border-bottom: 1px solid rgba(140, 100, 255, 0.14);
+      }
+      .hf-detail-l2-table td {
+        padding: 5px 6px;
+        color: rgba(210, 200, 240, 0.8);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      .hf-detail-l2-table tr:last-child td {
+        border-bottom: none;
+      }
+      .hf-detail-l2-table td:first-child {
+        color: rgba(140, 100, 255, 0.7);
+        font-weight: 700;
       }
     </style>
   </head>
@@ -5489,6 +5806,12 @@
         let _editingOpen = false;
 
         window.openFormation = async function () {
+          if (!window._hfDetailEscBound) {
+            window._hfDetailEscBound = true;
+            document.addEventListener("keydown", function (e) {
+              if (e.key === "Escape") closeHeroDetail();
+            });
+          }
           showView("view-formation");
           _editingOpen = false;
           const panel = document.getElementById("fv-slide-panel");
@@ -5550,6 +5873,9 @@
         window.openDeckSlot = function (idx) {
           _activeFormSlot = idx;
           _editingOpen = true;
+          closeHeroDetail();
+          document.getElementById("form-hero-grid")
+            ?.classList.add("fhc-editing-mode");
           _renderDeckCards();
           _renderSlideSlots();
           _renderFormHeroGrid();
@@ -5562,6 +5888,8 @@
 
         window.closeDeckSlot = function () {
           _editingOpen = false;
+          document.getElementById("form-hero-grid")
+            ?.classList.remove("fhc-editing-mode");
           const panel = document.getElementById("fv-slide-panel");
           if (panel) panel.classList.remove("open");
           _renderDeckCards();
@@ -5675,19 +6003,152 @@
               (!isSelected && isFull && _editingOpen ? " fhc-disabled" : "");
             if (_editingOpen && (isSelected || !isFull)) {
               card.onclick = () => _toggleFormHero(h.cid);
+            } else if (!_editingOpen) {
+              card.onclick = () => openHeroDetail(h.cid);
             }
-            const cat = _roleCategory(h.role);
-            const label =
-              cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
-            card.innerHTML = `<div class="form-hc-ico">${h.icon}</div>
-              <div class="form-hc-name">${h.name}</div>
-              <div class="form-hc-role role-${cat}">${label}</div>`;
+            card.innerHTML = `
+              <button class="fhc-info-btn" aria-label="Hero info">i</button>
+              <div class="form-hc-ico">${h.icon}</div>
+              <div class="form-hc-name">${h.name}</div>`;
+            card.querySelector(".fhc-info-btn").addEventListener("click", (e) => {
+              e.stopPropagation();
+              openHeroDetail(h.cid);
+            });
             grid.appendChild(card);
           });
           if (!filtered.length) {
             grid.innerHTML = '<div class="hh-empty">No heroes found</div>';
           }
         }
+
+        function _buildDetailBodyHTML(h) {
+          const cat = _roleCategory(h.role);
+          const label =
+            cat === "tank" ? "Tank" : cat === "support" ? "Support" : "DPS";
+          const lv1 = h.levels[1] || {};
+          const hp = lv1.max_hp ?? "—";
+          const atk = lv1.atk ?? "—";
+          const spd = lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : "—";
+          const crit =
+            lv1.crit_chance != null
+              ? (lv1.crit_chance * 100).toFixed(0) + "%"
+              : "—";
+
+          const levelKeys = Object.keys(h.levels || {})
+            .map(Number)
+            .sort((a, b) => a - b);
+          const tableRows = levelKeys
+            .map((lv) => {
+              const s = h.levels[lv] || {};
+              return `<tr>
+                <td>${lv}</td>
+                <td>${s.max_hp}</td>
+                <td>${s.atk}</td>
+                <td>${s.atk_speed != null ? s.atk_speed.toFixed(1) : "—"}</td>
+                <td>${s.crit_chance != null ? (s.crit_chance * 100).toFixed(0) + "%" : "—"}</td>
+              </tr>`;
+            })
+            .join("");
+
+          return `
+            <div class="hf-detail-role-wrap">
+              <span class="gr-hero-role role-${cat}">${label}</span>
+            </div>
+            <div class="hf-detail-section-label">Skill</div>
+            <div class="hf-detail-skill-name">✦ ${h.skill?.name ?? "—"}</div>
+            <div class="hf-detail-skill-desc">${h.skill?.description ?? ""}</div>
+            <div class="hf-detail-section-label">Base Stats (Lv 1)</div>
+            <div class="hf-detail-stats">
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">❤️ HP</span>
+                <span class="hf-stat-value">${hp}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">⚔️ ATK</span>
+                <span class="hf-stat-value">${atk}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">⚡ SPD</span>
+                <span class="hf-stat-value">${spd}</span>
+              </div>
+              <div class="hf-detail-stat">
+                <span class="hf-stat-label">💥 CRIT</span>
+                <span class="hf-stat-value">${crit}</span>
+              </div>
+            </div>
+            <button class="hf-detail-l2-btn" onclick="toggleHeroDetailL2(this)"><span class="hf-l2-label">Ver stats completos</span><span class="hf-l2-chevron">▾</span></button>
+            <div class="hf-detail-l2">
+              <table class="hf-detail-l2-table">
+                <thead>
+                  <tr>
+                    <th>Nível</th><th>HP</th><th>ATK</th><th>SPD</th><th>CRIT</th>
+                  </tr>
+                </thead>
+                <tbody>${tableRows}</tbody>
+              </table>
+            </div>`;
+        }
+
+        window.openHeroDetail = function (cid) {
+          if (_editingOpen) return;
+          if (!_heroData) return;
+          const h = _heroData.find((x) => String(x.cid) === String(cid));
+          if (!h) return;
+
+          const body = _buildDetailBodyHTML(h);
+          const isDesktop = window.innerWidth > 640;
+
+          if (isDesktop) {
+            document.getElementById("hf-drawer-ico").textContent = h.icon;
+            document.getElementById("hf-drawer-name").textContent = h.name;
+            document.getElementById("hf-drawer-body").innerHTML = body;
+            const drawer = document.getElementById("hf-hero-drawer");
+            drawer.classList.add("hf-open");
+            drawer.setAttribute("aria-hidden", "false");
+            document.getElementById("hf-hero-sheet")?.setAttribute("aria-hidden", "true");
+          } else {
+            document.getElementById("hf-sheet-ico").textContent = h.icon;
+            document.getElementById("hf-sheet-name").textContent = h.name;
+            document.getElementById("hf-sheet-body").innerHTML = body;
+            const sheet = document.getElementById("hf-hero-sheet");
+            sheet.classList.add("hf-open");
+            sheet.setAttribute("aria-hidden", "false");
+            document.getElementById("hf-hero-drawer")?.setAttribute("aria-hidden", "true");
+          }
+          document
+            .getElementById("hf-detail-backdrop")
+            .classList.add("hf-open");
+        };
+
+        window.closeHeroDetail = function () {
+          const drawer = document.getElementById("hf-hero-drawer");
+          const sheet = document.getElementById("hf-hero-sheet");
+          const backdrop = document.getElementById("hf-detail-backdrop");
+          if (drawer) {
+            drawer.classList.remove("hf-open");
+            drawer.setAttribute("aria-hidden", "true");
+          }
+          if (sheet) {
+            sheet.classList.remove("hf-open");
+            sheet.setAttribute("aria-hidden", "true");
+          }
+          if (backdrop) backdrop.classList.remove("hf-open");
+        };
+
+        window.toggleHeroDetailL2 = function (btn) {
+          const l2 = btn.nextElementSibling;
+          const chevron = btn.querySelector(".hf-l2-chevron");
+          const isExpanded = l2.classList.contains("expanded");
+          if (isExpanded) {
+            l2.classList.remove("expanded");
+            chevron.classList.remove("expanded");
+            btn.querySelector(".hf-l2-label").textContent = "Ver stats completos";
+          } else {
+            l2.classList.add("expanded");
+            chevron.classList.add("expanded");
+            btn.querySelector(".hf-l2-label").textContent = "Recolher";
+          }
+        };
 
         function _toggleFormHero(cid) {
           if (!_editingOpen) return;
@@ -5954,5 +6415,33 @@
         })();
       })();
     </script>
+
+    <!-- ── Hero Detail Backdrop ── -->
+    <div class="hf-detail-backdrop" id="hf-detail-backdrop" onclick="closeHeroDetail()"></div>
+
+    <!-- ── Hero Detail Drawer (desktop right-side) ── -->
+    <div class="hf-hero-drawer" id="hf-hero-drawer" role="dialog" aria-modal="true" aria-label="Hero Details" aria-hidden="true">
+      <div class="hf-detail-close-row">
+        <div class="hf-detail-hero-header" id="hf-drawer-header">
+          <span class="hf-detail-ico" id="hf-drawer-ico"></span>
+          <span class="hf-detail-hero-name" id="hf-drawer-name"></span>
+        </div>
+        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+      </div>
+      <div class="hf-detail-scroll" id="hf-drawer-body"></div>
+    </div>
+
+    <!-- ── Hero Detail Sheet (mobile bottom) ── -->
+    <div class="hf-hero-sheet" id="hf-hero-sheet" role="dialog" aria-modal="true" aria-label="Hero Details" aria-hidden="true">
+      <div class="hf-sheet-handle"></div>
+      <div class="hf-detail-close-row">
+        <div class="hf-detail-hero-header" id="hf-sheet-header">
+          <span class="hf-detail-ico" id="hf-sheet-ico"></span>
+          <span class="hf-detail-hero-name" id="hf-sheet-name"></span>
+        </div>
+        <button class="hf-detail-close-btn" onclick="closeHeroDetail()" aria-label="Close">✕</button>
+      </div>
+      <div class="hf-detail-scroll" id="hf-sheet-body"></div>
+    </div>
   </body>
 </html>
