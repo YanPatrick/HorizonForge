@@ -46,7 +46,10 @@
       "Bash(git branch *)",
       "Bash(git tag *)",
       "Bash(cat)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(grep -n \"order: [123456]$\\\\|order: [123456];$\" c:/Fontes_Javascript/HorizonForge/public/battle.html)",
+      "Bash(grep -v \"\\\\/\\\\*\\\\|<!--\\\\|//\")",
+      "Bash(grep -n \"shop-collapsed\\\\|checkShopCollapse\\\\|--card-w\\\\|--bcard-w\\\\|order: [123]$\" c:/Fontes_Javascript/HorizonForge/public/battle.html)"
     ],
     "additionalDirectories": [
       "\\tmp"

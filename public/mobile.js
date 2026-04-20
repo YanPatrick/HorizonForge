@@ -1,35 +1,26 @@
 (function () {
-  /* ─── Mobile detection ──────────────────────────────────────
-     Matches same condition as mobile.css media queries.
-     pointer: coarse = real touch device.
-     Early-return on desktop so zero JS runs there.
-  ─────────────────────────────────────────────────────────── */
-  var MQ = window.matchMedia('(max-width: 480px) and (pointer: coarse)');
-  if (!MQ.matches) return;
-
-  /* ─── Signal vertical layout to combat engine ─────────────────
-     window.mobileVertical is read by battle.html targeting logic
-     to flip row-search order: pfield row 0 (player front) attacks
-     efield row 2 (enemy front) — Clash Royale player-at-bottom.
+  /* ─── Layout is always vertical (single unified layout) ───────
+     Signal the combat engine to use player-at-bottom targeting.
   ─────────────────────────────────────────────────────────── */
   window.mobileVertical = true;
 
-  /* ─── Rotate overlay ───────────────────────────────────────
-     The CSS shows/hides it based on orientation media query.
-     We just inject the DOM element here.
-  ─────────────────────────────────────────────────────────── */
-  var rotateOverlay = document.createElement('div');
-  rotateOverlay.id = 'mobile-rotate-msg';
-  rotateOverlay.innerHTML =
-    '<div class="mrm-icon">📱</div>' +
-    '<p>Rotate your device to portrait to play</p>';
-  document.body.appendChild(rotateOverlay);
+  var isTouch = window.matchMedia('(pointer: coarse)').matches;
 
-  /* ─── Log overlay ──────────────────────────────────────────
-     Slide-up overlay that holds the battle log (#log).
+  /* ─── Rotate overlay (touch only) ─────────────────────────
+     CSS shows/hides based on orientation media query.
+  ─────────────────────────────────────────────────────────── */
+  if (isTouch) {
+    var rotateOverlay = document.createElement('div');
+    rotateOverlay.id = 'mobile-rotate-msg';
+    rotateOverlay.innerHTML =
+      '<div class="mrm-icon">📱</div>' +
+      '<p>Rotate your device to portrait to play</p>';
+    document.body.appendChild(rotateOverlay);
+  }
+
+  /* ─── Log overlay (all platforms) ─────────────────────────
+     Slide-up bottom sheet holding the battle log (#log).
      #log is moved here from #center-col on DOMContentLoaded.
-     mobile.css hides #log globally; #mobile-log-overlay #log
-     overrides that to display it inside the overlay.
   ─────────────────────────────────────────────────────────── */
   var logOverlay = document.createElement('div');
   logOverlay.id = 'mobile-log-overlay';
@@ -52,7 +43,7 @@
     }
   }
 
-  /* ─── Log toggle button in header ─────────────────────────
+  /* ─── Log toggle button in header (all platforms) ──────────
      Appended to #hdr so it sits next to existing header items.
   ─────────────────────────────────────────────────────────── */
   function injectLogBtn() {
@@ -78,19 +69,14 @@
     injectLogBtn();
   }
 
-  /* ─── Tap-select cell highlight ────────────────────────────
-     battle.html handles the actual swap via G.fieldSel.
-     mobile.js tracks selection independently (mSel) and adds
-     CSS classes for visual feedback after each render() call.
-
-     Classes added to #pfield .cell elements:
-       .m-selected   — gold border on the selected cell
+  /* ─── Tap-select cell highlight (touch only) ───────────────
+     Adds CSS classes for visual feedback after each render().
+       .m-selected   — gold border on the selected pfield cell
        .m-valid-drop — green tint on valid destination cells
-
-     window.render is global (function declaration in non-module
-     <script>) — safe to wrap after defer load.
   ─────────────────────────────────────────────────────────── */
-  var mSel = null; // index (data-i) of selected pfield cell, or null
+  if (!isTouch) return;
+
+  var mSel = null;
 
   function applyHighlight() {
     var cells = document.querySelectorAll('#pfield .cell');
@@ -108,7 +94,6 @@
     });
   }
 
-  // Wrap window.render to re-apply highlights after every render cycle
   var _origRender = window.render;
   if (typeof _origRender === 'function') {
     window.render = function () {
@@ -117,12 +102,10 @@
     };
   }
 
-  // Event delegation: track selection on pfield clicks
   document.addEventListener('click', function (e) {
     var cell = e.target.closest('#pfield .cell');
 
     if (!cell) {
-      // Clicked outside pfield — clear selection
       if (mSel !== null) {
         mSel = null;
         applyHighlight();
@@ -133,12 +116,10 @@
     var idx = parseInt(cell.getAttribute('data-i'), 10);
 
     if (mSel === null) {
-      // Select occupied cell only
       if (cell.classList.contains('occ')) {
         mSel = idx;
       }
     } else {
-      // Any second click on pfield = swap completed or cancelled by battle.html
       mSel = null;
     }
     applyHighlight();
