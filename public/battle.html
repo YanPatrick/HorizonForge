@@ -41,9 +41,9 @@
         --bottom-h: calc(200px * var(--s));
         --bench-w: calc(540px * var(--s));
         --shop-w: calc(500px * var(--s));
-        --card-w: calc(68px * var(--s));
-        --card-gap: calc(5px * var(--s));
-        --bcard-w: calc(72px * var(--s));
+        --card-w: calc(90px * var(--s));
+        --card-gap: calc(6px * var(--s));
+        --bcard-w: calc(82px * var(--s));
         --bcard-gap: calc(6px * var(--s));
         --center-max-w: calc(420px * var(--s));
       }
@@ -60,7 +60,6 @@
         font-family: "Exo 2", system-ui, sans-serif;
         display: flex;
         flex-direction: column;
-        align-items: center;
         height: 100dvh;
         overflow: hidden;
       }
@@ -140,7 +139,6 @@
         display: none;
         flex-direction: column;
         width: 100%;
-        max-width: 420px;
         height: 100%;
         padding: calc(4px * var(--s)) calc(8px * var(--s));
         gap: var(--gap);
@@ -152,15 +150,13 @@
       /* ── HEADER ── */
       #hdr {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        gap: calc(6px * var(--s));
-        max-width: 100%;
+        gap: calc(4px * var(--s));
+        max-width: 520px;
         width: 100%;
-        padding: 0 10px;
-        height: 44px;
-        min-height: 44px;
+        margin: 0 auto;
+        padding: calc(6px * var(--s)) calc(16px * var(--s));
         background: linear-gradient(
           90deg,
           rgba(25, 12, 60, 0.95),
@@ -168,34 +164,35 @@
           rgba(25, 12, 60, 0.95)
         );
         border: 1px solid rgba(150, 100, 255, 0.35);
-        border-radius: 0 0 var(--r) var(--r);
+        border-radius: var(--r);
         flex-shrink: 0;
-        flex-wrap: nowrap;
-        overflow: hidden;
         box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
       }
 
       .hdr-row-top {
         display: flex;
         align-items: center;
-        flex: 1 1 0;
-        min-width: 0;
-        flex-wrap: nowrap;
-        gap: calc(5px * var(--s));
-        overflow: hidden;
+        justify-content: center;
+        gap: calc(8px * var(--s));
+        flex-wrap: wrap;
+        width: 100%;
       }
 
       .hdr-row-bottom {
         display: flex;
         align-items: center;
-        flex: 0 0 auto;
-        flex-wrap: nowrap;
-        gap: calc(5px * var(--s));
-        overflow: hidden;
+        justify-content: center;
+        gap: calc(6px * var(--s));
+        flex-wrap: wrap;
+        width: 100%;
       }
 
       .hstats {
-        display: none;
+        display: flex;
+        gap: calc(5px * var(--s));
+        font-size: calc(10px * var(--s));
+        flex-wrap: wrap;
+        align-items: center;
       }
 
       .sb {
@@ -447,15 +444,14 @@
       }
 
       .hback-btn {
-        background: rgba(220, 60, 60, 0.16);
-        color: rgba(255, 130, 130, 0.95);
-        border-color: rgba(220, 60, 60, 0.42);
-        flex-shrink: 0;
+        background: rgba(220, 60, 60, 0.12);
+        color: rgba(255, 110, 110, 0.85);
+        border-color: rgba(220, 60, 60, 0.3);
       }
       .hback-btn:hover {
-        background: rgba(220, 60, 60, 0.28);
-        box-shadow: 0 0 14px rgba(220, 60, 60, 0.25);
-        color: #ff9999;
+        background: rgba(220, 60, 60, 0.24);
+        box-shadow: 0 0 12px rgba(220, 60, 60, 0.2);
+        color: #ff8888;
       }
 
       /* ── DUEL BAR ── */
@@ -526,7 +522,13 @@
 
       /* ── BANNER ── */
       #banner {
-        display: none;
+        text-align: center;
+        font-size: calc(10px * var(--s));
+        font-weight: 600;
+        padding: calc(2px * var(--s)) calc(8px * var(--s));
+        border-radius: calc(6px * var(--s));
+        letter-spacing: 0.2px;
+        max-width: 100%;
       }
 
       .bshop {
@@ -575,7 +577,6 @@
    ════════════════════════════════════════ */
       #arena-wrap {
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 0;
@@ -585,13 +586,12 @@
         overflow: hidden;
         position: relative;
         background: transparent;
-        width: 100%;
       }
 
       /* ── TURN ORDER PANEL (left column) ── */
       #turnpanel {
-        display: none;
         width: var(--tp-w);
+        display: flex;
         flex-direction: column;
         gap: calc(4px * var(--s));
         background: rgba(5, 3, 20, 0.65);
@@ -600,6 +600,8 @@
         border-radius: calc(12px * var(--s));
         padding: calc(8px * var(--s)) calc(6px * var(--s));
         overflow: hidden;
+
+        /* <-- ADICIONADO: Posicionamento flutuante para não empurrar a arena */
         position: absolute;
         left: calc(10px * var(--s));
         max-height: 90%;
@@ -771,30 +773,19 @@
       /* ── FIELDS CONTAINER (center, grows) ── */
       #fields-row {
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 0;
-        flex: 1 1 0;
-        min-height: 0;
-        width: 100%;
+        flex-shrink: 0;
       }
-
-      /* Vertical order: enemy top (order 1), VS middle (order 2), player bottom (order 3) */
-      #fields-row > .fwrap:first-child { order: 3; }
-      #fields-row > .fwrap:last-child  { order: 1; }
 
       /* ── FIELD WRAPPER (label + grid) ── */
       .fwrap {
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
         gap: calc(4px * var(--s));
-        flex: 1 1 0;
-        min-height: 0;
-        width: 100%;
-        overflow: hidden;
+        flex-shrink: 0;
       }
 
       .flbl {
@@ -832,7 +823,6 @@
         padding: var(--field-pad);
         border-radius: calc(14px * var(--s));
         width: fit-content;
-        flex-shrink: 0;
       }
 
       .pf {
@@ -850,40 +840,38 @@
       /* ── VS DIVIDER ── */
       #vs {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 100%;
-        height: 22px;
+        width: calc(48px * var(--s));
+        align-self: stretch;
         position: relative;
         flex-shrink: 0;
         z-index: 2;
-        order: 2;
       }
 
       #vs::before {
         content: "";
         position: absolute;
-        top: 50%;
-        bottom: auto;
-        left: 6%;
-        right: 6%;
-        width: auto;
-        height: 1px;
-        transform: none;
+        top: 8%;
+        bottom: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 1px;
         background: linear-gradient(
-          to right,
+          to bottom,
           transparent 0%,
-          rgba(255, 180, 60, 0.45) 20%,
-          rgba(255, 200, 100, 0.65) 50%,
-          rgba(255, 180, 60, 0.45) 80%,
+          rgba(255, 180, 60, 0.55) 25%,
+          rgba(255, 200, 100, 0.75) 50%,
+          rgba(255, 180, 60, 0.55) 75%,
           transparent 100%
         );
+        box-shadow: 0 0 6px rgba(255, 180, 60, 0.3);
       }
 
       .vstxt {
         font-family: "Cinzel", serif;
-        font-size: 9px;
+        font-size: calc(13px * var(--s));
         font-weight: 900;
         color: #ffdd66;
         text-shadow:
@@ -892,7 +880,7 @@
         position: relative;
         z-index: 1;
         padding: calc(5px * var(--s)) calc(9px * var(--s));
-        letter-spacing: 2px;
+        letter-spacing: 1px;
       }
 
       .vstxt::before {
@@ -1447,52 +1435,65 @@
       }
 
       /* ════════════════════════════════════════
-   BOTTOM ZONE — flex column, stacked
+   BOTTOM ZONE — flex row, fixed height
    ════════════════════════════════════════ */
       #bottom-zone {
         display: flex;
-        flex-direction: column;
         align-items: stretch;
-        gap: calc(3px * var(--s));
+        justify-content: space-between;
+        gap: calc(8px * var(--s));
         width: 100%;
-        height: auto;
-        max-height: clamp(240px, 40dvh, 330px);
+        height: var(--bottom-h);
         flex-shrink: 0;
-        overflow: hidden;
+        overflow: visible;
         background: transparent;
-        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2px);
       }
 
-      /* ── BARRACKS (second) ── */
+      /* ── BARRACKS (left) ── */
       #benchwrap {
-        order: 2;
-        width: 100%;
+        width: var(--bench-w);
         flex-shrink: 0;
         background: linear-gradient(
           160deg,
-          rgba(25, 10, 70, 0.94),
-          rgba(12, 6, 40, 0.94)
+          rgba(30, 15, 80, 0.92),
+          rgba(15, 8, 45, 0.92)
         );
-        border: 1px solid rgba(120, 80, 255, 0.3);
-        border-radius: calc(10px * var(--s));
-        padding: calc(5px * var(--s)) calc(8px * var(--s));
-        box-shadow: 0 0 20px rgba(80, 50, 180, 0.06);
+        border: 1px solid rgba(120, 80, 255, 0.35);
+        border-radius: calc(12px * var(--s));
+        padding: calc(7px * var(--s)) calc(8px * var(--s));
+        box-shadow: 0 0 24px rgba(80, 50, 180, 0.08);
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        max-height: calc(44px * var(--s));
+        transition: max-height 0.28s ease-in;
+        align-self: flex-end;
       }
 
-      #benchwrap #benchrow,
-      #benchwrap .bench-msg {
+      #benchwrap.expanded {
+        max-height: var(--bottom-h);
+        overflow: visible;
+        transition: max-height 0.35s cubic-bezier(0.22, 0.68, 0, 1.1);
+      }
+
+      #benchwrap:not(.expanded) #benchrow,
+      #benchwrap:not(.expanded) .bench-msg {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s;
+      }
+
+      #benchwrap.expanded #benchrow,
+      #benchwrap.expanded .bench-msg {
         opacity: 1;
-        pointer-events: auto;
+        transition: opacity 0.2s 0.1s;
       }
 
       .sec-hdr {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: calc(3px * var(--s));
+        margin-bottom: calc(5px * var(--s));
         flex-shrink: 0;
       }
 
@@ -1526,32 +1527,25 @@
 
       #benchrow {
         display: flex;
-        flex-direction: row;
+        gap: var(--bcard-gap);
         flex-wrap: nowrap;
-        gap: calc(4px * var(--s));
-        padding-top: calc(3px * var(--s));
-        padding-bottom: 3px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
+        padding-top: calc(4px * var(--s));
+        min-height: calc(10px * var(--s));
+        overflow: visible;
         flex: 1;
-        align-items: stretch;
       }
 
-      #benchrow::-webkit-scrollbar { display: none; }
-
-      /* ── CENTER COLUMN (battle button + timer, first) ── */
+      /* ── CENTER COLUMN (battle + log) ── */
       #center-col {
-        order: 1;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        gap: calc(8px * var(--s));
-        padding: 3px 12px;
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: var(--center-max-w);
         width: 100%;
-        max-width: none;
-        flex: 0 0 auto;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: calc(6px * var(--s));
       }
 
       #ctrl {
@@ -1563,82 +1557,56 @@
         width: 100%;
       }
 
-      /* ── SHOP (third — emerges from bottom) ── */
+      /* ── SHOP (right) ── */
       #shopwrap {
-        order: 3;
-        width: 100%;
+        width: var(--shop-w);
         flex-shrink: 0;
         background: linear-gradient(
-          175deg,
-          rgba(10, 32, 10, 0.97),
-          rgba(5, 18, 5, 0.99)
+          160deg,
+          rgba(15, 40, 15, 0.92),
+          rgba(8, 25, 8, 0.92)
         );
-        border: 1px solid rgba(80, 160, 80, 0.3);
-        border-radius: calc(12px * var(--s)) calc(12px * var(--s)) calc(8px * var(--s)) calc(8px * var(--s));
-        padding: calc(6px * var(--s)) calc(10px * var(--s)) calc(8px * var(--s));
-        box-shadow:
-          0 -4px 18px rgba(40, 160, 40, 0.08),
-          0 -1px 0 rgba(80, 160, 80, 0.15),
-          0 4px 12px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(80, 160, 80, 0.35);
+        border-radius: calc(12px * var(--s));
+        padding: calc(5px * var(--s)) calc(8px * var(--s));
+        box-shadow: 0 0 24px rgba(60, 180, 60, 0.08);
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-        max-height: 175px;
-        transition:
-          max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-          opacity 0.35s ease,
-          padding-top 0.35s,
-          padding-bottom 0.35s;
-      }
-
-      #shopwrap.shop-collapsed {
-        max-height: 0;
-        opacity: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        pointer-events: none;
+        align-self: flex-end;
+        overflow: visible;
       }
 
       #shoprow {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        overflow-y: hidden;
-        -webkit-overflow-scrolling: touch;
-        height: auto;
-        gap: calc(5px * var(--s));
-        padding-bottom: 3px;
-        position: static;
+        position: relative;
         width: 100%;
-        align-items: stretch;
+        flex: 0 0 auto;
+        height: calc(128px * var(--s));
+        overflow: visible;
       }
-
-      #shoprow::-webkit-scrollbar { display: none; }
 
       /* ════════════════════════════════════════
    SHOP CARDS
    ════════════════════════════════════════ */
       .scard {
-        position: static;
-        left: auto;
-        top: auto;
-        flex: 0 0 auto;
         width: var(--card-w);
         min-width: var(--card-w);
         max-width: var(--card-w);
-        border-radius: calc(10px * var(--s));
+        border-radius: calc(12px * var(--s));
         border: 2px solid;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: calc(4px * var(--s)) calc(4px * var(--s)) calc(3px * var(--s));
-        gap: 0;
+        padding: calc(6px * var(--s)) calc(6px * var(--s)) calc(5px * var(--s));
+        gap: calc(2px * var(--s));
+        position: absolute;
+        top: 0;
         overflow: visible;
         transition:
+          left 0.38s cubic-bezier(0.22, 0.68, 0, 1.2),
           opacity 0.28s ease,
           filter 0.22s,
           transform 0.18s ease;
+        will-change: left, opacity;
       }
 
       .scard::before {
@@ -1901,23 +1869,6 @@
         color: #88ff88;
       }
 
-      /* Icon-only mode for shop and bench cards */
-      .scard .cportrait {
-        height: calc(44px * var(--s));
-        width: 100%;
-        border-radius: calc(7px * var(--s));
-      }
-      .scard .cportrait .cico {
-        font-size: calc(26px * var(--s)) !important;
-      }
-      .bcard .cportrait {
-        height: calc(36px * var(--s));
-        border-radius: calc(6px * var(--s));
-      }
-      .bcard .cportrait .cico {
-        font-size: calc(20px * var(--s)) !important;
-      }
-
       .rrbtn {
         font-size: calc(9px * var(--s));
         padding: calc(3px * var(--s)) calc(10px * var(--s));
@@ -1944,17 +1895,16 @@
    BENCH CARDS
    ════════════════════════════════════════ */
       .bcard {
-        flex: 0 0 auto;
-        min-width: calc(56px * var(--s));
-        width: var(--bcard-w);
+        flex: 1 1 0;
+        min-width: 0;
         max-width: var(--bcard-w);
-        border-radius: calc(10px * var(--s));
+        border-radius: calc(12px * var(--s));
         border: 2px solid;
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: calc(4px * var(--s)) calc(3px * var(--s)) calc(3px * var(--s));
-        gap: calc(1px * var(--s));
+        padding: calc(5px * var(--s)) calc(4px * var(--s)) calc(4px * var(--s));
+        gap: calc(2px * var(--s));
         position: relative;
         cursor: pointer;
         transition: all 0.22s;
@@ -2173,12 +2123,12 @@
       }
 
       .bcard-empty {
-        flex: 0 0 auto;
-        width: var(--bcard-w);
+        flex: 1 1 0;
+        min-width: 0;
         max-width: var(--bcard-w);
-        height: calc(72px * var(--s));
+        height: calc(125px * var(--s));
         border: 2px dashed rgba(255, 255, 255, 0.08);
-        border-radius: calc(10px * var(--s));
+        border-radius: calc(11px * var(--s));
         opacity: 0.16;
       }
 
@@ -2216,14 +2166,10 @@
       .bbtn {
         background: linear-gradient(135deg, #c42222, #ff4422);
         color: #fff;
-        font-size: 12px;
-        letter-spacing: 0.8px;
-        box-shadow: 0 4px 14px rgba(255, 60, 30, 0.38);
+        font-size: calc(14px * var(--s));
+        letter-spacing: 1px;
+        box-shadow: 0 5px 18px rgba(255, 60, 30, 0.4);
         border: 1px solid rgba(255, 120, 80, 0.3);
-        height: 32px;
-        flex: 0 0 auto;
-        padding: 0 18px;
-        max-width: 160px;
       }
 
       .bbtn:hover:not(:disabled) {
@@ -2252,7 +2198,6 @@
    BATTLE LOG
    ════════════════════════════════════════ */
       #log {
-        display: none;
         width: 100%;
         flex: 1 1 0;
         min-height: 0;
@@ -3340,7 +3285,7 @@
             >
             <div class="recruit-controls">
               <button class="rrbtn" id="breroll" onclick="rerollShop()">
-                🔄 Reroll (2💰)
+                New Recruitment (2💰)
               </button>
             </div>
           </div>
@@ -6480,9 +6425,9 @@
           parseFloat(
             getComputedStyle(document.documentElement).getPropertyValue("--s"),
           ) || 1;
-        const cardW = Math.round(68 * s),
-          gap = Math.round(5 * s);
-        const shopWrapInner = Math.round(420 * s) - Math.round(16 * s) * 2;
+        const cardW = Math.round(90 * s),
+          gap = Math.round(6 * s);
+        const shopWrapInner = Math.round(500 * s) - Math.round(8 * s) * 2;
         const contW = shopWrapInner;
 
         const domById = {};
@@ -6546,7 +6491,7 @@
                 ? "pcombo"
                 : "pnew";
 
-          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait" title="${u.name} · ${u.role} · ${cc.abi.ico} ${cc.abi.name}"><div class="cico">${u.ico}</div></div><div class="caction">${actionLbl}</div>`;
+          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
 
           let el = domById[u.id];
           const isNew = !el;
@@ -6653,7 +6598,7 @@
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="bsell-hint" title="Sell +${SELL[u.lv]}💰">${u.stack > 1 ? "⚠️" : "💰"}+${SELL[u.lv]}</div><div class="cportrait" title="${u.name} · ${u.role} · ${cc.abi.ico} ${cc.abi.name}"><div class="cico">${u.ico}</div></div>${dotsHtml}`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="bsell-hint" title="Sell +${SELL[u.lv]}💰">${u.stack > 1 ? "⚠️" : "💰"}+${SELL[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
 
             if (active) {
               card.addEventListener("click", () => {
@@ -6734,31 +6679,6 @@
         document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
       }
 
-      function checkShopCollapse() {
-        const sw = document.getElementById("shopwrap");
-        if (!sw) return;
-        if (G.phase !== "shop") { sw.classList.remove("shop-collapsed"); return; }
-        const canReroll = G.gold >= HF.value_new_recruitment;
-        const combos = G.shopCombos || (G.shopCombo ? [G.shopCombo] : []);
-        const comboByIdx = {};
-        combos.forEach((c) => c.idxs.forEach((i) => (comboByIdx[i] = c)));
-        const canBuyAny = G.shop.some((u, i) => {
-          if (!u) return false;
-          const isOwned =
-            G.bench.find((b) => b.cid === u.cid) ||
-            G.board.find((b) => b && b.cid === u.cid);
-          if (isOwned && isOwned.lv >= 5) return false;
-          const cardCombo = comboByIdx[i] || null;
-          const cost = cardCombo
-            ? cardCombo.cost
-            : isOwned
-              ? 2
-              : HF.value_buy_card;
-          return G.gold >= cost;
-        });
-        sw.classList.toggle("shop-collapsed", !canReroll && !canBuyAny);
-      }
-
       function render() {
         renderField("pfield", G.board, true);
         renderField(
@@ -6770,7 +6690,6 @@
         renderBench();
         updateHdr();
         renderDuelBar();
-        checkShopCollapse();
         document.getElementById("bfight").disabled = G.phase !== "shop";
         const n = G.board.filter(Boolean).length,
           mx = maxUnits();
