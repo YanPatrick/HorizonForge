@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/yanpa/.claude/skills/VibeSec-Skill/**)",
+      "Bash(npx skills *)",
+      "Read(//c/Users/yanpa/.claude/skills/**)",
+      "Read(//c/Users/yanpa/.agents/skills/playwright-best-practices/**)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api *)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)"
+    ]
+  }
+}
