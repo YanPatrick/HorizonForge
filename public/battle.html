@@ -57,7 +57,11 @@
       body {
         background: #060310;
         color: #dde2ff;
-        font-family: "Exo 2", system-ui, sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         display: flex;
         flex-direction: column;
         height: 100dvh;
@@ -371,7 +375,11 @@
       }
 
       .qm-title {
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: 16px;
         font-weight: 800;
         color: rgba(255, 210, 90, 0.97);
@@ -401,7 +409,11 @@
         cursor: pointer;
         border: 1.5px solid;
         transition: all 0.18s;
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .qm-cancel {
@@ -1415,6 +1427,143 @@
       .unit.dragging {
         opacity: 0.28;
         transform: scale(0.9);
+      }
+
+      .unit.atk-melee {
+        animation: unit-atk-melee 0.34s cubic-bezier(0.22, 0.8, 0.22, 1);
+      }
+
+      .unit.atk-ranged {
+        animation: unit-atk-ranged 0.26s cubic-bezier(0.2, 0.8, 0.22, 1);
+      }
+
+      @keyframes unit-atk-melee {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        32% {
+          transform: translate(
+              calc(var(--atk-dx, 0px) * 0.85),
+              calc(var(--atk-dy, 0px) * 0.85)
+            )
+            scale(1.08);
+        }
+        58% {
+          transform: translate(
+              calc(var(--atk-dx, 0px) * 1),
+              calc(var(--atk-dy, 0px) * 1)
+            )
+            scale(1.03);
+        }
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+      }
+
+      @keyframes unit-atk-ranged {
+        0% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+        40% {
+          transform: scale(1.08);
+          filter: brightness(1.35);
+        }
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+      }
+
+      .battle-projectile,
+      .battle-impact {
+        position: fixed;
+        pointer-events: none;
+        z-index: 99996;
+      }
+
+      .battle-projectile {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        left: var(--start-x, 0px);
+        top: var(--start-y, 0px);
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        will-change: transform, opacity;
+        animation: battle-projectile-fly 0.44s cubic-bezier(0.16, 0.84, 0.2, 1)
+          forwards;
+      }
+
+      .battle-projectile::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 35% 35%,
+          #fff6cf 0%,
+          #ffd56a 38%,
+          #ff8f3d 68%,
+          rgba(255, 143, 61, 0.12) 100%
+        );
+        box-shadow:
+          0 0 18px rgba(255, 196, 79, 0.65),
+          0 0 34px rgba(255, 126, 35, 0.28);
+      }
+
+      @keyframes battle-projectile-fly {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) translate(0, 0) scale(0.55);
+        }
+        12% {
+          opacity: 1;
+          transform: translate(-50%, -50%)
+            translate(
+              calc(var(--travel-x, 0px) * 0.08),
+              calc(var(--travel-y, 0px) * 0.08)
+            )
+            scale(1);
+        }
+        82% {
+          opacity: 1;
+          transform: translate(-50%, -50%)
+            translate(
+              calc(var(--travel-x, 0px) * 0.92),
+              calc(var(--travel-y, 0px) * 0.92)
+            )
+            scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%)
+            translate(var(--travel-x, 0px), var(--travel-y, 0px)) scale(0.72);
+        }
+      }
+
+      .battle-impact {
+        width: 20px;
+        height: 20px;
+        left: var(--impact-x, 0px);
+        top: var(--impact-y, 0px);
+        border-radius: 50%;
+        border: 2px solid rgba(255, 216, 118, 0.85);
+        transform: translate(-50%, -50%) scale(0.35);
+        opacity: 0;
+        box-shadow: 0 0 18px rgba(255, 196, 79, 0.35);
+        animation: battle-impact-ring 0.26s ease-out forwards;
+      }
+
+      @keyframes battle-impact-ring {
+        0% {
+          opacity: 0.95;
+          transform: translate(-50%, -50%) scale(0.35);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(2.6);
+        }
       }
 
       .lfx {
@@ -2978,46 +3127,132 @@
       .dmg-float {
         position: fixed;
         pointer-events: none;
-        font-family: "Cinzel Decorative", serif;
-        font-weight: 700;
-        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
+        font-weight: 900;
         z-index: 9999;
-        animation: dmg-float-up 0.9s ease forwards;
         white-space: nowrap;
-        line-height: 1;
+        line-height: 0.95;
+        letter-spacing: 0.4px;
+        transform-origin: center center;
+        will-change: transform, opacity, filter;
+        filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.5))
+          drop-shadow(0 8px 14px rgba(0, 0, 0, 0.28));
+        animation: dmg-float-up 1.05s cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
+        -webkit-text-stroke: 1.6px rgba(18, 8, 18, 0.88);
+        text-shadow:
+          0 2px 0 rgba(0, 0, 0, 0.42),
+          0 0 10px rgba(255, 255, 255, 0.04);
       }
       .dmg-float.dmg {
-        font-size: 15px;
-        color: #ff4444;
+        font-size: 23px;
+        color: #ff6b66;
+        text-shadow:
+          0 2px 0 rgba(0, 0, 0, 0.42),
+          0 0 14px rgba(255, 90, 90, 0.16);
       }
       .dmg-float.crit {
-        font-size: 20px;
-        color: #ffd700;
+        font-size: 42px; /* maior que o dano normal */
+        color: #ffd54f;
+
+        /* contorno forte */
+        -webkit-text-stroke: 2px rgba(20, 10, 10, 0.9);
+
+        /* brilho e impacto */
         text-shadow:
-          0 0 10px rgba(255, 200, 0, 0.9),
-          0 2px 6px rgba(0, 0, 0, 0.8);
+          0 3px 0 rgba(0, 0, 0, 0.5),
+          0 0 12px rgba(255, 200, 0, 0.6),
+          0 0 24px rgba(255, 120, 0, 0.35);
+
+        animation:
+          critImpact 420ms ease-out,
+          dmg-float-up 900ms ease-out forwards;
       }
       .dmg-float.heal {
-        font-size: 14px;
-        color: #44ee88;
+        font-size: 22px;
+        color: #74ffab;
+        filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.5))
+          drop-shadow(0 0 14px rgba(60, 255, 150, 0.22));
+        text-shadow:
+          0 2px 0 rgba(0, 0, 0, 0.42),
+          0 0 12px rgba(60, 255, 150, 0.2);
+        animation: dmg-float-heal 1.12s cubic-bezier(0.18, 0.82, 0.2, 1)
+          forwards;
       }
 
       @keyframes dmg-float-up {
         0% {
-          opacity: 1;
-          transform: translateY(0) scale(1);
+          opacity: 0;
+          transform: translateY(0) scale(0.42);
         }
-        15% {
+        14% {
           opacity: 1;
-          transform: translateY(-6px) scale(1.15);
+          transform: translateY(-8px) scale(1.18);
         }
-        80% {
-          opacity: 0.8;
-          transform: translateY(-36px) scale(1);
+        34% {
+          opacity: 1;
+          transform: translateY(-18px) scale(1);
+        }
+        78% {
+          opacity: 0.86;
+          transform: translateY(-42px) scale(0.98);
         }
         100% {
           opacity: 0;
-          transform: translateY(-48px) scale(0.85);
+          transform: translateY(-58px) scale(0.88);
+        }
+      }
+
+      @keyframes dmg-float-crit {
+        0% {
+          opacity: 0;
+          transform: translateY(0) scale(0.28) rotate(-6deg);
+        }
+        10% {
+          opacity: 1;
+          transform: translateY(-10px) scale(1.34) rotate(3deg);
+        }
+        18% {
+          opacity: 1;
+          transform: translateY(-14px) scale(1.2) rotate(-2deg);
+        }
+        34% {
+          opacity: 1;
+          transform: translateY(-24px) scale(1.04) rotate(1deg);
+        }
+        80% {
+          opacity: 0.9;
+          transform: translateY(-50px) scale(0.98) rotate(0deg);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-68px) scale(0.9) rotate(0deg);
+        }
+      }
+
+      @keyframes dmg-float-heal {
+        0% {
+          opacity: 0;
+          transform: translateY(0) scale(0.5);
+        }
+        18% {
+          opacity: 1;
+          transform: translateY(-8px) scale(1.12);
+        }
+        42% {
+          opacity: 1;
+          transform: translateY(-22px) scale(1);
+        }
+        82% {
+          opacity: 0.88;
+          transform: translateY(-48px) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-62px) scale(0.94);
         }
       }
 
@@ -3817,7 +4052,8 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
-      const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
+      //const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
+      const ARENAS = ["arena-forest", "arena-desert"];
       const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
       document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
 
@@ -5088,15 +5324,72 @@
           el.classList.add(cls);
           setTimeout(() => el.classList.remove(cls), 600);
         }
-        function spawnFloat(el, text, type) {
+
+        function getCenter(el) {
           const r = el.getBoundingClientRect();
+          return {
+            x: r.left + r.width * 0.5,
+            y: r.top + r.height * 0.5,
+            topY: r.top + r.height * 0.2,
+          };
+        }
+
+        function spawnFloat(el, text, type) {
+          const c = getCenter(el);
           const d = document.createElement("span");
           d.className = "dmg-float " + type;
           d.textContent = text;
-          d.style.left = r.left + r.width * 0.5 - 12 + "px";
-          d.style.top = r.top + r.height * 0.2 + "px";
+          d.style.left = c.x - 12 + "px";
+          d.style.top = c.topY + "px";
           document.body.appendChild(d);
           setTimeout(() => d.remove(), 950);
+        }
+
+        function spawnImpact(el) {
+          if (!el) return;
+          const c = getCenter(el);
+          const ring = document.createElement("span");
+          ring.className = "battle-impact";
+          ring.style.setProperty("--impact-x", c.x + "px");
+          ring.style.setProperty("--impact-y", c.y - 8 + "px");
+          document.body.appendChild(ring);
+          setTimeout(() => ring.remove(), 320);
+        }
+
+        function spawnProjectile(srcEl, tgtEl) {
+          if (!srcEl || !tgtEl) return;
+          const from = getCenter(srcEl);
+          const to = getCenter(tgtEl);
+          const p = document.createElement("span");
+          p.className = "battle-projectile";
+          p.style.setProperty("--start-x", from.x + "px");
+          p.style.setProperty("--start-y", from.y + "px");
+          p.style.setProperty("--travel-x", to.x - from.x + "px");
+          p.style.setProperty("--travel-y", to.y - from.y + "px");
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 420);
+        }
+
+        function animateAttack(attackerEl, targetEl, attackerUnit) {
+          if (!attackerEl || !targetEl || !attackerUnit) return;
+          const from = getCenter(attackerEl);
+          const to = getCenter(targetEl);
+          const dx = to.x - from.x;
+          const dy = to.y - from.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          const reach = Math.min(44, dist * 0.24);
+          attackerEl.style.setProperty("--atk-dx", (dx / dist) * reach + "px");
+          attackerEl.style.setProperty("--atk-dy", (dy / dist) * reach + "px");
+          attackerEl.classList.remove("atk-melee", "atk-ranged");
+          void attackerEl.offsetWidth;
+          if (attackerUnit.tp === "ranged") {
+            attackerEl.classList.add("atk-ranged");
+            spawnProjectile(attackerEl, targetEl);
+            setTimeout(() => spawnImpact(targetEl), 300);
+          } else {
+            attackerEl.classList.add("atk-melee");
+            setTimeout(() => spawnImpact(targetEl), 150);
+          }
         }
 
         function updHp(u, isHeal = false) {
@@ -5182,7 +5475,9 @@
             } else if (ev.type === "atk" && t) {
               dHp[t.id] = Math.max(0, dHp[t.id] - ev.amt);
               updHp(t);
+              const attackerEl = u && gEl(u);
               const e2 = gEl(t);
+              if (attackerEl && e2 && u) animateAttack(attackerEl, e2, u);
               if (e2) {
                 if (ev.isCrit) {
                   flashUnit(e2, "vfx-crit");
@@ -5206,11 +5501,14 @@
             } else if (ev.type === "kill" && t) {
               dHp[t.id] = 0;
               updHp(t);
+              const attackerEl = u && gEl(u);
               const e2 = gEl(t);
+              if (attackerEl && e2 && u) animateAttack(attackerEl, e2, u);
               if (e2) {
                 e2.classList.remove("hit");
                 void e2.offsetWidth;
                 e2.classList.add("hit");
+                spawnImpact(e2);
               }
               setTimeout(() => {
                 const e3 = gEl(t);
