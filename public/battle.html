@@ -2005,29 +2005,6 @@
         display: none;
       }
 
-      .bsell-hint {
-        position: absolute;
-        top: 3px;
-        left: 3px;
-        font-size: calc(7px * var(--s));
-        font-weight: 800;
-        line-height: 1.4;
-        white-space: nowrap;
-        background: rgba(0, 0, 0, 0.55);
-        border-radius: 4px;
-        padding: 1px 3px;
-        opacity: 0.8;
-        pointer-events: auto;
-        cursor: pointer;
-        color: #ffdd55;
-        transition: opacity 0.15s, filter 0.15s;
-      }
-
-      .bcard:hover .bsell-hint {
-        opacity: 1;
-        filter: brightness(1.25);
-      }
-
       .bcard.new-copy {
         animation: copyadd 0.5s;
       }
@@ -2216,24 +2193,6 @@
         box-shadow:
           inset 0 0 40px rgba(0, 0, 0, 0.3),
           inset 0 1px 0 rgba(255, 255, 255, 0.04);
-      }
-
-      #log::before {
-        content: "";
-        position: sticky;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 24px;
-        background: linear-gradient(
-          to bottom,
-          rgba(4, 2, 18, 0.7),
-          transparent
-        );
-        display: block;
-        pointer-events: none;
-        margin-bottom: -24px;
-        z-index: 2;
       }
 
       .le {
@@ -2909,17 +2868,6 @@
         100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
       }
 
-      /* Bench card sell exit: red shrink-fade */
-      .bcard.bcard-sell-exit {
-        animation: bcard-sell-out 0.22s ease forwards;
-        pointer-events: none !important;
-      }
-      @keyframes bcard-sell-out {
-        0%   { opacity: 1; transform: scale(1);    filter: brightness(1); }
-        35%  { opacity: 0.8; transform: scale(1.05); filter: brightness(1.8) hue-rotate(340deg) saturate(0.4); }
-        100% { opacity: 0; transform: scale(0.72) translateY(8px); filter: brightness(0.5); }
-      }
-
       /* ════════════════════════════════════════
    PHASE 4 — COMBAT VFX
    ════════════════════════════════════════ */
@@ -3431,13 +3379,6 @@
               become much more powerful.
             </div>
           </div>
-          <div class="htp-tip">
-            <span class="htp-tip-ico">⚠️</span>
-            <div>
-              Selling a card gives gold based on its level. Unmerged copies are
-              lost.
-            </div>
-          </div>
         </div>
         <div class="htp-h2">🧙 Characters</div>
         <table class="htp-table">
@@ -3530,7 +3471,6 @@
       let CK = []; // array of cid strings
       let _deckPool = null; // cids restricted to active formation (null = all heroes)
       const LS = ["", "★", "★★", "★★★", "★★★★", "★★★★★"];
-      const SELL = [0, 1, 2, 4, 7, 11];
       const BARRACKS_MAX = 5;
 
       function BENCH_SLOTS() {
@@ -3555,7 +3495,6 @@
         initial_gold: 7,
         value_buy_card: 3,
         value_new_recruitment: 2,
-        value_sell_card: 1,
         value_chance_combo3: 0.1,
         value_gold_combo3: 2,
         value_chance_combo2: 0.3,
@@ -3952,7 +3891,7 @@
 
       function _addToBench(card, cost, silent) {
         if (!canAddNewHero(card.cid)) {
-          if (!silent) log("❌ Barracks full! Place or sell a card.", "lk");
+          if (!silent) log("❌ Barracks full! Place a card on the field first.", "lk");
           return false;
         }
         const benchIdx = G.bench.findIndex((u) => u.cid === card.cid);
@@ -4095,28 +4034,6 @@
         render();
       }
 
-      function sellBench(cid) {
-        if (G.phase !== "shop") return;
-        const idx = G.bench.findIndex((u) => u.cid === cid);
-        if (idx < 0) return;
-
-        // Proteção: não venda se tem em campo
-        if (G.board.some((u) => u && u.cid === cid)) {
-          log("❌ Remove from field before selling!", "lk");
-          return;
-        }
-
-        const u = G.bench[idx],
-          val = SELL[u.lv];
-        const sellEl = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
-        if (sellEl) sellEl.classList.add("bcard-sell-exit");
-        G.gold += val;
-        G.bench.splice(idx, 1);
-        if (G.bsel === cid) G.bsel = null;
-        log(`💸 Sold ${u.name} ${LS[u.lv]} for ${val}💰`, "la");
-        setTimeout(() => render(), 230);
-      }
-
       function betweenIncome() {
         return 1 + G.battleNum;
       }
@@ -4160,12 +4077,8 @@
         } else if (distinctHeroes() < BENCH_SLOTS()) {
           G.bench.push({ ...u });
         } else {
-          const val = SELL[u.lv];
-          G.gold += val;
-          log(
-            `💸 Barracks full! ${u.name} ${LS[u.lv]} auto-sold (+${val}💰)`,
-            "la",
-          );
+          G.board[i] = u;
+          log("❌ Barracks full!", "lk");
         }
         render();
       }
@@ -6598,7 +6511,7 @@
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="bsell-hint" title="Sell +${SELL[u.lv]}💰">${u.stack > 1 ? "⚠️" : "💰"}+${SELL[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="crole">${u.role}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
 
             if (active) {
               card.addEventListener("click", () => {
@@ -6626,17 +6539,6 @@
 
             // ✅ ADICIONAR ISTO FORA do if(active), DEPOIS de appendChild
             row.appendChild(card);
-
-            // ✅ Agora sim, pode selecionar elementos dentro de card
-            if (active) {
-              const sellHint = card.querySelector(".bsell-hint");
-              if (sellHint) {
-                sellHint.addEventListener("click", (e) => {
-                  e.stopPropagation();
-                  sellBench(u.cid);
-                });
-              }
-            }
 
             row.appendChild(card);
 

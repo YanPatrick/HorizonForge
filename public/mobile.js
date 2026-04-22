@@ -18,55 +18,54 @@
     document.body.appendChild(rotateOverlay);
   }
 
-  /* ─── Log overlay (all platforms) ─────────────────────────
+  /* ─── Log overlay (touch only) ────────────────────────────
      Slide-up bottom sheet holding the battle log (#log).
-     #log is moved here from #center-col on DOMContentLoaded.
+     Only on touch devices — desktop keeps #log inline in #center-col.
   ─────────────────────────────────────────────────────────── */
-  var logOverlay = document.createElement('div');
-  logOverlay.id = 'mobile-log-overlay';
-  logOverlay.innerHTML =
-    '<div class="mlo-header">' +
-      '<span class="mlo-title">Battle Log</span>' +
-      '<button id="mobile-log-close" type="button">✕</button>' +
-    '</div>';
-  document.body.appendChild(logOverlay);
+  if (isTouch) {
+    var logOverlay = document.createElement('div');
+    logOverlay.id = 'mobile-log-overlay';
+    logOverlay.innerHTML =
+      '<div class="mlo-header">' +
+        '<span class="mlo-title">Battle Log</span>' +
+        '<button id="mobile-log-close" type="button">✕</button>' +
+      '</div>';
+    document.body.appendChild(logOverlay);
 
-  function setupLog() {
-    var log = document.getElementById('log');
-    if (log) logOverlay.appendChild(log);
+    function setupLog() {
+      var log = document.getElementById('log');
+      if (log) logOverlay.appendChild(log);
 
-    var closeBtn = document.getElementById('mobile-log-close');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function () {
-        logOverlay.classList.remove('open');
-      });
+      var closeBtn = document.getElementById('mobile-log-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          logOverlay.classList.remove('open');
+        });
+      }
     }
-  }
 
-  /* ─── Log toggle button in header (all platforms) ──────────
-     Appended to #hdr so it sits next to existing header items.
-  ─────────────────────────────────────────────────────────── */
-  function injectLogBtn() {
-    var hdr = document.getElementById('hdr');
-    if (!hdr) return;
-    var btn = document.createElement('button');
-    btn.id = 'mobile-log-btn';
-    btn.setAttribute('type', 'button');
-    btn.textContent = '▼ Log';
-    btn.addEventListener('click', function () {
-      logOverlay.classList.toggle('open');
-    });
-    hdr.appendChild(btn);
-  }
+    function injectLogBtn() {
+      var hdr = document.getElementById('hdr');
+      if (!hdr) return;
+      var btn = document.createElement('button');
+      btn.id = 'mobile-log-btn';
+      btn.setAttribute('type', 'button');
+      btn.textContent = '▼ Log';
+      btn.addEventListener('click', function () {
+        logOverlay.classList.toggle('open');
+      });
+      hdr.appendChild(btn);
+    }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
+        setupLog();
+        injectLogBtn();
+      });
+    } else {
       setupLog();
       injectLogBtn();
-    });
-  } else {
-    setupLog();
-    injectLogBtn();
+    }
   }
 
   /* ─── Tap-select cell highlight (touch only) ───────────────
