@@ -34,11 +34,11 @@
         --purple: #cc88ff;
         /* Layout sizes */
         --tp-w: calc(150px * var(--s));
-        --cell-w: calc(118px * var(--s));
-        --cell-h: calc(108px * var(--s));
+        --cell-w: clamp(80px, calc(118px * var(--s)), 160px);
+        --cell-h: clamp(72px, calc(108px * var(--s)), 148px);
         --field-gap: calc(4px * var(--s));
         --field-pad: calc(8px * var(--s));
-        --bottom-h: calc(200px * var(--s));
+        --bottom-h: clamp(150px, calc(200px * var(--s)), 280px);
         --bench-w: calc(540px * var(--s));
         --shop-w: calc(500px * var(--s));
         --card-w: calc(90px * var(--s));
@@ -1117,7 +1117,7 @@
         border-radius: calc(7px * var(--s));
         background: linear-gradient(
           160deg,
-          rgba(255, 255, 255, 0.10) 0%,
+          rgba(255, 255, 255, 0.1) 0%,
           transparent 60%
         );
         pointer-events: none;
@@ -1131,7 +1131,11 @@
         transform: translateX(-50%);
         width: 65%;
         height: 12px;
-        background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35), transparent 70%);
+        background: radial-gradient(
+          ellipse,
+          rgba(0, 0, 0, 0.35),
+          transparent 70%
+        );
         filter: blur(5px);
         opacity: 0.7;
         pointer-events: none;
@@ -1169,7 +1173,9 @@
       .uhf {
         height: 100%;
         border-radius: 999px;
-        transition: width 0.25s ease-out, filter 0.4s ease;
+        transition:
+          width 0.25s ease-out,
+          filter 0.4s ease;
       }
 
       .uhf.hi {
@@ -2842,10 +2848,22 @@
         animation: scard-buy-burst 0.35s ease forwards;
       }
       @keyframes scard-buy-burst {
-        0%   { filter: brightness(1)   saturate(1); transform: scale(1); }
-        25%  { filter: brightness(3.5) saturate(0) sepia(1) hue-rotate(-20deg); transform: scale(1.08); }
-        60%  { filter: brightness(1.8) saturate(2); transform: scale(0.97); }
-        100% { filter: brightness(1);  transform: scale(1); }
+        0% {
+          filter: brightness(1) saturate(1);
+          transform: scale(1);
+        }
+        25% {
+          filter: brightness(3.5) saturate(0) sepia(1) hue-rotate(-20deg);
+          transform: scale(1.08);
+        }
+        60% {
+          filter: brightness(1.8) saturate(2);
+          transform: scale(0.97);
+        }
+        100% {
+          filter: brightness(1);
+          transform: scale(1);
+        }
       }
 
       /* Shop reroll: newly generated cards shimmer in */
@@ -2853,9 +2871,17 @@
         animation: scard-enter-new 0.42s cubic-bezier(0.22, 0.68, 0, 1.15) both;
       }
       @keyframes scard-enter-new {
-        0%   { filter: brightness(2.8) saturate(0); transform: scaleY(0.88); }
-        45%  { filter: brightness(1.5) saturate(1.5); }
-        100% { filter: brightness(1);  transform: scaleY(1); }
+        0% {
+          filter: brightness(2.8) saturate(0);
+          transform: scaleY(0.88);
+        }
+        45% {
+          filter: brightness(1.5) saturate(1.5);
+        }
+        100% {
+          filter: brightness(1);
+          transform: scaleY(1);
+        }
       }
 
       /* New bench card entrance (brand-new recruit, not a stack) */
@@ -2863,9 +2889,20 @@
         animation: bcard-enter-in 0.42s cubic-bezier(0.22, 0.68, 0, 1.2) both;
       }
       @keyframes bcard-enter-in {
-        0%   { opacity: 0; transform: scale(0.62) translateY(10px); filter: brightness(2.5) saturate(0); }
-        55%  { opacity: 1; filter: brightness(1.4); }
-        100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+        0% {
+          opacity: 0;
+          transform: scale(0.62) translateY(10px);
+          filter: brightness(2.5) saturate(0);
+        }
+        55% {
+          opacity: 1;
+          filter: brightness(1.4);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+          filter: brightness(1);
+        }
       }
 
       /* ════════════════════════════════════════
@@ -2877,10 +2914,22 @@
         animation: vfx-crit-pop 0.45s cubic-bezier(0.22, 0.68, 0, 1.3) forwards;
       }
       @keyframes vfx-crit-pop {
-        0%   { transform: scale(1);    filter: brightness(1); }
-        25%  { transform: scale(1.35); filter: brightness(2.2) sepia(1) hue-rotate(-20deg) saturate(4); }
-        60%  { transform: scale(0.92); filter: brightness(1.4); }
-        100% { transform: scale(1);    filter: brightness(1); }
+        0% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
+        25% {
+          transform: scale(1.35);
+          filter: brightness(2.2) sepia(1) hue-rotate(-20deg) saturate(4);
+        }
+        60% {
+          transform: scale(0.92);
+          filter: brightness(1.4);
+        }
+        100% {
+          transform: scale(1);
+          filter: brightness(1);
+        }
       }
 
       /* Heal flash: green glow */
@@ -2888,9 +2937,18 @@
         animation: vfx-heal-glow 0.5s ease forwards;
       }
       @keyframes vfx-heal-glow {
-        0%   { filter: brightness(1); box-shadow: none; }
-        30%  { filter: brightness(1.6) hue-rotate(80deg) saturate(2.5); box-shadow: 0 0 18px 6px rgba(60,220,100,0.7); }
-        100% { filter: brightness(1); box-shadow: none; }
+        0% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
+        30% {
+          filter: brightness(1.6) hue-rotate(80deg) saturate(2.5);
+          box-shadow: 0 0 18px 6px rgba(60, 220, 100, 0.7);
+        }
+        100% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
       }
 
       /* Skill burst: violet ring */
@@ -2898,33 +2956,69 @@
         animation: vfx-skill-burst 0.55s ease forwards;
       }
       @keyframes vfx-skill-burst {
-        0%   { filter: brightness(1); box-shadow: none; }
-        20%  { filter: brightness(2.0) hue-rotate(220deg) saturate(3); box-shadow: 0 0 22px 8px rgba(160,80,255,0.75); }
-        70%  { filter: brightness(1.2); box-shadow: 0 0 8px 2px rgba(160,80,255,0.3); }
-        100% { filter: brightness(1); box-shadow: none; }
+        0% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
+        20% {
+          filter: brightness(2) hue-rotate(220deg) saturate(3);
+          box-shadow: 0 0 22px 8px rgba(160, 80, 255, 0.75);
+        }
+        70% {
+          filter: brightness(1.2);
+          box-shadow: 0 0 8px 2px rgba(160, 80, 255, 0.3);
+        }
+        100% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
       }
 
       /* Floating damage / heal numbers */
       .dmg-float {
         position: fixed;
         pointer-events: none;
-        font-family: 'Cinzel Decorative', serif;
+        font-family: "Cinzel Decorative", serif;
         font-weight: 700;
-        text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
         z-index: 9999;
         animation: dmg-float-up 0.9s ease forwards;
         white-space: nowrap;
         line-height: 1;
       }
-      .dmg-float.dmg  { font-size: 15px; color: #ff4444; }
-      .dmg-float.crit { font-size: 20px; color: #ffd700; text-shadow: 0 0 10px rgba(255,200,0,0.9), 0 2px 6px rgba(0,0,0,0.8); }
-      .dmg-float.heal { font-size: 14px; color: #44ee88; }
+      .dmg-float.dmg {
+        font-size: 15px;
+        color: #ff4444;
+      }
+      .dmg-float.crit {
+        font-size: 20px;
+        color: #ffd700;
+        text-shadow:
+          0 0 10px rgba(255, 200, 0, 0.9),
+          0 2px 6px rgba(0, 0, 0, 0.8);
+      }
+      .dmg-float.heal {
+        font-size: 14px;
+        color: #44ee88;
+      }
 
       @keyframes dmg-float-up {
-        0%   { opacity: 1;   transform: translateY(0)   scale(1); }
-        15%  { opacity: 1;   transform: translateY(-6px) scale(1.15); }
-        80%  { opacity: 0.8; transform: translateY(-36px) scale(1); }
-        100% { opacity: 0;   transform: translateY(-48px) scale(0.85); }
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        15% {
+          opacity: 1;
+          transform: translateY(-6px) scale(1.15);
+        }
+        80% {
+          opacity: 0.8;
+          transform: translateY(-36px) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-48px) scale(0.85);
+        }
       }
 
       /* ════════════════════════════════════════
@@ -3434,6 +3528,30 @@
     <!-- ══════════════════ GAME LOGIC ══════════════════ -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      // ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
+      const BASE_W = 1280; // resolução de referência (seu design base)
+      const BASE_H = 720;
+
+      function updateScale() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Escala limitada entre 0.6 e 1.5 para não ficar absurdo
+        const scaleW = vw / BASE_W;
+        const scaleH = vh / BASE_H;
+        const scale = Math.min(scaleW, scaleH, 1.5);
+        const finalScale = Math.max(scale, 0.6);
+
+        document.documentElement.style.setProperty(
+          "--s",
+          finalScale.toFixed(4),
+        );
+      }
+
+      // Dispara ao carregar e a cada resize
+      updateScale();
+      window.addEventListener("resize", updateScale);
+
       // ── Auth & battle config injected by lobby ──────────
       (function () {
         const session = (function () {
@@ -3702,7 +3820,13 @@
       const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
       const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
       document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
-      document.body.style.backgroundSize = "100% 100%";
+
+      // ❌ Antes — estica e distorce a imagem
+      //document.body.style.backgroundSize = "100% 100%";
+
+      // ✅ Depois — mantém proporção e preenche a tela
+      document.body.style.backgroundSize = "cover";
+      document.body.style.backgroundPosition = "center center";
 
       let G = {
         format: 3,
@@ -3891,7 +4015,8 @@
 
       function _addToBench(card, cost, silent) {
         if (!canAddNewHero(card.cid)) {
-          if (!silent) log("❌ Barracks full! Place a card on the field first.", "lk");
+          if (!silent)
+            log("❌ Barracks full! Place a card on the field first.", "lk");
           return false;
         }
         const benchIdx = G.bench.findIndex((u) => u.cid === card.cid);
@@ -3991,7 +4116,9 @@
           log(`❌ Need ${cost}💰! You have ${G.gold}💰`, "lk");
           return;
         }
-        const shopEl = document.querySelector(`#shoprow .scard[data-uid="${card.id}"]`);
+        const shopEl = document.querySelector(
+          `#shoprow .scard[data-uid="${card.id}"]`,
+        );
         if (shopEl) shopEl.classList.add("scard-buy-flash");
         if (!_addToBench(card, cost, false)) return;
         G.gold -= cost;
@@ -4014,7 +4141,9 @@
           return;
         }
         combo.idxs.forEach((ci) => {
-          const el = document.querySelector(`#shoprow .scard[data-uid="${G.shop[ci]?.id}"]`);
+          const el = document.querySelector(
+            `#shoprow .scard[data-uid="${G.shop[ci]?.id}"]`,
+          );
           if (el) el.classList.add("scard-buy-flash");
         });
         G.gold -= cost;
@@ -4471,7 +4600,7 @@
           // No mobile vertical (player embaixo, inimigo em cima) as linhas são espelhadas:
           // pfield row 0 = frente do player (topo, perto do VS) ↔ efield row 2 = frente inimiga.
           // Por isso invertemos o índice de busca com (2 - unitRow) quando mobileVertical.
-          const searchRow = window.mobileVertical ? (2 - unitRow) : unitRow;
+          const searchRow = window.mobileVertical ? 2 - unitRow : unitRow;
           if (searchRow === 0) {
             return bestInRow(0) || bestInRow(1) || bestInRow(2) || null;
           }
@@ -4964,8 +5093,8 @@
           const d = document.createElement("span");
           d.className = "dmg-float " + type;
           d.textContent = text;
-          d.style.left = (r.left + r.width * 0.5 - 12) + "px";
-          d.style.top  = (r.top  + r.height * 0.2) + "px";
+          d.style.left = r.left + r.width * 0.5 - 12 + "px";
+          d.style.top = r.top + r.height * 0.2 + "px";
           document.body.appendChild(d);
           setTimeout(() => d.remove(), 950);
         }
@@ -6418,7 +6547,7 @@
             el.offsetWidth;
           }
           el.className = `scard${isCombo ? " combo-card" : ""}${isAtMax ? " maxed" : canBuy ? " buyable" : " broke"}${isNew ? " scard-new" : ""}`;
-          if (isNew) el.style.animationDelay = (i * 55) + "ms";
+          if (isNew) el.style.animationDelay = i * 55 + "ms";
           el.innerHTML = inner;
           el.style.background = cc.bg;
           el.style.borderColor = isCombo ? "#44ff88" : cc.col;
@@ -6494,7 +6623,7 @@
             if (isNewRecruit) G._newBenchCids.delete(u.cid);
             const card = document.createElement("div");
             card.className = `bcard${isSel ? " bsel" : ""}${isNewRecruit ? " bcard-enter" : ""}`;
-            if (isNewRecruit) card.style.animationDelay = (bi * 40) + "ms";
+            if (isNewRecruit) card.style.animationDelay = bi * 40 + "ms";
             card.dataset.cid = u.cid;
             card.style.cssText = `background:${cc.bg};border-color:${isSel ? "#88ccff" : cc.col}`;
             const dotColor =
