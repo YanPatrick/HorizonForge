@@ -567,6 +567,97 @@
           forwards;
       }
 
+      .sneak-smoke {
+        position: fixed;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 10000;
+        transform: translate(-50%, -50%);
+        opacity: 0;
+        background: radial-gradient(
+          circle at 35% 35%,
+          rgba(90, 90, 90, 0.85) 0%,
+          rgba(30, 30, 30, 0.88) 48%,
+          rgba(0, 0, 0, 0.05) 100%
+        );
+        box-shadow:
+          0 0 16px rgba(0, 0, 0, 0.55),
+          0 0 28px rgba(20, 20, 20, 0.32);
+        animation: sneak-smoke-travel calc(0.62s * var(--battle-speed-mult))
+          cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
+      }
+
+      @keyframes sneak-smoke-travel {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) translate(0, 0) scale(0.45);
+          filter: blur(1px);
+        }
+        14% {
+          opacity: 1;
+          transform: translate(-50%, -50%)
+            translate(calc(var(--dx) * 0.08), calc(var(--dy) * 0.08)) scale(1);
+          filter: blur(0px);
+        }
+        84% {
+          opacity: 1;
+          transform: translate(-50%, -50%)
+            translate(calc(var(--dx) * 0.94), calc(var(--dy) * 0.94))
+            scale(1.08);
+          filter: blur(0px);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
+            scale(1.35);
+          filter: blur(2px);
+        }
+      }
+
+      .sneak-slash {
+        position: fixed;
+        width: 84px;
+        height: 6px;
+        border-radius: 999px;
+        pointer-events: none;
+        z-index: 10001;
+        transform: translate(-50%, -50%) rotate(var(--rot, -25deg)) scaleX(0.35);
+        opacity: 0;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.95) 18%,
+          rgba(240, 240, 240, 1) 50%,
+          rgba(255, 120, 120, 0.8) 78%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        box-shadow:
+          0 0 10px rgba(255, 255, 255, 0.55),
+          0 0 18px rgba(255, 120, 120, 0.25);
+        animation: sneak-slash-hit calc(0.2s * var(--battle-speed-mult))
+          ease-out forwards;
+      }
+
+      @keyframes sneak-slash-hit {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) rotate(var(--rot, -25deg))
+            scaleX(0.35);
+        }
+        25% {
+          opacity: 1;
+          transform: translate(-50%, -50%) rotate(var(--rot, -25deg))
+            scaleX(1.1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) rotate(var(--rot, -25deg))
+            scaleX(0.95);
+        }
+      }
+
       @keyframes impact-ring {
         0% {
           opacity: 0.95;
@@ -4879,16 +4970,23 @@
             .forEach((u) => {
               const targets = foeSide.filter((f) => f.alive);
               if (!targets.length) return;
+
               const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
-              dealDmg(u, t, Math.floor(u.atk * u.skillPower), false);
+              const sneakDmg = Math.floor(u.atk * u.skillPower);
+
               evs.push({
                 type: "ability",
                 uid: u.id,
+                targetId: t.id,
                 abilName: "Sneak Strike",
+                amount: sneakDmg,
                 tick: -1,
               });
+
+              dealDmg(u, t, sneakDmg, false);
             });
         }
+
         applySneak(ps, es);
         applySneak(es, ps);
 
@@ -5409,6 +5507,7 @@
           el.classList.add(cls);
           setTimeout(() => el.classList.remove(cls), getBattleFxDuration(600));
         }
+
         function spawnFloat(el, text, type) {
           const r = el.getBoundingClientRect();
           const d = document.createElement("span");
@@ -5498,8 +5597,71 @@
             () => {
               spawnImpact(targetEl);
             },
-            getBattleFxDuration(attackerUnit.tp === "ranged" ? 320 : 185)
+            getBattleFxDuration(attackerUnit.tp === "ranged" ? 320 : 185),
           );
+        }
+
+        function spawnSneakSmoke(attackerEl, targetEl) {
+          const a = getCenter(attackerEl);
+          const t = getCenter(targetEl);
+
+          const smoke = document.createElement("span");
+          smoke.className = "sneak-smoke";
+          smoke.style.left = a.x + "px";
+          smoke.style.top = a.y + "px";
+          smoke.style.setProperty("--dx", `${t.x - a.x}px`);
+          smoke.style.setProperty("--dy", `${t.y - a.y}px`);
+          document.body.appendChild(smoke);
+
+          setTimeout(() => smoke.remove(), getBattleFxDuration(760));
+        }
+
+        function spawnSneakSlash(targetEl, rotDeg = -25, ox = 0, oy = 0) {
+          const p = getCenter(targetEl);
+          const slash = document.createElement("span");
+          slash.className = "sneak-slash";
+          slash.style.left = `${p.x + ox}px`;
+          slash.style.top = `${p.y + oy}px`;
+          slash.style.setProperty("--rot", `${rotDeg}deg`);
+          document.body.appendChild(slash);
+
+          setTimeout(() => slash.remove(), getBattleFxDuration(260));
+        }
+
+        function playSneakStrike(attackerEl, targetEl, amount) {
+          if (!attackerEl || !targetEl) return;
+
+          attackerEl.style.opacity = "0.7";
+          spawnSneakSmoke(attackerEl, targetEl);
+
+          setTimeout(() => {
+            spawnSneakSlash(
+              targetEl,
+              -28 + Math.round(Math.random() * 10),
+              -6 + Math.round(Math.random() * 8),
+              -4 + Math.round(Math.random() * 8),
+            );
+          }, getBattleFxDuration(380));
+
+          setTimeout(() => {
+            spawnSneakSlash(
+              targetEl,
+              24 + Math.round(Math.random() * 12),
+              6 - Math.round(Math.random() * 8),
+              4 - Math.round(Math.random() * 8),
+            );
+            targetEl.classList.remove("hit");
+            void targetEl.offsetWidth;
+            targetEl.classList.add("hit");
+            flashUnit(targetEl, "vfx-crit");
+            spawnImpact(targetEl);
+            spawnFloat(targetEl, "−" + amount, "crit");
+            attackerEl.style.opacity = "";
+          }, getBattleFxDuration(500));
+
+          setTimeout(() => {
+            attackerEl.style.opacity = "";
+          }, getBattleFxDuration(900));
         }
 
         function updHp(u, isHeal = false) {
@@ -5547,6 +5709,7 @@
           }
           const el = tg[tks[fi++]];
           const seen = new Set();
+          let tickDelay = getBattleFrameDelay();
           el.forEach((ev) => {
             const u = umap[ev.uid],
               t = ev.tid && umap[ev.tid];
@@ -5560,7 +5723,13 @@
               seen.add(ev.uid + ev.abilName);
               if (ev.abilName === "Fury" && u) updAtk(u);
               const eSkill = u && gEl(u);
+              const target = ev.targetId ? umap[ev.targetId] : null;
+              const eTarget = target ? gEl(target) : null;
               if (eSkill) flashUnit(eSkill, "vfx-skill");
+              if (ev.abilName === "Sneak Strike" && eSkill && eTarget) {
+                playSneakStrike(eSkill, eTarget, ev.amount || 0);
+                tickDelay = Math.max(tickDelay, getBattleFxDuration(980));
+              }
               log(
                 (ABILOG[ev.abilName] || "✨ {n}: " + ev.abilName).replace(
                   "{n}",
@@ -5588,13 +5757,23 @@
 
               const eAtk = gEl(u);
               const e2 = gEl(t);
+              const prevAbility = el.find(
+                (x) =>
+                  x.type === "ability" &&
+                  x.abilName === "Sneak Strike" &&
+                  x.uid === ev.uid &&
+                  x.targetId === ev.tid,
+              );
+              const isSneakFollowup = !!prevAbility;
 
-              if (eAtk && e2) {
+              if (eAtk && e2 && !isSneakFollowup) {
                 animateAttack(eAtk, e2, u);
               }
 
               if (e2) {
-                if (ev.isCrit) {
+                if (isSneakFollowup) {
+                  // Sneak Strike already renders its own smoke, slashes, impact and float.
+                } else if (ev.isCrit) {
                   flashUnit(e2, "vfx-crit");
                   spawnFloat(e2, "−" + ev.amt, "crit");
                 } else {
@@ -5633,7 +5812,7 @@
               );
             }
           });
-          btimer = setTimeout(frame, getBattleFrameDelay());
+          btimer = setTimeout(frame, tickDelay);
         }
         frame();
       }
