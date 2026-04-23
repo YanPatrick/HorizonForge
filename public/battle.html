@@ -882,7 +882,11 @@
       }
 
       .vstxt {
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: calc(13px * var(--s));
         font-weight: 900;
         color: #ffdd66;
@@ -2214,7 +2218,11 @@
       .merge-badge {
         position: fixed;
         transform: translateX(-50%);
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: calc(12px * var(--s));
         font-weight: 900;
         color: #ffd700;
@@ -2276,7 +2284,11 @@
         font-weight: 800;
         letter-spacing: 0.4px;
         transition: all 0.22s;
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .btn:hover {
@@ -2450,7 +2462,11 @@
         font-size: 23px;
         font-weight: 900;
         margin-bottom: 4px;
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .dr-title.win {
@@ -2740,7 +2756,11 @@
       .htp-h1 {
         font-size: 19px;
         font-weight: 800;
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         background: linear-gradient(90deg, #ff88cc, #bb88ff, #88ccff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -2901,7 +2921,11 @@
         transition:
           opacity 0.18s ease,
           transform 0.18s cubic-bezier(0.22, 0.68, 0, 1.15);
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
       .skill-tip.stp-visible {
         opacity: 1;
@@ -2940,7 +2964,11 @@
         color: rgba(255, 212, 90, 0.97);
         letter-spacing: 0.35px;
         text-shadow: 0 0 16px rgba(255, 165, 45, 0.6);
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         line-height: 1.2;
       }
       .stp-divider {
@@ -3062,6 +3090,7 @@
       .unit.vfx-crit {
         animation: vfx-crit-pop 0.45s cubic-bezier(0.22, 0.68, 0, 1.3) forwards;
       }
+
       @keyframes vfx-crit-pop {
         0% {
           transform: scale(1);
@@ -3155,18 +3184,21 @@
           0 0 14px rgba(255, 90, 90, 0.16);
       }
       .dmg-float.crit {
-        font-size: 42px; /* maior que o dano normal */
+        font-size: 44px;
+        font-weight: 900;
+
         color: #ffd54f;
 
-        /* contorno forte */
+        /* contorno forte estilo jogo */
         -webkit-text-stroke: 2px rgba(20, 10, 10, 0.9);
 
-        /* brilho e impacto */
+        /* glow e impacto */
         text-shadow:
           0 3px 0 rgba(0, 0, 0, 0.5),
-          0 0 12px rgba(255, 200, 0, 0.6),
-          0 0 24px rgba(255, 120, 0, 0.35);
+          0 0 14px rgba(255, 200, 0, 0.6),
+          0 0 28px rgba(255, 120, 0, 0.35);
 
+        /* animação combinada */
         animation:
           critImpact 420ms ease-out,
           dmg-float-up 900ms ease-out forwards;
@@ -3206,7 +3238,22 @@
         }
       }
 
-      @keyframes dmg-float-crit {
+      @keyframes critImpact {
+        0% {
+          transform: scale(0.4) rotate(-6deg);
+        }
+        40% {
+          transform: scale(1.3) rotate(3deg);
+        }
+        70% {
+          transform: scale(1.1) rotate(-2deg);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /*@keyframes dmg-float-crit {
         0% {
           opacity: 0;
           transform: translateY(0) scale(0.28) rotate(-6deg);
@@ -3231,7 +3278,7 @@
           opacity: 0;
           transform: translateY(-68px) scale(0.9) rotate(0deg);
         }
-      }
+      }*/
 
       @keyframes dmg-float-heal {
         0% {
@@ -5481,7 +5528,7 @@
               if (e2) {
                 if (ev.isCrit) {
                   flashUnit(e2, "vfx-crit");
-                  spawnFloat(e2, "✦" + ev.amt, "crit");
+                  spawnFloat(e2, "−" + ev.amt, "crit");
                 } else {
                   e2.classList.remove("hit");
                   void e2.offsetWidth;
