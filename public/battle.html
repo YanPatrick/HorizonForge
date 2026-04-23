@@ -58,7 +58,11 @@
       body {
         background: #060310;
         color: #dde2ff;
-        font-family: "Exo 2", system-ui, sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         display: flex;
         flex-direction: column;
         height: 100dvh;
@@ -385,7 +389,11 @@
       }
 
       .qm-title {
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: 16px;
         font-weight: 800;
         color: rgba(255, 210, 90, 0.97);
@@ -415,7 +423,11 @@
         cursor: pointer;
         border: 1.5px solid;
         transition: all 0.18s;
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .qm-cancel {
@@ -1139,7 +1151,11 @@
       }
 
       .vstxt {
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: calc(13px * var(--s));
         font-weight: 900;
         color: #ffdd66;
@@ -2334,7 +2350,11 @@
       .merge-badge {
         position: fixed;
         transform: translateX(-50%);
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         font-size: calc(12px * var(--s));
         font-weight: 900;
         color: #ffd700;
@@ -2396,7 +2416,11 @@
         font-weight: 800;
         letter-spacing: 0.4px;
         transition: all 0.22s;
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .btn:hover {
@@ -2570,7 +2594,11 @@
         font-size: 23px;
         font-weight: 900;
         margin-bottom: 4px;
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
 
       .dr-title.win {
@@ -2860,7 +2888,11 @@
       .htp-h1 {
         font-size: 19px;
         font-weight: 800;
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         background: linear-gradient(90deg, #ff88cc, #bb88ff, #88ccff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -3021,7 +3053,11 @@
         transition:
           opacity 0.18s ease,
           transform 0.18s cubic-bezier(0.22, 0.68, 0, 1.15);
-        font-family: "Exo 2", sans-serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
       }
       .skill-tip.stp-visible {
         opacity: 1;
@@ -3060,7 +3096,11 @@
         color: rgba(255, 212, 90, 0.97);
         letter-spacing: 0.35px;
         text-shadow: 0 0 16px rgba(255, 165, 45, 0.6);
-        font-family: "Cinzel", serif;
+        font-family:
+          Inter,
+          Segoe UI,
+          Arial,
+          sans-serif;
         line-height: 1.2;
       }
       .stp-divider {
@@ -4228,8 +4268,8 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
-      //const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
-      const ARENAS = ["arena-forest", "arena-desert"];
+      const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
+      //const ARENAS = ["arena-forest", "arena-desert"];
       const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
       document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
 
