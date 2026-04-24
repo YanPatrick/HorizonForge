@@ -1,0 +1,156 @@
+/* Horizon Forge — Definitive Portrait Card CSS
+   Uso:
+   1) Coloque este arquivo em: /public/css/hf-portraits.css
+   2) No battle.html, adicione:
+      <link rel="stylesheet" href="/css/hf-portraits.css" />
+      depois do CSS principal.
+   3) Na .cportrait, defina:
+      style="--portrait-url: url('/images/heroes/knight.webp')"
+*/
+
+/* Base portrait zone: shop + bench cards */
+.cportrait {
+  width: 100%;
+  height: calc(90px * var(--s));
+  min-height: calc(90px * var(--s));
+  border-radius: calc(11px * var(--s));
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  background-color: rgba(8, 5, 24, 0.92);
+  background-image: var(--portrait-url, none);
+  background-size: cover;
+  background-position: center 10%;
+  background-repeat: no-repeat;
+
+  border: 1px solid rgba(255, 220, 130, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+.cportrait::before {
+  display: none;
+}
+
+/* Thin premium highlight line at bottom */
+.cportrait::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 1px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,214,100,0.92), transparent);
+  box-shadow: 0 0 8px rgba(255,190,80,0.42);
+}
+
+/* Emoji fallback while there is no real portrait */
+.cportrait .cico {
+  position: relative;
+  z-index: 3;
+  margin: 0 !important;
+  font-size: calc(35px * var(--s)) !important;
+  line-height: 1;
+  transform: translateY(calc(1px * var(--s)));
+  filter:
+    drop-shadow(0 3px 8px rgba(0,0,0,0.90))
+    drop-shadow(0 0 10px rgba(255,210,95,0.18)) !important;
+}
+
+/* When a real portrait exists, hide the emoji but keep structure intact */
+.cportrait.has-portrait .cico,
+.scard.has-portrait .cportrait .cico,
+.bcard.has-portrait .cportrait .cico {
+  opacity: 0;
+}
+
+/* Give cards a more collectible-game silhouette without breaking sizes */
+.scard,
+.bcard {
+  border-radius: calc(14px * var(--s));
+  overflow: visible;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.01) 34%),
+    linear-gradient(160deg, rgba(24,14,56,0.96), rgba(9,5,26,0.96));
+  box-shadow:
+    0 9px 18px rgba(0,0,0,0.28),
+    inset 0 0 0 1px rgba(255,255,255,0.055);
+}
+
+/* Inner shine, similar to premium mobile card UI */
+.scard::before,
+.bcard::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: calc(12px * var(--s));
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 34%, transparent 64%),
+    radial-gradient(circle at 50% 0%, rgba(255,220,120,0.10), transparent 46%);
+}
+
+/* Better hover: lift card, not only portrait */
+.scard:not(.sold):not(.maxed):not(.combo-card):hover,
+.bcard:not(.dragging):hover {
+  transform: translateY(calc(-7px * var(--s))) scale(1.035);
+  filter: brightness(1.12) saturate(1.06);
+}
+
+/* Rarity / level color support using existing level classes */
+.scard.l1 .cportrait, .bcard.l1 .cportrait {
+  border-color: rgba(130,150,170,0.30);
+}
+.scard.l2 .cportrait, .bcard.l2 .cportrait {
+  border-color: rgba(95,235,125,0.42);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -24px 28px rgba(0,0,0,0.62),
+    0 0 12px rgba(80,220,100,0.12);
+}
+.scard.l3 .cportrait, .bcard.l3 .cportrait {
+  border-color: rgba(92,155,255,0.48);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -24px 28px rgba(0,0,0,0.62),
+    0 0 13px rgba(80,140,255,0.16);
+}
+.scard.l4 .cportrait, .bcard.l4 .cportrait {
+  border-color: rgba(205,105,255,0.56);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    inset 0 -24px 28px rgba(0,0,0,0.62),
+    0 0 15px rgba(190,80,255,0.22);
+}
+.scard.l5 .cportrait, .bcard.l5 .cportrait {
+  border-color: rgba(255,205,70,0.70);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.10),
+    inset 0 -24px 28px rgba(0,0,0,0.62),
+    0 0 18px rgba(255,185,45,0.28);
+}
+
+/* Optional portrait art positioning per hero */
+.cportrait.portrait-high { background-position: center 8%; }
+.cportrait.portrait-mid { background-position: center 18%; }
+.cportrait.portrait-low { background-position: center 30%; }
+.cportrait.portrait-zoom { background-size: 116%; }
+
+/* Mobile: keep portraits readable but avoid cards becoming too tall */
+@media (max-width: 720px) {
+  .cportrait {
+    height: calc(52px * var(--s));
+    min-height: calc(52px * var(--s));
+    border-radius: calc(10px * var(--s));
+  }
+
+  .cportrait .cico {
+    font-size: calc(31px * var(--s)) !important;
+  }
+}

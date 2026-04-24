@@ -518,55 +518,98 @@
 
       .projectile {
         position: fixed;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
+        width: 18px;
+        height: 8px;
+        border-radius: 999px;
         pointer-events: none;
         z-index: 9999;
         transform: translate3d(-50%, -50%, 0);
         opacity: 0;
-        will-change: transform, opacity;
+        will-change: transform, opacity, filter;
+        contain: layout paint;
       }
 
       .projectile.ranged {
-        background: radial-gradient(
-          circle at 35% 35%,
-          #fff8d6 0%,
-          #ffd86a 36%,
-          #ff9a3d 68%,
-          rgba(255, 143, 61, 0.08) 100%
+        background: linear-gradient(
+          90deg,
+          rgba(255, 118, 35, 0) 0%,
+          rgba(255, 160, 48, 0.55) 28%,
+          #ffd76a 62%,
+          #fff9d8 100%
         );
         box-shadow:
-          0 0 10px rgba(255, 196, 79, 0.65),
-          0 0 18px rgba(255, 126, 35, 0.25);
-        animation: projectile-travel calc(0.32s * var(--battle-speed-mult))
-          cubic-bezier(0.12, 0.78, 0.18, 1) forwards;
+          0 0 8px rgba(255, 211, 95, 0.85),
+          0 0 18px rgba(255, 126, 35, 0.35),
+          0 0 30px rgba(255, 95, 25, 0.16);
+        filter: drop-shadow(0 0 5px rgba(255, 198, 72, 0.45));
+        animation: projectile-travel calc(0.26s * var(--battle-speed-mult))
+          cubic-bezier(0.16, 0.84, 0.22, 1) forwards;
+      }
+
+      .projectile.ranged::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 58%;
+        width: clamp(22px, calc(var(--dist, 160px) * 0.18), 46px);
+        height: 4px;
+        border-radius: 999px;
+        transform: translateY(-50%);
+        background: linear-gradient(
+          90deg,
+          rgba(255, 130, 30, 0) 0%,
+          rgba(255, 150, 42, 0.1) 20%,
+          rgba(255, 190, 75, 0.42) 72%,
+          rgba(255, 244, 190, 0.78) 100%
+        );
+        filter: blur(0.4px);
+      }
+
+      .projectile.ranged::after {
+        content: "";
+        position: absolute;
+        right: -2px;
+        top: 50%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        transform: translateY(-50%);
+        background: radial-gradient(
+          circle,
+          #fffdf0 0%,
+          #ffe48a 45%,
+          rgba(255, 150, 46, 0.25) 78%,
+          rgba(255, 150, 46, 0) 100%
+        );
+        box-shadow: 0 0 12px rgba(255, 226, 120, 0.75);
       }
 
       @keyframes projectile-travel {
         0% {
           opacity: 0;
-          transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0) scale(0.55);
+          transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0)
+            rotate(var(--rot, 0deg)) scaleX(0.45) scaleY(0.75);
         }
 
-        8% {
+        6% {
           opacity: 1;
           transform: translate3d(-50%, -50%, 0)
-            translate3d(calc(var(--dx) * 0.08), calc(var(--dy) * 0.08), 0)
-            scale(1);
+            translate3d(calc(var(--dx) * 0.06), calc(var(--dy) * 0.06), 0)
+            rotate(var(--rot, 0deg)) scaleX(0.95) scaleY(1);
         }
 
-        88% {
+        82% {
           opacity: 1;
           transform: translate3d(-50%, -50%, 0)
-            translate3d(calc(var(--dx) * 0.96), calc(var(--dy) * 0.96), 0)
-            scale(0.95);
+            translate3d(calc(var(--dx) * 0.92), calc(var(--dy) * 0.92), 0)
+            rotate(var(--rot, 0deg)) scaleX(1.08) scaleY(1);
         }
 
         100% {
           opacity: 0;
           transform: translate3d(-50%, -50%, 0)
-            translate3d(var(--dx), var(--dy), 0) scale(0.7);
+            translate3d(var(--dx), var(--dy), 0) rotate(var(--rot, 0deg))
+            scaleX(0.7) scaleY(0.82);
         }
       }
 
@@ -1402,8 +1445,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-end;
-        padding: calc(3px * var(--s)) calc(5px * var(--s)) calc(5px * var(--s));
+        justify-content: flex-start;
+        padding: calc(4px * var(--s)) calc(4px * var(--s)) calc(5px * var(--s));
         border: 1px solid rgba(255, 255, 255, 0.15);
         position: relative;
         top: -2px;
@@ -1893,12 +1936,12 @@
         position: relative;
         width: 100%;
         flex: 0 0 auto;
-        height: calc(104px * var(--s));
+        height: calc(125px * var(--s));
         overflow: visible;
         transition:
           max-height 0.32s cubic-bezier(0.22, 0.68, 0, 1.1),
           opacity 0.25s ease;
-        max-height: calc(110px * var(--s));
+        max-height: calc(130px * var(--s));
       }
 
       /* ════════════════════════════════════════
@@ -1924,19 +1967,6 @@
           filter 0.22s,
           transform 0.18s ease;
         will-change: left, opacity;
-      }
-
-      .scard::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: calc(10px * var(--s));
-        background: linear-gradient(
-          160deg,
-          rgba(255, 255, 255, 0.07) 0%,
-          transparent 55%
-        );
-        pointer-events: none;
       }
 
       .scard.buyable {
@@ -2230,19 +2260,6 @@
         overflow: visible;
       }
 
-      .bcard::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: calc(10px * var(--s));
-        background: linear-gradient(
-          160deg,
-          rgba(255, 255, 255, 0.07) 0%,
-          transparent 55%
-        );
-        pointer-events: none;
-      }
-
       .bcard:hover {
         transform: translateY(-9px) scale(1.03);
         filter: brightness(1.18);
@@ -2425,7 +2442,7 @@
         flex: 1 1 0;
         min-width: 0;
         max-width: var(--bcard-w);
-        height: calc(86px * var(--s));
+        height: calc(103px * var(--s));
         border: 2px dashed rgba(255, 255, 255, 0.08);
         border-radius: calc(11px * var(--s));
         opacity: 0.16;
@@ -3175,6 +3192,103 @@
         line-height: 1.45;
       }
 
+      /* ── Portrait inside battlefield unit card ── */
+      .unit .cportrait {
+        flex: 1;
+        width: 100%;
+        margin-bottom: calc(3px * var(--s));
+        border-radius: calc(5px * var(--s));
+        min-height: 0;
+      }
+
+      /* ── "i" info button — shared across all card types ── */
+      .hf-info-btn {
+        position: absolute;
+        top: calc(3px * var(--s));
+        left: calc(4px * var(--s));
+        width: calc(15px * var(--s));
+        height: calc(15px * var(--s));
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.42);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: rgba(255, 255, 255, 0.55);
+        font-size: calc(9px * var(--s));
+        font-style: italic;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: help;
+        z-index: 10;
+        line-height: 1;
+        transition:
+          background 0.14s,
+          border-color 0.14s,
+          color 0.14s;
+      }
+      .hf-info-btn:hover {
+        background: rgba(255, 200, 50, 0.22);
+        border-color: rgba(255, 200, 80, 0.6);
+        color: rgba(255, 215, 90, 0.97);
+      }
+
+      /* ── Hero info section inside tooltip ── */
+      .stp-hero-header {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 13px 7px;
+      }
+      .stp-hero-ico {
+        font-size: 22px;
+        line-height: 1;
+        flex-shrink: 0;
+        filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.8));
+      }
+      .stp-hero-name {
+        font-size: 12px;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.95);
+        letter-spacing: 0.3px;
+        line-height: 1.2;
+      }
+      .stp-hero-role {
+        font-size: 8.5px;
+        font-weight: 700;
+        color: rgba(175, 185, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+        margin-top: 2px;
+      }
+      .stp-stats {
+        display: flex;
+        padding: 5px 10px 8px;
+      }
+      .stp-stat {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        border-right: 1px solid rgba(255, 255, 255, 0.07);
+      }
+      .stp-stat:last-child {
+        border-right: none;
+      }
+      .stp-stat-v {
+        font-size: 12px;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1;
+      }
+      .stp-stat-l {
+        font-size: 7.5px;
+        font-weight: 700;
+        color: rgba(175, 185, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+      }
+
       /* ════════════════════════════════════════
    PHASE 5 — SHOP ANIMATIONS
    ════════════════════════════════════════ */
@@ -3453,55 +3567,6 @@
         }
       }
 
-      /* ════════════════════════════════════════
-   PHASE 3 — HERO PORTRAIT ZONE
-   ════════════════════════════════════════ */
-
-      /* Portrait container — wraps .cico in shop/bench cards.
-         Set --portrait-url on the element when AI portrait is ready. */
-      .cportrait {
-        width: 100%;
-        height: calc(46px * var(--s));
-        border-radius: calc(8px * var(--s));
-        position: relative;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        background-image: var(--portrait-url, none);
-        background-size: cover;
-        background-position: center top;
-        box-shadow:
-          inset 0 0 0 1px rgba(255, 255, 255, 0.07),
-          inset 0 -14px 22px rgba(0, 0, 0, 0.45);
-      }
-
-      /* Gradient overlay — always on, softens icon and blends future portrait */
-      .cportrait::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(
-          180deg,
-          rgba(0, 0, 0, 0.04) 0%,
-          rgba(0, 0, 0, 0.52) 100%
-        );
-        pointer-events: none;
-        z-index: 0;
-      }
-
-      /* Icon inside portrait zone — centered, larger, grounded shadow */
-      .cportrait .cico {
-        margin-top: 0 !important;
-        font-size: calc(34px * var(--s)) !important;
-        position: relative;
-        z-index: 1;
-        filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.85)) !important;
-        line-height: 1;
-      }
-
       /* ── Battlefield unit: enhanced icon presentation ── */
       .uico {
         filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.75));
@@ -3548,6 +3613,7 @@
       }
     </style>
     <link rel="stylesheet" href="/mobile.css" />
+    <link rel="stylesheet" href="/css/hf-portraits.css" />
   </head>
 
   <body>
@@ -4061,6 +4127,7 @@
               id: char.cid,
               name: char.name,
               ico: char.icon,
+              portrait: char.url_portrait || "",
               col: char.color_hex,
               bg: char.bg_gradient,
               role: char.role,
@@ -5551,16 +5618,22 @@
         function spawnProjectile(attackerEl, targetEl) {
           const a = getCenter(attackerEl);
           const t = getCenter(targetEl);
+          const dx = t.x - a.x;
+          const dy = t.y - a.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          const rot = Math.atan2(dy, dx) * (180 / Math.PI);
 
           const p = document.createElement("span");
           p.className = "projectile ranged";
           p.style.left = a.x + "px";
           p.style.top = a.y + "px";
-          p.style.setProperty("--dx", `${t.x - a.x}px`);
-          p.style.setProperty("--dy", `${t.y - a.y}px`);
+          p.style.setProperty("--dx", `${dx}px`);
+          p.style.setProperty("--dy", `${dy}px`);
+          p.style.setProperty("--rot", `${rot}deg`);
+          p.style.setProperty("--dist", `${dist}px`);
           document.body.appendChild(p);
 
-          setTimeout(() => p.remove(), getBattleFxDuration(360));
+          setTimeout(() => p.remove(), getBattleFxDuration(300));
         }
 
         function animateAttack(attackerEl, targetEl, attackerUnit) {
@@ -5576,7 +5649,7 @@
             () => {
               spawnImpact(targetEl);
             },
-            getBattleFxDuration(attackerUnit.tp === "ranged" ? 260 : 145),
+            getBattleFxDuration(attackerUnit.tp === "ranged" ? 220 : 145),
           );
         }
 
@@ -6675,17 +6748,19 @@
             const hpBonus = auraBonus[i] || 0;
             const hpDisplay = hpBonus > 0 ? u.hp + hpBonus : u.hp;
             const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
+            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="hf-info-btn" title="">i</div><div class="cportrait${cc.portrait ? " has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${uDotsHtml}`;
 
-            const tipHtml = generateSkillTooltipHtml(u);
             el.addEventListener("dragstart", () => SkillTip.hide());
-            const ucabiEl = el.querySelector(".ucabi");
-            if (ucabiEl) {
-              ucabiEl.style.cursor = "help";
-              ucabiEl.addEventListener("mouseenter", () =>
-                SkillTip.show(ucabiEl, tipHtml),
+            const infoBtn = el.querySelector(".hf-info-btn");
+            if (infoBtn) {
+              infoBtn.addEventListener("mouseenter", () =>
+                SkillTip.show(infoBtn, generateHeroInfoHtml(u)),
               );
-              ucabiEl.addEventListener("mouseleave", () => SkillTip.hide());
+              infoBtn.addEventListener("mouseleave", () => SkillTip.hide());
+              infoBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                SkillTip.show(infoBtn, generateHeroInfoHtml(u));
+              });
             }
 
             if (isP && G.phase === "shop") {
@@ -7011,6 +7086,47 @@
                 </div>`;
       }
 
+      function generateHeroInfoHtml(u) {
+        const cc = C[u.cid];
+        const st = cc?.levels?.[u.lv];
+        const skillKey = cc?.abi?.key;
+        const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
+        const abiIco = cc?.abi?.ico || "✨";
+        const abiName = cc?.abi?.name || "Skill";
+
+        const hp = st?.max_hp ?? "—";
+        const atk = st?.atk ?? "—";
+        const spd =
+          st?.atk_speed != null ? Number(st.atk_speed).toFixed(2) : "—";
+
+        let skillSection = "";
+        if (skillInfo) {
+          const sp = u.skillPower ?? 0;
+          const av = u.atk ?? 0;
+          const mhp = u.maxHp ?? u.hp ?? 0;
+          const lv = u.lv || 1;
+          const calc = skillInfo.format(sp, lv, av, mhp);
+          skillSection = `<div class="stp-divider"></div>
+            <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>
+            <div class="stp-desc">${skillInfo.desc}</div>
+            <div class="stp-power"><span class="stp-power-label">Effect</span><span class="stp-power-value">${calc}</span></div>`;
+        } else {
+          skillSection = `<div class="stp-divider"></div>
+            <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>`;
+        }
+
+        return `<div class="stp-hero-header">
+          <span class="stp-hero-ico">${u.ico}</span>
+          <div><div class="stp-hero-name">${cc.name}</div><div class="stp-hero-role">${cc.role || ""}</div></div>
+        </div>
+        <div class="stp-divider"></div>
+        <div class="stp-stats">
+          <div class="stp-stat"><span class="stp-stat-v">${hp}</span><span class="stp-stat-l">HP</span></div>
+          <div class="stp-stat"><span class="stp-stat-v">${atk}</span><span class="stp-stat-l">ATK</span></div>
+          <div class="stp-stat"><span class="stp-stat-v">${spd}</span><span class="stp-stat-l">SPD</span></div>
+        </div>${skillSection}`;
+      }
+
       const SkillTip = (() => {
         let el = null;
         let hideTimer = null;
@@ -7134,7 +7250,7 @@
                 ? "pcombo"
                 : "pnew";
 
-          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="csts"><div class="cst"><span class="cstv">${u.hp}</span><span class="cstl">HP</span></div><div class="cst"><span class="cstv">${u.atk}</span><span class="cstl">ATK</span></div><div class="cst"><span class="cstv">${u.spd.toFixed(2)}</span><span class="cstl">VEL</span></div></div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div><div class="caction">${actionLbl}</div>`;
+          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait ${cc.portrait ? "has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div><div class="hf-info-btn" title="">i</div><div class="caction">${actionLbl}</div>`;
 
           let el = domById[u.id];
           const isNew = !el;
@@ -7190,15 +7306,16 @@
             el.style.opacity = "1";
           });
 
-          const shopTipHtml = generateSkillTooltipHtml(u);
-          const cabiEl = el.querySelector(".cabi");
-          if (cabiEl) {
-            cabiEl.title = "";
-            cabiEl.style.cursor = "help";
-            cabiEl.addEventListener("mouseenter", () =>
-              SkillTip.show(cabiEl, shopTipHtml),
+          const shopInfoBtn = el.querySelector(".hf-info-btn");
+          if (shopInfoBtn) {
+            shopInfoBtn.addEventListener("mouseenter", () =>
+              SkillTip.show(shopInfoBtn, generateHeroInfoHtml(u)),
             );
-            cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
+            shopInfoBtn.addEventListener("mouseleave", () => SkillTip.hide());
+            shopInfoBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              SkillTip.show(shopInfoBtn, generateHeroInfoHtml(u));
+            });
           }
         });
         document.getElementById("breroll").disabled =
@@ -7239,7 +7356,7 @@
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
             dotsHtml += `</div>`;
 
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
+            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="hf-info-btn" title="">i</div><div class="cportrait ${cc.portrait ? "has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div>${dotsHtml}`;
 
             if (active) {
               card.addEventListener("click", () => {
@@ -7268,15 +7385,18 @@
             // ✅ ADICIONAR ISTO FORA do if(active), DEPOIS de appendChild
             row.appendChild(card);
 
-            const html = generateSkillTooltipHtml(u);
-            const cabiEl = card.querySelector(".cabi");
-            if (cabiEl) {
-              cabiEl.title = "";
-              cabiEl.style.cursor = "help";
-              cabiEl.addEventListener("mouseenter", () =>
-                SkillTip.show(cabiEl, html),
+            const benchInfoBtn = card.querySelector(".hf-info-btn");
+            if (benchInfoBtn) {
+              benchInfoBtn.addEventListener("mouseenter", () =>
+                SkillTip.show(benchInfoBtn, generateHeroInfoHtml(u)),
               );
-              cabiEl.addEventListener("mouseleave", () => SkillTip.hide());
+              benchInfoBtn.addEventListener("mouseleave", () =>
+                SkillTip.hide(),
+              );
+              benchInfoBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                SkillTip.show(benchInfoBtn, generateHeroInfoHtml(u));
+              });
             }
           });
           for (let i = G.bench.length; i < BARRACKS_MAX; i++) {
