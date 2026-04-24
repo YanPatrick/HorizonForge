@@ -69,10 +69,6 @@
         overflow: hidden;
       }
 
-      #btn-back {
-        margin-right: calc(6px * var(--s));
-      }
-
       #battle-speed-toggle {
         margin-left: calc(4px * var(--s));
       }
@@ -522,49 +518,50 @@
 
       .projectile {
         position: fixed;
-        width: 16px;
-        height: 16px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
         pointer-events: none;
         z-index: 9999;
-        transform: translate(-50%, -50%);
+        transform: translate3d(-50%, -50%, 0);
         opacity: 0;
+        will-change: transform, opacity;
       }
 
       .projectile.ranged {
         background: radial-gradient(
           circle at 35% 35%,
-          #fff6cf 0%,
-          #ffd56a 38%,
-          #ff8f3d 68%,
-          rgba(255, 143, 61, 0.12) 100%
+          #fff8d6 0%,
+          #ffd86a 36%,
+          #ff9a3d 68%,
+          rgba(255, 143, 61, 0.08) 100%
         );
         box-shadow:
-          0 0 12px rgba(255, 196, 79, 0.65),
-          0 0 24px rgba(255, 126, 35, 0.28);
-        animation: projectile-travel calc(0.5s * var(--battle-speed-mult))
-          cubic-bezier(0.16, 0.84, 0.2, 1) forwards;
+          0 0 10px rgba(255, 196, 79, 0.65),
+          0 0 18px rgba(255, 126, 35, 0.25);
+        animation: projectile-travel calc(0.32s * var(--battle-speed-mult))
+          cubic-bezier(0.12, 0.78, 0.18, 1) forwards;
       }
 
       @keyframes projectile-travel {
         0% {
           opacity: 0;
-          transform: translate(-50%, -50%) translate(0, 0) scale(0.45);
+          transform: translate3d(-50%, -50%, 0) translate3d(0, 0, 0) scale(0.55);
         }
-        12% {
+
+        8% {
           opacity: 1;
-          transform: translate(-50%, -50%)
-            translate(calc(var(--dx) * 0.06), calc(var(--dy) * 0.06)) scale(0.9);
+          transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--dx) * 0.08), calc(var(--dy) * 0.08), 0) scale(1);
         }
-        82% {
+
+        88% {
           opacity: 1;
-          transform: translate(-50%, -50%)
-            translate(calc(var(--dx) * 0.94), calc(var(--dy) * 0.94)) scale(0.9);
+          transform: translate3d(-50%, -50%, 0) translate3d(calc(var(--dx) * 0.96), calc(var(--dy) * 0.96), 0) scale(0.95);
         }
+
         100% {
           opacity: 0;
-          transform: translate(-50%, -50%) translate(var(--dx), var(--dy))
-            scale(0.7);
+          transform: translate3d(-50%, -50%, 0) translate3d(var(--dx), var(--dy), 0) scale(0.7);
         }
       }
 
@@ -1485,10 +1482,6 @@
         cursor: help;
       }
 
-      .usts {
-        display: none;
-      }
-
       .ust {
         display: flex;
         flex-direction: column;
@@ -2093,13 +2086,6 @@
         margin-top: calc(2px * var(--s));
       }
 
-      .crole {
-        font-size: calc(7.5px * var(--s));
-        color: rgba(255, 255, 255, 0.38);
-        font-weight: 600;
-        letter-spacing: 0.4px;
-      }
-
       .csts {
         display: flex;
         gap: calc(5px * var(--s));
@@ -2308,10 +2294,6 @@
       .bprog-dot.empty {
         background: transparent;
         opacity: 0.28;
-      }
-
-      .bprog-label {
-        display: none;
       }
 
       .bcard.new-copy {
@@ -5509,7 +5491,7 @@
           const dx = t.x - a.x;
           const dy = t.y - a.y;
           const dist = Math.hypot(dx, dy) || 1;
-          const reach = Math.min(36, dist * 0.22);
+          const reach = Math.min(28, dist * 0.18);
 
           const tx = (dx / dist) * reach;
           const ty = (dy / dist) * reach;
@@ -5528,8 +5510,8 @@
               { transform: "translate(0px, 0px) scale(1)" },
             ],
             {
-              duration: getBattleFxDuration(380),
-              easing: "cubic-bezier(0.22, 0.8, 0.22, 1)",
+              duration: getBattleFxDuration(260),
+              easing: "cubic-bezier(0.18, 0.9, 0.22, 1)",
               fill: "none",
             },
           );
@@ -5547,7 +5529,7 @@
           p.style.setProperty("--dy", `${t.y - a.y}px`);
           document.body.appendChild(p);
 
-          setTimeout(() => p.remove(), getBattleFxDuration(520));
+          setTimeout(() => p.remove(), getBattleFxDuration(360));
         }
 
         function animateAttack(attackerEl, targetEl, attackerUnit) {
@@ -5563,7 +5545,7 @@
             () => {
               spawnImpact(targetEl);
             },
-            getBattleFxDuration(attackerUnit.tp === "ranged" ? 320 : 185),
+            getBattleFxDuration(attackerUnit.tp === "ranged" ? 260 : 145),
           );
         }
 
@@ -6662,7 +6644,7 @@
             const hpBonus = auraBonus[i] || 0;
             const hpDisplay = hpBonus > 0 ? u.hp + hpBonus : u.hp;
             const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="usts"><div class="ust"><span class="${hpClass}" data-uhp>${hpDisplay}</span><span class="ustl">HP</span></div><div class="ust"><span class="ustv" data-uatk>${u.atk}</span><span class="ustl">ATK</span></div><div class="ust"><span class="ustv">${u.spd.toFixed(1)}</span><span class="ustl">SPD</span></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
+            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="uico">${u.ico}</div><div class="unm">${u.name}</div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div><div class="ucabi">${cc.abi.name}</div>${uDotsHtml}`;
 
             const tipHtml = generateSkillTooltipHtml(u);
             el.addEventListener("dragstart", () => SkillTip.hide());
@@ -7224,7 +7206,7 @@
             let dotsHtml = `<div class="bprog" style="color:${dotColor}">`;
             for (let d = 0; d < 3; d++)
               dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
-            dotsHtml += `<span class="bprog-label">${u.stack}/3${nextLbl}</span></div>`;
+            dotsHtml += `</div>`;
 
             card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="cportrait"><div class="cico">${u.ico}</div></div><div class="cnm">${u.name}</div><div class="cabi">${cc.abi.ico} ${cc.abi.name}</div>${dotsHtml}`;
 
@@ -7253,8 +7235,6 @@
             }
 
             // ✅ ADICIONAR ISTO FORA do if(active), DEPOIS de appendChild
-            row.appendChild(card);
-
             row.appendChild(card);
 
             const html = generateSkillTooltipHtml(u);
