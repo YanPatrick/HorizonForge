@@ -1,8 +1,8 @@
 (function () {
-  /* ─── Layout is always vertical (single unified layout) ───────
-     Signal the combat engine to use player-at-bottom targeting.
+  /* ─── Layout is horizontal (player left, enemy right) ─────────
+     Combat engine uses same-row targeting without row inversion.
   ─────────────────────────────────────────────────────────── */
-  window.mobileVertical = true;
+  window.mobileVertical = false;
 
   var isTouch = window.matchMedia('(pointer: coarse)').matches;
 

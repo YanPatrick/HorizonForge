@@ -171,11 +171,11 @@
         flex-direction: column;
         align-items: center;
         gap: calc(4px * var(--s));
-        max-width: 400px;
+        max-width: clamp(320px, 90vw, 560px);
         width: fit-content;
-        min-width: min(100%, 280px);
+        min-width: min(100%, 320px);
         margin: 0 auto;
-        padding: calc(6px * var(--s)) calc(10px * var(--s));
+        padding: calc(6px * var(--s)) calc(14px * var(--s));
         background: linear-gradient(
           90deg,
           rgba(25, 12, 60, 0.95),
@@ -314,6 +314,11 @@
         font-weight: 600;
         letter-spacing: 0.2px;
         cursor: default;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
       }
 
       /* ── Modal de confirmação de saída ── */
@@ -738,6 +743,9 @@
         display: flex;
         align-items: center;
         gap: calc(6px * var(--s));
+        max-width: 100%;
+        overflow: hidden;
+        min-width: 0;
       }
 
       .dscore {
@@ -751,6 +759,10 @@
         color: rgba(255, 255, 255, 0.4);
         text-transform: uppercase;
         letter-spacing: 0.8px;
+        max-width: 100px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .dot {
@@ -787,14 +799,15 @@
 
       /* ── BANNER ── */
       #banner {
-        display: none !important;
+        display: block;
+        width: 100%;
+        order: 10;
         text-align: center;
         font-size: calc(10px * var(--s));
         font-weight: 600;
         padding: calc(2px * var(--s)) calc(8px * var(--s));
         border-radius: calc(6px * var(--s));
         letter-spacing: 0.2px;
-        max-width: 100%;
       }
 
       .bshop {
@@ -1241,52 +1254,19 @@
       }
 
       .cell.target-preview {
-        border-color: rgba(255, 60, 60, 0.9) !important;
-        background: rgba(255, 40, 40, 0.13) !important;
-        box-shadow:
-          0 0 0 2px rgba(255, 60, 60, 0.5),
-          0 0 12px rgba(255, 40, 40, 0.35);
-        animation: targetPulse 0.7s ease-in-out infinite alternate;
+        border-color: rgba(255, 70, 70, 0.9) !important;
+        box-shadow: 0 0 0 2px rgba(255, 60, 60, 0.55), 0 0 10px rgba(255, 40, 40, 0.2);
+        transition: box-shadow 0.12s, border-color 0.12s;
       }
       .cell.target-preview-splash {
-        border-color: rgba(255, 130, 40, 0.8) !important;
-        background: rgba(255, 100, 20, 0.1) !important;
-        box-shadow:
-          0 0 0 2px rgba(255, 130, 40, 0.4),
-          0 0 10px rgba(255, 100, 20, 0.25);
-        animation: splashPulse 0.7s ease-in-out infinite alternate;
-      }
-      @keyframes splashPulse {
-        from {
-          box-shadow:
-            0 0 0 2px rgba(255, 130, 40, 0.4),
-            0 0 5px rgba(255, 100, 20, 0.2);
-        }
-        to {
-          box-shadow:
-            0 0 0 2px rgba(255, 150, 60, 0.8),
-            0 0 14px rgba(255, 100, 20, 0.45);
-        }
+        border-color: rgba(255, 140, 40, 0.8) !important;
+        box-shadow: 0 0 0 2px rgba(255, 130, 40, 0.45), 0 0 8px rgba(255, 100, 20, 0.18);
+        transition: box-shadow 0.12s, border-color 0.12s;
       }
       .cell.target-preview-ally {
-        border-color: rgba(60, 220, 100, 0.9) !important;
-        background: rgba(40, 200, 80, 0.1) !important;
-        box-shadow:
-          0 0 0 2px rgba(60, 220, 100, 0.5),
-          0 0 12px rgba(40, 200, 80, 0.3);
-        animation: allyPulse 0.7s ease-in-out infinite alternate;
-      }
-      @keyframes allyPulse {
-        from {
-          box-shadow:
-            0 0 0 2px rgba(60, 220, 100, 0.4),
-            0 0 5px rgba(40, 200, 80, 0.2);
-        }
-        to {
-          box-shadow:
-            0 0 0 2px rgba(80, 240, 120, 0.8),
-            0 0 14px rgba(40, 200, 80, 0.45);
-        }
+        border-color: rgba(60, 220, 100, 0.85) !important;
+        box-shadow: 0 0 0 2px rgba(60, 220, 100, 0.45), 0 0 8px rgba(40, 200, 80, 0.2);
+        transition: box-shadow 0.12s, border-color 0.12s;
       }
 
       /* ── Attack arrow — 2-layer glow system ── */
@@ -1380,19 +1360,6 @@
         stroke: rgba(55, 215, 105, 0.45);
         stroke-width: 2.5;
       }
-      @keyframes targetPulse {
-        from {
-          box-shadow:
-            0 0 0 2px rgba(255, 60, 60, 0.5),
-            0 0 6px rgba(255, 40, 40, 0.3);
-        }
-        to {
-          box-shadow:
-            0 0 0 2px rgba(255, 80, 80, 0.9),
-            0 0 18px rgba(255, 40, 40, 0.6);
-        }
-      }
-
       .cell.field-sel {
         border-color: rgba(255, 200, 80, 0.95) !important;
         background: transparent !important;
@@ -2305,12 +2272,12 @@
 
       .bprog {
         position: absolute;
-        top: 14px;
-        right: 4px;
+        top: calc(18px * var(--s));
+        right: calc(4px * var(--s));
         left: auto;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: calc(2px * var(--s));
         align-items: center;
         margin-top: 0;
       }
@@ -2326,8 +2293,8 @@
       }
 
       .bprog-dot {
-        width: calc(7px * var(--s));
-        height: calc(7px * var(--s));
+        width: calc(5px * var(--s));
+        height: calc(5px * var(--s));
         border-radius: 50%;
         border: 1.5px solid;
         transition: all 0.25s;
@@ -4968,7 +4935,7 @@
                 targetId: t.id,
                 abilName: "Sneak Strike",
                 amount: sneakDmg,
-                tick: -1,
+                tick,
               });
 
               dealDmg(u, t, sneakDmg, false);
@@ -5318,6 +5285,7 @@
           if (remaining <= 0) {
             stopPhaseTimer();
             el.textContent = "⏱ 0:00";
+            startBattle();
           }
         }
         tick();
@@ -5367,7 +5335,7 @@
 
       function startBattle() {
         if (!G.board.filter(Boolean).length) {
-          log("❌ Place at least one fighter!", "lk");
+          log("❌ No fighters on field! Click a Barracks card to select it, then click an empty slot on your field.", "lk");
           return;
         }
         stopPhaseTimer();
@@ -5819,6 +5787,7 @@
         G.phase = "result";
         clearTimeout(btimer);
         hideTurnPanel();
+        render();
         G.duelStats.dmgP += stats.dmgP;
         G.duelStats.dmgE += stats.dmgE;
         G.duelStats.killsP += stats.killsP;
@@ -6745,36 +6714,32 @@
               const unitWithSlot = { ...u, slot: i };
               cell.addEventListener("mouseenter", () => {
                 _activeHoverCell = cell;
-                clearAttackArrows();
                 const enemyBoard = G.phase === "battle" ? G.enemy : G.duelEnemy;
                 if (!enemyBoard) return;
                 const efieldEl = document.getElementById("efield");
                 const pfieldEl = document.getElementById("pfield");
 
-                // ── Primary attack target (red) ──
+                // ── Primary attack target (red outline) ──
                 const target = previewTarget(unitWithSlot, enemyBoard);
                 if (target) {
                   const tgtCellEl = efieldEl?.querySelector(
                     `[data-i="${target.slot}"]`,
                   );
                   tgtCellEl?.classList.add("target-preview");
-                  drawAttackArrow(cell, tgtCellEl, "primary");
 
-                  // Mage Fireball: adjacent enemies in + shape (orange)
+                  // Mage Fireball: adjacent enemies in + shape (orange outline)
                   if (unitWithSlot.cid === "mage") {
                     const adj = adjacentSlots(target.slot);
                     enemyBoard.forEach((eu, ei) => {
                       if (eu && ei !== target.slot && adj.includes(ei)) {
-                        const splEl = efieldEl?.querySelector(
-                          `[data-i="${ei}"]`,
-                        );
-                        splEl?.classList.add("target-preview-splash");
-                        drawAttackArrow(cell, splEl, "splash");
+                        efieldEl
+                          ?.querySelector(`[data-i="${ei}"]`)
+                          ?.classList.add("target-preview-splash");
                       }
                     });
                   }
 
-                  // Archmage Chain Lightning: same row, deeper cols (orange)
+                  // Archmage Chain Lightning: same row, deeper cols (orange outline)
                   if (unitWithSlot.cid === "archmage") {
                     const tRow = Math.floor(target.slot / 3);
                     const pCol = target.slot % 3;
@@ -6792,16 +6757,14 @@
                       .sort((a, b) => (a % 3) - (b % 3))
                       .slice(0, 2)
                       .forEach((ei) => {
-                        const chainEl = efieldEl?.querySelector(
-                          `[data-i="${ei}"]`,
-                        );
-                        chainEl?.classList.add("target-preview-splash");
-                        drawAttackArrow(cell, chainEl, "splash");
+                        efieldEl
+                          ?.querySelector(`[data-i="${ei}"]`)
+                          ?.classList.add("target-preview-splash");
                       });
                   }
                 }
 
-                // ── Paladin Sacred Aura: adjacent allies (green highlight only) ──
+                // ── Paladin Sacred Aura: adjacent allies (green outline) ──
                 if (unitWithSlot.cid === "paladin") {
                   const adj = adjacentSlots(unitWithSlot.slot);
                   G.board.forEach((pu, pi) => {
@@ -6826,7 +6789,6 @@
                 document
                   .querySelectorAll(".target-preview-ally")
                   .forEach((el) => el.classList.remove("target-preview-ally"));
-                clearAttackArrows();
               });
             }
 
@@ -7237,7 +7199,7 @@
         if (!G.bench.length) {
           const m = document.createElement("div");
           m.className = "bench-msg";
-          m.textContent = "Barracks empty — drag cards from Recruitment";
+          m.textContent = "Barracks empty — buy heroes from Recruitment →";
           row.appendChild(m);
         } else {
           G.bench.forEach((u, bi) => {
@@ -7354,9 +7316,11 @@
         if (G.phase === "shop") {
           const selUnit = G.bsel ? G.bench.find((u) => u.cid === G.bsel) : null;
           const hint = selUnit
-            ? ` — ${selUnit.name} ${LS[selUnit.lv]} selected · click or drag to field`
-            : " — Drag or select a card from Barracks";
-          setBanner(`⚔️ Battle ${G.battleNum}/${G.format} ⚔️`, "bshop");
+            ? `${selUnit.name} selected — click a field slot or drag to place`
+            : G.bench.length
+              ? "Click a Barracks card to select, then click a field slot"
+              : "Buy heroes from Recruitment, then place them on your field";
+          setBanner(hint, "bshop");
         }
       }
 
