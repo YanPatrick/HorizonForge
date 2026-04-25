@@ -2325,42 +2325,48 @@
 
       .bprog {
         position: absolute;
-        top: calc(18px * var(--s));
+        top: calc(20px * var(--s));
         right: calc(4px * var(--s));
+        bottom: auto;
         left: auto;
         display: flex;
         flex-direction: column;
-        gap: calc(2px * var(--s));
+        gap: calc(3px * var(--s));
         align-items: center;
-        margin-top: 0;
+        z-index: 10;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
       }
 
       .blvl {
         position: absolute;
         top: 3px;
-        right: 5px;
-        font-size: calc(8.5px * var(--s));
+        right: 4px;
+        font-size: calc(9px * var(--s));
         font-weight: 900;
         color: rgba(255, 220, 100, 0.95);
         text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        z-index: 10;
       }
 
       .bprog-dot {
-        width: calc(5px * var(--s));
-        height: calc(5px * var(--s));
+        width: calc(7px * var(--s));
+        height: calc(7px * var(--s));
         border-radius: 50%;
         border: 1.5px solid;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75);
         transition: all 0.25s;
       }
 
       .bprog-dot.filled {
         background: currentColor;
-        box-shadow: 0 0 5px currentColor;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.75),
+          0 0 6px currentColor;
       }
 
       .bprog-dot.empty {
-        background: transparent;
-        opacity: 0.28;
+        background: rgba(0, 0, 0, 0.35);
+        opacity: 0.65;
       }
 
       .bcard.new-copy {
@@ -3487,6 +3493,21 @@
           0 3px 0 rgba(0, 0, 0, 0.5),
           0 0 10px rgba(255, 230, 120, 0.45),
           0 0 22px rgba(255, 170, 20, 0.28);
+        animation: dmg-float-crit 1.15s cubic-bezier(0.12, 0.82, 0.18, 1)
+          forwards;
+      }
+      .dmg-float.sneak-crit {
+        font-size: 34px;
+        color: #d97eff;
+        letter-spacing: 0.8px;
+        -webkit-text-stroke: 1.6px rgba(12, 4, 20, 0.92);
+        filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.58))
+          drop-shadow(0 0 16px rgba(185, 70, 255, 0.52))
+          drop-shadow(0 0 30px rgba(130, 30, 210, 0.28));
+        text-shadow:
+          0 3px 0 rgba(0, 0, 0, 0.52),
+          0 0 10px rgba(210, 110, 255, 0.48),
+          0 0 24px rgba(160, 40, 230, 0.3);
         animation: dmg-float-crit 1.15s cubic-bezier(0.12, 0.82, 0.18, 1)
           forwards;
       }
@@ -5526,6 +5547,7 @@
         btimer = null;
         const dHp = {};
         Object.values(umap).forEach((u) => (dHp[u.id] = u.maxHp));
+        const sneakHitEls = new Set();
         const tg = {};
         evs
           .filter((e) => e.tick >= 0)
@@ -5679,7 +5701,7 @@
           setTimeout(() => slash.remove(), getBattleFxDuration(260));
         }
 
-        function playSneakStrike(attackerEl, targetEl, amount) {
+        function playSneakStrike(attackerEl, targetEl, amount, targetUnit) {
           if (!attackerEl || !targetEl) return;
 
           spawnSneakSlash(
@@ -5696,12 +5718,17 @@
               6 - Math.round(Math.random() * 8),
               4 - Math.round(Math.random() * 8),
             );
+            sneakHitEls.add(targetEl);
             targetEl.classList.remove("hit");
             void targetEl.offsetWidth;
             targetEl.classList.add("hit");
             flashUnit(targetEl, "vfx-crit");
             spawnImpact(targetEl);
-            spawnFloat(targetEl, "−" + amount, "crit");
+            spawnFloat(targetEl, "−" + amount, "sneak-crit");
+            if (targetUnit && amount > 0) {
+              dHp[targetUnit.id] = Math.max(0, dHp[targetUnit.id] - amount);
+              updHp(targetUnit);
+            }
           }, getBattleFxDuration(130));
         }
 
@@ -5768,7 +5795,7 @@
               const eTarget = target ? gEl(target) : null;
               if (eSkill) flashUnit(eSkill, "vfx-skill");
               if (ev.abilName === "Sneak Strike" && eSkill && eTarget) {
-                playSneakStrike(eSkill, eTarget, ev.amount || 0);
+                playSneakStrike(eSkill, eTarget, ev.amount || 0, target);
                 tickDelay = Math.max(tickDelay, getBattleFxDuration(980));
               }
               log(
@@ -5793,9 +5820,6 @@
                 true,
               );
             } else if (ev.type === "atk" && t) {
-              dHp[t.id] = Math.max(0, dHp[t.id] - ev.amt);
-              updHp(t);
-
               const eAtk = gEl(u);
               const e2 = gEl(t);
               const prevAbility = el.find(
@@ -5805,7 +5829,16 @@
                   x.uid === ev.uid &&
                   x.targetId === ev.tid,
               );
-              const isSneakFollowup = !!prevAbility;
+              const isSneakFollowup =
+                ev.sneakFollowup || !!prevAbility || (e2 !== null && sneakHitEls.has(e2));
+              if (e2) sneakHitEls.delete(e2);
+
+              // Sneak Strike already decremented dHp + called updHp in playSneakStrike;
+              // skip both here to avoid double-counting and stale-transition flicker.
+              if (!isSneakFollowup) {
+                dHp[t.id] = Math.max(0, dHp[t.id] - ev.amt);
+                updHp(t);
+              }
 
               if (eAtk && e2 && !isSneakFollowup) {
                 animateAttack(eAtk, e2, u);
@@ -5836,11 +5869,32 @@
             } else if (ev.type === "kill" && t) {
               dHp[t.id] = 0;
               updHp(t);
+              const eAtk = gEl(u);
               const e2 = gEl(t);
-              if (e2) {
-                e2.classList.remove("hit");
-                void e2.offsetWidth;
-                e2.classList.add("hit");
+              const killedBySneak =
+                ev.sneakFollowup ||
+                el.some(
+                  (x) =>
+                    x.type === "ability" &&
+                    x.abilName === "Sneak Strike" &&
+                    x.uid === ev.uid &&
+                    x.targetId === ev.tid,
+                ) ||
+                (e2 !== null && sneakHitEls.has(e2));
+              if (e2) sneakHitEls.delete(e2);
+              if (!killedBySneak) {
+                if (eAtk && e2) animateAttack(eAtk, e2, u);
+                if (e2) {
+                  if (ev.isCrit) {
+                    flashUnit(e2, "vfx-crit");
+                    spawnFloat(e2, "−" + ev.amt, "crit");
+                  } else {
+                    e2.classList.remove("hit");
+                    void e2.offsetWidth;
+                    e2.classList.add("hit");
+                    spawnFloat(e2, "−" + ev.amt, "dmg");
+                  }
+                }
               }
               setTimeout(() => {
                 const e3 = gEl(t);
@@ -5900,10 +5954,18 @@
                   if (aEl) flashUnit(aEl, "vfx-heal");
                 });
             } else if (ev.abilName === "Sneak Strike") {
+              const followup = evs.find(
+                (e) =>
+                  (e.type === "atk" || e.type === "kill") &&
+                  e.uid === ev.uid &&
+                  e.tid === ev.targetId &&
+                  e.tick === ev.tick,
+              );
+              if (followup) followup.sneakFollowup = true;
               const t = umap[ev.targetId];
               const tEl = t && gEl(t);
               if (uEl) flashUnit(uEl, "vfx-skill");
-              if (uEl && tEl) playSneakStrike(uEl, tEl, ev.amount || 0);
+              if (uEl && tEl) playSneakStrike(uEl, tEl, ev.amount || 0, t);
             }
 
             setTimeout(nextAction, getBattleFxDuration(700));
