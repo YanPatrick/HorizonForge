@@ -1524,6 +1524,7 @@
         font-weight: 900;
         color: rgba(255, 220, 100, 0.95);
         text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        z-index: 10;
       }
 
       .ucabi {
@@ -1608,26 +1609,31 @@
         left: auto;
         display: flex;
         flex-direction: column;
-        gap: calc(2px * var(--s));
+        gap: calc(3px * var(--s));
         align-items: center;
+        z-index: 10;
+        filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95));
       }
 
       .uprog-dot {
-        width: calc(5px * var(--s));
-        height: calc(5px * var(--s));
+        width: calc(7px * var(--s));
+        height: calc(7px * var(--s));
         border-radius: 50%;
         border: 1.5px solid;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.75);
         transition: all 0.25s;
       }
 
       .uprog-dot.filled {
         background: currentColor;
-        box-shadow: 0 0 4px currentColor;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.75),
+          0 0 6px currentColor;
       }
 
       .uprog-dot.empty {
-        background: transparent;
-        opacity: 0.3;
+        background: rgba(0, 0, 0, 0.35);
+        opacity: 0.65;
       }
 
       #benchwrap.bench-drop-over {
@@ -2062,7 +2068,8 @@
       .sprice {
         position: absolute;
         top: 4px;
-        left: 5px;
+        right: 5px;
+        z-index: 10;
         font-size: calc(8.5px * var(--s));
         font-weight: 800;
         background: rgba(0, 0, 0, 0.6);
@@ -2103,8 +2110,9 @@
 
       .scnt {
         position: absolute;
-        top: 4px;
+        top: calc(17px * var(--s));
         right: 5px;
+        z-index: 10;
         font-size: calc(7.5px * var(--s));
         font-weight: 800;
         border-radius: 5px;
@@ -4034,7 +4042,7 @@
         return battleSpeed === 1 ? 2 : 1;
       }
       function getBattleFrameDelay() {
-        return Math.round(360 * getBattleSpeedMultiplier());
+        return Math.round(500 * getBattleSpeedMultiplier());
       }
       function getBattleFxDuration(baseMs) {
         return Math.round(baseMs * getBattleSpeedMultiplier());
@@ -5482,18 +5490,6 @@
 
         document.getElementById("log").innerHTML = "";
         log("⚔️ Battle begins!", "lr");
-        _auraFired.forEach((pid) => {
-          const pal = G.board.find((u) => u && u.id === pid);
-          if (pal)
-            log(
-              (ABILOG["Sacred Aura"] || "✨ {n}: Sacred Aura!").replace(
-                "{n}",
-                nameTag(pal),
-              ),
-              "lab",
-              true,
-            );
-        });
         setBanner(
           `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
           "bbattle",
@@ -5501,24 +5497,11 @@
         render();
         const res = simulate(G.board, G.enemy);
         botLearnFromBattle(res.evs, res.umap);
-        res.evs
-          .filter(
-            (e) =>
-              e.type === "ability" &&
-              e.tick === -1 &&
-              e.abilName !== "Chain Lightning",
-          )
-          .forEach((e) => {
-            const u = res.umap[e.uid];
-            log(
-              (ABILOG[e.abilName] || "✨ {n}: " + e.abilName).replace(
-                "{n}",
-                u ? nameTag(u) : "?",
-              ),
-              "lab",
-              true,
-            );
-          });
+        // Inject player-side Sacred Aura events so the prep phase can animate them
+        // (simulate only adds enemy-side Sacred Aura; player side was pre-applied)
+        _auraFired.forEach((pid) => {
+          res.evs.unshift({ type: "ability", uid: pid, abilName: "Sacred Aura", tick: -1 });
+        });
         playback(res);
       }
 
@@ -5683,17 +5666,12 @@
         function playSneakStrike(attackerEl, targetEl, amount) {
           if (!attackerEl || !targetEl) return;
 
-          attackerEl.style.opacity = "0.7";
-          spawnSneakSmoke(attackerEl, targetEl);
-
-          setTimeout(() => {
-            spawnSneakSlash(
-              targetEl,
-              -28 + Math.round(Math.random() * 10),
-              -6 + Math.round(Math.random() * 8),
-              -4 + Math.round(Math.random() * 8),
-            );
-          }, getBattleFxDuration(380));
+          spawnSneakSlash(
+            targetEl,
+            -28 + Math.round(Math.random() * 10),
+            -6 + Math.round(Math.random() * 8),
+            -4 + Math.round(Math.random() * 8),
+          );
 
           setTimeout(() => {
             spawnSneakSlash(
@@ -5708,12 +5686,7 @@
             flashUnit(targetEl, "vfx-crit");
             spawnImpact(targetEl);
             spawnFloat(targetEl, "−" + amount, "crit");
-            attackerEl.style.opacity = "";
-          }, getBattleFxDuration(500));
-
-          setTimeout(() => {
-            attackerEl.style.opacity = "";
-          }, getBattleFxDuration(900));
+          }, getBattleFxDuration(130));
         }
 
         function updHp(u, isHeal = false) {
@@ -5866,7 +5839,63 @@
           });
           btimer = setTimeout(frame, tickDelay);
         }
-        frame();
+
+        // ── Preparation phase: buffs → abilities, then combat ──────────────
+        function runPrepPhase(onDone) {
+          const prepEvs = [
+            ...evs.filter((e) => e.type === "ability" && e.tick === -1),
+            ...evs.filter(
+              (e) =>
+                e.type === "ability" &&
+                e.tick === 0 &&
+                e.abilName === "Sneak Strike",
+            ),
+          ];
+          prepEvs.forEach((ev) => { ev.silent = true; });
+
+          if (!prepEvs.length) { onDone(); return; }
+
+          let i = 0;
+          function nextAction() {
+            if (i >= prepEvs.length) {
+              setTimeout(onDone, getBattleFxDuration(500));
+              return;
+            }
+            const ev = prepEvs[i++];
+            const u = umap[ev.uid];
+            const uEl = u && gEl(u);
+
+            log(
+              (ABILOG[ev.abilName] || "✨ {n}: " + ev.abilName).replace(
+                "{n}",
+                u ? nameTag(u) : "?",
+              ),
+              "lab",
+              true,
+            );
+
+            if (ev.abilName === "Sacred Aura" && u && uEl) {
+              flashUnit(uEl, "vfx-skill");
+              const adj = adjacentSlots(u.slot);
+              Object.values(umap)
+                .filter((a) => a.side === u.side && adj.includes(a.slot))
+                .forEach((a) => {
+                  const aEl = gEl(a);
+                  if (aEl) flashUnit(aEl, "vfx-heal");
+                });
+            } else if (ev.abilName === "Sneak Strike") {
+              const t = umap[ev.targetId];
+              const tEl = t && gEl(t);
+              if (uEl) flashUnit(uEl, "vfx-skill");
+              if (uEl && tEl) playSneakStrike(uEl, tEl, ev.amount || 0);
+            }
+
+            setTimeout(nextAction, getBattleFxDuration(700));
+          }
+          nextAction();
+        }
+
+        runPrepPhase(() => frame());
       }
 
       function endBattle(w, stats) {

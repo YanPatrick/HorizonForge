@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr *)",
+      "Bash(file public/heroes/*.webp)",
+      "Bash(magick --version)",
+      "Bash(convert --version)",
+      "Read(//c/Program Files/**)",
+      "PowerShell(& \"C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI\\\\magick.exe\" --version)"
+    ]
+  }
+}
