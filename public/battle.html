@@ -5876,16 +5876,8 @@
             } else if (ev.type === "atk" && t) {
               const eAtk = gEl(u);
               const e2 = gEl(t);
-              const prevAbility = el.find(
-                (x) =>
-                  x.type === "ability" &&
-                  x.abilName === "Sneak Strike" &&
-                  x.uid === ev.uid &&
-                  x.targetId === ev.tid,
-              );
               const isSneakFollowup =
                 ev.sneakFollowup ||
-                !!prevAbility ||
                 (e2 !== null && sneakHitEls.has(e2));
               if (e2) sneakHitEls.delete(e2);
 
@@ -5930,13 +5922,6 @@
               const e2 = gEl(t);
               const killedBySneak =
                 ev.sneakFollowup ||
-                el.some(
-                  (x) =>
-                    x.type === "ability" &&
-                    x.abilName === "Sneak Strike" &&
-                    x.uid === ev.uid &&
-                    x.targetId === ev.tid,
-                ) ||
                 (e2 !== null && sneakHitEls.has(e2));
               if (e2) sneakHitEls.delete(e2);
               if (killedBySneak) {
