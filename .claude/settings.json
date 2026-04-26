@@ -6,7 +6,8 @@
       "Bash(magick --version)",
       "Bash(convert --version)",
       "Read(//c/Program Files/**)",
-      "PowerShell(& \"C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI\\\\magick.exe\" --version)"
+      "PowerShell(& \"C:\\\\Program Files\\\\ImageMagick-7.1.2-Q16-HDRI\\\\magick.exe\" --version)",
+      "PowerShell(New-Item -ItemType Directory -Force -Path graphify-out)"
     ]
   }
 }

@@ -820,6 +820,19 @@ function resolveBattleRound(matchId) {
     merges: { [m.p1]: m.merges[m.p1] || 0, [m.p2]: m.merges[m.p2] || 0 },
   };
 
+  // Normalize stats to ensure numeric fields are always present
+  {
+    const s = roundPayload.stats || {};
+    roundPayload.stats = {
+      dmgP: Number(s.dmgP || 0),
+      dmgE: Number(s.dmgE || 0),
+      killsP: Number(s.killsP || 0),
+      killsE: Number(s.killsE || 0),
+      survP: Number(s.survP || 0),
+      survE: Number(s.survE || 0),
+    };
+  }
+
   // Store so a reconnecting player can receive it via rejoin_match
   m.lastRoundResult = roundPayload;
 
@@ -884,7 +897,7 @@ function forfeitBattle(matchId, winner) {
     scores: { [m.p1]: m.scores[m.p1], [m.p2]: m.scores[m.p2] },
     seriesOver,
     matchWinner: seriesOver ? winner : null,
-    evs: [], umap: {}, stats: {},
+    evs: [], umap: {}, stats: { dmgP:0, dmgE:0, killsP:0, killsE:0, survP:0, survE:0 },
     reason: 'forfeit',
   });
   if (seriesOver) {

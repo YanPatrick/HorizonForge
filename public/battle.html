@@ -73,6 +73,31 @@
         margin-left: calc(4px * var(--s));
       }
 
+      .unit.vfx-sneak-hit {
+        animation: sneak-hit-flash calc(0.42s * var(--battle-speed-mult))
+          ease-out;
+      }
+
+      @keyframes sneak-hit-flash {
+        0% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
+
+        35% {
+          filter: brightness(1.55) saturate(1.25);
+          box-shadow:
+            0 0 0 2px rgba(190, 90, 255, 0.75),
+            0 0 18px rgba(180, 70, 255, 0.65),
+            0 0 34px rgba(120, 30, 220, 0.35);
+        }
+
+        100% {
+          filter: brightness(1);
+          box-shadow: none;
+        }
+      }
+
       /* Starfield overlay */
       body::before {
         content: "";
@@ -3646,6 +3671,14 @@
         animation: low-hp-throb 1.1s ease-in-out infinite;
       }
 
+      /* If a unit is hit while in low-HP state, prefer the hit pulse animation
+         so the white flash is visible even though low-hp defines its own
+         infinite throb animation. This selector is placed after the
+         low-hp rule to increase precedence. */
+      .unit.low-hp.hit {
+        animation: hf 0.3s;
+      }
+
       @keyframes low-hp-throb {
         0%,
         100% {
@@ -5537,7 +5570,12 @@
         // Inject player-side Sacred Aura events so the prep phase can animate them
         // (simulate only adds enemy-side Sacred Aura; player side was pre-applied)
         _auraFired.forEach((pid) => {
-          res.evs.unshift({ type: "ability", uid: pid, abilName: "Sacred Aura", tick: -1 });
+          res.evs.unshift({
+            type: "ability",
+            uid: pid,
+            abilName: "Sacred Aura",
+            tick: -1,
+          });
         });
         playback(res);
       }
@@ -5573,6 +5611,18 @@
           void el.offsetWidth;
           el.classList.add(cls);
           setTimeout(() => el.classList.remove(cls), getBattleFxDuration(600));
+        }
+
+        function flashDamage(el) {
+          if (!el) return;
+          el.classList.remove("hit");
+          void el.offsetWidth;
+          el.classList.add("hit");
+
+          clearTimeout(el._hitT);
+          el._hitT = setTimeout(() => {
+            el.classList.remove("hit");
+          }, getBattleFxDuration(340));
         }
 
         function spawnFloat(el, text, type) {
@@ -5718,13 +5768,17 @@
               6 - Math.round(Math.random() * 8),
               4 - Math.round(Math.random() * 8),
             );
+
             sneakHitEls.add(targetEl);
-            targetEl.classList.remove("hit");
+
+            // brilho próprio do Sneak Strike, sem usar o hit branco genérico
+            targetEl.classList.remove("vfx-sneak-hit");
             void targetEl.offsetWidth;
-            targetEl.classList.add("hit");
-            flashUnit(targetEl, "vfx-crit");
+            targetEl.classList.add("vfx-sneak-hit");
+
             spawnImpact(targetEl);
             spawnFloat(targetEl, "−" + amount, "sneak-crit");
+
             if (targetUnit && amount > 0) {
               dHp[targetUnit.id] = Math.max(0, dHp[targetUnit.id] - amount);
               updHp(targetUnit);
@@ -5830,30 +5884,33 @@
                   x.targetId === ev.tid,
               );
               const isSneakFollowup =
-                ev.sneakFollowup || !!prevAbility || (e2 !== null && sneakHitEls.has(e2));
+                ev.sneakFollowup ||
+                !!prevAbility ||
+                (e2 !== null && sneakHitEls.has(e2));
               if (e2) sneakHitEls.delete(e2);
 
-              // Sneak Strike already decremented dHp + called updHp in playSneakStrike;
-              // skip both here to avoid double-counting and stale-transition flicker.
-              if (!isSneakFollowup) {
-                dHp[t.id] = Math.max(0, dHp[t.id] - ev.amt);
-                updHp(t);
+              // If this atk is a Sneak Strike followup, stop here —
+              // the Sneak animation already handled damage and VFX.
+              if (isSneakFollowup) {
+                return;
               }
 
-              if (eAtk && e2 && !isSneakFollowup) {
+              // Sneak Strike already decremented dHp + called updHp in playSneakStrike;
+              // normal atks apply damage/animation as usual.
+              dHp[t.id] = Math.max(0, dHp[t.id] - ev.amt);
+              updHp(t);
+
+              if (eAtk && e2) {
                 animateAttack(eAtk, e2, u);
               }
 
               if (e2) {
-                if (isSneakFollowup) {
-                  // Sneak Strike already renders its own smoke, slashes, impact and float.
-                } else if (ev.isCrit) {
+                if (ev.isCrit) {
+                  flashDamage(e2);
                   flashUnit(e2, "vfx-crit");
                   spawnFloat(e2, "−" + ev.amt, "crit");
                 } else {
-                  e2.classList.remove("hit");
-                  void e2.offsetWidth;
-                  e2.classList.add("hit");
+                  flashDamage(e2);
                   spawnFloat(e2, "−" + ev.amt, "dmg");
                 }
               }
@@ -5882,18 +5939,23 @@
                 ) ||
                 (e2 !== null && sneakHitEls.has(e2));
               if (e2) sneakHitEls.delete(e2);
-              if (!killedBySneak) {
-                if (eAtk && e2) animateAttack(eAtk, e2, u);
-                if (e2) {
-                  if (ev.isCrit) {
-                    flashUnit(e2, "vfx-crit");
-                    spawnFloat(e2, "−" + ev.amt, "crit");
-                  } else {
-                    e2.classList.remove("hit");
-                    void e2.offsetWidth;
-                    e2.classList.add("hit");
-                    spawnFloat(e2, "−" + ev.amt, "dmg");
-                  }
+              if (killedBySneak) {
+                setTimeout(() => {
+                  const e3 = gEl(t);
+                  if (e3) e3.classList.add("dead");
+                }, getBattleFxDuration(200));
+                return;
+              }
+
+              if (eAtk && e2) animateAttack(eAtk, e2, u);
+              if (e2) {
+                if (ev.isCrit) {
+                  flashDamage(e2);
+                  flashUnit(e2, "vfx-crit");
+                  spawnFloat(e2, "−" + ev.amt, "crit");
+                } else {
+                  flashDamage(e2);
+                  spawnFloat(e2, "−" + ev.amt, "dmg");
                 }
               }
               setTimeout(() => {
@@ -5921,9 +5983,14 @@
                 e.abilName === "Sneak Strike",
             ),
           ];
-          prepEvs.forEach((ev) => { ev.silent = true; });
+          prepEvs.forEach((ev) => {
+            ev.silent = true;
+          });
 
-          if (!prepEvs.length) { onDone(); return; }
+          if (!prepEvs.length) {
+            onDone();
+            return;
+          }
 
           let i = 0;
           function nextAction() {
@@ -5981,11 +6048,14 @@
         clearTimeout(btimer);
         hideTurnPanel();
         render();
-        G.duelStats.dmgP += stats.dmgP;
-        G.duelStats.dmgE += stats.dmgE;
-        G.duelStats.killsP += stats.killsP;
-        G.duelStats.killsE += stats.killsE;
+          // (debug logs removed)
+        // Defensive: ensure incoming stats are numeric (PvP server may omit keys)
+        G.duelStats.dmgP += Number(stats?.dmgP || 0);
+        G.duelStats.dmgE += Number(stats?.dmgE || 0);
+        G.duelStats.killsP += Number(stats?.killsP || 0);
+        G.duelStats.killsE += Number(stats?.killsE || 0);
         G.duelStats.battles.push({ winner: w });
+        // (debug logs removed)
         // In PvP mode boardSnap/enemySnap aren't sent from server — keep the snap set from umap
         G.lastBoardSnap = stats.boardSnap || G.lastBoardSnap;
         if (!window._PVP) G.lastEnemySnap = stats.enemySnap || G.lastEnemySnap;
@@ -6049,6 +6119,22 @@
           nb.onclick = nextBattle;
         }
         document.getElementById("ctrl").appendChild(nb);
+        // Auto-advance: trigger the next action immediately for non-PvP flows
+        // Only auto-click when this button advances to the next *battle* (not when
+        // the duel result overlay is shown and the button is "Next Duel").
+        if (!window._PVP && nb.onclick === nextBattle) {
+          // Hide the button during the short delay so it doesn't flash briefly
+          nb.style.visibility = "hidden";
+          // Small delay to avoid immediate UI jump — makes transition smoother
+          setTimeout(() => {
+            try {
+              nb.click();
+            } catch (e) {
+              // fallback: call the handler directly if click fails
+              if (typeof nb.onclick === "function") nb.onclick();
+            }
+          }, 350);
+        }
         updateHdr();
         renderDuelBar();
       }
@@ -7228,7 +7314,9 @@
         const heroClass = u.cid
           ? u.cid.charAt(0).toUpperCase() + u.cid.slice(1)
           : "";
-        const roleLabel = [heroClass, cc.role || ""].filter(Boolean).join(" · ");
+        const roleLabel = [heroClass, cc.role || ""]
+          .filter(Boolean)
+          .join(" · ");
 
         return `<div class="stp-hero-header">
           <span class="stp-hero-ico">${u.ico}</span>
