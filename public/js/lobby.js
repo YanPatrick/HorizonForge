@@ -1025,16 +1025,8 @@
             if (nameEl) nameEl.textContent = displayName;
             if (countEl) countEl.textContent = `${f.hero_ids.length}/8`;
             if (iconsEl) {
-              if (f.hero_ids.length) {
-                iconsEl.innerHTML = f.hero_ids
-                  .map((cid) => {
-                    const h = _heroData?.find((x) => x.cid === cid);
-                    return `<span class="fv-tab-ico" title="${h?.name || cid}">${h?.icon || "?"}</span>`;
-                  })
-                  .join("");
-              } else {
-                iconsEl.innerHTML = '<span class="fv-tab-empty">Empty</span>';
-              }
+              const isFull = f.hero_ids.length === 8;
+              iconsEl.innerHTML = `<div class="fv-deck-stack${isFull ? " full" : ""}"><div class="fds-card c3"></div><div class="fds-card c2"></div><div class="fds-card c1"></div></div>`;
             }
           });
         }
@@ -1070,7 +1062,12 @@
             cell.className = "fv-slot-cell" + (cid ? " filled" : "");
             if (cid) {
               const hero = _heroData?.find((h) => h.cid === cid);
-              cell.textContent = hero?.icon || "?";
+              if (hero?.url_portrait) {
+                cell.classList.add("has-portrait");
+                cell.style.setProperty("--portrait-url", `url('${hero.url_portrait}')`);
+              } else {
+                cell.textContent = hero?.icon || "?";
+              }
               cell.title = (hero?.name || cid) + " — click to remove";
               cell.onclick = () => _removeFromFormation(cid);
             } else {
@@ -1113,7 +1110,9 @@
             }
             card.innerHTML = `
               <button class="fhc-info-btn" aria-label="Hero info">i</button>
-              <div class="form-hc-ico">${h.icon}</div>
+              <div class="form-hc-portrait${h.url_portrait ? " has-portrait" : ""}"${h.url_portrait ? ` style="--portrait-url:url('${h.url_portrait}')"` : ""}>
+                ${!h.url_portrait ? `<div class="form-hc-ico">${h.icon}</div>` : ""}
+              </div>
               <div class="form-hc-name">${h.name}</div>`;
             card
               .querySelector(".fhc-info-btn")
