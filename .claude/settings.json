@@ -10,7 +10,8 @@
       "PowerShell(New-Item -ItemType Directory -Force -Path graphify-out)",
       "Bash(xargs grep *)",
       "Bash(grep -E \"\\\\.\\(js|html\\)$\")",
-      "PowerShell(python -m graphify claude install 2>&1)"
+      "PowerShell(python -m graphify claude install 2>&1)",
+      "Bash(node -e ' *)"
     ]
   },
   "hooks": {
