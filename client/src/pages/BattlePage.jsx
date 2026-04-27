@@ -1,0 +1,313 @@
+import { useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+function getSession() {
+  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
+}
+
+export default function BattlePage() {
+  const navigate = useNavigate()
+  const initialized = useRef(false)
+
+  useEffect(() => {
+    if (!getSession()) { navigate('/', { replace: true }); return }
+    if (initialized.current) return
+    initialized.current = true
+
+    const cssFiles = ['/css/battle.css', '/mobile.css', '/css/hf-portraits.css']
+    const links = cssFiles.map(href => {
+      const el = document.createElement('link')
+      el.rel = 'stylesheet'
+      el.href = href
+      document.head.appendChild(el)
+      return el
+    })
+
+    const scripts = []
+    function loadScript(src, onload) {
+      const s = document.createElement('script')
+      s.src = src
+      if (onload) s.onload = onload
+      document.body.appendChild(s)
+      scripts.push(s)
+    }
+
+    loadScript('/socket.io/socket.io.js', () => {
+      loadScript('/js/battle.js', () => {
+        loadScript('/mobile.js')
+      })
+    })
+
+    return () => {
+      links.forEach(el => el.remove())
+      scripts.forEach(s => s.remove())
+    }
+  }, [navigate])
+
+  return (
+    <>
+      {/* ══ QUIT MODAL ══ */}
+      <div id="quit-overlay" onClick={e => e.target === e.currentTarget && window.closeQuitModal?.()}>
+        <div id="quit-modal">
+          <div className="qm-icon">⚠️</div>
+          <div className="qm-title">Quit Match?</div>
+          <div className="qm-body">
+            You will lose all progress in this match and return to the Lobby.
+          </div>
+          <div className="qm-btns">
+            <button className="qm-btn qm-cancel" onClick={() => window.closeQuitModal?.()}>Keep Playing</button>
+            <button className="qm-btn qm-confirm" onClick={() => window.confirmQuit?.()}>Quit</button>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ GAME ══ */}
+      <div id="game">
+        {/* HEADER */}
+        <div id="hdr">
+          <div className="hdr-row-top">
+            <div className="duelbar-center">
+              <span className="sb suser" id="h-user">@you</span>
+              <div className="dscore" id="dots-p"></div>
+              <span className="duel-vs">⚔️</span>
+              <div className="dscore" id="dots-e"></div>
+              <span className="sb sopp" id="lbl-score-enemy">Enemy</span>
+            </div>
+          </div>
+          <div className="hdr-row-bottom">
+            <span className="sb sfmt" id="h-fmt">BO3</span>
+            <span id="h-timer">⏱ 2:00</span>
+            <div id="banner" className="bshop">
+              🛍️ Analyze the enemy, buy cards and build your army!
+            </div>
+            <button
+              id="battle-speed-toggle"
+              type="button"
+              onClick={() => window.toggleBattleSpeed?.()}
+              title="Toggle battle speed"
+            >
+              2x
+            </button>
+            <button className="htp-btn hback-btn" onClick={() => window.openQuitModal?.()} title="Back to Lobby">
+              ← Lobby
+            </button>
+          </div>
+        </div>
+
+        {/* ══ ARENA ══ */}
+        <div id="arena-wrap">
+          <div id="turnpanel" className="hidden">
+            <div className="tp-title">⚔ Order</div>
+            <div className="tp-list" id="tp-list"></div>
+          </div>
+          <div id="fields-row">
+            <div className="fwrap">
+              <div className="flbl flbl-row">
+                <span id="lbl-player" style={{ color: '#88aaff' }}>⚔ Your Army</span>
+                <span id="army-count"></span>
+              </div>
+              <div className="field pf" id="pfield"></div>
+            </div>
+            <div id="vs"><span className="vstxt">VS</span></div>
+            <div className="fwrap">
+              <div className="flbl" style={{ color: '#ff8888' }}>
+                <span id="lbl-enemy">☠ Opponent</span>
+              </div>
+              <div className="field ef" id="efield"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* ══ BOTTOM ZONE ══ */}
+        <div id="bottom-zone">
+          {/* LEFT: Barracks */}
+          <div id="benchwrap">
+            <div className="sec-hdr">
+              <span className="sec-title barracks-title">Barracks</span>
+              <span className="sec-title bcount-lbl" id="bcount"></span>
+            </div>
+            <div id="benchrow"></div>
+          </div>
+
+          {/* CENTER: Battle button + Log */}
+          <div id="center-col">
+            <div id="ctrl">
+              <button className="btn bbtn" id="bfight" onClick={() => window.startBattle?.()}>
+                Battle!
+              </button>
+              <div id="phase-timer"></div>
+            </div>
+            <div id="log"></div>
+          </div>
+
+          {/* RIGHT: Recruitment */}
+          <div id="shopwrap">
+            <div className="sec-hdr">
+              <span className="sec-title recruit-title">
+                Recruitment <span className="sb sg" id="h-gold">💰 7</span>
+              </span>
+              <div className="recruit-controls">
+                <button className="rrbtn" id="breroll" onClick={() => window.rerollShop?.()}>
+                  New Recruitment (2💰)
+                </button>
+              </div>
+            </div>
+            <div id="shoprow"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ DUEL RESULT ══ */}
+      <div id="duel-result">
+        <div id="dr-box">
+          <div className="dr-title" id="dr-title">🏆 DUEL WON!</div>
+          <div className="dr-score" id="dr-score"></div>
+          <div className="dr-battles" id="dr-battles"></div>
+          <div className="dr-divider"></div>
+          <div className="dr-stats-grid">
+            <div className="dr-stat-row">
+              <div className="dr-val p" id="drs-dmgP">0</div>
+              <div className="dr-stat-lbl">⚔️ Total Damage</div>
+              <div className="dr-val e" id="drs-dmgE">0</div>
+            </div>
+            <div className="dr-stat-row">
+              <div className="dr-val p" id="drs-killsP">0</div>
+              <div className="dr-stat-lbl">💀 Kills</div>
+              <div className="dr-val e" id="drs-killsE">0</div>
+            </div>
+            <div className="dr-stat-row">
+              <div className="dr-val p" id="drs-merges">0</div>
+              <div className="dr-stat-lbl">✨ Merges</div>
+              <div className="dr-val e" id="drs-mergesE">—</div>
+            </div>
+          </div>
+          <div className="dr-divider"></div>
+          <div className="dr-teams">
+            <div className="dr-team">
+              <div className="dr-team-lbl" style={{ color: 'rgba(136, 170, 255, 0.6)' }}>
+                Your Final Army
+              </div>
+              <div className="dr-team-units" id="drt-p"></div>
+            </div>
+            <div className="dr-team">
+              <div className="dr-team-lbl" style={{ color: 'rgba(255, 100, 100, 0.6)' }}>
+                Enemy Army
+              </div>
+              <div className="dr-team-units" id="drt-e"></div>
+            </div>
+          </div>
+          <div id="dr-submitting">
+            <div className="dr-submit-row">
+              <div className="dr-submit-spinner" id="dr-spin"></div>
+              <div className="dr-submit-text" id="dr-submit-text">Submitting results...</div>
+            </div>
+            <div className="dr-submit-sub" id="dr-submit-sub">
+              Processing match outcome on the blockchain...
+            </div>
+          </div>
+          <div className="dr-cta">
+            <button className="btn gnbtn" id="dr-next-btn">🌟 Next Duel</button>
+            <button
+              className="btn"
+              style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.6)' }}
+              onClick={() => document.getElementById('duel-result')?.classList.remove('open')}
+            >
+              ✕ View Field
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ══ HOW TO PLAY ══ */}
+      <div id="howto">
+        <div id="htp-box">
+          <button id="htp-close" onClick={() => window.closeHowTo?.()}>✕ Close</button>
+          <div className="htp-h1">📖 How To Play — Horizon Forge</div>
+          <div className="htp-h2">🎯 Objective</div>
+          <p className="htp-p">
+            Win most battles in a duel to advance. In{' '}
+            <span className="htp-hl">Best of 3</span>, win 2 battles. In{' '}
+            <span className="htp-hl">Best of 5</span>, win 3. The opponent keeps the
+            same army for the whole duel — analyze it before building yours.
+          </p>
+          <div className="htp-h2">💰 Gold</div>
+          <div className="htp-tips">
+            <div className="htp-tip">
+              <span className="htp-tip-ico">🏁</span>
+              <div>Each duel starts with <b style={{ color: '#ffdd55' }}>7💰</b>.</div>
+            </div>
+            <div className="htp-tip">
+              <span className="htp-tip-ico">⚔️</span>
+              <div>Between battles you receive gold automatically — both players receive the same amount each round.</div>
+            </div>
+            <div className="htp-tip">
+              <span className="htp-tip-ico">🔄</span>
+              <div>New Recruitment costs <b style={{ color: '#ffdd55' }}>2💰</b>.</div>
+            </div>
+          </div>
+          <div className="htp-h2">⛺ Recruitment &amp; Bench</div>
+          <div className="htp-tips">
+            <div className="htp-tip">
+              <span className="htp-tip-ico">🆕</span>
+              <div>Buying a character you don&apos;t own yet costs <b style={{ color: '#ffdd55' }}>3💰</b>. They go straight to the Barracks.</div>
+            </div>
+            <div className="htp-tip">
+              <span className="htp-tip-ico">🔗</span>
+              <div>Buying a character you already own costs <b style={{ color: '#88ff88' }}>2💰</b> and stacks on the same card — each hero uses only <b>1 slot</b> in the Barracks.</div>
+            </div>
+            <div className="htp-tip">
+              <span className="htp-tip-ico">🖱️</span>
+              <div><b>Drag</b> a card from Barracks to a field slot, or click it then click the slot.</div>
+            </div>
+          </div>
+          <div className="htp-h2">✨ Card Merging</div>
+          <div className="htp-tips">
+            <div className="htp-tip">
+              <span className="htp-tip-ico">⭐</span>
+              <div>
+                Stack <b>3 copies</b> of the same character to auto-merge — they level up (
+                <b style={{ color: '#ffcc44' }}>★ → ★★ → ★★★...</b>) and become much more powerful.
+              </div>
+            </div>
+          </div>
+          <div className="htp-h2">🧙 Characters</div>
+          <table className="htp-table">
+            <tbody>
+              <tr><th>Character</th><th>Ability</th><th>Effect</th></tr>
+              <tr><td>⚔️ Knight</td><td>🛡️ Iron Defense</td><td>Reduces damage taken per hit.</td></tr>
+              <tr><td>🔮 Mage</td><td>🔥 Fireball</td><td>Area damage to surrounding enemies.</td></tr>
+              <tr><td>🏹 Archer</td><td>🎯 Precise Shot</td><td>Increased critical hit chance.</td></tr>
+              <tr><td>💚 Healer</td><td>💫 Healing</td><td>Heals the ally with lowest HP.</td></tr>
+              <tr><td>🗡️ Assassin</td><td>⚡ Sneak Strike</td><td>Amplified first attack on the weakest foe.</td></tr>
+              <tr><td>🛡️ Paladin</td><td>✨ Sacred Aura</td><td>Boosts max HP of adjacent allies.</td></tr>
+              <tr><td>🌟 Archmage</td><td>⛓️ Chain Lightning</td><td>Attack chains to multiple targets in a row.</td></tr>
+              <tr><td>🪓 Barbarian</td><td>😡 Fury</td><td>Attack bonus when low on HP.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ══ ATTACK ARROW OVERLAY ══ */}
+      <svg
+        id="attack-svg"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 95, overflow: 'visible' }}
+      >
+        <defs>
+          <filter id="arr-blur" x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
+          </filter>
+          <marker id="arr-primary" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+            <path d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z" fill="rgba(255,88,72,.96)" />
+          </marker>
+          <marker id="arr-splash" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+            <path d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z" fill="rgba(255,178,35,.94)" />
+          </marker>
+          <marker id="arr-ally" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto">
+            <path d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z" fill="rgba(72,230,115,.94)" />
+          </marker>
+        </defs>
+      </svg>
+    </>
+  )
+}

@@ -1,38 +1,24 @@
-<<<<<<< HEAD
-# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-04-26)
+# Graph Report - HorizonForge  (2026-04-27)
 
 ## Corpus Check
-- 6 files · ~87,062 words
+- 6 files · ~82,030 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 165 nodes · 315 edges · 18 communities detected
+- 165 nodes · 315 edges · 17 communities detected
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
-=======
-# Graph Report - HorizonForge  (2026-04-26)
-
-## Corpus Check
-- 3 files · ~100,203 words
-- Verdict: corpus is large enough that graph structure adds value.
-
-## Summary
-- 39 nodes · 58 edges · 10 communities detected
-- Extraction: 79% EXTRACTED · 21% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.82)
->>>>>>> c77b62ef34e52958fc82dde8b0a573e7312736dd
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
 - [[_COMMUNITY_Community 1|Community 1]]
 - [[_COMMUNITY_Community 2|Community 2]]
-- [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
 - [[_COMMUNITY_Community 6|Community 6]]
 - [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Community 9|Community 9]]
-<<<<<<< HEAD
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
 - [[_COMMUNITY_Community 12|Community 12]]
@@ -56,41 +42,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `resolveBattleRound()` --references--> `simulate()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\shared\simulate.js
+  api\server.js → shared\simulate.js
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
-=======
-
-## God Nodes (most connected - your core abstractions)
-1. `resolveBattleRound()` - 6 edges
-2. `sendHivePrize()` - 4 edges
-3. `tryMatch()` - 4 edges
-4. `armForfeitTimer()` - 4 edges
-5. `forfeitBattle()` - 4 edges
-6. `Paladin Hero Portrait` - 4 edges
-7. `hiveClient()` - 3 edges
-8. `verifyHivePayment()` - 3 edges
-9. `simulate()` - 3 edges
-10. `Archer Hero Portrait` - 3 edges
-
-## Surprising Connections (you probably didn't know these)
-- `simulate()` --references--> `resolveBattleRound()`  [INFERRED]
-  shared\simulate.js → api\server.js
-- `Archmage Hero Portrait` --conceptually_related_to--> `Mage Hero Portrait`  [INFERRED]
-  public/heroes/archmage.webp → public/heroes/mage.webp
-- `Archmage Hero Portrait` --conceptually_related_to--> `Paladin Hero Portrait`  [INFERRED]
-  public/heroes/archmage.webp → public/heroes/paladin.webp
-- `Assassin Hero Portrait` --conceptually_related_to--> `Barbarian Hero Portrait`  [INFERRED]
-  public/heroes/assassin.webp → public/heroes/barbarian.webp
-- `Barbarian Hero Portrait` --conceptually_related_to--> `Knight Hero Portrait`  [INFERRED]
-  public/heroes/barbarian.webp → public/heroes/knight.webp
->>>>>>> c77b62ef34e52958fc82dde8b0a573e7312736dd
+  api\server.js → public\js\battle.js
 
 ## Hyperedges (group relationships)
 - **Hive Payment Verification and Prize Pipeline** — server_verifyHivePayment, server_refundHiveWager, server_sendHivePrize, server_hiveRpc, server_hiveClient [EXTRACTED 0.95]
@@ -119,7 +79,6 @@
 ## Communities
 
 ### Community 0 - "Community 0"
-<<<<<<< HEAD
 Cohesion: 0.1
 Nodes (14): _buildDetailBodyHTML(), _clearPayCountdown(), _ensureActiveDeck(), _loadFormations(), _loadPref(), _prefKey(), _removeFromFormation(), _renderDeckCards() (+6 more)
 
@@ -130,10 +89,6 @@ Nodes (24): adjacentSlots(), betweenIncome(), botLearnFromBattle(), botNextBattl
 ### Community 2 - "Community 2"
 Cohesion: 0.19
 Nodes (19): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient() (+11 more)
-
-### Community 3 - "Community 3"
-Cohesion: 0.1
-Nodes (0): 
 
 ### Community 4 - "Community 4"
 Cohesion: 0.27
@@ -168,12 +123,12 @@ Cohesion: 0.67
 Nodes (2): injectLogBtn(), setupLog()
 
 ### Community 12 - "Community 12"
-Cohesion: 0.67
-Nodes (4): botBuyPhase(), botGenShop(), botPosition(), botRunTurn()
-
-### Community 13 - "Community 13"
 Cohesion: 0.5
 Nodes (4): botScoreCard(), randCid(), rnd(), shuffle()
+
+### Community 13 - "Community 13"
+Cohesion: 0.67
+Nodes (4): botBuyPhase(), botGenShop(), botPosition(), botRunTurn()
 
 ### Community 14 - "Community 14"
 Cohesion: 1.0
@@ -181,81 +136,33 @@ Nodes (2): adjacentSlots(), simulate()
 
 ### Community 15 - "Community 15"
 Cohesion: 1.0
-Nodes (2): playback(), renderTurnPanel()
+Nodes (2): closeQuitModal(), confirmQuit()
 
 ### Community 16 - "Community 16"
 Cohesion: 1.0
-Nodes (2): closeQuitModal(), confirmQuit()
+Nodes (2): playback(), renderTurnPanel()
 
 ### Community 17 - "Community 17"
 Cohesion: 1.0
-=======
-Cohesion: 0.43
-Nodes (8): Archer Hero Portrait, Archmage Hero Portrait, Assassin Hero Portrait, Barbarian Hero Portrait, Healer Hero Portrait, Knight Hero Portrait, Mage Hero Portrait, Paladin Hero Portrait
-
-### Community 1 - "Community 1"
-Cohesion: 0.5
-Nodes (2): hiveClient(), refundHiveWager()
-
-### Community 2 - "Community 2"
-Cohesion: 0.6
-Nodes (5): armForfeitTimer(), forfeitBattle(), mirrorBoard(), resolveBattleRound(), sendHivePrize()
-
-### Community 3 - "Community 3"
-Cohesion: 0.7
-Nodes (5): Desert Arena Background, Forest Arena Background, Snow Arena Background, Hive Logo, Horizon Forge Arena Background Collection
-
-### Community 4 - "Community 4"
-Cohesion: 0.67
-Nodes (2): injectLogBtn(), setupLog()
-
-### Community 5 - "Community 5"
-Cohesion: 0.67
-Nodes (3): broadcastQueueSize(), makeMatchId(), tryMatch()
-
-### Community 6 - "Community 6"
-Cohesion: 0.67
-Nodes (3): hiveRpc(), sleep(), verifyHivePayment()
-
-### Community 7 - "Community 7"
-Cohesion: 1.0
-Nodes (2): adjacentSlots(), simulate()
-
-### Community 8 - "Community 8"
-Cohesion: 1.0
-Nodes (2): computeSkillPowerLevels(), trunc4()
-
-### Community 9 - "Community 9"
-Cohesion: 1.0
->>>>>>> c77b62ef34e52958fc82dde8b0a573e7312736dd
 Nodes (1): Payout Preference Setting (liquid/stake)
 
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-<<<<<<< HEAD
-- **Thin community `Community 15`** (2 nodes): `playback()`, `renderTurnPanel()`
+- **Thin community `Community 11`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 16`** (2 nodes): `closeQuitModal()`, `confirmQuit()`
+- **Thin community `Community 14`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 15`** (2 nodes): `closeQuitModal()`, `confirmQuit()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 16`** (2 nodes): `playback()`, `renderTurnPanel()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 17`** (1 nodes): `Payout Preference Setting (liquid/stake)`
-=======
-- **Thin community `Community 1`** (5 nodes): `server.js`, `hiveClient()`, `refundHiveWager()`, `requireAdmin()`, `runDailyCleanup()`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 4`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 7`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 8`** (2 nodes): `computeSkillPowerLevels()`, `trunc4()`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 9`** (1 nodes): `Payout Preference Setting (liquid/stake)`
->>>>>>> c77b62ef34e52958fc82dde8b0a573e7312736dd
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-<<<<<<< HEAD
 - **Why does `log()` connect `Community 2` to `Community 1`, `Community 3`, `Community 4`, `Community 5`, `Community 7`?**
   _High betweenness centrality (0.146) - this node is a cross-community bridge._
 - **Why does `resolveBattleRound()` connect `Community 2` to `Community 14`?**
@@ -270,13 +177,3 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.12 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
-=======
-- **Why does `resolveBattleRound()` connect `Community 2` to `Community 1`, `Community 7`?**
-  _High betweenness centrality (0.075) - this node is a cross-community bridge._
-- **Why does `simulate()` connect `Community 7` to `Community 2`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
-- **Are the 2 inferred relationships involving `resolveBattleRound()` (e.g. with `simulate()` and `forfeitBattle()`) actually correct?**
-  _`resolveBattleRound()` has 2 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Payout Preference Setting (liquid/stake)`, `Hive Logo` to the rest of the system?**
-  _2 weakly-connected nodes found - possible documentation gaps or missing edges._
->>>>>>> c77b62ef34e52958fc82dde8b0a573e7312736dd

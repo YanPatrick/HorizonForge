@@ -5,7 +5,10 @@
   "type": "module",
   "main": "api/server.js",
   "scripts": {
-    "dev": "node --watch api/server.js",
+    "dev": "concurrently -n API,CLIENT -c cyan,magenta \"node --watch api/server.js\" \"npm run dev --prefix client\"",
+    "dev:api": "node --watch api/server.js",
+    "dev:client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
     "start": "node api/server.js",
     "migrate": "curl -s -X POST http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\""
   },
@@ -17,5 +20,8 @@
     "express": "^4.19.2",
     "pg": "^8.20.0",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

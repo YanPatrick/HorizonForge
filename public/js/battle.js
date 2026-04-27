@@ -222,7 +222,7 @@
             }
           } else {
             // No battle config — user landed here directly; send back to lobby
-            window.location.replace("/lobby.html");
+            window.location.replace("/lobby");
           }
         } catch (err) {
           console.error(err);
@@ -231,7 +231,7 @@
           const ov = document.createElement("div");
           ov.style.cssText =
             "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:#ff8888;font-size:13px;text-align:center;padding:24px";
-          ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>Could not connect to the server</b><br><br>${err.message}<br><br><a href="/lobby.html" style="color:#aa88ff">← Back to Lobby</a></div>`;
+          ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>Could not connect to the server</b><br><br>${err.message}<br><br><a href="/lobby" style="color:#aa88ff">← Back to Lobby</a></div>`;
           document.body.appendChild(ov);
         }
 
@@ -2090,7 +2090,7 @@
             nb.textContent = "🏠 Back to Lobby";
             nb.onclick = () => {
               if (window._PVP.socket) window._PVP.socket.disconnect();
-              window.location.href = "/lobby.html";
+              window.location.href = "/lobby";
             };
           } else {
             nb.textContent = "🌟 Next Duel";
@@ -2188,7 +2188,7 @@
             "🏠 Back to Lobby";
           document.getElementById("dr-next-btn").onclick = () => {
             if (window._PVP.socket) window._PVP.socket.disconnect();
-            window.location.href = "/lobby.html";
+            window.location.href = "/lobby";
           };
 
           // Show "Submitting results..." banner (prep for Etapa 3 HIVE transfer)
@@ -2239,7 +2239,7 @@
         if (window._PVP && window._PVP.socket) {
           window._PVP.socket.disconnect();
         }
-        window.location.href = "/lobby.html";
+        window.location.href = "/lobby";
       }
 
       // ═══════════════════════════════════════════════════
@@ -2313,7 +2313,7 @@
         pvp.socket.on("rejoin_error", (data) => {
           showToastBattle(data.message || "Match not found. Redirecting...");
           setTimeout(() => {
-            window.location.href = "/lobby.html";
+            window.location.href = "/lobby";
           }, 2500);
         });
 
@@ -2387,7 +2387,7 @@
         pvp.socket.on("match_cancelled", (data) => {
           showToastBattle(data.reason || "Match cancelled.");
           setTimeout(() => {
-            window.location.href = "/lobby.html";
+            window.location.href = "/lobby";
           }, 3000);
         });
 

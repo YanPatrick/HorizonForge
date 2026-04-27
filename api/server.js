@@ -182,6 +182,12 @@ const io = new SocketIO(httpServer, {
 
 app.use(cors());
 app.use(express.json());
+// Em produção serve o build do React; em dev o Vite roda separado
+const CLIENT_DIST = join(__dirname, '../public/dist');
+const isDev = process.env.NODE_ENV !== 'production';
+if (!isDev) {
+  app.use(express.static(CLIENT_DIST));
+}
 app.use(express.static(join(__dirname, '../public')));
 app.use('/shared', express.static(join(__dirname, '../shared')));
 
@@ -550,9 +556,13 @@ app.put('/api/formations', async (req, res) => {
   }
 });
 
-// Serve index.html for qualquer rota não-API
+// Catch-all: em produção serve o React, em dev deixa o Vite cuidar
 app.get('*', (_req, res) => {
-  res.sendFile(join(__dirname, '../public/index.html'));
+  if (!isDev) {
+    res.sendFile(join(CLIENT_DIST, 'index.html'));
+  } else {
+    res.sendFile(join(__dirname, '../public/index.html'));
+  }
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
