@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function getSession() {
@@ -8,17 +8,34 @@ function getSession() {
 export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
+  const [cssReady, setCssReady] = useState(false)
 
   useEffect(() => {
     if (!getSession()) { navigate('/', { replace: true }); return }
     if (initialized.current) return
     initialized.current = true
 
+    // Make #root fill the viewport and act as flex container for battle layout
+    const root = document.getElementById('root')
+    if (root) {
+      root.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;min-height:100dvh;margin:0;padding:0;border:none;max-width:none;text-align:left;'
+    }
+
+    // Load CSS files — only show content after main battle.css loads
     const cssFiles = ['/css/battle.css', '/mobile.css', '/css/hf-portraits.css']
+    let loadedCount = 0
     const links = cssFiles.map(href => {
       const el = document.createElement('link')
       el.rel = 'stylesheet'
       el.href = href
+      el.onload = () => {
+        loadedCount++
+        if (loadedCount >= cssFiles.length) setCssReady(true)
+      }
+      el.onerror = () => {
+        loadedCount++
+        if (loadedCount >= cssFiles.length) setCssReady(true)
+      }
       document.head.appendChild(el)
       return el
     })
@@ -41,11 +58,13 @@ export default function BattlePage() {
     return () => {
       links.forEach(el => el.remove())
       scripts.forEach(s => s.remove())
+      // Restore #root styles on unmount
+      if (root) root.style.cssText = ''
     }
   }, [navigate])
 
   return (
-    <>
+    <div style={cssReady ? undefined : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" onClick={e => e.target === e.currentTarget && window.closeQuitModal?.()}>
         <div id="quit-modal">
@@ -308,6 +327,6 @@ export default function BattlePage() {
           </marker>
         </defs>
       </svg>
-    </>
+    </div>
   )
 }
