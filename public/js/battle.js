@@ -3649,7 +3649,7 @@
       }
 
       // ── Boot ──
-      document.addEventListener("DOMContentLoaded", () => {
+      function _bootBattle() {
         initGame(); // async: auto-start happens inside after data loads
         // Show username badge in header
         const uEl = document.getElementById("h-user");
@@ -3658,7 +3658,13 @@
             ? "@" + window._HF_SESSION.username
             : "@you";
         }
-      });
+      }
+      // If loaded dynamically after DOM is ready (React SPA), fire immediately
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", _bootBattle);
+      } else {
+        _bootBattle();
+      }
 
       // ── Mobile phase navigation ──
       let _mobileStep = null;
