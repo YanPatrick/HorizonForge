@@ -3722,7 +3722,7 @@
 /* Esconder action bar por padrão — só aparece no mobile */
 .mobile-actions { display: none; }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) {
 
   /* Colapsar bottom-zone sem display:none — display:none esconderia
      filhos position:fixed também, impedindo os painéis de abrir */
@@ -3858,13 +3858,60 @@
   /* scroll horizontal no recruitment */
   #shoprow {
     display: flex;
+    flex-wrap: nowrap;
     overflow-x: auto;
-    gap: 10px;
+    gap: 8px;
+    min-height: 145px;
+    padding: 6px 4px 14px;
+    align-items: flex-start;
+    scrollbar-width: none;
+  }
+
+  #shoprow::-webkit-scrollbar { display: none; }
+
+  /* shop cards: sai do position:absolute e vira flex item */
+  #shoprow .scard {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    flex-shrink: 0;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+  }
+
+  /* portrait mais alto para ratio vertical (≈ 1.6:1) */
+  #shoprow .scard .cportrait {
+    height: 88px !important;
+    min-height: 88px !important;
   }
 
   #benchrow {
     display: flex;
     overflow-x: auto;
-    gap: 10px;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+
+  #benchrow::-webkit-scrollbar { display: none; }
+
+  /* barracks cards: mesmo tamanho do recruitment */
+  #benchrow .bcard {
+    flex: 0 0 auto;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+  }
+
+  #benchrow .bcard .cportrait {
+    height: 88px !important;
+    min-height: 88px !important;
+  }
+
+  #benchrow .bcard-empty {
+    flex: 0 0 auto;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
   }
 }

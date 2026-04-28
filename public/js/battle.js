@@ -3,7 +3,8 @@
       const BASE_H = 720;
 
       function updateScale() {
-        const vw = window.innerWidth;
+        const isTouch = window.matchMedia("(pointer: coarse)").matches;
+        const vw = isTouch ? Math.min(window.innerWidth, 480) : window.innerWidth;
         const vh = window.innerHeight;
 
         // Escala limitada entre 0.6 e 1.5 para não ficar absurdo
@@ -3663,6 +3664,7 @@
       let _mobileStep = null;
 
       function setMobileStep(step) {
+        if (step === _mobileStep) step = null;
         _mobileStep = step;
         document.getElementById("shopwrap")?.classList.remove("mobile-open");
         document.getElementById("benchwrap")?.classList.remove("mobile-open");
