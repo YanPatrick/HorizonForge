@@ -3714,4 +3714,157 @@
         50% {
           box-shadow: 0 0 22px rgba(255, 40, 40, 0.72);
         }
-      }
+      }
+/* =========================
+   MOBILE MODE (portrait ≤768px)
+========================= */
+
+/* Esconder action bar por padrão — só aparece no mobile */
+.mobile-actions { display: none; }
+
+@media (max-width: 768px) {
+
+  /* Colapsar bottom-zone sem display:none — display:none esconderia
+     filhos position:fixed também, impedindo os painéis de abrir */
+  #bottom-zone {
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    border: none !important;
+    visibility: hidden;
+  }
+
+  /* Painéis precisam ser visíveis mesmo com pai visibility:hidden */
+  #shopwrap,
+  #benchwrap {
+    visibility: visible;
+  }
+
+  /* Recruitment — painel deslizante */
+  #shopwrap {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 45%;
+    z-index: 20;
+    background: rgba(6, 3, 20, 0.97);
+    border-top: 1px solid rgba(180, 130, 255, 0.2);
+    border-radius: 16px 16px 0 0;
+    padding: 12px 16px 12px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    transition: bottom 0.3s ease;
+  }
+
+  /* Barracks — painel deslizante */
+  #benchwrap {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    height: 35%;
+    z-index: 20;
+    background: rgba(6, 3, 20, 0.97);
+    border-top: 1px solid rgba(180, 130, 255, 0.2);
+    border-radius: 16px 16px 0 0;
+    padding: 12px 16px 12px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    transition: bottom 0.3s ease;
+  }
+
+  /* quando aberto: senta acima da action bar (56px) */
+  #shopwrap.mobile-open,
+  #benchwrap.mobile-open {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+  }
+
+  /* battlefield maior */
+  #game {
+    height: 65vh !important;
+  }
+
+  /* esconder log-btn do header (substituido pela action bar) */
+  #mobile-log-btn {
+    display: none;
+  }
+
+  /* action bar */
+  .mobile-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: calc(env(safe-area-inset-bottom, 0px) + 56px);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: linear-gradient(to top, rgba(26, 19, 48, 0.98), rgba(26, 19, 48, 0.75));
+    backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(180, 130, 255, 0.14);
+    z-index: 50;
+  }
+
+  .mobile-actions button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 16px;
+    background: none;
+    border: none;
+    color: rgba(200, 185, 245, 0.8);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    padding: 4px 10px;
+  }
+
+  .mobile-actions button span {
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: "Exo 2", system-ui, sans-serif;
+  }
+
+  /* Estado ativo na action bar */
+  .mobile-actions button.ms-active {
+    color: #ffd700;
+  }
+  .mobile-actions button.ms-active span {
+    color: #ffd700;
+  }
+
+  /* Botão Battle! na action bar */
+  #mobile-battle-btn {
+    color: #ff5555;
+    font-size: 18px;
+  }
+  #mobile-battle-btn span {
+    color: #ff8888;
+  }
+  #mobile-battle-btn:disabled {
+    color: rgba(255, 85, 85, 0.3);
+  }
+  #mobile-battle-btn:disabled span {
+    color: rgba(255, 136, 136, 0.3);
+  }
+
+  /* scroll horizontal no recruitment */
+  #shoprow {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+  }
+
+  #benchrow {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+  }
+}
