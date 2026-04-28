@@ -186,11 +186,6 @@ app.use(express.json());
 const CLIENT_DIST = join(__dirname, '../public/dist');
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Serve páginas estáticas legacy (explicit routes) before the SPA
-app.get('/battle', (_req, res) => {
-  return res.sendFile(join(__dirname, '../public/battle.html'));
-});
-
 if (!isDev) {
   app.use(express.static(CLIENT_DIST));
 }
