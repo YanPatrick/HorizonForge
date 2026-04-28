@@ -21,39 +21,42 @@ export default function BattlePage() {
       root.style.cssText = 'display:flex;flex-direction:column;width:100%;height:100%;min-height:100dvh;margin:0;padding:0;border:none;max-width:none;text-align:left;'
     }
 
-    // Load CSS files — only show content after main battle.css loads
+    // ── Load CSS files in parallel ──
+    // Only gate visibility on battle.css (critical, 105KB). Others are small/optional.
     const cssFiles = ['/css/battle.css', '/mobile.css', '/css/hf-portraits.css']
-    let loadedCount = 0
     const links = cssFiles.map(href => {
       const el = document.createElement('link')
       el.rel = 'stylesheet'
       el.href = href
-      el.onload = () => {
-        loadedCount++
-        if (loadedCount >= cssFiles.length) setCssReady(true)
-      }
-      el.onerror = () => {
-        loadedCount++
-        if (loadedCount >= cssFiles.length) setCssReady(true)
+      if (href === '/css/battle.css') {
+        el.onload = () => setCssReady(true)
+        el.onerror = () => setCssReady(true)
       }
       document.head.appendChild(el)
       return el
     })
 
+    // ── Load scripts in PARALLEL (not sequential!) ──
+    // socket.io is only used inside pvpInit(), not at module level in battle.js
+    // So all 3 can load simultaneously. battle.js boot just needs DOM ready.
     const scripts = []
-    function loadScript(src, onload) {
-      const s = document.createElement('script')
-      s.src = src
-      if (onload) s.onload = onload
-      document.body.appendChild(s)
-      scripts.push(s)
+    function addScript(src) {
+      return new Promise((resolve) => {
+        const s = document.createElement('script')
+        s.src = src
+        s.onload = resolve
+        s.onerror = resolve // don't block on error
+        document.body.appendChild(s)
+        scripts.push(s)
+      })
     }
 
-    loadScript('/socket.io/socket.io.js', () => {
-      loadScript('/js/battle.js', () => {
-        loadScript('/mobile.js')
-      })
-    })
+    // Start all downloads at once
+    Promise.all([
+      addScript('/socket.io/socket.io.js'),
+      addScript('/js/battle.js'),
+      addScript('/mobile.js'),
+    ])
 
     return () => {
       links.forEach(el => el.remove())

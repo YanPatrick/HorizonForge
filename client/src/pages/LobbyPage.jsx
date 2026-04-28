@@ -467,6 +467,19 @@ export default function LobbyPage() {
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current) }
   }, []) // eslint-disable-line
 
+  /* ── prefetch battle resources while user is in lobby ── */
+  useEffect(() => {
+    const heavy = ['/css/battle.css', '/js/battle.js', '/socket.io/socket.io.js']
+    const hints = heavy.map(href => {
+      const el = document.createElement('link')
+      el.rel = 'prefetch'
+      el.href = href
+      document.head.appendChild(el)
+      return el
+    })
+    return () => hints.forEach(el => el.remove())
+  }, [])
+
   /* ── load heroes ─────────────────────────────────────── */
   useEffect(() => {
     const order = { tank: 0, dps: 1, support: 2 }
