@@ -1,11 +1,11 @@
-# Graph Report - HorizonForge  (2026-04-27)
+# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-04-28)
 
 ## Corpus Check
-- 14 files · ~90,346 words
+- 14 files · ~106,161 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 191 nodes · 338 edges · 13 communities detected
+- 193 nodes · 340 edges · 20 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -22,7 +22,14 @@
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
+- [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
 - [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `log()` - 20 edges
@@ -37,16 +44,16 @@
 10. `resolveBattleRound()` - 7 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `resolveBattleRound()` --references--> `simulate()`  [INFERRED]
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\shared\simulate.js
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
-- `tryMatch()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 
 ## Hyperedges (group relationships)
 - **Hive Payment Verification and Prize Pipeline** — server_verifyHivePayment, server_refundHiveWager, server_sendHivePrize, server_hiveRpc, server_hiveClient [EXTRACTED 0.95]
@@ -76,7 +83,7 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
-Nodes (25): applyBattleSpeed(), applyMerge(), BENCH_SLOTS(), botApplyMerge(), botBuyPhase(), botGenShop(), botPosition(), botRunTurn() (+17 more)
+Nodes (23): applyBattleSpeed(), applyMerge(), BENCH_SLOTS(), botApplyMerge(), botBuyPhase(), botGenShop(), botPosition(), botRunTurn() (+15 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.1
@@ -87,16 +94,16 @@ Cohesion: 0.12
 Nodes (24): adjacentSlots(), betweenIncome(), botLearnFromBattle(), botNextBattle(), clearAttackArrows(), endBattle(), FIELD_MAX(), hideTurnPanel() (+16 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.17
-Nodes (18): armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient(), hiveRpc(), makeMatchId(), mirrorBoard() (+10 more)
+Cohesion: 0.19
+Nodes (19): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient() (+11 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.29
-Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), _detectCombos(), genShop(), log(), mkUnit() (+4 more)
-
-### Community 5 - "Community 5"
 Cohesion: 0.25
 Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleCategory(), savePref()
+
+### Community 5 - "Community 5"
+Cohesion: 0.27
+Nodes (11): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+3 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.24
@@ -122,29 +129,59 @@ Nodes (2): getSession(), RequireAuth()
 Cohesion: 0.67
 Nodes (2): injectLogBtn(), setupLog()
 
+### Community 12 - "Community 12"
+Cohesion: 0.67
+Nodes (0): 
+
+### Community 13 - "Community 13"
+Cohesion: 0.67
+Nodes (0): 
+
+### Community 14 - "Community 14"
+Cohesion: 1.0
+Nodes (2): adjacentSlots(), simulate()
+
+### Community 15 - "Community 15"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 16 - "Community 16"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 17 - "Community 17"
+Cohesion: 1.0
+Nodes (0): 
+
 ### Community 18 - "Community 18"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 19 - "Community 19"
 Cohesion: 1.0
 Nodes (1): Payout Preference Setting (liquid/stake)
 
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 10`** (4 nodes): `App()`, `getSession()`, `RequireAuth()`, `App.jsx`
+- **Thin community `Community 15`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 11`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
+- **Thin community `Community 16`** (1 nodes): `eslint.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 18`** (1 nodes): `Payout Preference Setting (liquid/stake)`
+- **Thin community `Community 17`** (1 nodes): `vite.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 18`** (1 nodes): `main.jsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 19`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 4` to `Community 0`, `Community 2`, `Community 3`, `Community 6`?**
+- **Why does `log()` connect `Community 3` to `Community 0`, `Community 2`, `Community 5`, `Community 6`?**
   _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `resolveBattleRound()` connect `Community 3` to `Community 4`?**
+- **Why does `resolveBattleRound()` connect `Community 3` to `Community 14`?**
   _High betweenness centrality (0.032) - this node is a cross-community bridge._
-- **Why does `tryMatch()` connect `Community 3` to `Community 4`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `refundHiveWager()`) actually correct?**
   _`log()` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Payout Preference Setting (liquid/stake)`, `Hive Logo` to the rest of the system?**
@@ -153,3 +190,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.06 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
