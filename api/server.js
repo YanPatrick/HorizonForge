@@ -222,11 +222,19 @@ app.use(express.json());
 const CLIENT_DIST = join(__dirname, '../public/dist');
 const isDev = process.env.NODE_ENV !== 'production';
 
+// HTML files must never be cached so deploys take effect immediately.
+// JS/CSS/images get a 1-week cache (they use content-hash filenames).
+const htmlCacheHeaders = (_req, res, next) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  next();
+};
+app.use('*.html', htmlCacheHeaders);
+
 if (!isDev) {
-  app.use(express.static(CLIENT_DIST));
+  app.use(express.static(CLIENT_DIST, { maxAge: '7d' }));
 }
-app.use(express.static(join(__dirname, '../public')));
-app.use('/shared', express.static(join(__dirname, '../shared')));
+app.use(express.static(join(__dirname, '../public'), { maxAge: '7d' }));
+app.use('/shared', express.static(join(__dirname, '../shared'), { maxAge: '7d' }));
 
 // ── DB connection ─────────────────────────────────────────
 const sql = neon(process.env.DATABASE_URL);
