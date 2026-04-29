@@ -733,7 +733,7 @@ export default function LobbyPage() {
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {aiFmtOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', top:'100%', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
                             {FMT_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === aiFormat ? ' active' : ''}`} onClick={() => { setAiFormat(o.val); savePref('ai_fmt', username, o.val); setAiFmtOpen(false) }}>{o.label}</button>
                             ))}
@@ -763,7 +763,7 @@ export default function LobbyPage() {
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {pvpBetOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', top:'100%', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
                             {BET_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === pvpBet ? ' active' : ''}`} onClick={() => { setPvpBet(o.val); savePref('pvp_bet', username, o.val); setPvpBetOpen(false) }}>{o.label}</button>
                             ))}
@@ -776,7 +776,7 @@ export default function LobbyPage() {
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {pvpFmtOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', top:'100%', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
                             {FMT_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === pvpFmt ? ' active' : ''}`} onClick={() => { setPvpFmt(o.val); savePref('pvp_fmt', username, o.val); setPvpFmtOpen(false) }}>{o.label}</button>
                             ))}
