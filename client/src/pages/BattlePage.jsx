@@ -67,7 +67,7 @@ export default function BattlePage() {
   }, [navigate])
 
   return (
-    <div style={cssReady ? undefined : { visibility: 'hidden', position: 'absolute' }}>
+    <div style={cssReady ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" onClick={e => e.target === e.currentTarget && window.closeQuitModal?.()}>
         <div id="quit-modal">
