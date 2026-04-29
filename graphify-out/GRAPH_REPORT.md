@@ -1,11 +1,11 @@
 # Graph Report - HorizonForge  (2026-04-29)
 
 ## Corpus Check
-- 14 files · ~90,933 words
+- 15 files · ~91,650 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 194 nodes · 342 edges · 14 communities detected
+- 198 nodes · 345 edges · 14 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -23,7 +23,7 @@
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
 - [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `log()` - 20 edges
@@ -88,20 +88,20 @@ Cohesion: 0.12
 Nodes (24): adjacentSlots(), betweenIncome(), botLearnFromBattle(), botNextBattle(), clearAttackArrows(), endBattle(), FIELD_MAX(), hideTurnPanel() (+16 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.19
-Nodes (19): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient() (+11 more)
+Cohesion: 0.16
+Nodes (18): log(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient(), hiveRpc() (+10 more)
 
 ### Community 4 - "Community 4"
+Cohesion: 0.24
+Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+4 more)
+
+### Community 5 - "Community 5"
 Cohesion: 0.21
 Nodes (12): _bootBattle(), botInitDuel(), hideLoader(), initGame(), nextDuel(), pvpInit(), showLoader(), skillIcon() (+4 more)
 
-### Community 5 - "Community 5"
+### Community 6 - "Community 6"
 Cohesion: 0.25
 Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleCategory(), savePref()
-
-### Community 6 - "Community 6"
-Cohesion: 0.27
-Nodes (11): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+3 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.43
@@ -127,7 +127,7 @@ Nodes (2): injectLogBtn(), setupLog()
 Cohesion: 1.0
 Nodes (2): adjacentSlots(), simulate()
 
-### Community 19 - "Community 19"
+### Community 20 - "Community 20"
 Cohesion: 1.0
 Nodes (1): Payout Preference Setting (liquid/stake)
 
@@ -140,16 +140,16 @@ Nodes (1): Payout Preference Setting (liquid/stake)
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 14`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 19`** (1 nodes): `Payout Preference Setting (liquid/stake)`
+- **Thin community `Community 20`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 3` to `Community 0`, `Community 2`, `Community 4`, `Community 6`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
+- **Why does `log()` connect `Community 3` to `Community 0`, `Community 2`, `Community 4`, `Community 5`?**
+  _High betweenness centrality (0.119) - this node is a cross-community bridge._
 - **Why does `resolveBattleRound()` connect `Community 3` to `Community 14`?**
-  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `refundHiveWager()`) actually correct?**
   _`log()` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Payout Preference Setting (liquid/stake)`, `Hive Logo` to the rest of the system?**
