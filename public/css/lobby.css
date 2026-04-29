@@ -2859,7 +2859,8 @@
       }
 
       /* Floating dropdown panel — body-level, position:fixed */
-      #hf-float-dd {
+      #hf-float-dd,
+      .hf-float-dd {
         position: fixed;
         z-index: 9998;
         display: none;
@@ -2873,7 +2874,15 @@
           0 0 20px rgba(130, 80, 255, 0.12);
         backdrop-filter: blur(12px);
       }
-      #hf-float-dd.dd-open {
+      /* React inline-dropdown variant (position:absolute inside hf-select) */
+      .hf-select .hf-float-dd {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 100%;
+      }
+      #hf-float-dd.dd-open,
+      .hf-float-dd.dd-open {
         display: flex;
         animation: hf-dd-in 0.14s ease both;
       }
