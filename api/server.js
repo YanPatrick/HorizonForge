@@ -6,8 +6,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createServer } from 'http';
 import { Server as SocketIO } from 'socket.io';
+import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
 import { simulate } from '../shared/simulate.js';
-import { Client as HiveClient, PrivateKey as HiveKey } from '@hiveio/dhive';
+import { Client as HiveClient, PrivateKey as HiveKey, Signature, cryptoUtils } from '@hiveio/dhive';
 
 // ── Hive configuration ────────────────────────────────────────────────────────
 const HIVE_GAME_ACCOUNT = process.env.HIVE_GAME_ACCOUNT || '';
@@ -18,6 +19,41 @@ const HIVE_NODES = [
   'https://hive-api.arcange.eu',
 ];
 const PAYOUT_RATE_FALLBACK = { liquid: 0.80, stake: 0.90 }; // fallback if DB unavailable
+
+// ── Auth token (HMAC-SHA256, no extra deps) ───────────────────────────────────
+const AUTH_SECRET = process.env.AUTH_SECRET || (() => {
+  const s = randomBytes(32).toString('hex');
+  console.warn('[auth] AUTH_SECRET not set — ephemeral secret generated (sessions reset on restart)');
+  return s;
+})();
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; // 24 h
+
+function makeToken(username) {
+  const expires = Date.now() + TOKEN_TTL_MS;
+  const payload = `${username}:${expires}`;
+  const mac = createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+  return `${payload}:${mac}`;
+}
+
+function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const first = token.indexOf(':');
+  const last  = token.lastIndexOf(':');
+  if (first === last) return null;                        // needs at least 2 colons
+  const username  = token.slice(0, first);
+  const expiresStr = token.slice(first + 1, last);
+  const mac       = token.slice(last + 1);
+  const expires   = parseInt(expiresStr, 10);
+  if (!username || isNaN(expires) || Date.now() > expires) return null;
+  const payload  = `${username}:${expires}`;
+  const expected = createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+  try {
+    if (!timingSafeEqual(Buffer.from(mac, 'hex'), Buffer.from(expected, 'hex'))) return null;
+  } catch {
+    return null;
+  }
+  return username;
+}
 
 // Lazy Hive client — only instantiated when credentials are present
 let _hive = null;
@@ -557,6 +593,42 @@ app.put('/api/formations', async (req, res) => {
   }
 });
 
+// ── POST /api/auth/verify ─────────────────────────────────────────────────────
+// Verifies a Hive Keychain signature server-side and returns a signed token.
+// Body: { username, memo, signature }
+// Returns: { ok: true, token } on success, { error } on failure.
+app.post('/api/auth/verify', async (req, res) => {
+  const { username, memo, signature } = req.body || {};
+  if (!username || !memo || !signature) {
+    return res.status(400).json({ error: 'Missing fields.' });
+  }
+
+  // Validate memo format and freshness (5-minute window)
+  const memoMatch = /^horizon-forge-login-(\d+)$/.exec(memo);
+  if (!memoMatch) return res.status(400).json({ error: 'Invalid memo format.' });
+  if (Math.abs(Date.now() - parseInt(memoMatch[1], 10)) > 5 * 60 * 1000) {
+    return res.status(400).json({ error: 'Login request expired. Please try again.' });
+  }
+
+  try {
+    const accounts = await hiveRpc('condenser_api.get_accounts', [[username.toLowerCase()]]);
+    if (!accounts?.length) return res.status(400).json({ error: 'Hive account not found.' });
+
+    const postingKeys = accounts[0].posting.key_auths.map(([k]) => k);
+    const msgHash = cryptoUtils.sha256(Buffer.from(memo));
+    const recoveredKey = Signature.fromString(signature).recover(msgHash).toString();
+
+    if (!postingKeys.includes(recoveredKey)) {
+      return res.status(401).json({ error: 'Signature verification failed.' });
+    }
+
+    res.json({ ok: true, token: makeToken(username.toLowerCase()) });
+  } catch (err) {
+    console.error('[auth/verify]', err.message);
+    res.status(500).json({ error: 'Verification failed. Try again.' });
+  }
+});
+
 // Catch-all: em produção serve o React, em dev deixa o Vite cuidar
 app.get('*', (_req, res) => {
   if (!isDev) {
@@ -940,13 +1012,25 @@ function forfeitBattle(matchId, winner) {
   }
 }
 
+// ── Socket.io auth middleware ─────────────────────────────────────────────────
+// Sets socket.data.username from the verified token; guests remain null.
+io.use((socket, next) => {
+  socket.data.username = verifyToken(socket.handshake.auth?.token) || null;
+  next();
+});
+
 // ── Socket.io event handlers ───────────────────────────────────────────────────
 io.on('connection', socket => {
-  let connectedUser = null;
+  // Identity is fixed at connection time — never trust client-sent usernames.
+  let connectedUser = socket.data.username;
 
   // Player joins matchmaking queue
-  socket.on('join_queue', ({ username, wager, wagerType, format }) => {
-    if (!username || typeof wager !== 'number' || wager < 0) {
+  socket.on('join_queue', ({ wager, wagerType, format }) => {
+    if (!connectedUser) {
+      socket.emit('error', { message: 'Authentication required to join queue.' });
+      return;
+    }
+    if (typeof wager !== 'number' || wager < 0) {
       socket.emit('error', { message: 'Invalid queue parameters.' });
       return;
     }
@@ -954,9 +1038,8 @@ io.on('connection', socket => {
     // If this player already has an active match (reconnected before redirecting),
     // resend match_found so the client can redirect correctly.
     for (const [, m] of activeMatches) {
-      if (m.p1 === username || m.p2 === username) {
-        connectedUser = username;
-        if (m.p1 === username) m.s1 = socket; else m.s2 = socket;
+      if (m.p1 === connectedUser || m.p2 === connectedUser) {
+        if (m.p1 === connectedUser) m.s1 = socket; else m.s2 = socket;
         socket.join(m.matchId);
         const reconNeedsPayment = m.wager > 0 && !!HIVE_GAME_ACCOUNT && m.status === 'waiting_payments';
         socket.emit('match_found', {
@@ -969,38 +1052,37 @@ io.on('connection', socket => {
           gameAccount: reconNeedsPayment ? HIVE_GAME_ACCOUNT : undefined,
           timeLimitMs: reconNeedsPayment ? 120_000 : 3 * 60 * 1000,
         });
-        console.log(`📨 Resent match_found to ${username} (reconnected on lobby)`);
+        console.log(`📨 Resent match_found to ${connectedUser} (reconnected on lobby)`);
         return;
       }
     }
 
     // Upsert: if player has a stale entry (e.g. reconnect after F5), replace it
-    if (matchQueue.has(username)) {
-      console.log(`🔄 ${username} already in queue — replacing stale entry`);
-      matchQueue.delete(username);
+    if (matchQueue.has(connectedUser)) {
+      console.log(`🔄 ${connectedUser} already in queue — replacing stale entry`);
+      matchQueue.delete(connectedUser);
     }
-    connectedUser = username;
-    matchQueue.set(username, {
+    matchQueue.set(connectedUser, {
       socket, wager,
       wagerType: wagerType || 'HIVE',
       format: format || 5,
       joinedAt: Date.now(),
     });
     socket.emit('queued', { queueSize: matchQueue.size });
-    console.log(`🔍 ${username} joined queue | ${wager} ${wagerType} BO${format} | size: ${matchQueue.size}`);
+    console.log(`🔍 ${connectedUser} joined queue | ${wager} ${wagerType} BO${format} | size: ${matchQueue.size}`);
     tryMatch();
     broadcastQueueSize();
   });
 
   // Rejoin after page redirect (battle.html connects with saved matchId)
-  socket.on('rejoin_match', ({ matchId, username }) => {
+  socket.on('rejoin_match', ({ matchId }) => {
+    if (!connectedUser) { socket.emit('rejoin_error', { message: 'Authentication required.' }); return; }
     const m = activeMatches.get(matchId);
     if (!m) { socket.emit('rejoin_error', { message: 'Match not found or already finished.' }); return; }
-    if (m.p1 !== username && m.p2 !== username) {
+    if (m.p1 !== connectedUser && m.p2 !== connectedUser) {
       socket.emit('rejoin_error', { message: 'You are not part of this match.' }); return;
     }
-    connectedUser = username;
-    if (m.p1 === username) m.s1 = socket;
+    if (m.p1 === connectedUser) m.s1 = socket;
     else m.s2 = socket;
     socket.join(matchId);
     socket.emit('rejoin_ok', {
@@ -1013,9 +1095,9 @@ io.on('connection', socket => {
     // If this player missed a round_result while disconnected, resend it
     if (m.lastRoundResult) {
       socket.emit('round_result', m.lastRoundResult);
-      console.log(`📨 Resent round_result to ${username} (missed while offline)`);
+      console.log(`📨 Resent round_result to ${connectedUser} (missed while offline)`);
     }
-    console.log(`🔄 ${username} rejoined match ${matchId}`);
+    console.log(`🔄 ${connectedUser} rejoined match ${matchId}`);
   });
 
   // Player submits their team for the current round

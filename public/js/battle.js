@@ -2302,13 +2302,13 @@
           window.location.hostname === "127.0.0.1"
             ? "http://localhost:3000"
             : "";
-        pvp.socket = io(base, { transports: ["websocket"] });
+        pvp.socket = io(base, {
+          transports: ["websocket"],
+          auth: { token: window._HF_SESSION?.token },
+        });
 
         pvp.socket.on("connect", () => {
-          pvp.socket.emit("rejoin_match", {
-            matchId: pvp.matchId,
-            username: window._HF_SESSION.username,
-          });
+          pvp.socket.emit("rejoin_match", { matchId: pvp.matchId });
         });
 
         pvp.socket.on("rejoin_error", (data) => {

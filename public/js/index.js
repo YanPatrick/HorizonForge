@@ -46,19 +46,38 @@
             username,
             memo,
             "Posting",
-            (resp) => {
-              if (resp.success) {
+            async (resp) => {
+              if (!resp.success) {
+                setErr(resp.message || "Login cancelled or failed.");
+                return;
+              }
+              try {
+                const r = await fetch("/api/auth/verify", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    username,
+                    memo,
+                    signature: resp.result,
+                  }),
+                });
+                const data = await r.json();
+                if (!r.ok || !data.token) {
+                  setErr(data.error || "Server verification failed.");
+                  return;
+                }
                 sessionStorage.setItem(
                   "hf_session",
                   JSON.stringify({
                     username,
                     mode: "hive",
                     ts: Date.now(),
+                    token: data.token,
                   }),
                 );
                 window.location.href = "/lobby.html";
-              } else {
-                setErr(resp.message || "Login cancelled or failed.");
+              } catch {
+                setErr("Network error. Please try again.");
               }
             },
           );

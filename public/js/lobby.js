@@ -420,7 +420,7 @@
         /* ── Socket.io ───────────────── */
         // Force WebSocket transport — avoids HTTP long-polling which causes
         // browser sluggishness while the socket is being established.
-        const socket = io({ transports: ["websocket"] });
+        const socket = io({ transports: ["websocket"], auth: { token: session.token } });
 
         // Pre-warm Keychain when user starts searching (not at page load).
         // Moved here so two browsers on the same machine don't warm up simultaneously.
@@ -514,7 +514,6 @@
           }
           _startSearchUI();
           socket.emit("join_queue", {
-            username: session.username,
             wager: pvpCfg.bet,
             format: pvpCfg.fmt,
           });
@@ -811,7 +810,6 @@
             !overlay.classList.contains("paying");
           if (isSearching && session.username) {
             socket.emit("join_queue", {
-              username: session.username,
               wager: pvpCfg.bet,
               format: pvpCfg.fmt,
             });
