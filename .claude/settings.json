@@ -11,7 +11,8 @@
       "Bash(xargs grep *)",
       "Bash(grep -E \"\\\\.\\(js|html\\)$\")",
       "PowerShell(python -m graphify claude install 2>&1)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(grep -o 'method:\"POST\"[^}]*formations\\\\|formations[^}]*method:\"POST\"\\\\|fetch\\(\"/api/formations\"[^\\)]*\\)\\\\|fetch\\(`/api/formations[^`]*`' \"c:/Fontes_Javascript/HorizonForge/public/dist/assets/index-sp789DVu.js\")"
     ]
   },
   "hooks": {

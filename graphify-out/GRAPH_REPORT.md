@@ -1,11 +1,11 @@
 # Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-04-28)
 
 ## Corpus Check
-- 14 files · ~106,161 words
+- 14 files · ~106,658 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 193 nodes · 340 edges · 20 communities detected
+- 194 nodes · 342 edges · 20 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -37,11 +37,11 @@
 3. `startGame()` - 11 edges
 4. `nextBattle()` - 11 edges
 5. `startBattle()` - 10 edges
-6. `genShop()` - 8 edges
-7. `_addToBench()` - 8 edges
-8. `endBattle()` - 8 edges
-9. `nextDuel()` - 8 edges
-10. `resolveBattleRound()` - 7 edges
+6. `initGame()` - 8 edges
+7. `genShop()` - 8 edges
+8. `_addToBench()` - 8 edges
+9. `endBattle()` - 8 edges
+10. `nextDuel()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `resolveBattleRound()` --references--> `simulate()`  [INFERRED]
@@ -98,16 +98,16 @@ Cohesion: 0.19
 Nodes (19): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient() (+11 more)
 
 ### Community 4 - "Community 4"
+Cohesion: 0.21
+Nodes (12): _bootBattle(), botInitDuel(), hideLoader(), initGame(), nextDuel(), pvpInit(), showLoader(), skillIcon() (+4 more)
+
+### Community 5 - "Community 5"
 Cohesion: 0.25
 Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleCategory(), savePref()
 
-### Community 5 - "Community 5"
+### Community 6 - "Community 6"
 Cohesion: 0.27
 Nodes (11): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+3 more)
-
-### Community 6 - "Community 6"
-Cohesion: 0.24
-Nodes (11): botInitDuel(), hideLoader(), initGame(), nextDuel(), pvpInit(), showLoader(), skillIcon(), START_GOLD() (+3 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.43
@@ -178,7 +178,7 @@ Nodes (1): Payout Preference Setting (liquid/stake)
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 3` to `Community 0`, `Community 2`, `Community 5`, `Community 6`?**
+- **Why does `log()` connect `Community 3` to `Community 0`, `Community 2`, `Community 4`, `Community 6`?**
   _High betweenness centrality (0.109) - this node is a cross-community bridge._
 - **Why does `resolveBattleRound()` connect `Community 3` to `Community 14`?**
   _High betweenness centrality (0.032) - this node is a cross-community bridge._

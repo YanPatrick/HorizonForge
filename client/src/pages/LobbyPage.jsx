@@ -149,7 +149,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
     }
     try {
       const res = await fetch('/api/formations', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player: session.username, slot: editingSlot + 1, name: f.name || `format${editingSlot + 1}`, hero_ids: f.hero_ids }),
       })
