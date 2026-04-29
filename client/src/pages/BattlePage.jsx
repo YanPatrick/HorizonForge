@@ -179,6 +179,30 @@ export default function BattlePage() {
         </div>
       </div>
 
+      {/* ══ MOBILE LOG OVERLAY ══ */}
+      <div id="mobile-log-overlay">
+        <div className="mlo-header">
+          <span className="mlo-title">Battle Log</span>
+          <button id="mobile-log-close" type="button" onClick={() => document.getElementById('mobile-log-overlay')?.classList.remove('open')}>✕</button>
+        </div>
+      </div>
+
+      {/* ══ MOBILE ACTION BAR ══ */}
+      <div className="mobile-actions">
+        <button type="button" data-step="recruit" onClick={() => window.setMobileStep?.('recruit')}>
+          🛍️<span>RECRUIT</span>
+        </button>
+        <button type="button" data-step="barracks" onClick={() => window.setMobileStep?.('barracks')}>
+          🏕️<span>BARRACKS</span>
+        </button>
+        <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>
+          ⚔️<span>BATTLE</span>
+        </button>
+        <button type="button" onClick={() => document.getElementById('mobile-log-overlay')?.classList.toggle('open')}>
+          📜<span>LOG</span>
+        </button>
+      </div>
+
       {/* ══ DUEL RESULT ══ */}
       <div id="duel-result">
         <div id="dr-box">

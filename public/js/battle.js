@@ -3646,7 +3646,13 @@
               : "Buy heroes from Recruitment, then place them on your field";
           setBanner(hint, "bshop");
         }
+        // ── Mobile sync (runs every render regardless of call site) ──
+        const mbb = document.getElementById("mobile-battle-btn");
+        if (mbb) mbb.disabled = G.phase !== "shop";
+        if (typeof window._mobilePhaseSync === "function") window._mobilePhaseSync(G.phase);
       }
+
+      window.render = render;
 
       // ── Boot ──
       function _bootBattle() {
@@ -3689,29 +3695,22 @@
       }
       window.togglePanel = togglePanel;
 
-      // Comportamentos mobile: auto-open, auto-advance, sync battle btn
+      // Comportamentos mobile: auto-open, auto-advance
+      // _mobilePhaseSync é chamado dentro de render() a cada frame — sem wrapper frágil
       (function () {
-        if (!window.matchMedia("(max-width: 768px)").matches) return;
-        let _autoOpened = false;
-        const _origRender = window.render;
-        if (typeof _origRender !== "function") return;
-        window.render = function () {
-          _origRender.apply(this, arguments);
-          const phase = G.phase;
-
-          // Combat: fecha painéis e reseta flag para próxima rodada
-          if (phase === "combat") {
+        if (!window.matchMedia("(max-width: 768px)").matches &&
+            !window.matchMedia("(pointer: coarse)").matches) return;
+        let _lastPhase = null;
+        window._mobilePhaseSync = function (phase) {
+          // Transição para combat: fecha painéis
+          if (phase === "combat" && _lastPhase !== "combat") {
             document.getElementById("shopwrap")?.classList.remove("mobile-open");
             document.getElementById("benchwrap")?.classList.remove("mobile-open");
-            _autoOpened = false;
           }
-
-          // Auto-abre recruit no início do shop
-          if (!_autoOpened && phase === "shop") {
-            _autoOpened = true;
+          // Transição para shop (nova rodada): sempre abre recruit
+          if (phase === "shop" && _lastPhase !== "shop") {
             setMobileStep("recruit");
           }
-
           // Auto-avança para barracks quando não tem mais ação de compra possível
           if (phase === "shop" && _mobileStep === "recruit") {
             const gold = G.gold;
@@ -3720,9 +3719,6 @@
             const canReroll = gold >= 2;
             if (!canBuy && !canReroll) setMobileStep("barracks");
           }
-
-          // Espelha estado disabled do #bfight no botão mobile
-          const mbb = document.getElementById("mobile-battle-btn");
-          if (mbb) mbb.disabled = G.phase !== "shop";
+          _lastPhase = phase;
         };
       })();

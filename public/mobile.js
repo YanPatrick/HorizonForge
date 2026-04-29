@@ -5,6 +5,7 @@
   window.mobileVertical = false;
 
   var isTouch = window.matchMedia('(pointer: coarse)').matches;
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
 
   /* ─── Rotate overlay (touch only) ─────────────────────────
      CSS shows/hides based on orientation media query.
@@ -18,21 +19,16 @@
     document.body.appendChild(rotateOverlay);
   }
 
-  /* ─── Log overlay (touch only) ────────────────────────────
+  /* ─── Log overlay ─────────────────────────────────────────
      Slide-up bottom sheet holding the battle log (#log).
-     Only on touch devices — desktop keeps #log inline in #center-col.
+     The overlay element is injected by React JSX; we just
+     wire up the close button and move #log into it.
   ─────────────────────────────────────────────────────────── */
-  if (isTouch) {
-    var logOverlay = document.createElement('div');
-    logOverlay.id = 'mobile-log-overlay';
-    logOverlay.innerHTML =
-      '<div class="mlo-header">' +
-        '<span class="mlo-title">Battle Log</span>' +
-        '<button id="mobile-log-close" type="button">✕</button>' +
-      '</div>';
-    document.body.appendChild(logOverlay);
-
+  if (isTouch || isMobile) {
     function setupLog() {
+      var logOverlay = document.getElementById('mobile-log-overlay');
+      if (!logOverlay) return;
+
       var log = document.getElementById('log');
       if (log) logOverlay.appendChild(log);
 
@@ -52,7 +48,8 @@
       btn.setAttribute('type', 'button');
       btn.textContent = '▼ Log';
       btn.addEventListener('click', function () {
-        logOverlay.classList.toggle('open');
+        var logOverlay = document.getElementById('mobile-log-overlay');
+        if (logOverlay) logOverlay.classList.toggle('open');
       });
       hdr.appendChild(btn);
     }
