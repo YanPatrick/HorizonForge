@@ -1,11 +1,11 @@
-# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-04-29)
+# Graph Report - HorizonForge  (2026-04-30)
 
 ## Corpus Check
-- 15 files · ~107,748 words
+- 15 files · ~92,125 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 198 nodes · 345 edges · 21 communities detected
+- 198 nodes · 345 edges · 14 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -22,14 +22,7 @@
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
 - [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Community 12|Community 12]]
-- [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 15|Community 15]]
-- [[_COMMUNITY_Community 16|Community 16]]
-- [[_COMMUNITY_Community 17|Community 17]]
-- [[_COMMUNITY_Community 18|Community 18]]
-- [[_COMMUNITY_Community 19|Community 19]]
 - [[_COMMUNITY_Community 20|Community 20]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -46,15 +39,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `resolveBattleRound()` --references--> `simulate()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\shared\simulate.js
+  api\server.js → shared\simulate.js
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 
 ## Hyperedges (group relationships)
 - **Hive Payment Verification and Prize Pipeline** — server_verifyHivePayment, server_refundHiveWager, server_sendHivePrize, server_hiveRpc, server_hiveClient [EXTRACTED 0.95]
@@ -130,37 +123,9 @@ Nodes (2): getSession(), RequireAuth()
 Cohesion: 0.67
 Nodes (2): injectLogBtn(), setupLog()
 
-### Community 12 - "Community 12"
-Cohesion: 0.67
-Nodes (0): 
-
-### Community 13 - "Community 13"
-Cohesion: 0.67
-Nodes (0): 
-
 ### Community 14 - "Community 14"
 Cohesion: 1.0
 Nodes (2): adjacentSlots(), simulate()
-
-### Community 15 - "Community 15"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 16 - "Community 16"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 17 - "Community 17"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 18 - "Community 18"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 19 - "Community 19"
-Cohesion: 1.0
-Nodes (0): 
 
 ### Community 20 - "Community 20"
 Cohesion: 1.0
@@ -169,15 +134,11 @@ Nodes (1): Payout Preference Setting (liquid/stake)
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 15`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
+- **Thin community `Community 10`** (4 nodes): `App()`, `getSession()`, `RequireAuth()`, `App.jsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 16`** (1 nodes): `eslint.config.js`
+- **Thin community `Community 11`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 17`** (1 nodes): `vite.config.js`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 18`** (1 nodes): `main.jsx`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 19`** (1 nodes): `release.js`
+- **Thin community `Community 14`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 20`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.

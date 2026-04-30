@@ -94,18 +94,21 @@ function simulate(pb, eb) {
       .filter((u) => u.cid === "paladin")
       .forEach((u) => {
         const adj = adjacentSlots(u.slot);
+        const bonusMap = {};
         units
           .filter((a) => a.id !== u.id && adj.includes(a.slot))
           .forEach((a) => {
             const b = Math.floor(a.maxHp * u.skillPower);
             a.maxHp += b;
             a.hp += b;
+            bonusMap[a.id] = b;
           });
         evs.push({
           type: "ability",
           uid: u.id,
           abilName: "Sacred Aura",
           tick: -1,
+          auraBonus: bonusMap,
         });
       });
 
