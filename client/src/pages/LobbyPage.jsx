@@ -411,7 +411,7 @@ export default function LobbyPage() {
     }).catch(() => {})
 
     // socket.io
-    const socket = io({ transports: ['websocket'] })
+    const socket = io({ transports: ['websocket'], auth: { token: session?.token } })
     socketRef.current = socket
 
     socket.on('queue_update', d => setSearch(s => ({ ...s, queueText: `Players in queue: ${d.queueSize ?? d.count ?? '—'}` })))
