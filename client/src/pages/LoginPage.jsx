@@ -31,12 +31,20 @@ export default function LoginPage() {
     setShowKcWarn(false)
 
     const memo = `horizon-forge-login-${Date.now()}`
-    window.hive_keychain.requestSignBuffer(user, memo, 'Posting', (resp) => {
-      if (resp.success) {
-        sessionStorage.setItem('hf_session', JSON.stringify({ username: user, mode: 'hive', ts: Date.now() }))
+    window.hive_keychain.requestSignBuffer(user, memo, 'Posting', async (resp) => {
+      if (!resp.success) { setErr(resp.message || 'Login cancelled or failed.'); return }
+      try {
+        const r = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, memo, signature: resp.result }),
+        })
+        const data = await r.json()
+        if (!r.ok || !data.token) { setErr(data.error || 'Server verification failed.'); return }
+        sessionStorage.setItem('hf_session', JSON.stringify({ username: user, mode: 'hive', ts: Date.now(), token: data.token }))
         navigate('/lobby')
-      } else {
-        setErr(resp.message || 'Login cancelled or failed.')
+      } catch {
+        setErr('Network error. Please try again.')
       }
     })
   }
