@@ -2109,10 +2109,10 @@
           nb.onclick = nextBattle;
         }
         document.getElementById("ctrl").appendChild(nb);
-        // Auto-advance: trigger the next action immediately for non-PvP flows
+        // Auto-advance: trigger the next action immediately.
         // Only auto-click when this button advances to the next *battle* (not when
-        // the duel result overlay is shown and the button is "Next Duel").
-        if (!window._PVP && nb.onclick === nextBattle) {
+        // the duel result overlay is shown and the button is "Next Duel" / "Back to Lobby").
+        if (nb.onclick === nextBattle) {
           // Hide the button during the short delay so it doesn't flash briefly
           nb.style.visibility = "hidden";
           // Small delay to avoid immediate UI jump — makes transition smoother
@@ -2370,11 +2370,19 @@
           }
         }
 
-        // Expose so startBattle() can stop the countdown when submitting team
-        pvp.stopRoundTimer = stopRoundTimer;
+        // Expose so other functions can start/stop the countdown
+        pvp.stopRoundTimer  = stopRoundTimer;
+        pvp.startRoundTimer = startRoundTimer;
 
         pvp.socket.on("round_timer", (data) => {
-          startRoundTimer(data.ms);
+          // Server emits round_timer immediately after round_result (for the next
+          // round). If the battle animation is still playing, defer the timer so
+          // it only appears once the recruitment/shop phase actually begins.
+          if (G.phase === "shop") {
+            startRoundTimer(data.ms);
+          } else {
+            pvp._pendingTimerMs = data.ms;
+          }
         });
 
         pvp.socket.on("opponent_ready", () => {
@@ -2611,6 +2619,11 @@
                 : null,
             );
             window._PVP._idsPrefixed = false;
+          }
+          // Start the recruitment timer that was deferred while battle animation played.
+          if (window._PVP._pendingTimerMs && window._PVP.startRoundTimer) {
+            window._PVP.startRoundTimer(window._PVP._pendingTimerMs);
+            window._PVP._pendingTimerMs = null;
           }
         }
         document.getElementById("bnext")?.remove();
