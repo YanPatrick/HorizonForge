@@ -3714,25 +3714,36 @@
       // Comportamentos mobile: auto-open, auto-advance
       // _mobilePhaseSync é chamado dentro de render() a cada frame — sem wrapper frágil
       (function () {
-        if (!window.matchMedia("(max-width: 768px)").matches &&
-            !window.matchMedia("(pointer: coarse)").matches) return;
         let _lastPhase = null;
         window._mobilePhaseSync = function (phase) {
+          // Só executa em viewports mobile (checagem em tempo de execução para suportar
+          // troca de modo no DevTools sem recarregar a página)
+          if (!window.matchMedia("(max-width: 768px)").matches &&
+              !window.matchMedia("(pointer: coarse)").matches) return;
+
           // Transição para combat: fecha painéis
           if (phase === "combat" && _lastPhase !== "combat") {
             document.getElementById("shopwrap")?.classList.remove("mobile-open");
             document.getElementById("benchwrap")?.classList.remove("mobile-open");
           }
-          // Transição para shop (nova rodada): sempre abre recruit
+          // Transição para shop (nova rodada): sempre abre recruit.
+          // Zera _mobileStep antes de chamar setMobileStep para evitar que o
+          // comportamento de toggle feche o painel caso já estivesse em "recruit".
           if (phase === "shop" && _lastPhase !== "shop") {
+            _mobileStep = null;
             setMobileStep("recruit");
           }
-          // Auto-avança para barracks quando não tem mais ação de compra possível
+          // Auto-avança para barracks quando não tem mais ação de compra possível.
+          // Usa cardCost(c.cid) porque mkUnit() não popula c.cost nos cards da loja.
           if (phase === "shop" && _mobileStep === "recruit") {
             const gold = G.gold;
             const shop = G.shop ?? [];
-            const canBuy = shop.some((c) => c && c.cost <= gold);
-            const canReroll = gold >= 2;
+            const canBuy = shop.some((c) => {
+              if (!c) return false;
+              const cost = c.cost != null ? c.cost : cardCost(c.cid);
+              return cost <= gold;
+            });
+            const canReroll = gold >= HF.value_new_recruitment;
             if (!canBuy && !canReroll) setMobileStep("barracks");
           }
           _lastPhase = phase;

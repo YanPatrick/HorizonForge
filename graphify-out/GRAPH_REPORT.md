@@ -1,7 +1,7 @@
-# Graph Report - HorizonForge  (2026-04-30)
+# Graph Report - HorizonForge  (2026-05-01)
 
 ## Corpus Check
-- 15 files · ~92,125 words
+- 15 files · ~92,201 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
