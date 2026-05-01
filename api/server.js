@@ -960,7 +960,7 @@ function resolveBattleRound(matchId) {
             error: result.error,
           });
         }
-      });
+      }).catch(err => console.error('[sendHivePrize] Unexpected rejection:', err.message));
     }
 
     activeMatches.delete(matchId);
@@ -1014,7 +1014,7 @@ function forfeitBattle(matchId, winner) {
         } else {
           io.to(matchId).emit('prize_error', { error: result.error });
         }
-      });
+      }).catch(err => console.error('[sendHivePrize] Unexpected rejection:', err.message));
     }
     activeMatches.delete(matchId);
   } else {
@@ -1306,6 +1306,12 @@ app.post('/api/admin/send-refund', async (req, res) => {
   const r = await refundHiveWager(to, amount, matchId);
   if (r.ok) res.json({ ok: true, to, amount });
   else res.status(500).json({ ok: false, error: r.error });
+});
+
+// Prevent unhandled rejections from crashing the server (Node 15+).
+// Log and continue — individual request handlers already return error responses.
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRITICAL] Unhandled rejection — server kept alive:', reason);
 });
 
 // ── Start server ───────────────────────────────────────────────────────────────

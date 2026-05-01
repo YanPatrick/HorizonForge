@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Horizon Forge | Battle</title>
+    <link rel="stylesheet" href="/css/battle.css" />
+    <link rel="stylesheet" href="/mobile.css" />
+    <link rel="stylesheet" href="/css/hf-portraits.css" />
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+  </head>
+
+  <body>
+    <!-- ══════════════════ QUIT MODAL ══════════════════ -->
+    <div
+      id="quit-overlay"
+      onclick="if (event.target === this) closeQuitModal();"
+    >
+      <div id="quit-modal">
+        <div class="qm-icon">⚠️</div>
+        <div class="qm-title">Quit Match?</div>
+        <div class="qm-body">
+          You will lose all progress in this match and return to the Lobby.
+        </div>
+        <div class="qm-btns">
+          <button class="qm-btn qm-cancel" onclick="closeQuitModal()">
+            Keep Playing
+          </button>
+          <button class="qm-btn qm-confirm" onclick="confirmQuit()">
+            Quit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ GAME ══════════════════ -->
+    <div id="game">
+      <!-- HEADER -->
+      <div id="hdr">
+        <div class="hdr-row-top">
+          <div class="duelbar-center">
+            <span class="sb suser" id="h-user">@you</span>
+            <div class="dscore" id="dots-p"></div>
+            <span class="duel-vs">⚔️</span>
+            <div class="dscore" id="dots-e"></div>
+            <span class="sb sopp" id="lbl-score-enemy">Enemy</span>
+          </div>
+        </div>
+        <div class="hdr-row-bottom">
+          <span class="sb sfmt" id="h-fmt">BO3</span>
+          <span id="h-timer">⏱ 2:00</span>
+          <div id="banner" class="bshop">
+            🛍️ Analyze the enemy, buy cards and build your army!
+          </div>
+          <button
+            id="battle-speed-toggle"
+            type="button"
+            onclick="toggleBattleSpeed()"
+            title="Toggle battle speed"
+          >
+            2x
+          </button>
+          <button
+            class="htp-btn hback-btn"
+            onclick="openQuitModal()"
+            title="Back to Lobby"
+          >
+            ← Lobby
+          </button>
+        </div>
+      </div>
+
+      <!-- ══════════════════ ARENA ══════════════════ -->
+      <div id="arena-wrap">
+        <!-- Turn Order Panel -->
+        <div id="turnpanel" class="hidden">
+          <div class="tp-title">⚔ Order</div>
+          <div class="tp-list" id="tp-list"></div>
+        </div>
+
+        <!-- Fields Row: Player | VS | Enemy -->
+        <div id="fields-row">
+          <div class="fwrap">
+            <div class="flbl flbl-row">
+              <span id="lbl-player" style="color: #88aaff">⚔ Your Army</span>
+              <span id="army-count"></span>
+            </div>
+            <div class="field pf" id="pfield"></div>
+          </div>
+          <div id="vs"><span class="vstxt">VS</span></div>
+          <div class="fwrap">
+            <div class="flbl" style="color: #ff8888">
+              <span id="lbl-enemy">☠ Opponent</span>
+            </div>
+            <div class="field ef" id="efield"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ BOTTOM ZONE ══════════════════ -->
+      <div id="bottom-zone">
+        <!-- LEFT: Barracks -->
+        <div id="benchwrap">
+          <div class="sec-hdr">
+            <span class="sec-title barracks-title">Barracks</span>
+            <span class="sec-title bcount-lbl" id="bcount"></span>
+          </div>
+          <div id="benchrow"></div>
+        </div>
+
+        <!-- CENTER: Battle button + Log -->
+        <div id="center-col">
+          <div id="ctrl">
+            <button class="btn bbtn" id="bfight" onclick="startBattle()">
+              Battle!
+            </button>
+            <div id="phase-timer"></div>
+          </div>
+          <div id="log"></div>
+        </div>
+
+        <!-- RIGHT: Recruitment -->
+        <div id="shopwrap">
+          <div class="sec-hdr">
+            <span class="sec-title recruit-title"
+              >Recruitment <span class="sb sg" id="h-gold">💰 7</span></span
+            >
+            <div class="recruit-controls">
+              <button class="rrbtn" id="breroll" onclick="rerollShop()">
+                New Recruitment (2💰)
+              </button>
+            </div>
+          </div>
+          <div id="shoprow"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ DUEL RESULT ══════════════════ -->
+    <div id="duel-result">
+      <div id="dr-box">
+        <div class="dr-title" id="dr-title">🏆 DUEL WON!</div>
+        <div class="dr-score" id="dr-score"></div>
+        <div class="dr-battles" id="dr-battles"></div>
+        <div class="dr-divider"></div>
+        <div class="dr-stats-grid">
+          <div class="dr-stat-row">
+            <div class="dr-val p" id="drs-dmgP">0</div>
+            <div class="dr-stat-lbl">⚔️ Total Damage</div>
+            <div class="dr-val e" id="drs-dmgE">0</div>
+          </div>
+          <div class="dr-stat-row">
+            <div class="dr-val p" id="drs-killsP">0</div>
+            <div class="dr-stat-lbl">💀 Kills</div>
+            <div class="dr-val e" id="drs-killsE">0</div>
+          </div>
+          <div class="dr-stat-row">
+            <div class="dr-val p" id="drs-merges">0</div>
+            <div class="dr-stat-lbl">✨ Merges</div>
+            <div class="dr-val e" id="drs-mergesE">—</div>
+          </div>
+        </div>
+        <div class="dr-divider"></div>
+        <div class="dr-teams">
+          <div class="dr-team">
+            <div class="dr-team-lbl" style="color: rgba(136, 170, 255, 0.6)">
+              Your Final Army
+            </div>
+            <div class="dr-team-units" id="drt-p"></div>
+          </div>
+          <div class="dr-team">
+            <div class="dr-team-lbl" style="color: rgba(255, 100, 100, 0.6)">
+              Enemy Army
+            </div>
+            <div class="dr-team-units" id="drt-e"></div>
+          </div>
+        </div>
+        <!-- PvP: submitting results banner (hidden until series ends in PvP) -->
+        <div id="dr-submitting">
+          <div class="dr-submit-row">
+            <div class="dr-submit-spinner" id="dr-spin"></div>
+            <div class="dr-submit-text" id="dr-submit-text">
+              Submitting results...
+            </div>
+          </div>
+          <div class="dr-submit-sub" id="dr-submit-sub">
+            Processing match outcome on the blockchain...
+          </div>
+        </div>
+
+        <div class="dr-cta">
+          <button class="btn gnbtn" id="dr-next-btn">🌟 Next Duel</button>
+          <button
+            class="btn"
+            style="
+              background: rgba(255, 255, 255, 0.07);
+              border: 1px solid rgba(255, 255, 255, 0.14);
+              color: rgba(255, 255, 255, 0.6);
+            "
+            onclick="
+              document.getElementById('duel-result').classList.remove('open')
+            "
+          >
+            ✕ View Field
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ HOW TO PLAY ══════════════════ -->
+    <div id="howto">
+      <div id="htp-box">
+        <button id="htp-close" onclick="closeHowTo()">✕ Close</button>
+        <div class="htp-h1">📖 How To Play — Horizon Forge</div>
+        <div class="htp-h2">🎯 Objective</div>
+        <p class="htp-p">
+          Win most battles in a duel to advance. In
+          <span class="htp-hl">Best of 3</span>, win 2 battles. In
+          <span class="htp-hl">Best of 5</span>, win 3. The opponent keeps the
+          same army for the whole duel — analyze it before building yours.
+        </p>
+        <div class="htp-h2">💰 Gold</div>
+        <div class="htp-tips">
+          <div class="htp-tip">
+            <span class="htp-tip-ico">🏁</span>
+            <div>Each duel starts with <b style="color: #ffdd55">7💰</b>.</div>
+          </div>
+          <div class="htp-tip">
+            <span class="htp-tip-ico">⚔️</span>
+            <div>
+              Between battles you receive gold automatically — both players
+              receive the same amount each round.
+            </div>
+          </div>
+          <div class="htp-tip">
+            <span class="htp-tip-ico">🔄</span>
+            <div>New Recruitment costs <b style="color: #ffdd55">2💰</b>.</div>
+          </div>
+        </div>
+        <div class="htp-h2">⛺ Recruitment & Bench</div>
+        <div class="htp-tips">
+          <div class="htp-tip">
+            <span class="htp-tip-ico">🆕</span>
+            <div>
+              Buying a character you don't own yet costs
+              <b style="color: #ffdd55">3💰</b>. They go straight to the
+              Barracks.
+            </div>
+          </div>
+          <div class="htp-tip">
+            <span class="htp-tip-ico">🔗</span>
+            <div>
+              Buying a character you already own costs
+              <b style="color: #88ff88">2💰</b> and stacks on the same card —
+              each hero uses only <b>1 slot</b> in the Barracks.
+            </div>
+          </div>
+          <div class="htp-tip">
+            <span class="htp-tip-ico">🖱️</span>
+            <div>
+              <b>Drag</b> a card from Barracks to a field slot, or click it then
+              click the slot.
+            </div>
+          </div>
+        </div>
+        <div class="htp-h2">✨ Card Merging</div>
+        <div class="htp-tips">
+          <div class="htp-tip">
+            <span class="htp-tip-ico">⭐</span>
+            <div>
+              Stack <b>3 copies</b> of the same character to auto-merge — they
+              level up (<b style="color: #ffcc44">★ → ★★ → ★★★...</b>) and
+              become much more powerful.
+            </div>
+          </div>
+        </div>
+        <div class="htp-h2">🧙 Characters</div>
+        <table class="htp-table">
+          <tr>
+            <th>Character</th>
+            <th>Ability</th>
+            <th>Effect</th>
+          </tr>
+          <tr>
+            <td>⚔️ Knight</td>
+            <td>🛡️ Iron Defense</td>
+            <td>Reduces damage taken per hit.</td>
+          </tr>
+          <tr>
+            <td>🔮 Mage</td>
+            <td>🔥 Fireball</td>
+            <td>Area damage to surrounding enemies.</td>
+          </tr>
+          <tr>
+            <td>🏹 Archer</td>
+            <td>🎯 Precise Shot</td>
+            <td>Increased critical hit chance.</td>
+          </tr>
+          <tr>
+            <td>💚 Healer</td>
+            <td>💫 Healing</td>
+            <td>Heals the ally with lowest HP.</td>
+          </tr>
+          <tr>
+            <td>🗡️ Assassin</td>
+            <td>⚡ Sneak Strike</td>
+            <td>Amplified first attack on the weakest foe.</td>
+          </tr>
+          <tr>
+            <td>🛡️ Paladin</td>
+            <td>✨ Sacred Aura</td>
+            <td>Boosts max HP of adjacent allies.</td>
+          </tr>
+          <tr>
+            <td>🌟 Archmage</td>
+            <td>⛓️ Chain Lightning</td>
+            <td>Attack chains to multiple targets in a row.</td>
+          </tr>
+          <tr>
+            <td>🪓 Barbarian</td>
+            <td>😡 Fury</td>
+            <td>Attack bonus when low on HP.</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════ GAME LOGIC ══════════════════ -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/battle.js"></script>
+
+    <!-- ── Attack arrow overlay ── -->
+    <svg
+      id="attack-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      style="
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 95;
+        overflow: visible;
+      "
+    >
+      <defs>
+        <!-- Blur filter for glow trail layer -->
+        <filter id="arr-blur" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
+        </filter>
+
+        <!-- Chevron arrowheads (concave for a sharper game-feel) -->
+        <marker
+          id="arr-primary"
+          markerWidth="9"
+          markerHeight="9"
+          refX="7.5"
+          refY="4.5"
+          orient="auto"
+        >
+          <path
+            d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z"
+            fill="rgba(255,88,72,.96)"
+          />
+        </marker>
+        <marker
+          id="arr-splash"
+          markerWidth="9"
+          markerHeight="9"
+          refX="7.5"
+          refY="4.5"
+          orient="auto"
+        >
+          <path
+            d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z"
+            fill="rgba(255,178,35,.94)"
+          />
+        </marker>
+        <marker
+          id="arr-ally"
+          markerWidth="9"
+          markerHeight="9"
+          refX="7.5"
+          refY="4.5"
+          orient="auto"
+        >
+          <path
+            d="M0.5,0.5 L8.5,4.5 L0.5,8.5 L2,4.5 Z"
+            fill="rgba(72,230,115,.94)"
+          />
+        </marker>
+      </defs>
+    </svg>
+    <script src="/mobile.js" defer></script>
+
+    <!-- MOBILE MENU POPUP -->
+    <div id="mobile-menu-overlay" onclick="if(event.target===this)closeMobileMenu()">
+      <div id="mobile-menu-popup">
+        <div class="mmp-title">Menu</div>
+        <button class="mmp-btn" onclick="closeMobileMenu();openHowTo()">📖 Rules</button>
+        <button class="mmp-btn mmp-danger" onclick="closeMobileMenu();openQuitModal()">🏳 Concede / Quit</button>
+        <button class="mmp-close" onclick="closeMobileMenu()">✕ Close</button>
+      </div>
+    </div>
+
+    <!-- MOBILE ACTION BAR -->
+    <div class="mobile-actions">
+      <button data-step="recruit" onclick="setMobileStep('recruit')">
+        🛒<span>Recruit</span>
+      </button>
+      <button data-step="barracks" onclick="setMobileStep('barracks')">
+        🛡️<span>Barracks</span>
+      </button>
+      <div class="mab-center">
+        <button id="mobile-battle-btn" onclick="startBattle()">⚔️</button>
+      </div>
+      <button data-step="log" onclick="togglePanel('log')">📜<span>Log</span></button>
+      <button onclick="openMobileMenu()">⚙️<span>Menu</span></button>
+    </div>
+  </body>
+</html>

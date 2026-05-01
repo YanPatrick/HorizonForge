@@ -3794,15 +3794,23 @@
           transition: bottom 0.3s ease;
         }
 
-        /* quando aberto: senta acima da action bar (56px) */
-        #shopwrap.mobile-open,
+        /* Recruit: tela cheia menos a nav bar */
+        #shopwrap.mobile-open {
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+          top: 0;
+          height: auto;
+          max-height: none;
+          border-radius: 0;
+        }
+
+        /* Barracks: bottom sheet (campo fica visível acima) */
         #benchwrap.mobile-open {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
         }
 
         /* battlefield: ocupa tela toda menos action bar */
         #game {
-          height: calc(100dvh - 56px - env(safe-area-inset-bottom, 0px)) !important;
+          height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important;
         }
 
         /* esconder log-btn do header (substituido pela action bar) */
@@ -3816,65 +3824,174 @@
           bottom: 0;
           left: 0;
           width: 100%;
-          height: calc(env(safe-area-inset-bottom, 0px) + 56px);
-          display: flex;
-          justify-content: space-around;
+          height: calc(64px + env(safe-area-inset-bottom, 0px));
+          display: grid;
+          grid-template-columns: 1fr 1fr 72px 1fr 1fr;
           align-items: center;
           padding-bottom: env(safe-area-inset-bottom, 0px);
-          background: linear-gradient(to top, rgba(26, 19, 48, 0.98), rgba(26, 19, 48, 0.75));
-          backdrop-filter: blur(8px);
-          border-top: 1px solid rgba(180, 130, 255, 0.14);
+          background: linear-gradient(to top, rgba(20, 14, 40, 0.99), rgba(26, 19, 48, 0.92));
+          backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(180, 130, 255, 0.18);
           z-index: 50;
+          overflow: visible;
         }
 
-        .mobile-actions button {
+        .mobile-actions > button {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 2px;
-          font-size: 16px;
+          justify-content: center;
+          gap: 3px;
+          font-size: 18px;
           background: none;
           border: none;
-          color: rgba(200, 185, 245, 0.8);
+          color: rgba(200, 185, 245, 0.65);
           cursor: pointer;
           -webkit-tap-highlight-color: transparent;
           touch-action: manipulation;
-          padding: 4px 10px;
+          padding: 4px 0;
+          height: 64px;
         }
 
-        .mobile-actions button span {
+        .mobile-actions > button span {
           font-size: 7px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.6px;
           font-family: "Exo 2", system-ui, sans-serif;
+          color: rgba(190, 170, 240, 0.5);
         }
 
-        /* Estado ativo na action bar */
-        .mobile-actions button.ms-active {
+        /* Estado ativo */
+        .mobile-actions > button.ms-active {
+          color: #ffd700;
+        }
+        .mobile-actions > button.ms-active span {
           color: #ffd700;
         }
 
-        .mobile-actions button.ms-active span {
-          color: #ffd700;
+        /* Container do botão central */
+        .mab-center {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 64px;
+          position: relative;
         }
 
-        /* Botão Battle! na action bar */
+        /* Botão Battle central — círculo destacado */
         #mobile-battle-btn {
-          color: #ff5555;
-          font-size: 18px;
+          width: 58px;
+          height: 58px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 38% 32%, #d93030, #7a0a0a);
+          border: none;
+          box-shadow:
+            0 0 0 3px rgba(20, 14, 40, 0.99),
+            0 0 0 5px rgba(255, 90, 60, 0.55),
+            0 4px 18px rgba(200, 30, 30, 0.6);
+          font-size: 24px;
+          color: #fff;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translateY(-10px);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          position: relative;
+          z-index: 51;
         }
 
-        #mobile-battle-btn span {
-          color: #ff8888;
+        #mobile-battle-btn:active {
+          transform: translateY(-6px);
+          box-shadow:
+            0 0 0 3px rgba(20, 14, 40, 0.99),
+            0 0 0 5px rgba(255, 90, 60, 0.35),
+            0 2px 8px rgba(200, 30, 30, 0.4);
         }
 
         #mobile-battle-btn:disabled {
-          color: rgba(255, 85, 85, 0.3);
+          background: radial-gradient(circle at 38% 32%, #4a2020, #2a0808);
+          box-shadow:
+            0 0 0 3px rgba(20, 14, 40, 0.99),
+            0 0 0 5px rgba(255, 90, 60, 0.15);
+          opacity: 0.5;
+          cursor: default;
         }
 
-        #mobile-battle-btn:disabled span {
-          color: rgba(255, 136, 136, 0.3);
+        /* Menu popup */
+        #mobile-menu-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          z-index: 200;
+          background: rgba(0, 0, 0, 0.6);
+          align-items: flex-end;
+          justify-content: center;
+        }
+
+        #mobile-menu-overlay.open {
+          display: flex;
+        }
+
+        #mobile-menu-popup {
+          background: linear-gradient(160deg, #1a1230, #0e0a22);
+          border: 1px solid rgba(180, 130, 255, 0.2);
+          border-bottom: none;
+          border-radius: 20px 20px 0 0;
+          padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 80px);
+          width: 100%;
+          max-width: 420px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .mmp-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: rgba(200, 185, 245, 0.5);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          font-family: "Exo 2", system-ui, sans-serif;
+          text-align: center;
+          margin-bottom: 6px;
+        }
+
+        .mmp-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          color: rgba(220, 210, 255, 0.9);
+          font-size: 15px;
+          font-family: "Exo 2", system-ui, sans-serif;
+          font-weight: 600;
+          padding: 14px 16px;
+          text-align: left;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+
+        .mmp-btn.mmp-danger {
+          color: rgba(255, 130, 100, 0.9);
+          border-color: rgba(255, 80, 60, 0.2);
+        }
+
+        .mmp-close {
+          background: none;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 10px;
+          color: rgba(255, 255, 255, 0.4);
+          font-size: 14px;
+          font-family: "Exo 2", system-ui, sans-serif;
+          padding: 12px;
+          margin-top: 4px;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
         }
 
         /* scroll horizontal no recruitment */

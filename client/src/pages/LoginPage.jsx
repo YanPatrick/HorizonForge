@@ -34,11 +34,15 @@ export default function LoginPage() {
     window.hive_keychain.requestSignBuffer(user, memo, 'Posting', async (resp) => {
       if (!resp.success) { setErr(resp.message || 'Login cancelled or failed.'); return }
       try {
-        const r = await fetch('/api/auth/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: user, memo, signature: resp.result }),
-        })
+        const body = JSON.stringify({ username: user, memo, signature: resp.result })
+        const fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
+        let r
+        try {
+          r = await fetch('/api/auth/verify', fetchOpts)
+        } catch {
+          await new Promise(res => setTimeout(res, 1500))
+          r = await fetch('/api/auth/verify', fetchOpts)
+        }
         const data = await r.json()
         if (!r.ok || !data.token) { setErr(data.error || 'Server verification failed.'); return }
         sessionStorage.setItem('hf_session', JSON.stringify({ username: user, mode: 'hive', ts: Date.now(), token: data.token }))

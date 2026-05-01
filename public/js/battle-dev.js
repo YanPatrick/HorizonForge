@@ -3709,8 +3709,26 @@
       function togglePanel(type) {
         if (type !== "log") return;
         document.getElementById("mobile-log-overlay")?.classList.toggle("open");
+        const logBtn = document.querySelector('.mobile-actions button[data-step="log"]');
+        if (logBtn) {
+          const isOpen = document.getElementById("mobile-log-overlay")?.classList.contains("open");
+          logBtn.classList.toggle("ms-active", !!isOpen);
+        }
       }
       window.togglePanel = togglePanel;
+
+      function openMobileMenu() {
+        document.getElementById("mobile-menu-overlay")?.classList.add("open");
+      }
+      function closeMobileMenu() {
+        document.getElementById("mobile-menu-overlay")?.classList.remove("open");
+      }
+      function openHowTo() {
+        document.getElementById("howto")?.classList.add("open");
+      }
+      window.openMobileMenu = openMobileMenu;
+      window.closeMobileMenu = closeMobileMenu;
+      window.openHowTo = openHowTo;
 
       // Comportamentos mobile: auto-open, auto-advance
       // _mobilePhaseSync é chamado dentro de render() a cada frame — sem wrapper frágil

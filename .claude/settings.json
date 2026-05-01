@@ -13,7 +13,9 @@
       "PowerShell(python -m graphify claude install 2>&1)",
       "Bash(node -e ' *)",
       "Bash(grep -o 'method:\"POST\"[^}]*formations\\\\|formations[^}]*method:\"POST\"\\\\|fetch\\(\"/api/formations\"[^\\)]*\\)\\\\|fetch\\(`/api/formations[^`]*`' \"c:/Fontes_Javascript/HorizonForge/public/dist/assets/index-sp789DVu.js\")",
-      "Bash(grep -n \"^\\(function\\\\|\\(function.*{\\\\s*$\\\\|^\\\\s*\\(function\" \"c:/Fontes_Javascript/HorizonForge/public/js/battle.js\")"
+      "Bash(grep -n \"^\\(function\\\\|\\(function.*{\\\\s*$\\\\|^\\\\s*\\(function\" \"c:/Fontes_Javascript/HorizonForge/public/js/battle.js\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Fontes_Javascript\\\\HorizonForge\" -Recurse -Directory -Name)",
+      "Bash(Select-Object -First 20)"
     ]
   },
   "hooks": {
