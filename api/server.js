@@ -222,13 +222,15 @@ app.use(express.json());
 const CLIENT_DIST = join(__dirname, '../public/dist');
 const isDev = process.env.NODE_ENV !== 'production';
 
-// HTML files: never cache (deploys reflect immediately).
-// JS/CSS/images: 1-week cache (Vite stamps content-hash in the filename).
+// Vite assets have content-hashes in their filenames and are safe to cache long-term.
+// All other files (battle.js, battle.css, mobile.css, etc.) have no hash, so they
+// must never be cached — otherwise browsers ignore updates for up to 7 days.
 function staticOpts(htmlNoCache = true) {
   return {
     maxAge: '7d',
     setHeaders(res, filePath) {
-      if (htmlNoCache && filePath.endsWith('.html')) {
+      const isViteAsset = filePath.includes('/dist/assets/');
+      if (!isViteAsset) {
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');

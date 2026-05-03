@@ -3759,12 +3759,15 @@
           _mobileStep = null;
           document.querySelectorAll(".mobile-actions button[data-step]")
             .forEach(b => b.classList.remove("ms-active"));
-          // Sincronizar histórico completo do log
+          // Sincronizar histórico completo do log, ignorando spacers (div.le vazios)
           const src = document.getElementById("log");
           const dest = document.getElementById("mobile-log-entries");
           if (src && dest) {
             dest.innerHTML = "";
-            dest.innerHTML = src.innerHTML;
+            Array.from(src.children).forEach(el => {
+              if (el.innerHTML.trim() === "&nbsp;" || el.innerHTML.trim() === "") return;
+              dest.appendChild(el.cloneNode(true));
+            });
             requestAnimationFrame(() => { dest.scrollTop = dest.scrollHeight; });
           }
         }
