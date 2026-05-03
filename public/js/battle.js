@@ -1,3 +1,9 @@
+      // ============================================================
+      // ARQUIVO DE DESENVOLVIMENTO — battle-dev.js
+      // NÃO é servido em produção. Edite aqui para novas features.
+      // Para publicar: copie o conteúdo para battle.js.
+      // ============================================================
+
       // ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
       const BASE_W = 1280; // resolução de referência (seu design base)
       const BASE_H = 720;
@@ -109,10 +115,17 @@
           "--battle-speed-mult",
           String(getBattleSpeedMultiplier()),
         );
+        const label = battleSpeed === 1 ? "1x" : "2x";
+        const fast = battleSpeed === 2;
         const btn = document.getElementById("battle-speed-toggle");
         if (btn) {
-          btn.textContent = battleSpeed === 1 ? "1x" : "2x";
-          btn.classList.toggle("is-fast", battleSpeed === 2);
+          btn.textContent = label;
+          btn.classList.toggle("is-fast", fast);
+        }
+        const mBtn = document.getElementById("mobile-speed-btn");
+        if (mBtn) {
+          mBtn.textContent = label;
+          mBtn.classList.toggle("is-fast", fast);
         }
         try {
           localStorage.setItem("hf_battle_speed", String(battleSpeed));
@@ -1466,7 +1479,10 @@
           le.textContent = "";
           le.parentElement.style.display = "none";
         }
-        if (lse) lse.textContent = pvp?.opponent ? `@${pvp.opponent}` : "Enemy";
+        const oppName = pvp?.opponent ? `@${pvp.opponent}` : "Enemy";
+        if (lse) lse.textContent = oppName;
+        const mob = document.getElementById("mobile-opp-name");
+        if (mob) mob.textContent = oppName;
       }
 
       function setShopLocked(locked) {
@@ -2755,6 +2771,10 @@
           de = document.getElementById("dots-e");
         dp.innerHTML = "";
         de.innerHTML = "";
+        const mdp = document.getElementById("mobile-dots-p");
+        const mde = document.getElementById("mobile-dots-e");
+        if (mdp) mdp.innerHTML = "";
+        if (mde) mde.innerHTML = "";
         const battles = G.duelStats.battles; // [{winner:"p"|"e"}, ...]
         for (let i = 0; i < G.format; i++) {
           const pd = document.createElement("div"),
@@ -2769,6 +2789,8 @@
           }
           dp.appendChild(pd);
           de.appendChild(ed);
+          if (mdp) { const m = document.createElement("div"); m.className = pd.className; mdp.appendChild(m); }
+          if (mde) { const m = document.createElement("div"); m.className = ed.className; mde.appendChild(m); }
         }
       }
 
@@ -2965,6 +2987,15 @@
                 SkillTip.show(infoBtn, generateHeroInfoHtml(u));
               });
             }
+            // Long press on field cell → sticky info (mobile)
+            let _lpTimer = null;
+            el.addEventListener("touchstart", () => {
+              _lpTimer = setTimeout(() => {
+                SkillTip.showSticky(el, generateHeroInfoHtml(u));
+              }, 500);
+            }, { passive: true });
+            el.addEventListener("touchend", () => clearTimeout(_lpTimer));
+            el.addEventListener("touchmove", () => clearTimeout(_lpTimer));
 
             if (isP && G.phase === "shop") {
               el.draggable = true;
@@ -3372,6 +3403,22 @@
           });
         }
 
+        function showSticky(anchor, html) {
+          show(anchor, html);
+          setTimeout(() => {
+            function dismiss(e) {
+              const tip = getEl();
+              if (!tip.contains(e.target)) {
+                hide();
+                document.removeEventListener("touchstart", dismiss);
+                document.removeEventListener("click", dismiss);
+              }
+            }
+            document.addEventListener("touchstart", dismiss, { passive: true });
+            document.addEventListener("click", dismiss);
+          }, 150);
+        }
+
         function hide() {
           clearTimeout(hideTimer);
           hideTimer = setTimeout(() => {
@@ -3379,7 +3426,7 @@
           }, 80);
         }
 
-        return { show, hide };
+        return { show, showSticky, hide };
       })();
 
       function renderShop() {
@@ -3701,16 +3748,108 @@
         if (step === "recruit") document.getElementById("shopwrap")?.classList.add("mobile-open");
         else if (step === "barracks") document.getElementById("benchwrap")?.classList.add("mobile-open");
         document.querySelectorAll(".mobile-actions button[data-step]").forEach((btn) => {
-          btn.classList.toggle("ms-active", btn.dataset.step === step);
+          btn.classList.toggle("ms-active", btn.dataset.step === step && step !== null);
         });
       }
       window.setMobileStep = setMobileStep;
 
       function togglePanel(type) {
         if (type !== "log") return;
-        document.getElementById("mobile-log-overlay")?.classList.toggle("open");
+        const overlay = document.getElementById("mobile-log-overlay");
+        if (!overlay) return;
+        const opening = !overlay.classList.contains("open");
+        if (opening) {
+          // Fechar outros painéis
+          document.getElementById("shopwrap")?.classList.remove("mobile-open");
+          document.getElementById("benchwrap")?.classList.remove("mobile-open");
+          _mobileStep = null;
+          document.querySelectorAll(".mobile-actions button[data-step]")
+            .forEach(b => b.classList.remove("ms-active"));
+          // Sincronizar histórico completo do log
+          const src = document.getElementById("log");
+          const dest = document.getElementById("mobile-log-entries");
+          if (src && dest) {
+            dest.innerHTML = "";
+            dest.innerHTML = src.innerHTML;
+            requestAnimationFrame(() => { dest.scrollTop = dest.scrollHeight; });
+          }
+        }
+        overlay.classList.toggle("open");
+        const logBtn = document.querySelector('.mobile-actions button[data-step="log"]');
+        if (logBtn) logBtn.classList.toggle("ms-active", overlay.classList.contains("open"));
       }
       window.togglePanel = togglePanel;
+
+      function openMobileMenu() {
+        // Fechar log se estiver aberto
+        document.getElementById("mobile-log-overlay")?.classList.remove("open");
+        document.querySelector('.mobile-actions button[data-step="log"]')?.classList.remove("ms-active");
+        const btn = document.getElementById("mmp-fs-btn");
+        if (btn) btn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Enter Fullscreen";
+        document.getElementById("mobile-menu-overlay")?.classList.add("open");
+      }
+      function closeMobileMenu() {
+        document.getElementById("mobile-menu-overlay")?.classList.remove("open");
+      }
+      function openHowTo() {
+        document.getElementById("howto")?.classList.add("open");
+      }
+      window.openMobileMenu = openMobileMenu;
+      window.closeMobileMenu = closeMobileMenu;
+      window.openHowTo = openHowTo;
+
+      // ── Fullscreen ───────────────────────────────────────────────
+      (function () {
+        const FS_KEY = "hf_fullscreen";
+        const isMobileDevice = (window.matchMedia("(pointer: coarse)").matches ||
+                                window.matchMedia("(max-width: 768px)").matches) &&
+                               window.matchMedia("(orientation: portrait)").matches;
+        if (!isMobileDevice) return;
+
+        function enterFS() {
+          const el = document.documentElement;
+          if (el.requestFullscreen) return el.requestFullscreen();
+          if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+        }
+
+        function exitFS() {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+
+        window.toggleFullscreen = function () {
+          if (document.fullscreenElement || document.webkitFullscreenElement) exitFS();
+          else enterFS();
+          closeMobileMenu();
+        };
+
+        window.acceptFullscreen = function () {
+          localStorage.setItem(FS_KEY, "1");
+          document.getElementById("fs-banner")?.classList.remove("show");
+          enterFS();
+        };
+
+        window.declineFullscreen = function () {
+          localStorage.setItem(FS_KEY, "0");
+          document.getElementById("fs-banner")?.classList.remove("show");
+        };
+
+        const pref = localStorage.getItem(FS_KEY);
+
+        if (pref === "1") {
+          function onFirstTouch() {
+            document.removeEventListener("touchstart", onFirstTouch, true);
+            document.removeEventListener("click", onFirstTouch, true);
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) enterFS();
+          }
+          document.addEventListener("touchstart", onFirstTouch, { once: true, capture: true });
+          document.addEventListener("click", onFirstTouch, { once: true, capture: true });
+        } else if (pref === null) {
+          setTimeout(function () {
+            document.getElementById("fs-banner")?.classList.add("show");
+          }, 1500);
+        }
+      })();
 
       // Comportamentos mobile: auto-open, auto-advance
       // _mobilePhaseSync é chamado dentro de render() a cada frame — sem wrapper frágil
@@ -3752,4 +3891,4 @@
           }
           _lastPhase = phase;
         };
-      })();
+      })();
