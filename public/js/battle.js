@@ -3802,8 +3802,12 @@
 
         function enterFS() {
           const el = document.documentElement;
-          if (el.requestFullscreen) return el.requestFullscreen();
-          if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+          const p = el.requestFullscreen
+            ? el.requestFullscreen()
+            : el.webkitRequestFullscreen
+              ? el.webkitRequestFullscreen()
+              : null;
+          if (p) p.catch(() => {});
         }
 
         function exitFS() {
