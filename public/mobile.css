@@ -52,7 +52,7 @@
 #mobile-log-overlay {
   position: fixed;
   top: auto;
-  bottom: 0;
+  bottom: -100%;
   left: 0;
   right: 0;
   height: 60dvh;
@@ -64,12 +64,15 @@
   border-top: 1px solid rgba(180, 130, 255, 0.2);
   box-shadow: 0 -6px 32px rgba(0, 0, 0, 0.6);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  transform: translateY(100%);
-  transition: transform 0.28s cubic-bezier(0.22, 0.68, 0, 1.1);
+  transition: bottom 0.28s cubic-bezier(0.22, 0.68, 0, 1.1);
 }
 
+/* When open, use bottom (same strategy as #benchwrap / #shopwrap) and
+   force z-index so it appears above the mobile action bar. Use !important
+   to avoid being overridden by other bundled CSS rules. */
 #mobile-log-overlay.open {
-  transform: translateY(0);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px) !important;
+  z-index: 5001 !important;
 }
 
 #mobile-log-overlay #log {
@@ -154,6 +157,13 @@
   #game {
     padding-top: env(safe-area-inset-top);
   }
+}
+
+/* Portrait mobile: hide the inline #log and use the slide-up overlay instead.
+   Also add bottom padding so center content isn't obscured by the action bar. */
+@media (pointer: coarse) and (max-width: 768px) and (orientation: portrait) {
+  #log { display: none !important; }
+  #center-col { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ══════════════════════════════════════════
