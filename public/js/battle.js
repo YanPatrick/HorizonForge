@@ -1,9 +1,3 @@
-      // ============================================================
-      // ARQUIVO DE DESENVOLVIMENTO — battle-dev.js
-      // NÃO é servido em produção. Edite aqui para novas features.
-      // Para publicar: copie o conteúdo para battle.js.
-      // ============================================================
-
       // ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
       const BASE_W = 1280; // resolução de referência (seu design base)
       const BASE_H = 720;
