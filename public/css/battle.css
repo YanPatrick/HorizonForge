@@ -4060,12 +4060,30 @@
           color: rgba(190, 170, 240, 0.5);
         }
 
-        /* Estado ativo */
-        .mobile-actions > button.ms-active {
-          color: #ffd700;
+        /* Estado ativo — pill indicator */
+        .mobile-actions > button {
+          position: relative;
         }
+
+        .mobile-actions > button.ms-active {
+          color: rgba(215, 195, 255, 0.95);
+        }
+
         .mobile-actions > button.ms-active span {
-          color: #ffd700;
+          color: rgba(215, 195, 255, 0.95);
+        }
+
+        .mobile-actions > button.ms-active::before {
+          content: '';
+          position: absolute;
+          top: 9px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 38px;
+          height: 28px;
+          background: rgba(150, 100, 255, 0.15);
+          border-radius: 10px;
+          pointer-events: none;
         }
 
         /* Container do botão central */
