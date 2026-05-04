@@ -278,60 +278,12 @@
             </div>
           </div>
         </div>
-        <div class="htp-h2">🧙 Characters</div>
-        <table class="htp-table">
-          <tr>
-            <th>Character</th>
-            <th>Ability</th>
-            <th>Effect</th>
-          </tr>
-          <tr>
-            <td>⚔️ Knight</td>
-            <td>🛡️ Iron Defense</td>
-            <td>Reduces damage taken per hit.</td>
-          </tr>
-          <tr>
-            <td>🔮 Mage</td>
-            <td>🔥 Fireball</td>
-            <td>Area damage to surrounding enemies.</td>
-          </tr>
-          <tr>
-            <td>🏹 Archer</td>
-            <td>🎯 Precise Shot</td>
-            <td>Increased critical hit chance.</td>
-          </tr>
-          <tr>
-            <td>💚 Healer</td>
-            <td>💫 Healing</td>
-            <td>Heals the ally with lowest HP.</td>
-          </tr>
-          <tr>
-            <td>🗡️ Assassin</td>
-            <td>⚡ Sneak Strike</td>
-            <td>Amplified first attack on the weakest foe.</td>
-          </tr>
-          <tr>
-            <td>🛡️ Paladin</td>
-            <td>✨ Sacred Aura</td>
-            <td>Boosts max HP of adjacent allies.</td>
-          </tr>
-          <tr>
-            <td>🌟 Archmage</td>
-            <td>⛓️ Chain Lightning</td>
-            <td>Attack chains to multiple targets in a row.</td>
-          </tr>
-          <tr>
-            <td>🪓 Barbarian</td>
-            <td>😡 Fury</td>
-            <td>Attack bonus when low on HP.</td>
-          </tr>
-        </table>
       </div>
     </div>
 
     <!-- ══════════════════ GAME LOGIC ══════════════════ -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/battle.js"></script>
+    <script src="/js/battle.js?v=2"></script>
 
     <!-- ── Attack arrow overlay ── -->
     <svg
@@ -397,18 +349,57 @@
     </svg>
     <script src="/mobile.js" defer></script>
 
+    <!-- FULLSCREEN BANNER (primeira visita mobile) -->
+    <div id="fs-banner">
+      <div class="fsb-text">🎮 Play in fullscreen for the best experience?</div>
+      <div class="fsb-btns">
+        <button class="fsb-yes" onclick="acceptFullscreen()">Yes, fullscreen</button>
+        <button class="fsb-no" onclick="declineFullscreen()">No thanks</button>
+      </div>
+    </div>
+
+    <!-- MOBILE HUD OVERLAY -->
+    <div id="mobile-hud">
+      <div id="mobile-opp-badge">
+        <span id="mobile-opp-name">Enemy</span>
+      </div>
+      <button id="mobile-speed-btn" type="button" onclick="toggleBattleSpeed()">2x</button>
+      <div id="mobile-dots-right">
+        <div id="mobile-dots-e" class="mdots"></div>
+        <div class="mdots-divider"></div>
+        <div id="mobile-dots-p" class="mdots"></div>
+      </div>
+    </div>
+
+    <!-- MOBILE LOG OVERLAY -->
+    <div id="mobile-log-overlay">
+      <div class="mob-log-handle" onclick="togglePanel('log')"></div>
+      <div class="mob-log-title">Battle Log</div>
+      <div id="mobile-log-entries"></div>
+    </div>
+
+    <!-- MOBILE MENU PANEL -->
+    <div id="mobile-menu-overlay">
+      <div class="mob-log-handle" onclick="toggleMobileMenu()"></div>
+      <div class="mmp-title">Menu</div>
+      <button class="mmp-btn" onclick="closeMobileMenu();openHowTo()">Rules</button>
+      <button class="mmp-btn" id="mmp-fs-btn" onclick="toggleFullscreen()">Enter Fullscreen</button>
+      <button class="mmp-btn mmp-danger" onclick="closeMobileMenu();openQuitModal()">Concede</button>
+    </div>
+
     <!-- MOBILE ACTION BAR -->
     <div class="mobile-actions">
       <button data-step="recruit" onclick="setMobileStep('recruit')">
         🛒<span>Recruit</span>
       </button>
       <button data-step="barracks" onclick="setMobileStep('barracks')">
-        🧍<span>Barracks</span>
+        🛡️<span>Barracks</span>
       </button>
-      <button id="mobile-battle-btn" onclick="startBattle()">
-        ⚔️<span>Battle!</span>
-      </button>
-      <button onclick="togglePanel('log')">📜<span>Log</span></button>
+      <div class="mab-center">
+        <button id="mobile-battle-btn" onclick="startBattle()">⚔️</button>
+      </div>
+      <button data-step="log" onclick="togglePanel('log')">📜<span>Log</span></button>
+      <button data-step="menu" onclick="toggleMobileMenu()">⚙️<span>Menu</span></button>
     </div>
   </body>
 </html>

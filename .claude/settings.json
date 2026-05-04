@@ -15,7 +15,14 @@
       "Bash(grep -o 'method:\"POST\"[^}]*formations\\\\|formations[^}]*method:\"POST\"\\\\|fetch\\(\"/api/formations\"[^\\)]*\\)\\\\|fetch\\(`/api/formations[^`]*`' \"c:/Fontes_Javascript/HorizonForge/public/dist/assets/index-sp789DVu.js\")",
       "Bash(grep -n \"^\\(function\\\\|\\(function.*{\\\\s*$\\\\|^\\\\s*\\(function\" \"c:/Fontes_Javascript/HorizonForge/public/js/battle.js\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Fontes_Javascript\\\\HorizonForge\" -Recurse -Directory -Name)",
-      "Bash(Select-Object -First 20)"
+      "Bash(Select-Object -First 20)",
+      "PowerShell(Get-Process -Id 8448)",
+      "PowerShell(Get-Process -Id 8448 -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 8448 -Force)",
+      "Read(//tmp/**)",
+      "Bash(git checkout *)",
+      "Bash(git restore *)",
+      "Bash(awk '/\\\\.mobile-actions|#fs-banner|#mobile-menu-overlay/{found=1} found{print NR\": \"$0; if\\(/}/\\)found=0}' public/css/battle-dev.css)"
     ]
   },
   "hooks": {

@@ -29,8 +29,11 @@
       var logOverlay = document.getElementById('mobile-log-overlay');
       if (!logOverlay) return;
 
-      var log = document.getElementById('log');
-      if (log) logOverlay.appendChild(log);
+      // Do NOT move the #log element into the overlay here —
+      // togglePanel() copies #log.innerHTML into #mobile-log-entries
+      // when the overlay is opened. Moving the element earlier caused
+      // the same content to appear twice (element + copied HTML).
+      // Keep #log in-place and let togglePanel handle the sync.
 
       var closeBtn = document.getElementById('mobile-log-close');
       if (closeBtn) {

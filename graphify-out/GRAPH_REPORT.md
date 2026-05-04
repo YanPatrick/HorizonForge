@@ -1,12 +1,12 @@
-# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-01)
+# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-03)
 
 ## Corpus Check
-- 18 files · ~123,314 words
+- 15 files · ~119,051 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 301 nodes · 562 edges · 30 communities detected
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
+- 204 nodes · 354 edges · 26 communities detected
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -36,22 +36,18 @@
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
-- [[_COMMUNITY_Community 26|Community 26]]
-- [[_COMMUNITY_Community 27|Community 27]]
-- [[_COMMUNITY_Community 28|Community 28]]
-- [[_COMMUNITY_Community 29|Community 29]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `render()` - 20 edges
-2. `log()` - 20 edges
-3. `render()` - 20 edges
-4. `log()` - 14 edges
-5. `startBattle()` - 11 edges
-6. `startGame()` - 11 edges
-7. `nextBattle()` - 11 edges
-8. `startBattle()` - 11 edges
-9. `startGame()` - 11 edges
-10. `nextBattle()` - 11 edges
+1. `log()` - 20 edges
+2. `render()` - 20 edges
+3. `startBattle()` - 11 edges
+4. `startGame()` - 11 edges
+5. `nextBattle()` - 11 edges
+6. `initGame()` - 8 edges
+7. `genShop()` - 8 edges
+8. `_addToBench()` - 8 edges
+9. `endBattle()` - 8 edges
+10. `nextDuel()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
@@ -92,95 +88,95 @@
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (11): applyBattleSpeed(), botScoreCard(), closeQuitModal(), confirmQuit(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), randCid() (+3 more)
+Cohesion: 0.09
+Nodes (33): adjacentSlots(), betweenIncome(), botInitDuel(), botLearnFromBattle(), botNextBattle(), clearAttackArrows(), endBattle(), FIELD_MAX() (+25 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.08
-Nodes (11): applyBattleSpeed(), botScoreCard(), closeQuitModal(), confirmQuit(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), randCid() (+3 more)
-
-### Community 2 - "Community 2"
 Cohesion: 0.1
 Nodes (14): _buildDetailBodyHTML(), _clearPayCountdown(), _ensureActiveDeck(), _loadFormations(), _loadPref(), _prefKey(), _removeFromFormation(), _renderDeckCards() (+6 more)
 
+### Community 2 - "Community 2"
+Cohesion: 0.13
+Nodes (21): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient() (+13 more)
+
 ### Community 3 - "Community 3"
-Cohesion: 0.14
-Nodes (20): log(), showToastBattle(), armForfeitTimer(), broadcastQueueSize(), computeSkillPowerLevels(), forfeitBattle(), hiveClient(), hiveRpc() (+12 more)
+Cohesion: 0.08
+Nodes (2): closeQuitModal(), confirmQuit()
 
 ### Community 4 - "Community 4"
-Cohesion: 0.17
-Nodes (16): betweenIncome(), botNextBattle(), clearAttackArrows(), endBattle(), FIELD_MAX(), hideTurnPanel(), maxUnits(), nextBattle() (+8 more)
-
-### Community 5 - "Community 5"
-Cohesion: 0.18
-Nodes (15): betweenIncome(), botNextBattle(), clearAttackArrows(), endBattle(), FIELD_MAX(), hideTurnPanel(), maxUnits(), nextBattle() (+7 more)
-
-### Community 6 - "Community 6"
-Cohesion: 0.23
-Nodes (14): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), log() (+6 more)
-
-### Community 7 - "Community 7"
-Cohesion: 0.19
-Nodes (13): _bootBattle(), botInitDuel(), hideLoader(), initGame(), nextDuel(), pvpInit(), setShopLocked(), showLoader() (+5 more)
-
-### Community 8 - "Community 8"
-Cohesion: 0.21
-Nodes (12): _bootBattle(), botInitDuel(), hideLoader(), initGame(), nextDuel(), pvpInit(), showLoader(), skillIcon() (+4 more)
-
-### Community 9 - "Community 9"
-Cohesion: 0.24
-Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+4 more)
-
-### Community 10 - "Community 10"
 Cohesion: 0.25
 Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleCategory(), savePref()
 
-### Community 11 - "Community 11"
-Cohesion: 0.2
-Nodes (11): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setBanner(), setMobileStep(), simulate() (+3 more)
+### Community 5 - "Community 5"
+Cohesion: 0.27
+Nodes (11): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+3 more)
 
-### Community 12 - "Community 12"
-Cohesion: 0.2
-Nodes (11): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setMobileStep(), setShopLocked(), simulate() (+3 more)
-
-### Community 13 - "Community 13"
-Cohesion: 0.22
-Nodes (10): applyMerge(), BENCH_SLOTS(), botApplyMerge(), botBuyPhase(), botGenShop(), botPosition(), botRunTurn(), distinctHeroes() (+2 more)
-
-### Community 14 - "Community 14"
-Cohesion: 0.22
-Nodes (10): applyMerge(), BENCH_SLOTS(), botApplyMerge(), botBuyPhase(), botGenShop(), botPosition(), botRunTurn(), distinctHeroes() (+2 more)
-
-### Community 15 - "Community 15"
+### Community 6 - "Community 6"
 Cohesion: 0.43
 Nodes (8): Archer Hero Portrait, Archmage Hero Portrait, Assassin Hero Portrait, Barbarian Hero Portrait, Healer Hero Portrait, Knight Hero Portrait, Mage Hero Portrait, Paladin Hero Portrait
 
-### Community 16 - "Community 16"
+### Community 7 - "Community 7"
+Cohesion: 0.33
+Nodes (6): applyMerge(), BENCH_SLOTS(), botApplyMerge(), distinctHeroes(), retBench(), upgradeUnit()
+
+### Community 8 - "Community 8"
+Cohesion: 0.33
+Nodes (6): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon()
+
+### Community 9 - "Community 9"
+Cohesion: 0.4
+Nodes (5): applyBattleSpeed(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), toggleBattleSpeed()
+
+### Community 10 - "Community 10"
 Cohesion: 0.6
 Nodes (3): clrErr(), doLogin(), setErr()
 
-### Community 17 - "Community 17"
+### Community 11 - "Community 11"
 Cohesion: 0.7
 Nodes (5): Desert Arena Background, Forest Arena Background, Snow Arena Background, Hive Logo, Horizon Forge Arena Background Collection
 
-### Community 18 - "Community 18"
+### Community 12 - "Community 12"
 Cohesion: 0.67
 Nodes (2): getSession(), RequireAuth()
 
-### Community 19 - "Community 19"
-Cohesion: 0.5
-Nodes (0): 
-
-### Community 20 - "Community 20"
+### Community 13 - "Community 13"
 Cohesion: 0.67
 Nodes (2): injectLogBtn(), setupLog()
 
-### Community 21 - "Community 21"
+### Community 14 - "Community 14"
+Cohesion: 0.5
+Nodes (4): botScoreCard(), randCid(), rnd(), shuffle()
+
+### Community 15 - "Community 15"
+Cohesion: 0.67
+Nodes (4): botBuyPhase(), botGenShop(), botPosition(), botRunTurn()
+
+### Community 16 - "Community 16"
 Cohesion: 0.67
 Nodes (0): 
 
-### Community 22 - "Community 22"
+### Community 17 - "Community 17"
 Cohesion: 0.67
+Nodes (0): 
+
+### Community 18 - "Community 18"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 19 - "Community 19"
+Cohesion: 1.0
+Nodes (2): openMobileMenu(), toggleMobileMenu()
+
+### Community 20 - "Community 20"
+Cohesion: 1.0
+Nodes (2): enterFS(), onFirstTouch()
+
+### Community 21 - "Community 21"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 22 - "Community 22"
+Cohesion: 1.0
 Nodes (0): 
 
 ### Community 23 - "Community 23"
@@ -193,56 +189,42 @@ Nodes (0):
 
 ### Community 25 - "Community 25"
 Cohesion: 1.0
-Nodes (0): 
-
-### Community 26 - "Community 26"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 27 - "Community 27"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 28 - "Community 28"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 29 - "Community 29"
-Cohesion: 1.0
 Nodes (1): Payout Preference Setting (liquid/stake)
 
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 23`** (2 nodes): `Get-FilePath()`, `battle-swap.ps1`
+- **Thin community `Community 18`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
+- **Thin community `Community 19`** (2 nodes): `openMobileMenu()`, `toggleMobileMenu()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 25`** (1 nodes): `eslint.config.js`
+- **Thin community `Community 20`** (2 nodes): `enterFS()`, `onFirstTouch()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 26`** (1 nodes): `vite.config.js`
+- **Thin community `Community 21`** (1 nodes): `eslint.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 27`** (1 nodes): `main.jsx`
+- **Thin community `Community 22`** (1 nodes): `vite.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 28`** (1 nodes): `release.js`
+- **Thin community `Community 23`** (1 nodes): `main.jsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 29`** (1 nodes): `Payout Preference Setting (liquid/stake)`
+- **Thin community `Community 24`** (1 nodes): `release.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 25`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 3` to `Community 1`, `Community 4`, `Community 8`, `Community 9`, `Community 12`, `Community 14`?**
-  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Why does `log()` connect `Community 2` to `Community 0`, `Community 3`, `Community 5`, `Community 7`, `Community 8`?**
+  _High betweenness centrality (0.119) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `refundHiveWager()`) actually correct?**
   _`log()` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `Payout Preference Setting (liquid/stake)`, `Hive Logo` to the rest of the system?**
   _2 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.14 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08 - nodes in this community are weakly interconnected._

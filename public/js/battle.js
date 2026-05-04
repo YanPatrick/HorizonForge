@@ -3739,6 +3739,7 @@
         document.getElementById("shopwrap")?.classList.remove("mobile-open");
         document.getElementById("benchwrap")?.classList.remove("mobile-open");
         document.getElementById("mobile-log-overlay")?.classList.remove("open");
+        document.getElementById("mobile-menu-overlay")?.classList.remove("open");
         if (step === "recruit") document.getElementById("shopwrap")?.classList.add("mobile-open");
         else if (step === "barracks") document.getElementById("benchwrap")?.classList.add("mobile-open");
         document.querySelectorAll(".mobile-actions button[data-step]").forEach((btn) => {
@@ -3756,6 +3757,7 @@
           // Fechar outros painéis
           document.getElementById("shopwrap")?.classList.remove("mobile-open");
           document.getElementById("benchwrap")?.classList.remove("mobile-open");
+          document.getElementById("mobile-menu-overlay")?.classList.remove("open");
           _mobileStep = null;
           document.querySelectorAll(".mobile-actions button[data-step]")
             .forEach(b => b.classList.remove("ms-active"));
@@ -3777,20 +3779,39 @@
       }
       window.togglePanel = togglePanel;
 
+      function toggleMobileMenu() {
+        const overlay = document.getElementById("mobile-menu-overlay");
+        if (!overlay) return;
+        const opening = !overlay.classList.contains("open");
+        if (opening) {
+          // Fechar outros painéis
+          document.getElementById("shopwrap")?.classList.remove("mobile-open");
+          document.getElementById("benchwrap")?.classList.remove("mobile-open");
+          document.getElementById("mobile-log-overlay")?.classList.remove("open");
+          _mobileStep = null;
+          document.querySelectorAll('.mobile-actions button[data-step]:not([data-step="menu"])')
+            .forEach(b => b.classList.remove("ms-active"));
+          const fsBtn = document.getElementById("mmp-fs-btn");
+          if (fsBtn) fsBtn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Enter Fullscreen";
+        }
+        overlay.classList.toggle("open");
+        const menuBtn = document.querySelector('.mobile-actions button[data-step="menu"]');
+        if (menuBtn) menuBtn.classList.toggle("ms-active", overlay.classList.contains("open"));
+      }
       function openMobileMenu() {
-        // Fechar log se estiver aberto
-        document.getElementById("mobile-log-overlay")?.classList.remove("open");
-        document.querySelector('.mobile-actions button[data-step="log"]')?.classList.remove("ms-active");
-        const btn = document.getElementById("mmp-fs-btn");
-        if (btn) btn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Enter Fullscreen";
-        document.getElementById("mobile-menu-overlay")?.classList.add("open");
+        const overlay = document.getElementById("mobile-menu-overlay");
+        if (overlay && !overlay.classList.contains("open")) toggleMobileMenu();
       }
       function closeMobileMenu() {
-        document.getElementById("mobile-menu-overlay")?.classList.remove("open");
+        const overlay = document.getElementById("mobile-menu-overlay");
+        if (!overlay) return;
+        overlay.classList.remove("open");
+        document.querySelector('.mobile-actions button[data-step="menu"]')?.classList.remove("ms-active");
       }
       function openHowTo() {
         document.getElementById("howto")?.classList.add("open");
       }
+      window.toggleMobileMenu = toggleMobileMenu;
       window.openMobileMenu = openMobileMenu;
       window.closeMobileMenu = closeMobileMenu;
       window.openHowTo = openHowTo;

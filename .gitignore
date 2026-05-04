@@ -1,5 +1,7 @@
 node_modules/
 .env
 .claude/.worktrees/
+.superpowers
+.docs/superpowers/
 .playwright-mcp/
 tests/

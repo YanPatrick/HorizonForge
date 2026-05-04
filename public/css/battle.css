@@ -3916,10 +3916,12 @@
           background: rgba(6, 3, 20, 0.97);
           border-top: 1px solid rgba(180, 130, 255, 0.2);
           border-radius: 16px 16px 0 0;
-          padding: 12px 16px 12px;
+          padding: 12px 12px 10px;
           box-sizing: border-box;
-          overflow-y: auto;
+          overflow: hidden;
           transition: bottom 0.3s ease;
+          display: flex;
+          flex-direction: column;
         }
 
         /* Barracks — painel deslizante */
@@ -4030,7 +4032,7 @@
           background: linear-gradient(to top, rgba(20, 14, 40, 0.99), rgba(26, 19, 48, 0.92));
           backdrop-filter: blur(12px);
           border-top: 1px solid rgba(180, 130, 255, 0.18);
-          z-index: 50;
+          z-index: 5100;
           overflow: visible;
         }
 
@@ -4200,32 +4202,26 @@
           -webkit-tap-highlight-color: transparent;
         }
 
-        /* Menu popup */
+        /* Menu — painel slide-up igual ao recruit/barracks */
         #mobile-menu-overlay {
-          display: none;
           position: fixed;
-          inset: 0;
-          z-index: 200;
-          background: rgba(0, 0, 0, 0.6);
-          align-items: flex-end;
-          justify-content: center;
-        }
-
-        #mobile-menu-overlay.open {
-          display: flex;
-        }
-
-        #mobile-menu-popup {
-          background: linear-gradient(160deg, #1a1230, #0e0a22);
-          border: 1px solid rgba(180, 130, 255, 0.2);
-          border-bottom: none;
-          border-radius: 20px 20px 0 0;
-          padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 80px);
+          bottom: -100%;
+          left: 0;
           width: 100%;
-          max-width: 420px;
+          z-index: 20;
+          background: linear-gradient(160deg, rgba(20, 12, 46, 0.98), rgba(10, 6, 26, 0.98));
+          border-top: 1px solid rgba(180, 130, 255, 0.2);
+          border-radius: 16px 16px 0 0;
+          padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 80px);
+          box-sizing: border-box;
+          transition: bottom 0.3s ease;
           display: flex;
           flex-direction: column;
           gap: 10px;
+        }
+
+        #mobile-menu-overlay.open {
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
         }
 
         .mmp-title {
@@ -4259,19 +4255,6 @@
           border-color: rgba(255, 80, 60, 0.2);
         }
 
-        .mmp-close {
-          background: none;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 10px;
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 14px;
-          font-family: "Exo 2", system-ui, sans-serif;
-          padding: 12px;
-          margin-top: 4px;
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-          touch-action: manipulation;
-        }
 
         /* reroll btn: mesmo porte visual que o texto do header de barracks */
         .rrbtn {
@@ -4280,32 +4263,28 @@
           border-radius: 7px;
         }
 
-        /* scroll horizontal no recruitment — idêntico ao benchrow */
+        /* 5 cards de recruitment sempre visíveis, sem scroll */
         #shoprow {
           display: flex;
           flex-wrap: nowrap;
-          overflow-x: auto;
-          gap: 8px;
+          overflow: hidden;
+          gap: 4px;
           height: auto;
           min-height: 0;
           max-height: none;
           padding: 4px 0 0;
-          scrollbar-width: none;
+          justify-content: space-evenly;
         }
 
-        #shoprow::-webkit-scrollbar {
-          display: none;
-        }
-
-        /* shop cards: sai do position:absolute e vira flex item */
+        /* shop cards: flex para caber as 5 sem scroll */
         #shoprow .scard {
           position: relative !important;
           left: auto !important;
           top: auto !important;
-          flex-shrink: 0;
-          width: 68px !important;
-          min-width: 68px !important;
-          max-width: 68px !important;
+          flex: 0 1 62px;
+          width: 62px !important;
+          min-width: 0 !important;
+          max-width: 62px !important;
         }
 
         /* portraits mobile: mesma altura e enquadramento nos dois painéis */
