@@ -1,11 +1,11 @@
-# Graph Report - HorizonForge  (2026-05-04)
+# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-04)
 
 ## Corpus Check
-- 15 files · ~96,227 words
+- 15 files · ~112,675 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 203 nodes · 353 edges · 17 communities detected
+- 203 nodes · 353 edges · 24 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -26,6 +26,13 @@
 - [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
 - [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -42,15 +49,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `tryMatch()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 
 ## Hyperedges (group relationships)
 - **Hive Payment Verification and Prize Pipeline** — server_verifyHivePayment, server_refundHiveWager, server_sendHivePrize, server_hiveRpc, server_hiveClient [EXTRACTED 0.95]
@@ -104,11 +111,11 @@ Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleC
 
 ### Community 6 - "Community 6"
 Cohesion: 0.2
-Nodes (11): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), startPhaseTimer() (+3 more)
+Nodes (11): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setMobileStep(), setShopLocked(), simulate() (+3 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.25
-Nodes (9): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setMobileStep(), setShopLocked(), simulate() (+1 more)
+Nodes (9): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), updateFieldLabels() (+1 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.43
@@ -142,6 +149,34 @@ Nodes (2): injectLogBtn(), setupLog()
 Cohesion: 0.5
 Nodes (4): botScoreCard(), randCid(), rnd(), shuffle()
 
+### Community 16 - "Community 16"
+Cohesion: 0.67
+Nodes (0): 
+
+### Community 17 - "Community 17"
+Cohesion: 0.67
+Nodes (0): 
+
+### Community 18 - "Community 18"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 19 - "Community 19"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 20 - "Community 20"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 21 - "Community 21"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 22 - "Community 22"
+Cohesion: 1.0
+Nodes (0): 
+
 ### Community 23 - "Community 23"
 Cohesion: 1.0
 Nodes (1): Payout Preference Setting (liquid/stake)
@@ -149,9 +184,15 @@ Nodes (1): Payout Preference Setting (liquid/stake)
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 13`** (4 nodes): `App()`, `getSession()`, `RequireAuth()`, `App.jsx`
+- **Thin community `Community 18`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 14`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
+- **Thin community `Community 19`** (1 nodes): `eslint.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 20`** (1 nodes): `vite.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 21`** (1 nodes): `main.jsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 22`** (1 nodes): `release.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 23`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.

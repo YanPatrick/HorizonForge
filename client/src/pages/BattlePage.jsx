@@ -202,10 +202,9 @@ export default function BattlePage() {
 
       {/* ══ MOBILE LOG OVERLAY ══ */}
       <div id="mobile-log-overlay">
-        <div className="mlo-header">
-          <span className="mlo-title">Battle Log</span>
-          <button id="mobile-log-close" type="button" onClick={() => document.getElementById('mobile-log-overlay')?.classList.remove('open')}>✕</button>
-        </div>
+        <div className="mob-log-handle" onClick={() => window.togglePanel?.('log')}></div>
+        <div className="mob-log-title">Battle Log</div>
+        <div id="mobile-log-entries"></div>
       </div>
 
       {/* ══ MOBILE MENU PANEL ══ */}
@@ -245,19 +244,19 @@ export default function BattlePage() {
       {/* ══ MOBILE ACTION BAR ══ */}
       <div className="mobile-actions">
         <button type="button" data-step="recruit" onClick={() => window.setMobileStep?.('recruit')}>
-          🛍️<span>RECRUIT</span>
+          🛍️<span>Recruit</span>
         </button>
         <button type="button" data-step="barracks" onClick={() => window.setMobileStep?.('barracks')}>
-          🏕️<span>BARRACKS</span>
+          🏕️<span>Barracks</span>
         </button>
-        <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>
-          ⚔️<span>BATTLE</span>
-        </button>
-        <button type="button" onClick={() => document.getElementById('mobile-log-overlay')?.classList.toggle('open')}>
-          📜<span>LOG</span>
+        <div className="mab-center">
+          <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>⚔️</button>
+        </div>
+        <button type="button" data-step="log" onClick={() => window.togglePanel?.('log')}>
+          📜<span>Log</span>
         </button>
         <button type="button" data-step="menu" onClick={() => window.toggleMobileMenu?.()}>
-          ⚙️<span>MENU</span>
+          ⚙️<span>Menu</span>
         </button>
       </div>
 
@@ -374,20 +373,15 @@ export default function BattlePage() {
               </div>
             </div>
           </div>
-          <div className="htp-h2">🧙 Characters</div>
-          <table className="htp-table">
-            <tbody>
-              <tr><th>Character</th><th>Ability</th><th>Effect</th></tr>
-              <tr><td>⚔️ Knight</td><td>🛡️ Iron Defense</td><td>Reduces damage taken per hit.</td></tr>
-              <tr><td>🔮 Mage</td><td>🔥 Fireball</td><td>Area damage to surrounding enemies.</td></tr>
-              <tr><td>🏹 Archer</td><td>🎯 Precise Shot</td><td>Increased critical hit chance.</td></tr>
-              <tr><td>💚 Healer</td><td>💫 Healing</td><td>Heals the ally with lowest HP.</td></tr>
-              <tr><td>🗡️ Assassin</td><td>⚡ Sneak Strike</td><td>Amplified first attack on the weakest foe.</td></tr>
-              <tr><td>🛡️ Paladin</td><td>✨ Sacred Aura</td><td>Boosts max HP of adjacent allies.</td></tr>
-              <tr><td>🌟 Archmage</td><td>⛓️ Chain Lightning</td><td>Attack chains to multiple targets in a row.</td></tr>
-              <tr><td>🪓 Barbarian</td><td>😡 Fury</td><td>Attack bonus when low on HP.</td></tr>
-            </tbody>
-          </table>
+        </div>
+      </div>
+
+      {/* ══ FULLSCREEN BANNER ══ */}
+      <div id="fs-banner">
+        <div className="fsb-text">🎮 Play in fullscreen for the best experience?</div>
+        <div className="fsb-btns">
+          <button className="fsb-yes" onClick={() => window.acceptFullscreen?.()}>Yes, fullscreen</button>
+          <button className="fsb-no" onClick={() => window.declineFullscreen?.()}>No thanks</button>
         </div>
       </div>
 

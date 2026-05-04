@@ -741,6 +741,7 @@ export default function LobbyPage() {
                           </div>
                         )}
                       </div>
+                      <button className="info-trigger" id="info-ai" data-tip-id="ai" aria-label="More info">i</button>
                     </div>
                   </div>
                   <div className="banner-expand">
@@ -784,6 +785,7 @@ export default function LobbyPage() {
                           </div>
                         )}
                       </div>
+                      <button className="info-trigger" id="info-pvp" data-tip-id="pvp" aria-label="More info">i</button>
                     </div>
                   </div>
                   <div className="banner-expand">
@@ -830,6 +832,7 @@ export default function LobbyPage() {
       />
 
       {toast && <div className="toast show">{toast}</div>}
+      <div id="desc-tooltip"></div>
     </>
   )
 }

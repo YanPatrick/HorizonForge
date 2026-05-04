@@ -4217,7 +4217,7 @@
           left: 0;
           width: 100%;
           z-index: 20;
-          background: linear-gradient(160deg, rgba(20, 12, 46, 0.98), rgba(10, 6, 26, 0.98));
+          background: linear-gradient(160deg, rgba(10, 6, 26, 0.98), rgba(6, 3, 20, 0.98));
           border-top: 1px solid rgba(180, 130, 255, 0.2);
           border-radius: 16px 16px 0 0;
           padding: 0 16px calc(min(env(safe-area-inset-bottom, 0px), 40px) + 80px);
