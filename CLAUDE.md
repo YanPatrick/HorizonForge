@@ -11,17 +11,128 @@ Rules:
 
 ## Diretrizes de Desenvolvimento — HorizonForge
 
-### 1. Build para Produção (Vite + React → /dist)
+### 1. Regra obrigatória — Fonte real da interface
 
-Este projeto usa Vite + React. Os arquivos em `src/` são o ambiente de desenvolvimento; a pasta `/dist` é o que vai para produção.
+Este projeto usa **Vite + React**. A interface que roda em desenvolvimento e em produção vem exclusivamente dos arquivos React em:
 
-**Regra obrigatória:** Toda vez que uma alteração for concluída e validada em localhost, executar o build imediatamente antes de considerar a tarefa finalizada:
+```
+client/src/
+```
+
+Os arquivos em `public/` (ex: `public/battle.html`, `public/lobby.html`, `public/mobile.js`, `public/mobile.css`) existem apenas como referência ou legado. **Eles não são a fonte principal da interface.**
+
+### Regra obrigatória
+
+> Toda alteração visual, estrutural ou funcional de tela deve ser aplicada nos arquivos `.jsx` dentro de `client/src/`.
+
+Se uma mudança for encontrada ou feita em um arquivo `.html` de `public/`, ela **deve obrigatoriamente ser portada** para o `.jsx` correspondente antes de considerar a tarefa concluída.
+
+| Arquivo legado alterado | Arquivo JSX correspondente |
+|---|---|
+| `public/battle.html` | `client/src/pages/BattlePage.jsx` |
+| `public/lobby.html` | Componente React correspondente em `client/src/` |
+
+---
+
+## Portas de desenvolvimento e produção
+
+| Porta | Propósito |
+|---|---|
+| `localhost:5173` | Frontend Vite/React (desenvolvimento) |
+| `localhost:3000` | API/backend Express |
+
+- **Para testar visual e UI:** `http://localhost:5173/battle`
+- **Para testar comportamento de produção após build:** `http://localhost:3000/battle`
+
+### URLs a não usar
+
+```
+localhost:3000/battle.html
+localhost:3000/lobby.html
+localhost:3000/index.html
+```
+
+Essas URLs podem carregar arquivos legados e causar diagnósticos incorretos.
+
+---
+
+## Fluxo de build para produção
+
+Após validar localmente em `localhost:5173`, executar:
 
 ```bash
 npm run build
 ```
 
-Isso garante que os arquivos em `/dist` reflitam todas as mudanças. Nunca encerrar uma tarefa sem confirmar que o build foi feito. Se o usuário mencionar que algo funciona em localhost mas não em produção, a primeira hipótese a investigar é se o build foi executado após as últimas alterações.
+O build gera os arquivos finais em:
+
+```
+public/dist/
+```
+
+Somente os arquivos em `public/dist/` representam a versão React pronta para produção. Para testar:
+
+```bash
+npm run build
+npm start
+# Acessar: http://localhost:3000/battle
+```
+
+---
+
+## Checklist obrigatório — antes de encerrar qualquer tarefa
+
+- [ ] O arquivo `.jsx` correto foi alterado
+- [ ] A alteração está visível em `localhost:5173`
+- [ ] `npm run build` foi executado com sucesso
+- [ ] A versão final foi testada em `localhost:3000` via `npm start`
+
+**Nunca considerar uma tarefa concluída se apenas o arquivo `.html` legado foi alterado.**
+
+---
+
+## Como converter HTML legado para JSX
+
+Ao portar estrutura de `public/*.html` para componentes React, aplicar as seguintes conversões:
+
+| HTML | JSX |
+|---|---|
+| `class="..."` | `className="..."` |
+| `onclick="funcao()"` | `onClick={() => window.funcao?.()}` |
+| `style="color: red"` | `style={{ color: 'red' }}` |
+| `<!-- comentário -->` | `{/* comentário */}` |
+
+Tags devem estar corretamente fechadas. Evitar scripts inline dentro do JSX.
+
+**Exemplo:**
+
+```html
+<!-- HTML legado -->
+<button data-step="menu" onclick="toggleMobileMenu()">
+  ⚙️<span>Menu</span>
+</button>
+```
+
+```jsx
+{/* JSX correto */}
+<button type="button" data-step="menu" onClick={() => window.toggleMobileMenu?.()}>
+  ⚙️<span>Menu</span>
+</button>
+```
+
+---
+
+## Investigação de bugs visuais
+
+Se algo aparece em `public/battle.html` mas não aparece em `/battle` no navegador:
+
+**Verificar imediatamente o componente React em `client/src/`.**
+
+A primeira hipótese deve sempre ser:
+
+> A alteração foi feita no arquivo legado, mas não foi portada para o JSX.
+
+**Nunca assumir problema de cache antes de confirmar que o JSX correto foi alterado.**
 
 ### 2. Paridade entre Modo Bot e Modo PvP
 

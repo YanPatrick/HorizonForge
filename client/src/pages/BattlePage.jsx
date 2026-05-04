@@ -116,6 +116,27 @@ export default function BattlePage() {
           </div>
         </div>
 
+        {/* ══ MOBILE HUD OVERLAY ══ */}
+        <div id="mobile-hud">
+          <div id="mobile-opp-badge">
+            <span id="mobile-opp-name">Enemy</span>
+          </div>
+
+          <button
+            id="mobile-speed-btn"
+            type="button"
+            onClick={() => window.toggleBattleSpeed?.()}
+          >
+            2x
+          </button>
+
+          <div id="mobile-dots-right">
+            <div id="mobile-dots-e" className="mdots"></div>
+            <div className="mdots-divider"></div>
+            <div id="mobile-dots-p" className="mdots"></div>
+          </div>
+        </div>
+
         {/* ══ ARENA ══ */}
         <div id="arena-wrap">
           <div id="turnpanel" className="hidden">
@@ -187,6 +208,40 @@ export default function BattlePage() {
         </div>
       </div>
 
+      {/* ══ MOBILE MENU PANEL ══ */}
+      <div id="mobile-menu-overlay">
+        <div className="mob-log-handle" onClick={() => window.toggleMobileMenu?.()}></div>
+        <div className="mmp-title">Menu</div>
+
+        <button
+          className="mmp-btn"
+          onClick={() => {
+            window.closeMobileMenu?.()
+            window.openHowTo?.()
+          }}
+        >
+          Rules
+        </button>
+
+        <button
+          className="mmp-btn"
+          id="mmp-fs-btn"
+          onClick={() => window.toggleFullscreen?.()}
+        >
+          Enter Fullscreen
+        </button>
+
+        <button
+          className="mmp-btn mmp-danger"
+          onClick={() => {
+            window.closeMobileMenu?.()
+            window.openQuitModal?.()
+          }}
+        >
+          Concede
+        </button>
+      </div>
+
       {/* ══ MOBILE ACTION BAR ══ */}
       <div className="mobile-actions">
         <button type="button" data-step="recruit" onClick={() => window.setMobileStep?.('recruit')}>
@@ -200,6 +255,9 @@ export default function BattlePage() {
         </button>
         <button type="button" onClick={() => document.getElementById('mobile-log-overlay')?.classList.toggle('open')}>
           📜<span>LOG</span>
+        </button>
+        <button type="button" data-step="menu" onClick={() => window.toggleMobileMenu?.()}>
+          ⚙️<span>MENU</span>
         </button>
       </div>
 
