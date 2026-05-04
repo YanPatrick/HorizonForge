@@ -3819,10 +3819,15 @@
       // ── Fullscreen ───────────────────────────────────────────────
       (function () {
         const FS_KEY = "hf_fullscreen";
-        const isMobileDevice = (window.matchMedia("(pointer: coarse)").matches ||
-                                window.matchMedia("(max-width: 768px)").matches) &&
-                               window.matchMedia("(orientation: portrait)").matches;
-        if (!isMobileDevice) return;
+        // Detect touch device — check pointer:coarse, touch events, or small screen.
+        // Do NOT gate on orientation:portrait — the prompt only shows in portrait via
+        // CSS anyway, but the localStorage preference and enterFS() must work in any orientation.
+        const isTouch = window.matchMedia("(pointer: coarse)").matches ||
+                        ('ontouchstart' in window) ||
+                        navigator.maxTouchPoints > 0;
+        const hasFS = !!(document.documentElement.requestFullscreen ||
+                         document.documentElement.webkitRequestFullscreen);
+        if (!isTouch || !hasFS) return;
 
         function enterFS() {
           const el = document.documentElement;

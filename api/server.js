@@ -245,6 +245,15 @@ if (!isDev) {
 app.use(express.static(join(__dirname, '../public'), staticOpts()));
 app.use('/shared', express.static(join(__dirname, '../shared'), staticOpts(false)));
 
+// Unique ID generated at every server boot — used by the client to detect
+// a new deploy and force a hard reload instead of serving stale bfcache pages.
+const BUILD_ID = Date.now().toString(36);
+
+app.get('/api/version', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.json({ v: BUILD_ID });
+});
+
 // ── DB connection ─────────────────────────────────────────
 const sql = neon(process.env.DATABASE_URL);
 

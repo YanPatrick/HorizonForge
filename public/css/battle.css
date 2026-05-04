@@ -54,8 +54,10 @@
         background: #060310;
         color: #dde2ff;
         font-family:
+          "Exo 2",
           Inter,
-          Segoe UI,
+          Roboto,
+          "Segoe UI",
           Arial,
           sans-serif;
         display: flex;
@@ -3768,12 +3770,12 @@
         #mobile-hud {
           display: block;
           position: fixed;
-          top: 0;
+          top: env(safe-area-inset-top, 0px);
           left: 0;
           right: 0;
-          bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+          bottom: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px));
           pointer-events: none;
-          z-index: 30;
+          z-index: 200;
         }
 
         /* Oponente — top-left, estilo Clash Royale */
@@ -3943,12 +3945,12 @@
 
         /* Recruit: bottom sheet (mesmo comportamento do barracks) */
         #shopwrap.mobile-open {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+          bottom: calc(min(env(safe-area-inset-bottom, 0px), 40px) + 64px);
         }
 
         /* Barracks: bottom sheet (campo fica visível acima) */
         #benchwrap.mobile-open {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+          bottom: calc(min(env(safe-area-inset-bottom, 0px), 40px) + 64px);
         }
 
         /* Log: bottom sheet — z-index abaixo da action bar (50) */
@@ -3970,7 +3972,7 @@
         }
 
         #mobile-log-overlay.open {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+          bottom: calc(min(env(safe-area-inset-bottom, 0px), 40px) + 64px);
         }
 
         .mob-log-handle {
@@ -4010,7 +4012,7 @@
 
         /* battlefield: ocupa tela toda menos action bar */
         #game {
-          height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px)) !important;
+          height: calc(100dvh - 64px - min(env(safe-area-inset-bottom, 0px), 40px)) !important;
         }
 
         /* esconder log-btn do header (substituido pela action bar) */
@@ -4018,22 +4020,24 @@
           display: none;
         }
 
-        /* action bar */
+        /* action bar — cap safe-area to 40px so broken WebViews don't create
+           giant blank space when env() returns an unrealistically large value */
         .mobile-actions {
           position: fixed;
           bottom: 0;
           left: 0;
-          width: 100%;
-          height: calc(64px + env(safe-area-inset-bottom, 0px));
+          right: 0;
+          height: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px));
           display: grid;
-          grid-template-columns: 1fr 1fr 72px 1fr 1fr;
+          grid-template-columns: 1fr 1fr 64px 1fr 1fr;
           align-items: center;
-          padding-bottom: env(safe-area-inset-bottom, 0px);
+          padding-bottom: min(env(safe-area-inset-bottom, 0px), 40px);
           background: linear-gradient(to top, rgba(20, 14, 40, 0.99), rgba(26, 19, 48, 0.92));
           backdrop-filter: blur(12px);
           border-top: 1px solid rgba(180, 130, 255, 0.18);
           z-index: 5100;
           overflow: visible;
+          box-sizing: border-box;
         }
 
         .mobile-actions > button {
@@ -4054,11 +4058,11 @@
         }
 
         .mobile-actions > button span {
-          font-size: 7px;
+          font-size: 9px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.6px;
-          font-family: "Exo 2", system-ui, sans-serif;
+          letter-spacing: 0.3px;
+          font-family: "Exo 2", Roboto, "Segoe UI", system-ui, sans-serif;
           color: rgba(190, 170, 240, 0.5);
         }
 
@@ -4095,12 +4099,13 @@
           justify-content: center;
           height: 64px;
           position: relative;
+          overflow: visible;
         }
 
         /* Botão Battle central — círculo destacado */
         #mobile-battle-btn {
-          width: 58px;
-          height: 58px;
+          width: 54px;
+          height: 54px;
           border-radius: 50%;
           background: radial-gradient(circle at 38% 32%, #d93030, #7a0a0a);
           border: none;
@@ -4143,7 +4148,7 @@
         #fs-banner {
           display: none;
           position: fixed;
-          bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 10px);
+          bottom: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px) + 10px);
           left: 12px;
           right: 12px;
           z-index: 100;
@@ -4212,7 +4217,7 @@
           background: linear-gradient(160deg, rgba(20, 12, 46, 0.98), rgba(10, 6, 26, 0.98));
           border-top: 1px solid rgba(180, 130, 255, 0.2);
           border-radius: 16px 16px 0 0;
-          padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 80px);
+          padding: 0 16px calc(min(env(safe-area-inset-bottom, 0px), 40px) + 80px);
           box-sizing: border-box;
           transition: bottom 0.3s ease;
           display: flex;
@@ -4221,7 +4226,7 @@
         }
 
         #mobile-menu-overlay.open {
-          bottom: calc(env(safe-area-inset-bottom, 0px) + 64px);
+          bottom: calc(min(env(safe-area-inset-bottom, 0px), 40px) + 64px);
         }
 
         .mmp-title {

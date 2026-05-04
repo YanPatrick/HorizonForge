@@ -71,7 +71,7 @@
    force z-index so it appears above the mobile action bar. Use !important
    to avoid being overridden by other bundled CSS rules. */
 #mobile-log-overlay.open {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 64px) !important;
+  bottom: calc(min(env(safe-area-inset-bottom, 0px), 40px) + 64px) !important;
   z-index: 5001 !important;
 }
 
@@ -163,7 +163,7 @@
    Also add bottom padding so center content isn't obscured by the action bar. */
 @media (pointer: coarse) and (max-width: 768px) and (orientation: portrait) {
   #log { display: none !important; }
-  #center-col { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  #center-col { padding-bottom: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px)); }
 }
 
 /* ══════════════════════════════════════════
@@ -210,9 +210,12 @@
 /* Bottom tabs: hidden by default (desktop) */
 .mobile-bottom-tabs { display: none; }
 
-@media (max-width: 480px) and (pointer: coarse) {
+/* Lobby mobile: activate for narrow screens (≤640px) or any touch device ≤900px.
+   The wider breakpoints ensure WebViews (e.g. Keychain browser) that may not
+   correctly report pointer:coarse still receive the mobile layout. */
+@media (max-width: 640px), (max-width: 900px) and (pointer: coarse) {
 
-  /* ── TopNav: hide center and right ── */
+  /* ── TopNav: hide balance + exit on mobile (keep user badge) ── */
   .topnav .nav-center,
   .topnav .hive-bal,
   .topnav .btn-exit {
@@ -221,7 +224,7 @@
 
   .topnav {
     padding: 0 14px;
-    justify-content: space-between;
+    justify-content: flex-end;
   }
 
   /* ── Bottom Tabs ── */
@@ -238,6 +241,7 @@
     z-index: 99;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     align-items: stretch;
+    box-sizing: content-box;
   }
 
   .mbt-tab {
@@ -253,19 +257,22 @@
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     padding: 4px 0;
+    min-width: 0;
   }
 
   .mbt-ico {
-    font-size: 18px;
+    font-size: 20px;
+    line-height: 1;
   }
 
   .mbt-lbl {
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     color: rgba(190, 170, 240, 0.45);
-    font-family: "Exo 2", system-ui, sans-serif;
+    font-family: "Exo 2", Roboto, "Segoe UI", system-ui, sans-serif;
+    white-space: nowrap;
   }
 
   .mbt-tab.active .mbt-lbl {

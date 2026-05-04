@@ -1,11 +1,11 @@
-# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-03)
+# Graph Report - HorizonForge  (2026-05-04)
 
 ## Corpus Check
-- 15 files · ~119,051 words
+- 15 files · ~95,214 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 204 nodes · 354 edges · 26 communities detected
+- 204 nodes · 354 edges · 19 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 18 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
@@ -26,15 +26,8 @@
 - [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
 - [[_COMMUNITY_Community 15|Community 15]]
-- [[_COMMUNITY_Community 16|Community 16]]
-- [[_COMMUNITY_Community 17|Community 17]]
-- [[_COMMUNITY_Community 18|Community 18]]
 - [[_COMMUNITY_Community 19|Community 19]]
 - [[_COMMUNITY_Community 20|Community 20]]
-- [[_COMMUNITY_Community 21|Community 21]]
-- [[_COMMUNITY_Community 22|Community 22]]
-- [[_COMMUNITY_Community 23|Community 23]]
-- [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -51,15 +44,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 - `tryMatch()` --calls--> `log()`  [INFERRED]
-  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
+  api\server.js → public\js\battle.js
 
 ## Hyperedges (group relationships)
 - **Hive Payment Verification and Prize Pipeline** — server_verifyHivePayment, server_refundHiveWager, server_sendHivePrize, server_hiveRpc, server_hiveClient [EXTRACTED 0.95]
@@ -101,7 +94,7 @@ Nodes (21): log(), rerollShop(), showToastBattle(), armForfeitTimer(), broadcast
 
 ### Community 3 - "Community 3"
 Cohesion: 0.08
-Nodes (2): closeQuitModal(), confirmQuit()
+Nodes (2): openMobileMenu(), toggleMobileMenu()
 
 ### Community 4 - "Community 4"
 Cohesion: 0.25
@@ -151,41 +144,13 @@ Nodes (4): botScoreCard(), randCid(), rnd(), shuffle()
 Cohesion: 0.67
 Nodes (4): botBuyPhase(), botGenShop(), botPosition(), botRunTurn()
 
-### Community 16 - "Community 16"
-Cohesion: 0.67
-Nodes (0): 
-
-### Community 17 - "Community 17"
-Cohesion: 0.67
-Nodes (0): 
-
-### Community 18 - "Community 18"
-Cohesion: 1.0
-Nodes (0): 
-
 ### Community 19 - "Community 19"
-Cohesion: 1.0
-Nodes (2): openMobileMenu(), toggleMobileMenu()
-
-### Community 20 - "Community 20"
 Cohesion: 1.0
 Nodes (2): enterFS(), onFirstTouch()
 
-### Community 21 - "Community 21"
+### Community 20 - "Community 20"
 Cohesion: 1.0
-Nodes (0): 
-
-### Community 22 - "Community 22"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 23 - "Community 23"
-Cohesion: 1.0
-Nodes (0): 
-
-### Community 24 - "Community 24"
-Cohesion: 1.0
-Nodes (0): 
+Nodes (2): closeQuitModal(), confirmQuit()
 
 ### Community 25 - "Community 25"
 Cohesion: 1.0
@@ -194,19 +159,15 @@ Nodes (1): Payout Preference Setting (liquid/stake)
 ## Knowledge Gaps
 - **2 isolated node(s):** `Payout Preference Setting (liquid/stake)`, `Hive Logo`
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 18`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
+- **Thin community `Community 3`** (25 nodes): `botCardCost()`, `closeHowTo()`, `closeMobileMenu()`, `dmgTag()`, `drawAttackArrow()`, `escapeHtml()`, `exitFS()`, `generateHeroInfoHtml()`, `generateSkillTooltip()`, `generateSkillTooltipHtml()`, `mirrorBoard()`, `nameTag()`, `openHowTo()`, `openMobileMenu()`, `openQuitModal()`, `previewTarget()`, `pvpFlipResult()`, `_shopSlotLeft()`, `showDuelResult()`, `showMergeBadge()`, `toggleMobileMenu()`, `togglePanel()`, `updateScale()`, `uTag()`, `battle.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 19`** (2 nodes): `openMobileMenu()`, `toggleMobileMenu()`
+- **Thin community `Community 12`** (4 nodes): `App()`, `getSession()`, `RequireAuth()`, `App.jsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 20`** (2 nodes): `enterFS()`, `onFirstTouch()`
+- **Thin community `Community 13`** (4 nodes): `applyHighlight()`, `injectLogBtn()`, `setupLog()`, `mobile.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 21`** (1 nodes): `eslint.config.js`
+- **Thin community `Community 19`** (2 nodes): `enterFS()`, `onFirstTouch()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 22`** (1 nodes): `vite.config.js`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 23`** (1 nodes): `main.jsx`
-  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 24`** (1 nodes): `release.js`
+- **Thin community `Community 20`** (2 nodes): `closeQuitModal()`, `confirmQuit()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 - **Thin community `Community 25`** (1 nodes): `Payout Preference Setting (liquid/stake)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.

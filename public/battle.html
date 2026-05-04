@@ -6,12 +6,32 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Horizon Forge | Battle</title>
+    <!-- Google Fonts via <link> (more reliable in WebViews than CSS @import) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Exo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/battle.css" />
     <link rel="stylesheet" href="/mobile.css" />
     <link rel="stylesheet" href="/css/hf-portraits.css" />
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
+    <script>
+      // Force reload when navigating back (bfcache) or when a new deploy is live.
+      window.addEventListener('pageshow', function (e) {
+        if (e.persisted) { window.location.reload(true); }
+      });
+      (function () {
+        fetch('/api/version').then(function (r) { return r.json(); }).then(function (d) {
+          var k = 'hf_v', s = localStorage.getItem(k);
+          if (s && s !== d.v) { localStorage.setItem(k, d.v); window.location.reload(true); }
+          else if (!s) { localStorage.setItem(k, d.v); }
+        }).catch(function () {});
+      })();
+    </script>
   </head>
 
   <body>
