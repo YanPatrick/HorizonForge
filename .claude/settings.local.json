@@ -27,7 +27,10 @@
       "Bash(graphify update *)",
       "Bash(sed -n '3770,3780p' \"c:/Fontes_Javascript/HorizonForge/public/css/battle.css\")",
       "Bash(sed -n '3940,3980p' \"c:/Fontes_Javascript/HorizonForge/public/css/battle.css\")",
-      "Bash(sed -n '4010,4020p' \"c:/Fontes_Javascript/HorizonForge/public/css/battle.css\")"
+      "Bash(sed -n '4010,4020p' \"c:/Fontes_Javascript/HorizonForge/public/css/battle.css\")",
+      "Bash(Get-ChildItem -Path \"c:\\\\Fontes_Javascript\\\\HorizonForge\\\\client\\\\src\\\\\" -Force)",
+      "Bash(xargs ls *)",
+      "Bash(git rm *)"
     ]
   }
 }
