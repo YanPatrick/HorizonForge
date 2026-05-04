@@ -2,8 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { readFileSync } from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const rootPkg = JSON.parse(readFileSync(path.resolve(__dirname, '../package.json'), 'utf-8'))
 
 export default defineConfig({
   plugins: [react()],
@@ -29,5 +31,8 @@ export default defineConfig({
   build: {
     outDir: '../public/dist',
     emptyOutDir: true,
+  },
+  define: {
+    __APP_VERSION__: JSON.stringify(rootPkg.version),
   },
 })

@@ -4,9 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/images/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Horizon Forge | Lobby</title>
-    <script type="module" crossorigin src="/assets/index-4PH4kHwI.js"></script>
+    <script>
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) window.location.reload(true);
+      });
+      (function() {
+        fetch('/api/version').then(function(r) { return r.json(); }).then(function(d) {
+          var k = 'hf_v', s = localStorage.getItem(k);
+          if (s && s !== d.v) { localStorage.setItem(k, d.v); window.location.reload(true); }
+          else if (!s) { localStorage.setItem(k, d.v); }
+        }).catch(function() {});
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-BQqc8uNp.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-Dve-aM2k.css">
   </head>
   <body>
