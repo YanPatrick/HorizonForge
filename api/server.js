@@ -226,28 +226,33 @@ app.use(express.json());
 const CLIENT_DIST = join(__dirname, '../public/dist');
 const isDev = process.env.NODE_ENV !== 'production';
 
-// Vite assets have content-hashes in their filenames and are safe to cache long-term.
-// All other files (battle.js, battle.css, mobile.css, etc.) have no hash, so they
-// must never be cached — otherwise browsers ignore updates for up to 7 days.
-function staticOpts(htmlNoCache = true) {
-  return {
-    maxAge: '7d',
-    setHeaders(res, filePath) {
-      const isViteAsset = filePath.includes('/dist/assets/');
-      if (!isViteAsset) {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-      }
-    },
-  };
-}
+// Static file serving strategy:
+//   • Vite-hashed assets (/assets/index-HASH.js): immutable, cached 1 year
+//   • Everything else (HTML, CSS, JS without hash): never cached, no ETag, no Last-Modified
+//     Disabling ETag + Last-Modified is critical — without them the server cannot
+//     return 304 Not Modified, so every request always gets a fresh 200 response.
+const noCacheOpts = {
+  etag: false,
+  lastModified: false,
+  setHeaders(res) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+};
 
 if (!isDev) {
-  app.use(express.static(CLIENT_DIST, staticOpts()));
+  // Vite content-hashed assets — filename changes every build, safe to cache forever
+  app.use('/assets', express.static(join(CLIENT_DIST, 'assets'), {
+    maxAge: '1y',
+    immutable: true,
+  }));
+  // Remaining dist files (React index.html) — no cache
+  app.use(express.static(CLIENT_DIST, noCacheOpts));
 }
-app.use(express.static(join(__dirname, '../public'), staticOpts()));
-app.use('/shared', express.static(join(__dirname, '../shared'), staticOpts(false)));
+// Public static files — no cache, no ETag
+app.use(express.static(join(__dirname, '../public'), noCacheOpts));
+app.use('/shared', express.static(join(__dirname, '../shared'), noCacheOpts));
 
 // Unique ID generated at every server boot — used by the client to detect
 // a new deploy and force a hard reload instead of serving stale bfcache pages.
