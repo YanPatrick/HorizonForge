@@ -1,7 +1,7 @@
 # Graph Report - HorizonForge  (2026-05-04)
 
 ## Corpus Check
-- 15 files · ~95,756 words
+- 15 files · ~95,792 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -104,11 +104,11 @@ Nodes (7): getSession(), HeroDetail(), loadPref(), LobbyPage(), prefKey(), roleC
 
 ### Community 6 - "Community 6"
 Cohesion: 0.2
-Nodes (11): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setMobileStep(), setShopLocked(), simulate() (+3 more)
+Nodes (11): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), startPhaseTimer() (+3 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.25
-Nodes (9): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), updateFieldLabels() (+1 more)
+Nodes (9): adjacentSlots(), botLearnFromBattle(), playback(), renderField(), renderTurnPanel(), setMobileStep(), setShopLocked(), simulate() (+1 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.43
