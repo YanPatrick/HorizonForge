@@ -7,8 +7,12 @@ import { dirname, join } from 'path';
 import { createServer } from 'http';
 import { Server as SocketIO } from 'socket.io';
 import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
+import { createRequire } from 'module';
 import { simulate } from '../shared/simulate.js';
 import { Client as HiveClient, PrivateKey as HiveKey, Signature, cryptoUtils } from '@hiveio/dhive';
+
+const _require = createRequire(import.meta.url);
+const APP_VERSION = _require('../package.json').version;
 
 // ── Hive configuration ────────────────────────────────────────────────────────
 const HIVE_GAME_ACCOUNT = process.env.HIVE_GAME_ACCOUNT || '';
@@ -247,11 +251,15 @@ app.use('/shared', express.static(join(__dirname, '../shared'), staticOpts(false
 
 // Unique ID generated at every server boot — used by the client to detect
 // a new deploy and force a hard reload instead of serving stale bfcache pages.
+// The full version key combines the semantic version (from package.json, bumped
+// manually per release) with a boot timestamp so that EITHER a version bump OR
+// a new Railway deploy will trigger a client reload.
 const BUILD_ID = Date.now().toString(36);
+const VERSION_KEY = `${APP_VERSION}-${BUILD_ID}`;
 
 app.get('/api/version', (_req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.json({ v: BUILD_ID });
+  res.json({ v: VERSION_KEY, app: APP_VERSION });
 });
 
 // ── DB connection ─────────────────────────────────────────
