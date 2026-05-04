@@ -295,7 +295,7 @@ function SettingsView({ session, payoutPct }) {
           <div className="stg-section">
             <div className="stg-section-title">About</div>
             <div className="stg-about">
-              <div className="stg-about-row"><span>Horizon Forge</span><span className="stg-version">v1.2</span></div>
+              <div className="stg-about-row"><span>Horizon Forge</span><span className="stg-version">v1.3</span></div>
               <div className="stg-about-row"><span>Developer</span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a></div>
               <div className="stg-about-row"><span>Discord</span><a href="https://discord.gg/w6QFKapJ3Q" target="_blank" rel="noreferrer">Join Server</a></div>
             </div>
