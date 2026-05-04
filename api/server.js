@@ -16,7 +16,7 @@ const APP_VERSION = _require('../package.json').version;
 
 // ── Hive configuration ────────────────────────────────────────────────────────
 const HIVE_GAME_ACCOUNT = process.env.HIVE_GAME_ACCOUNT || '';
-const HIVE_ACTIVE_KEY   = process.env.HIVE_ACTIVE_KEY   || '';
+const HIVE_ACTIVE_KEY = process.env.HIVE_ACTIVE_KEY || '';
 const HIVE_NODES = [
   'https://api.hive.blog',
   'https://api.deathwing.me',
@@ -42,14 +42,14 @@ function makeToken(username) {
 function verifyToken(token) {
   if (!token || typeof token !== 'string') return null;
   const first = token.indexOf(':');
-  const last  = token.lastIndexOf(':');
+  const last = token.lastIndexOf(':');
   if (first === last) return null;                        // needs at least 2 colons
-  const username  = token.slice(0, first);
+  const username = token.slice(0, first);
   const expiresStr = token.slice(first + 1, last);
-  const mac       = token.slice(last + 1);
-  const expires   = parseInt(expiresStr, 10);
+  const mac = token.slice(last + 1);
+  const expires = parseInt(expiresStr, 10);
   if (!username || isNaN(expires) || Date.now() > expires) return null;
-  const payload  = `${username}:${expires}`;
+  const payload = `${username}:${expires}`;
   const expected = createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
   try {
     if (!timingSafeEqual(Buffer.from(mac, 'hex'), Buffer.from(expected, 'hex'))) return null;
@@ -117,7 +117,7 @@ async function verifyHivePayment(_txId, from, wager, matchId, maxAttempts = 15) 
         const [, entry] = history[i];
         const [opType, op] = entry.op;
         if (opType !== 'transfer') continue;
-        if (op.to.toLowerCase()   !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+        if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
         if (op.from.toLowerCase() !== from.toLowerCase()) continue;
         const sent = parseFloat(op.amount);
         if (Math.abs(sent - wager) > 0.001) continue;
@@ -242,16 +242,22 @@ const noCacheOpts = {
 };
 
 if (!isDev) {
-  // Vite content-hashed assets — filename changes every build, safe to cache forever
+  // Assets do Vite (hashados → cache forte OK)
   app.use('/assets', express.static(join(CLIENT_DIST, 'assets'), {
     maxAge: '1y',
     immutable: true,
   }));
-  // Remaining dist files (React index.html) — no cache
+
+  // React build (index.html → sem cache)
   app.use(express.static(CLIENT_DIST, noCacheOpts));
 }
-// Public static files — no cache, no ETag
-app.use(express.static(join(__dirname, '../public'), noCacheOpts));
+
+// ⚠️ NÃO servir public inteiro (evita HTML antigo)
+// Em vez disso, só sirva o necessário:
+app.use('/images', express.static(join(__dirname, '../public/images'), noCacheOpts));
+app.use('/heroes', express.static(join(__dirname, '../public/heroes'), noCacheOpts));
+
+// Shared (se necessário)
 app.use('/shared', express.static(join(__dirname, '../shared'), noCacheOpts));
 
 // Unique ID generated at every server boot — used by the client to detect
@@ -312,11 +318,11 @@ function computeSkillPowerLevels(baseSkillPower, spmByLevel) {
       result[lv] = trunc4(prev);
     } else {
       // Relative per-step multiplier — avoids exponential compounding
-      const stepMult  = spmByLevel[lv] / spmByLevel[lv - 1];
+      const stepMult = spmByLevel[lv] / spmByLevel[lv - 1];
       const valorReal = prev * stepMult;
-      const novo      = Math.max(valorReal, prev + incMin);
-      result[lv]      = trunc4(novo);
-      prev            = result[lv];
+      const novo = Math.max(valorReal, prev + incMin);
+      result[lv] = trunc4(novo);
+      prev = result[lv];
     }
   }
   return result;
@@ -531,9 +537,9 @@ app.post('/api/migrate', async (_req, res) => {
     `;
 
     // Migrate: add new columns to existing matches table
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`.catch(() => {});
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`.catch(() => {});
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`.catch(() => {});
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`.catch(() => { });
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`.catch(() => { });
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`.catch(() => { });
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
@@ -549,7 +555,7 @@ app.post('/api/migrate', async (_req, res) => {
     // Migrate existing match_teams table: add battle_num column and fix PK if needed
     await sql`
       ALTER TABLE match_teams ADD COLUMN IF NOT EXISTS battle_num INT NOT NULL DEFAULT 1
-    `.catch(() => {/* column already exists */});
+    `.catch(() => {/* column already exists */ });
 
     await sql`
       DO $$
@@ -564,7 +570,7 @@ app.post('/api/migrate', async (_req, res) => {
           ALTER TABLE match_teams ADD PRIMARY KEY (match_id, player, battle_num);
         END IF;
       END $$
-    `.catch(() => {/* already migrated */});
+    `.catch(() => {/* already migrated */ });
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_transactions (
@@ -668,22 +674,13 @@ app.post('/api/auth/verify', async (req, res) => {
   }
 });
 
-// Catch-all: em produção serve o React, em dev deixa o Vite cuidar
-app.get('*', (_req, res) => {
-  if (!isDev) {
-    res.sendFile(join(CLIENT_DIST, 'index.html'));
-  } else {
-    res.sendFile(join(__dirname, '../public/index.html'));
-  }
-});
-
 // ══════════════════════════════════════════════════════════════════════════════
 //  MATCHMAKING — Socket.io
 // ══════════════════════════════════════════════════════════════════════════════
 
 // In-memory state (survives restarts only if single Railway instance)
 // queue: Map<username, { socket, wager, wagerType, joinedAt }>
-const matchQueue   = new Map();
+const matchQueue = new Map();
 // activeMatches: Map<matchId, { p1, p2, wager, wagerType, teams:{}, status }>
 const activeMatches = new Map();
 
@@ -745,11 +742,11 @@ function tryMatch() {
   matchQueue.delete(u1);
   matchQueue.delete(u2);
 
-  const matchId    = makeMatchId();
-  const fmt        = e1.format || 5;
-  const winsNeed   = fmt === 10 ? 6 : Math.ceil(fmt / 2);
+  const matchId = makeMatchId();
+  const fmt = e1.format || 5;
+  const winsNeed = fmt === 10 ? 6 : Math.ceil(fmt / 2);
   const needsPayment = e1.wager > 0 && !!HIVE_GAME_ACCOUNT;
-  const initStatus   = needsPayment ? 'waiting_payments' : 'waiting_teams';
+  const initStatus = needsPayment ? 'waiting_payments' : 'waiting_teams';
 
   const matchData = {
     matchId,
@@ -761,9 +758,9 @@ function tryMatch() {
     battleNum: 1,
     scores: { [u1]: 0, [u2]: 0 },
     // Payment tracking (populated by wager_sent handler)
-    payments:    { [u1]: false, [u2]: false },
+    payments: { [u1]: false, [u2]: false },
     payoutPrefs: { [u1]: 'liquid', [u2]: 'liquid' },
-    merges:      { [u1]: 0, [u2]: 0 },
+    merges: { [u1]: 0, [u2]: 0 },
     teams: {},
     status: initStatus,
     createdAt: Date.now(),
@@ -810,7 +807,7 @@ function tryMatch() {
         if (m.payments[player]) continue;
         try {
           const r = await verifyHivePayment('', player, m.wager, matchId, 3);
-          m.payments[player]    = true;
+          m.payments[player] = true;
           m.payoutPrefs[player] = r.payoutPref;
           console.log(`🔍 Late payment found on-chain for ${player} — will refund`);
         } catch {
@@ -818,7 +815,7 @@ function tryMatch() {
         }
       }
 
-      const paid   = [u1, u2].filter(p =>  m.payments[p]);
+      const paid = [u1, u2].filter(p => m.payments[p]);
       const unpaid = [u1, u2].filter(p => !m.payments[p]);
       activeMatches.delete(matchId);
 
@@ -834,7 +831,7 @@ function tryMatch() {
         if (sock && sock.connected) {
           matchQueue.set(player, {
             socket: sock,
-            wager:  m.wager,
+            wager: m.wager,
             wagerType: 'HIVE',
             format: m.format,
             joinedAt: Date.now(),
@@ -853,7 +850,7 @@ function tryMatch() {
         const sock = m.p1 === player ? m.s1 : m.s2;
         if (sock) {
           if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: unpaid.length ? 'Opponent did not confirm payment in time.' : 'Match cancelled.' });
-          else      sock.emit('prize_error', { error: `Refund failed: ${r.error}. Contact support.` });
+          else sock.emit('prize_error', { error: `Refund failed: ${r.error}. Contact support.` });
         }
       }
       console.log(`⏰ Match ${matchId} cancelled | paid: [${paid.join(', ')}] refunded | unpaid: [${unpaid.join(', ')}] requeued`);
@@ -936,8 +933,8 @@ function resolveBattleRound(matchId) {
     scores: { [m.p1]: m.scores[m.p1], [m.p2]: m.scores[m.p2] },
     seriesOver,
     matchWinner,
-    evs:   result.evs,
-    umap:  result.umap,
+    evs: result.evs,
+    umap: result.umap,
     stats: result.stats,
     merges: { [m.p1]: m.merges[m.p1] || 0, [m.p2]: m.merges[m.p2] || 0 },
   };
@@ -969,7 +966,7 @@ function resolveBattleRound(matchId) {
 
     // ── Send prize if match had a real wager ──────────────────────────────────
     if (m.wager > 0 && HIVE_GAME_ACCOUNT) {
-      const pot        = m.wager * 2;
+      const pot = m.wager * 2;
       const payoutPref = m.payoutPrefs[matchWinner] || 'liquid';
       sendHivePrize(matchWinner, pot, payoutPref, matchId).then(result => {
         if (result.ok) {
@@ -1019,7 +1016,7 @@ function forfeitBattle(matchId, winner) {
     scores: { [m.p1]: m.scores[m.p1], [m.p2]: m.scores[m.p2] },
     seriesOver,
     matchWinner: seriesOver ? winner : null,
-    evs: [], umap: {}, stats: { dmgP:0, dmgE:0, killsP:0, killsE:0, survP:0, survE:0 },
+    evs: [], umap: {}, stats: { dmgP: 0, dmgE: 0, killsP: 0, killsE: 0, survP: 0, survE: 0 },
     reason: 'forfeit',
   });
   if (seriesOver) {
@@ -1208,12 +1205,12 @@ io.on('connection', socket => {
         // Match was cancelled during verification — the timeout handler will refund
         console.log(`⚠️  Payment verified for ${connectedUser} but match ${matchId} already cancelling — timeout will refund`);
         // Update payments on the original object so the timeout refund loop sees it
-        m.payments[connectedUser]    = true;
+        m.payments[connectedUser] = true;
         m.payoutPrefs[connectedUser] = payoutPref;
         return;
       }
 
-      mNow.payments[connectedUser]    = true;
+      mNow.payments[connectedUser] = true;
       mNow.payoutPrefs[connectedUser] = payoutPref;
       console.log(`✅ Payment confirmed: ${connectedUser} | pref: ${payoutPref}`);
 
@@ -1338,13 +1335,22 @@ process.on('unhandledRejection', (reason) => {
   console.error('[CRITICAL] Unhandled rejection — server kept alive:', reason);
 });
 
+// Catch-all: em produção serve o React, em dev deixa o Vite cuidar
+app.get('*', (_req, res) => {
+  if (!isDev) {
+    res.sendFile(join(CLIENT_DIST, 'index.html'));
+  } else {
+    res.sendFile(join(__dirname, '../public/index.html'));
+  }
+});
+
 // ── Start server ───────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.log(`⚔️  Horizon Forge running on http://localhost:${PORT}`);
   console.log(`   DB:        ${process.env.DATABASE_URL ? '✅ Connected' : '❌ DATABASE_URL not set'}`);
   console.log(`   Sockets:   ✅ Socket.io ready`);
-  console.log(`   HIVE acct: ${HIVE_GAME_ACCOUNT  ? `✅ ${HIVE_GAME_ACCOUNT}` : '❌ HIVE_GAME_ACCOUNT not set'}`);
-  console.log(`   HIVE key:  ${HIVE_ACTIVE_KEY    ? '✅ Set'                  : '❌ HIVE_ACTIVE_KEY not set'}`);
-  console.log(`   Admin:     ${ADMIN_SECRET        ? '✅ Protected'           : '⚠️  ADMIN_SECRET not set (endpoint disabled)'}`);
+  console.log(`   HIVE acct: ${HIVE_GAME_ACCOUNT ? `✅ ${HIVE_GAME_ACCOUNT}` : '❌ HIVE_GAME_ACCOUNT not set'}`);
+  console.log(`   HIVE key:  ${HIVE_ACTIVE_KEY ? '✅ Set' : '❌ HIVE_ACTIVE_KEY not set'}`);
+  console.log(`   Admin:     ${ADMIN_SECRET ? '✅ Protected' : '⚠️  ADMIN_SECRET not set (endpoint disabled)'}`);
 });

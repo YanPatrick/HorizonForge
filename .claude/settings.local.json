@@ -30,7 +30,16 @@
       "Bash(sed -n '4010,4020p' \"c:/Fontes_Javascript/HorizonForge/public/css/battle.css\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Fontes_Javascript\\\\HorizonForge\\\\client\\\\src\\\\\" -Force)",
       "Bash(xargs ls *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" log --oneline -5)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show cded69b --stat)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show cded69b -- public/battle.html)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show 313ff1e -- public/css/battle.css)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show 8d93575 -- public/css/battle.css)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" log --oneline -20)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44 -- public/css/battle.css)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44 --stat)",
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44:public/css/battle.css)"
     ]
   }
 }
