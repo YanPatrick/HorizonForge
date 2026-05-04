@@ -3770,12 +3770,14 @@
         #mobile-hud {
           display: block;
           position: fixed;
-          top: env(safe-area-inset-top, 0px);
+          top: 0;
           left: 0;
           right: 0;
+          bottom: 64px;
           bottom: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px));
           pointer-events: none;
           z-index: 200;
+          overflow: visible;
         }
 
         /* Oponente — top-left, estilo Clash Royale */
@@ -4020,17 +4022,19 @@
           display: none;
         }
 
-        /* action bar — cap safe-area to 40px so broken WebViews don't create
-           giant blank space when env() returns an unrealistically large value */
+        /* action bar — flex layout is more reliable than grid across WebViews */
         .mobile-actions {
           position: fixed;
           bottom: 0;
           left: 0;
           right: 0;
+          width: 100%;
+          height: 64px;
           height: calc(64px + min(env(safe-area-inset-bottom, 0px), 40px));
-          display: grid;
-          grid-template-columns: 1fr 1fr 64px 1fr 1fr;
-          align-items: center;
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
+          padding-bottom: 0;
           padding-bottom: min(env(safe-area-inset-bottom, 0px), 40px);
           background: linear-gradient(to top, rgba(20, 14, 40, 0.99), rgba(26, 19, 48, 0.92));
           backdrop-filter: blur(12px);
@@ -4041,6 +4045,8 @@
         }
 
         .mobile-actions > button {
+          flex: 1;
+          min-width: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -4094,6 +4100,8 @@
 
         /* Container do botão central */
         .mab-center {
+          flex: 0 0 64px;
+          width: 64px;
           display: flex;
           align-items: center;
           justify-content: center;
