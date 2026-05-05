@@ -112,6 +112,32 @@ export default function BattlePage() {
   const [mobileView, setMobileView] = useState(null)
   const [fsBtnText, setFsBtnText] = useState('Enter Fullscreen')
 
+  // Fullscreen banner state — shown once on first visit to touch devices
+  // with Fullscreen API support; user accepts (auto-enter on next touch)
+  // or declines (never show again). localStorage pref persists the choice.
+  const [fsBannerOpen, setFsBannerOpen] = useState(false)
+
+  // Duel-result overlay (Phase 4 of #16). battle.js's showDuelResult()
+  // builds the full render shape and dispatches via window.showDuelResult.
+  // Kept as one composite state because the overlay's contents only
+  // change when the duel ends — no partial updates needed except for
+  // toggling open/closed and the PvP "submitting..." 3s lifecycle.
+  const [duelResult, setDuelResult] = useState({
+    open: false,
+    pw: false,
+    scoreP: 0, scoreE: 0,
+    battles: [],
+    dmgP: 0, dmgE: 0,
+    killsP: 0, killsE: 0,
+    mergesP: 0, mergesE: '—',
+    teamP: [],
+    teamE: [],
+    isPvP: false,
+    wager: 0,
+    nextLabel: '🌟 Next Duel',
+    submitting: null, // null | { state: 'pending' | 'done', text, sub }
+  })
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -181,6 +207,37 @@ export default function BattlePage() {
     // the next view (toggle behavior, etc.) and dispatch the result.
     window.setMobileView         = (view) => setMobileView(view ?? null)
     window.setFullscreenBtnText  = (txt) => setFsBtnText(txt || 'Enter Fullscreen')
+    // Duel-result overlay — full render shape from battle.js's
+    // showDuelResult(). closeDuelResult flips just `open` so the
+    // ✕ View Field button doesn't disturb the rest of the data.
+    window.showDuelResult        = (data) => setDuelResult({
+      open: true,
+      pw: !!data?.pw,
+      scoreP: data?.scoreP ?? 0,
+      scoreE: data?.scoreE ?? 0,
+      battles: data?.battles ?? [],
+      dmgP: data?.dmgP ?? 0,
+      dmgE: data?.dmgE ?? 0,
+      killsP: data?.killsP ?? 0,
+      killsE: data?.killsE ?? 0,
+      mergesP: data?.mergesP ?? 0,
+      mergesE: data?.mergesE ?? '—',
+      teamP: data?.teamP ?? [],
+      teamE: data?.teamE ?? [],
+      isPvP: !!data?.isPvP,
+      wager: data?.wager ?? 0,
+      nextLabel: data?.isPvP ? '🏠 Back to Lobby' : '🌟 Next Duel',
+      submitting: data?.isPvP
+        ? {
+            state: 'pending',
+            text: 'Submitting results...',
+            sub: data.wager > 0
+              ? `${data.wager} HIVE will be transferred to the winner`
+              : 'Friendly match — no wager to process',
+          }
+        : null,
+    })
+    window.closeDuelResult       = () => setDuelResult((prev) => ({ ...prev, open: false }))
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -200,8 +257,108 @@ export default function BattlePage() {
       delete window.setFieldState
       delete window.setMobileView
       delete window.setFullscreenBtnText
+      delete window.showDuelResult
+      delete window.closeDuelResult
     }
   }, [closeQuit, confirmQuit])
+
+  // PvP "submitting results..." mock — flips to "done" after 3s. This is a
+  // placeholder that mirrors the original imperative behaviour (Etapa 3 will
+  // be a real on-chain confirmation; until then it's a UX cue that the
+  // server has accepted the result). Effect resets on each duel-result open.
+  useEffect(() => {
+    if (!duelResult.open || !duelResult.isPvP) return
+    if (duelResult.submitting?.state === 'done') return
+    const t = setTimeout(() => {
+      setDuelResult((prev) => prev.open && prev.isPvP ? {
+        ...prev,
+        submitting: {
+          state: 'done',
+          text: 'Results submitted!',
+          sub: prev.wager > 0
+            ? 'Transfer complete. Check your Hive wallet.'
+            : 'Match recorded.',
+        },
+      } : prev)
+    }, 3000)
+    return () => clearTimeout(t)
+  }, [duelResult.open, duelResult.isPvP, duelResult.submitting?.state])
+
+  // ── Fullscreen banner + handlers (Phase 4 of #16) ───────────────────
+  // Was an IIFE in battle.js gated on isTouch+hasFS feature detection.
+  // Now lives in BattlePage. Banner visibility is React state; the
+  // localStorage preference and first-touch auto-enter behaviour are
+  // preserved exactly. window.toggleFullscreen / acceptFullscreen /
+  // declineFullscreen are still registered for the menu button (and
+  // for any code that calls them).
+  useEffect(() => {
+    const FS_KEY = 'hf_fullscreen'
+    const isTouch =
+      window.matchMedia('(pointer: coarse)').matches ||
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0
+    const docEl = document.documentElement
+    const hasFS = !!(docEl.requestFullscreen || docEl.webkitRequestFullscreen)
+
+    function enterFS() {
+      const p = docEl.requestFullscreen
+        ? docEl.requestFullscreen()
+        : docEl.webkitRequestFullscreen
+          ? docEl.webkitRequestFullscreen()
+          : null
+      if (p) p.catch(() => {})
+    }
+    function exitFS() {
+      if (document.exitFullscreen) document.exitFullscreen()
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen()
+    }
+
+    window.toggleFullscreen = () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) exitFS()
+      else enterFS()
+      window.closeMobileMenu?.()
+    }
+    window.acceptFullscreen = () => {
+      try { localStorage.setItem(FS_KEY, '1') } catch {}
+      setFsBannerOpen(false)
+      enterFS()
+    }
+    window.declineFullscreen = () => {
+      try { localStorage.setItem(FS_KEY, '0') } catch {}
+      setFsBannerOpen(false)
+    }
+
+    let bannerTimer = null
+    let firstTouchOff = null
+    if (isTouch && hasFS) {
+      let pref = null
+      try { pref = localStorage.getItem(FS_KEY) } catch {}
+      if (pref === '1') {
+        // Auto-enter on the next user gesture (FS APIs require one).
+        const onFirstTouch = () => {
+          document.removeEventListener('touchstart', onFirstTouch, true)
+          document.removeEventListener('click', onFirstTouch, true)
+          if (!document.fullscreenElement && !document.webkitFullscreenElement) enterFS()
+        }
+        document.addEventListener('touchstart', onFirstTouch, { once: true, capture: true })
+        document.addEventListener('click', onFirstTouch, { once: true, capture: true })
+        firstTouchOff = () => {
+          document.removeEventListener('touchstart', onFirstTouch, true)
+          document.removeEventListener('click', onFirstTouch, true)
+        }
+      } else if (pref === null) {
+        // First visit on a touch device — show the banner after a short delay.
+        bannerTimer = setTimeout(() => setFsBannerOpen(true), 1500)
+      }
+    }
+    return () => {
+      if (bannerTimer) clearTimeout(bannerTimer)
+      if (firstTouchOff) firstTouchOff()
+      delete window.toggleFullscreen
+      delete window.acceptFullscreen
+      delete window.declineFullscreen
+    }
+  }, [])
 
   useEffect(() => {
     if (!getSession()) { navigate('/', { replace: true }); return }
@@ -691,27 +848,39 @@ export default function BattlePage() {
       </div>
 
       {/* ══ DUEL RESULT ══ */}
-      <div id="duel-result">
+      <div id="duel-result" className={duelResult.open ? 'open' : ''}>
         <div id="dr-box">
-          <div className="dr-title" id="dr-title">🏆 DUEL WON!</div>
-          <div className="dr-score" id="dr-score"></div>
-          <div className="dr-battles" id="dr-battles"></div>
+          <div className={`dr-title ${duelResult.pw ? 'win' : 'loss'}`} id="dr-title">
+            {duelResult.pw ? '🏆 DUEL WON!' : '💔 DUEL LOST!'}
+          </div>
+          <div className="dr-score" id="dr-score">
+            <span style={{ color: '#88ff88' }}>{duelResult.scoreP}</span>
+            {' – '}
+            <span style={{ color: '#ff8888' }}>{duelResult.scoreE}</span>
+          </div>
+          <div className="dr-battles" id="dr-battles">
+            {duelResult.battles.map((b, i) => (
+              <div key={i} className={`dr-bat ${b.winner === 'p' ? 'w' : 'l'}`}>
+                {`B${i + 1} ${b.winner === 'p' ? '✓' : '✗'}`}
+              </div>
+            ))}
+          </div>
           <div className="dr-divider"></div>
           <div className="dr-stats-grid">
             <div className="dr-stat-row">
-              <div className="dr-val p" id="drs-dmgP">0</div>
+              <div className="dr-val p" id="drs-dmgP">{duelResult.dmgP.toLocaleString()}</div>
               <div className="dr-stat-lbl">⚔️ Total Damage</div>
-              <div className="dr-val e" id="drs-dmgE">0</div>
+              <div className="dr-val e" id="drs-dmgE">{duelResult.dmgE.toLocaleString()}</div>
             </div>
             <div className="dr-stat-row">
-              <div className="dr-val p" id="drs-killsP">0</div>
+              <div className="dr-val p" id="drs-killsP">{duelResult.killsP}</div>
               <div className="dr-stat-lbl">💀 Kills</div>
-              <div className="dr-val e" id="drs-killsE">0</div>
+              <div className="dr-val e" id="drs-killsE">{duelResult.killsE}</div>
             </div>
             <div className="dr-stat-row">
-              <div className="dr-val p" id="drs-merges">0</div>
+              <div className="dr-val p" id="drs-merges">{duelResult.mergesP}</div>
               <div className="dr-stat-lbl">✨ Merges</div>
-              <div className="dr-val e" id="drs-mergesE">—</div>
+              <div className="dr-val e" id="drs-mergesE">{duelResult.mergesE}</div>
             </div>
           </div>
           <div className="dr-divider"></div>
@@ -720,30 +889,66 @@ export default function BattlePage() {
               <div className="dr-team-lbl" style={{ color: 'rgba(136, 170, 255, 0.6)' }}>
                 Your Final Army
               </div>
-              <div className="dr-team-units" id="drt-p"></div>
+              <div className="dr-team-units" id="drt-p">
+                {duelResult.teamP.length === 0
+                  ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)' }}>—</span>
+                  : duelResult.teamP.map((u, i) => (
+                      <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
+                        <span>{u.ico}</span>
+                        <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
+                        <span className="dr-unit-lbl">{u.shortName}</span>
+                      </div>
+                    ))}
+              </div>
             </div>
             <div className="dr-team">
               <div className="dr-team-lbl" style={{ color: 'rgba(255, 100, 100, 0.6)' }}>
                 Enemy Army
               </div>
-              <div className="dr-team-units" id="drt-e"></div>
+              <div className="dr-team-units" id="drt-e">
+                {duelResult.teamE.length === 0
+                  ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)' }}>—</span>
+                  : duelResult.teamE.map((u, i) => (
+                      <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
+                        <span>{u.ico}</span>
+                        <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
+                        <span className="dr-unit-lbl">{u.shortName}</span>
+                      </div>
+                    ))}
+              </div>
             </div>
           </div>
-          <div id="dr-submitting">
+          <div
+            id="dr-submitting"
+            className={`${duelResult.submitting ? 'visible' : ''}${duelResult.submitting?.state === 'done' ? ' done' : ''}`.trim()}
+          >
             <div className="dr-submit-row">
-              <div className="dr-submit-spinner" id="dr-spin"></div>
-              <div className="dr-submit-text" id="dr-submit-text">Submitting results...</div>
+              <div
+                className={`dr-submit-spinner${duelResult.submitting?.state === 'done' ? ' done' : ''}`}
+                id="dr-spin"
+              >
+                {duelResult.submitting?.state === 'done' ? '✓' : ''}
+              </div>
+              <div className="dr-submit-text" id="dr-submit-text">
+                {duelResult.submitting?.text || 'Submitting results...'}
+              </div>
             </div>
             <div className="dr-submit-sub" id="dr-submit-sub">
-              Processing match outcome on the blockchain...
+              {duelResult.submitting?.sub || 'Processing match outcome on the blockchain...'}
             </div>
           </div>
           <div className="dr-cta">
-            <button className="btn gnbtn" id="dr-next-btn">🌟 Next Duel</button>
+            <button
+              className="btn gnbtn"
+              id="dr-next-btn"
+              onClick={() => window.duelResultNext?.()}
+            >
+              {duelResult.nextLabel}
+            </button>
             <button
               className="btn"
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.6)' }}
-              onClick={() => document.getElementById('duel-result')?.classList.remove('open')}
+              onClick={() => window.closeDuelResult?.()}
             >
               ✕ View Field
             </button>
@@ -808,7 +1013,7 @@ export default function BattlePage() {
       </div>
 
       {/* ══ FULLSCREEN BANNER ══ */}
-      <div id="fs-banner">
+      <div id="fs-banner" className={fsBannerOpen ? 'show' : ''}>
         <div className="fsb-text">🎮 Play in fullscreen for the best experience?</div>
         <div className="fsb-btns">
           <button className="fsb-yes" onClick={() => window.acceptFullscreen?.()}>Yes, fullscreen</button>

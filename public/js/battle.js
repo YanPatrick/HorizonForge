@@ -1541,97 +1541,48 @@
       // ═══════════════════════════════════════════════════
       //  DUEL RESULT OVERLAY
       // ═══════════════════════════════════════════════════
+      // Phase 4 of #16: duel-result overlay is React-rendered. Build a
+      // pure render shape (stats, team summaries, win/loss flag) and
+      // dispatch via window.showDuelResult. The PvP "submitting..." 3s
+      // mock is now a useEffect in BattlePage. The Next/Back-to-Lobby
+      // button delegates to window.duelResultNext below.
       function showDuelResult(pw) {
-        document.getElementById("dr-title").textContent = pw
-          ? "🏆 DUEL WON!"
-          : "💔 DUEL LOST!";
-        document.getElementById("dr-title").className =
-          "dr-title " + (pw ? "win" : "loss");
-        const sc = G.duelScore;
-        document.getElementById("dr-score").innerHTML =
-          `<span style="color:#88ff88">${sc.p}</span> – <span style="color:#ff8888">${sc.e}</span>`;
-        const bb = document.getElementById("dr-battles");
-        bb.innerHTML = "";
-        G.duelStats.battles.forEach((b, i) => {
-          const d = document.createElement("div");
-          d.className = `dr-bat ${b.winner === "p" ? "w" : "l"}`;
-          d.textContent = `B${i + 1} ${b.winner === "p" ? "✓" : "✗"}`;
-          bb.appendChild(d);
+        const isPvP = !!window._PVP;
+        const summarizeUnits = (arr) =>
+          (arr || []).filter(Boolean).map((u) => ({
+            ico: u.ico,
+            levelLabel: LS[u.lv],
+            shortName: (u.name || "").slice(0, 4),
+            alive: u.hp > 0,
+          }));
+        window.showDuelResult?.({
+          pw,
+          scoreP: G.duelScore.p,
+          scoreE: G.duelScore.e,
+          battles: G.duelStats.battles.map((b) => ({ winner: b.winner })),
+          dmgP: G.duelStats.dmgP,
+          dmgE: G.duelStats.dmgE,
+          killsP: G.duelStats.killsP,
+          killsE: G.duelStats.killsE,
+          mergesP: G.duelStats.mergesP,
+          mergesE: isPvP ? G.duelStats.mergesE : "—",
+          teamP: summarizeUnits(G.lastBoardSnap),
+          // PvP: final state from umap. AI: fallback to initial enemy board.
+          teamE: summarizeUnits(G.lastEnemySnap || G.duelEnemy),
+          isPvP,
+          wager: isPvP ? (window._PVP.wager || 0) : 0,
         });
-        document.getElementById("drs-dmgP").textContent =
-          G.duelStats.dmgP.toLocaleString();
-        document.getElementById("drs-dmgE").textContent =
-          G.duelStats.dmgE.toLocaleString();
-        document.getElementById("drs-killsP").textContent = G.duelStats.killsP;
-        document.getElementById("drs-killsE").textContent = G.duelStats.killsE;
-        document.getElementById("drs-merges").textContent = G.duelStats.mergesP;
-        const mergesEEl = document.getElementById("drs-mergesE");
-        if (window._PVP) {
-          mergesEEl.textContent = G.duelStats.mergesE;
-        } else {
-          mergesEEl.textContent = "—"; // AI doesn't merge
-        }
-
-        function renderTeam(el, units) {
-          el.innerHTML = "";
-          units.filter(Boolean).forEach((u) => {
-            const alive = u.hp > 0;
-            const d = document.createElement("div");
-            d.className = `dr-unit ${alive ? "alive" : "dead"}`;
-            d.innerHTML = `<span>${u.ico}</span><span style="font-size:7px;color:${alive ? "#88ff88" : "#ff8888"}">${LS[u.lv]}</span><span class="dr-unit-lbl">${u.name.slice(0, 4)}</span>`;
-            el.appendChild(d);
-          });
-          if (!units.filter(Boolean).length)
-            el.innerHTML =
-              '<span style="font-size:11px;color:rgba(255,255,255,.25)">—</span>';
-        }
-        renderTeam(document.getElementById("drt-p"), G.lastBoardSnap);
-        // In PvP use final-state enemy units from umap; fallback to initial board for AI
-        renderTeam(
-          document.getElementById("drt-e"),
-          G.lastEnemySnap || G.duelEnemy,
-        );
-
-        const subEl = document.getElementById("dr-submitting");
-        if (window._PVP) {
-          document.getElementById("dr-next-btn").textContent =
-            "🏠 Back to Lobby";
-          document.getElementById("dr-next-btn").onclick = () => {
-            if (window._PVP.socket) window._PVP.socket.disconnect();
-            window.location.href = "/lobby";
-          };
-
-          // Show "Submitting results..." banner (prep for Etapa 3 HIVE transfer)
-          const pvp = window._PVP;
-          subEl.classList.add("visible");
-          subEl.classList.remove("done");
-          document.getElementById("dr-spin").className = "dr-submit-spinner";
-          document.getElementById("dr-submit-text").textContent =
-            "Submitting results...";
-          const wagerLabel =
-            pvp.wager > 0
-              ? `${pvp.wager} HIVE will be transferred to the winner`
-              : "Friendly match — no wager to process";
-          document.getElementById("dr-submit-sub").textContent = wagerLabel;
-          // Mock: after 3s mark as done (real call happens in Etapa 3)
-          setTimeout(() => {
-            subEl.classList.add("done");
-            document.getElementById("dr-spin").className =
-              "dr-submit-spinner done";
-            document.getElementById("dr-spin").textContent = "✓";
-            document.getElementById("dr-submit-text").textContent =
-              "Results submitted!";
-            document.getElementById("dr-submit-sub").textContent =
-              pvp.wager > 0
-                ? "Transfer complete. Check your Hive wallet."
-                : "Match recorded.";
-          }, 3000);
-        } else {
-          subEl.classList.remove("visible");
-          document.getElementById("dr-next-btn").onclick = nextDuel;
-        }
-        document.getElementById("duel-result").classList.add("open");
       }
+
+      // Next-duel button click: PvP returns to lobby; AI proceeds to next duel.
+      window.duelResultNext = function () {
+        if (window._PVP) {
+          if (window._PVP.socket) window._PVP.socket.disconnect();
+          window.location.href = "/lobby";
+        } else {
+          nextDuel();
+        }
+      };
 
       // ═══════════════════════════════════════════════════
       //  GAME FLOW
@@ -2051,7 +2002,7 @@
 
       function nextDuel() {
         setShopLocked(false);
-        document.getElementById("duel-result").classList.remove("open");
+        window.closeDuelResult?.();
         G.duelNum++;
         G.battleNum = 1;
         G.duelScore = { p: 0, e: 0 };
@@ -3034,66 +2985,11 @@
       window.closeMobileMenu = closeMobileMenu;
 
       // ── Fullscreen ───────────────────────────────────────────────
-      (function () {
-        const FS_KEY = "hf_fullscreen";
-        // Detect touch device — check pointer:coarse, touch events, or small screen.
-        // Do NOT gate on orientation:portrait — the prompt only shows in portrait via
-        // CSS anyway, but the localStorage preference and enterFS() must work in any orientation.
-        const isTouch = window.matchMedia("(pointer: coarse)").matches ||
-                        ('ontouchstart' in window) ||
-                        navigator.maxTouchPoints > 0;
-        const hasFS = !!(document.documentElement.requestFullscreen ||
-                         document.documentElement.webkitRequestFullscreen);
-        if (!isTouch || !hasFS) return;
-
-        function enterFS() {
-          const el = document.documentElement;
-          const p = el.requestFullscreen
-            ? el.requestFullscreen()
-            : el.webkitRequestFullscreen
-              ? el.webkitRequestFullscreen()
-              : null;
-          if (p) p.catch(() => {});
-        }
-
-        function exitFS() {
-          if (document.exitFullscreen) document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        }
-
-        window.toggleFullscreen = function () {
-          if (document.fullscreenElement || document.webkitFullscreenElement) exitFS();
-          else enterFS();
-          closeMobileMenu();
-        };
-
-        window.acceptFullscreen = function () {
-          localStorage.setItem(FS_KEY, "1");
-          document.getElementById("fs-banner")?.classList.remove("show");
-          enterFS();
-        };
-
-        window.declineFullscreen = function () {
-          localStorage.setItem(FS_KEY, "0");
-          document.getElementById("fs-banner")?.classList.remove("show");
-        };
-
-        const pref = localStorage.getItem(FS_KEY);
-
-        if (pref === "1") {
-          function onFirstTouch() {
-            document.removeEventListener("touchstart", onFirstTouch, true);
-            document.removeEventListener("click", onFirstTouch, true);
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) enterFS();
-          }
-          document.addEventListener("touchstart", onFirstTouch, { once: true, capture: true });
-          document.addEventListener("click", onFirstTouch, { once: true, capture: true });
-        } else if (pref === null) {
-          setTimeout(function () {
-            document.getElementById("fs-banner")?.classList.add("show");
-          }, 1500);
-        }
-      })();
+      // Migrated to BattlePage.jsx (Phase 4 of #16). The banner visibility,
+      // localStorage preference, and first-touch auto-enter behaviour all
+      // live in the React component now. window.toggleFullscreen /
+      // acceptFullscreen / declineFullscreen are still registered there
+      // for code that calls them (notably the mobile menu's FS button).
 
       // Comportamentos mobile: auto-open, auto-advance
       // _mobilePhaseSync é chamado dentro de render() a cada frame — sem wrapper frágil
