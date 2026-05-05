@@ -62,7 +62,9 @@ function simulate(pb, eb) {
   // ── Deal damage ─────────────────────────────────────────────────────────────
   function dealDmg(atk, tgt, d, isCrit = false) {
     let dmg = d;
-    if (tgt.cid === "knight") dmg = Math.floor(dmg * (1 - tgt.skillPower));
+    // Knight Iron Defense: skillPower% damage reduction. Clamp at 0 so a
+    // future balance change with skillPower > 1 can't heal Knight on hit.
+    if (tgt.cid === "knight") dmg = Math.floor(dmg * Math.max(0, 1 - tgt.skillPower));
     tgt.hp = Math.max(0, tgt.hp - dmg);
     if (tgt.hp <= 0) {
       tgt.alive = false;
@@ -87,9 +89,9 @@ function simulate(pb, eb) {
   }
 
   // ── Start-of-battle abilities ────────────────────────────────────────────────
-  // Applies Sacred Aura and Sneak Strike for one side.
-  function applyBattleStart(units, foeSide) {
-    // Sacred Aura (Paladin) — buff adjacent allies' max HP
+  // Sacred Aura (Paladin) — buff adjacent allies' max HP. Aura only touches
+  // own-side units, so the order between sides doesn't matter for fairness.
+  function applyAura(units) {
     units
       .filter((u) => u.cid === "paladin")
       .forEach((u) => {
@@ -111,32 +113,48 @@ function simulate(pb, eb) {
           auraBonus: bonusMap,
         });
       });
-
-    // Sneak Strike (Assassin) — instant hit on lowest-HP enemy at battle start
-    units
-      .filter((u) => u.cid === "assassin")
-      .forEach((u) => {
-        const targets = foeSide.filter((f) => f.alive);
-        if (!targets.length) return;
-        const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
-        const sneakDmg = Math.floor(u.atk * u.skillPower);
-
-        evs.push({
-          type: "ability",
-          uid: u.id,
-          targetId: t.id,
-          abilName: "Sneak Strike",
-          amount: sneakDmg,
-          tick,
-        });
-
-        dealDmg(u, t, sneakDmg, false);
-      });
   }
 
-  // Apply for both sides (player first, then enemy — matters for cross-hits)
-  applyBattleStart(ps, es);
-  applyBattleStart(es, ps);
+  // Sneak Strike (Assassin) — instant hit on lowest-HP enemy at battle start.
+  // Targets are picked simultaneously on the pre-strike state so neither side
+  // gets the "kill the enemy assassin first" advantage in a mirror match;
+  // damage is then applied in a randomized order.
+  function applySneakStrikesFairly(sideA, sideB) {
+    const strikes = [];
+    const collect = (attackers, defenders) => {
+      attackers
+        .filter((u) => u.cid === "assassin")
+        .forEach((u) => {
+          const targets = defenders.filter((f) => f.alive);
+          if (!targets.length) return;
+          const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
+          const dmg = Math.floor(u.atk * u.skillPower);
+          strikes.push({ u, t, dmg });
+        });
+    };
+    collect(sideA, sideB);
+    collect(sideB, sideA);
+    // Fisher-Yates shuffle for fair resolution order
+    for (let i = strikes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [strikes[i], strikes[j]] = [strikes[j], strikes[i]];
+    }
+    strikes.forEach(({ u, t, dmg }) => {
+      evs.push({
+        type: "ability",
+        uid: u.id,
+        targetId: t.id,
+        abilName: "Sneak Strike",
+        amount: dmg,
+        tick,
+      });
+      dealDmg(u, t, dmg, false);
+    });
+  }
+
+  applyAura(ps);
+  applyAura(es);
+  applySneakStrikesFairly(ps, es);
 
   // ── Target selection ─────────────────────────────────────────────────────────
   function pickTarget(unit) {
@@ -337,9 +355,18 @@ function simulate(pb, eb) {
   if (pa.length && !ea.length) winner = "p";
   else if (ea.length && !pa.length) winner = "e";
   else {
-    const ph = pa.reduce((s, u) => s + u.hp, 0);
-    const eh = ea.reduce((s, u) => s + u.hp, 0);
-    winner = ph >= eh ? "p" : "e";
+    // Both sides survived (safety break or simultaneous wipe).
+    // Fair tiebreaker: more survivors → more total HP → coin flip.
+    // Previous logic defaulted to "p" on perfect tie, which gave p1 a free
+    // win on every dead-equal stalemate in PvP.
+    if (pa.length !== ea.length) {
+      winner = pa.length > ea.length ? "p" : "e";
+    } else {
+      const ph = pa.reduce((s, u) => s + u.hp, 0);
+      const eh = ea.reduce((s, u) => s + u.hp, 0);
+      if (ph !== eh) winner = ph > eh ? "p" : "e";
+      else winner = Math.random() < 0.5 ? "p" : "e";
+    }
   }
 
   let dmgP = 0,

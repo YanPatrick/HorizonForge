@@ -1020,8 +1020,10 @@
 
         function dealDmg(atk, tgt, d, isCrit = false) {
           let dmg = d;
+          // Knight Iron Defense: clamp at 0 so a future skillPower > 1
+          // can't heal Knight on hit (kept in sync with shared/simulate.js).
           if (tgt.cid === "knight")
-            dmg = Math.floor(dmg * (1 - tgt.skillPower));
+            dmg = Math.floor(dmg * Math.max(0, 1 - tgt.skillPower));
           tgt.hp = Math.max(0, tgt.hp - dmg);
           if (tgt.hp <= 0) {
             tgt.alive = false;
@@ -1071,31 +1073,40 @@
         // the ps copies inherit those boosted values, so we skip applyStart(ps) here.
         applyStart(es);
 
-        function applySneak(units, foeSide) {
-          units
-            .filter((u) => u.cid === "assassin")
-            .forEach((u) => {
-              const targets = foeSide.filter((f) => f.alive);
-              if (!targets.length) return;
-
-              const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
-              const sneakDmg = Math.floor(u.atk * u.skillPower);
-
-              evs.push({
-                type: "ability",
-                uid: u.id,
-                targetId: t.id,
-                abilName: "Sneak Strike",
-                amount: sneakDmg,
-                tick,
+        // Sneak Strike: pick targets simultaneously on the pre-strike state,
+        // then apply damage in randomized order. Mirrors shared/simulate.js so
+        // PvP and AI behave identically.
+        (function applySneakStrikesFairly(sideA, sideB) {
+          const strikes = [];
+          const collect = (attackers, defenders) => {
+            attackers
+              .filter((u) => u.cid === "assassin")
+              .forEach((u) => {
+                const targets = defenders.filter((f) => f.alive);
+                if (!targets.length) return;
+                const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
+                const dmg = Math.floor(u.atk * u.skillPower);
+                strikes.push({ u, t, dmg });
               });
-
-              dealDmg(u, t, sneakDmg, false);
+          };
+          collect(sideA, sideB);
+          collect(sideB, sideA);
+          for (let i = strikes.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [strikes[i], strikes[j]] = [strikes[j], strikes[i]];
+          }
+          strikes.forEach(({ u, t, dmg }) => {
+            evs.push({
+              type: "ability",
+              uid: u.id,
+              targetId: t.id,
+              abilName: "Sneak Strike",
+              amount: dmg,
+              tick,
             });
-        }
-
-        applySneak(ps, es);
-        applySneak(es, ps);
+            dealDmg(u, t, dmg, false);
+          });
+        })(ps, es);
 
         function pickTarget(unit) {
           const f = foes(unit.side);
@@ -1308,9 +1319,16 @@
         if (pa.length && !ea.length) winner = "p";
         else if (ea.length && !pa.length) winner = "e";
         else {
-          const ph = pa.reduce((s, u) => s + u.hp, 0),
-            eh = ea.reduce((s, u) => s + u.hp, 0);
-          winner = ph >= eh ? "p" : "e";
+          // Fair tiebreaker: more survivors → more total HP → coin flip.
+          // Kept in sync with shared/simulate.js.
+          if (pa.length !== ea.length) {
+            winner = pa.length > ea.length ? "p" : "e";
+          } else {
+            const ph = pa.reduce((s, u) => s + u.hp, 0),
+              eh = ea.reduce((s, u) => s + u.hp, 0);
+            if (ph !== eh) winner = ph > eh ? "p" : "e";
+            else winner = Math.random() < 0.5 ? "p" : "e";
+          }
         }
         let dmgP = 0,
           dmgE = 0,

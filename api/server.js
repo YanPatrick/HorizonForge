@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { neon } from '@neondatabase/serverless';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -166,9 +167,16 @@ async function refundHiveWager(to, amount, matchId) {
 }
 
 /**
- * Send the prize to the winner:
- *  - 'liquid' → standard HIVE transfer (90% of pot)
- *  - 'stake'  → transfer_to_vesting / power-up (95% of pot)
+ * Send the prize to the winner.
+ *
+ * Payout rate is read from `horizon_forge_details` (keys
+ *   `percent_payout_liquid`, `percent_payout_stake`) so the treasury cut can
+ * be tuned without redeploys. If the keys are missing the fallback below
+ * (PAYOUT_RATE_FALLBACK) is used.
+ *
+ *  - 'liquid' → standard HIVE transfer
+ *  - 'stake'  → transfer_to_vesting / power-up
+ *
  * Returns { ok, amount, payoutPref } or { ok: false, error }.
  */
 async function sendHivePrize(winner, pot, payoutPref, matchId) {
@@ -589,6 +597,20 @@ app.get('/api/config', async (_req, res) => {
  * Cria as tabelas se não existirem. Seguro para re-executar.
  * Requer ADMIN_SECRET no header `x-admin-secret`.
  */
+// Swallow only "already exists" errors during migrations:
+//   42701 = duplicate_column, 42P07 = duplicate_table, 42710 = duplicate_object
+// Anything else means the schema is in an unexpected state and should fail loud.
+const BENIGN_MIGRATION_ERRORS = new Set(['42701', '42P07', '42710']);
+async function safeMigrate(promise, label) {
+  try {
+    await promise;
+  } catch (err) {
+    if (err && BENIGN_MIGRATION_ERRORS.has(err.code)) return;
+    console.error(`[migrate ${label}]`, err.code || '', err.message);
+    throw err;
+  }
+}
+
 app.post('/api/migrate', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
@@ -647,15 +669,19 @@ app.post('/api/migrate', async (req, res) => {
 
     await sql`
       INSERT INTO horizon_forge_details (key, value) VALUES
-        ('initial_gold',          '7'),
-        ('value_buy_card',        '3'),
-        ('value_new_recruitment', '2'),
-        ('value_sell_card',       '1'),
-        ('value_chance_combo3',   '0.10'),
-        ('value_gold_combo3',     '2'),
-        ('value_chance_combo2',   '0.30'),
-        ('value_gold_combo2',     '1'),
-        ('qtd_max_heroes',        '5')
+        ('initial_gold',           '7'),
+        ('value_buy_card',         '3'),
+        ('value_new_recruitment',  '2'),
+        ('value_sell_card',        '1'),
+        ('value_chance_combo3',    '0.10'),
+        ('value_gold_combo3',      '2'),
+        ('value_chance_combo2',    '0.30'),
+        ('value_gold_combo2',      '1'),
+        ('qtd_max_heroes',         '5'),
+        -- Prize payout %: matches PAYOUT_RATE_FALLBACK in api/server.js.
+        -- Adjust live in DB to retune treasury cut without a redeploy.
+        ('percent_payout_liquid',  '80'),
+        ('percent_payout_stake',   '90')
       ON CONFLICT (key) DO NOTHING
     `;
 
@@ -678,17 +704,17 @@ app.post('/api/migrate', async (req, res) => {
     `;
 
     // Migrate: add new columns to existing matches table
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`.catch(() => { });
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`.catch(() => { });
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`.catch(() => { });
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`, 'matches.format');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`, 'matches.score_p1');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`, 'matches.score_p2');
     // Persist active-match state so a server restart doesn't lose paid wagers.
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS battle_num   INT  NOT NULL DEFAULT 1`.catch(() => { });
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payments     JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payout_prefs JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS merges       JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS battle_num   INT  NOT NULL DEFAULT 1`,                   'matches.battle_num');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payments     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.payments');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payout_prefs JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.payout_prefs');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS merges       JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.merges');
     // Tracks which players have been refunded — prevents double-refund if a
     // crash happens mid-cancellation and rehydrate then re-runs the refund loop.
-    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.refunded');
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
@@ -702,11 +728,12 @@ app.post('/api/migrate', async (req, res) => {
     `;
 
     // Migrate existing match_teams table: add battle_num column and fix PK if needed
-    await sql`
-      ALTER TABLE match_teams ADD COLUMN IF NOT EXISTS battle_num INT NOT NULL DEFAULT 1
-    `.catch(() => {/* column already exists */ });
+    await safeMigrate(
+      sql`ALTER TABLE match_teams ADD COLUMN IF NOT EXISTS battle_num INT NOT NULL DEFAULT 1`,
+      'match_teams.battle_num'
+    );
 
-    await sql`
+    await safeMigrate(sql`
       DO $$
       BEGIN
         IF EXISTS (
@@ -719,7 +746,7 @@ app.post('/api/migrate', async (req, res) => {
           ALTER TABLE match_teams ADD PRIMARY KEY (match_id, player, battle_num);
         END IF;
       END $$
-    `.catch(() => {/* already migrated */ });
+    `, 'match_teams_pkey');
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_transactions (
@@ -808,7 +835,17 @@ app.put('/api/formations', async (req, res) => {
 // Verifies a Hive Keychain signature server-side and returns a signed token.
 // Body: { username, memo, signature }
 // Returns: { ok: true, token } on success, { error } on failure.
-app.post('/api/auth/verify', async (req, res) => {
+//
+// Rate-limited because each call hits Hive RPC (`condenser_api.get_accounts`)
+// — without this, an attacker could DoS our Hive node dependency for free.
+const authVerifyLimiter = rateLimit({
+  windowMs: 60 * 1000,         // 1 minute
+  max: 10,                     // 10 attempts per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please wait a moment and try again.' },
+});
+app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
   const { username, memo, signature } = req.body || {};
   if (!username || !memo || !signature) {
     return res.status(400).json({ error: 'Missing fields.' });
