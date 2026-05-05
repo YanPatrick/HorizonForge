@@ -111,16 +111,8 @@
         );
         const label = battleSpeed === 1 ? "1x" : "2x";
         const fast = battleSpeed === 2;
-        const btn = document.getElementById("battle-speed-toggle");
-        if (btn) {
-          btn.textContent = label;
-          btn.classList.toggle("is-fast", fast);
-        }
-        const mBtn = document.getElementById("mobile-speed-btn");
-        if (mBtn) {
-          mBtn.textContent = label;
-          mBtn.classList.toggle("is-fast", fast);
-        }
+        // Phase 2 of #16: dispatch into BattlePage instead of mutating DOM.
+        window.setBattleSpeed?.({ label, fast });
         try {
           localStorage.setItem("hf_battle_speed", String(battleSpeed));
         } catch {}
@@ -858,28 +850,19 @@
       function startPhaseTimer(ms) {
         if (window._PVP) return; // PvP uses server-driven timer inside pvpInit
         stopPhaseTimer();
-        const el = document.getElementById("phase-timer");
-        const elMobile = document.getElementById("mobile-round-timer");
-        if (!el && !elMobile) return;
-        if (el) el.style.display = "block";
-        if (elMobile) elMobile.style.display = "block";
+        // Phase 2 of #16: timer state lives in BattlePage. Dispatch via the
+        // setRoundTimer / hideRoundTimer shims registered there. Safe-call (?.)
+        // makes this a no-op if BattlePage hasn't mounted yet — the interval
+        // still ticks down so startBattle() fires on schedule.
         let remaining = Math.ceil(ms / 1000);
         function tick() {
           const m = Math.floor(remaining / 60);
           const s = remaining % 60;
           const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-          if (el) {
-            el.textContent = txt;
-            el.classList.toggle("timer-urgent", remaining <= 30);
-          }
-          if (elMobile) {
-            elMobile.textContent = txt;
-            elMobile.classList.toggle("timer-urgent", remaining <= 30);
-          }
+          window.setRoundTimer?.(txt, remaining <= 30);
           if (remaining <= 0) {
             stopPhaseTimer();
-            if (el) el.textContent = "⏱ 0:00";
-            if (elMobile) elMobile.textContent = "⏱ 0:00";
+            window.setRoundTimer?.("⏱ 0:00", false);
             startBattle();
           }
         }
@@ -895,24 +878,17 @@
           clearInterval(_aiTimerInterval);
           _aiTimerInterval = null;
         }
-        const el = document.getElementById("phase-timer");
-        if (el) {
-          el.style.display = "none";
-          el.classList.remove("timer-urgent");
-        }
-        const elMobile = document.getElementById("mobile-round-timer");
-        if (elMobile) {
-          elMobile.style.display = "none";
-          elMobile.classList.remove("timer-urgent");
-        }
+        window.hideRoundTimer?.();
       }
 
       function updateFieldLabels() {
-        const user = window._HF_SESSION?.username || "";
-        const pvp = window._PVP;
+        // The legacy lbl-player / lbl-enemy field labels are intentionally
+        // hidden — the duelbar at the top of the header already shows the
+        // player and opponent identities. Phase 2 of #16: opp-name dispatch
+        // moved to BattlePage; the old text-clear + parent-hide kept here as
+        // a defensive no-op against any CSS that might try to show them.
         const lp = document.getElementById("lbl-player");
         const le = document.getElementById("lbl-enemy");
-        const lse = document.getElementById("lbl-score-enemy");
         if (lp) {
           lp.textContent = "";
           lp.parentElement.style.display = "none";
@@ -921,10 +897,9 @@
           le.textContent = "";
           le.parentElement.style.display = "none";
         }
+        const pvp = window._PVP;
         const oppName = pvp?.opponent ? `@${pvp.opponent}` : "Enemy";
-        if (lse) lse.textContent = oppName;
-        const mob = document.getElementById("mobile-opp-name");
-        if (mob) mob.textContent = oppName;
+        window.setBattleOpp?.(oppName);
       }
 
       function setShopLocked(locked) {
@@ -1759,28 +1734,17 @@
 
         function startRoundTimer(ms) {
           stopRoundTimer();
-          const el = document.getElementById("phase-timer");
-          const elMobile = document.getElementById("mobile-round-timer");
-          if (!el && !elMobile) return;
-          if (el) el.style.display = "block";
-          if (elMobile) elMobile.style.display = "block";
+          // Phase 2 of #16: dispatch through the BattlePage shims. See
+          // startPhaseTimer above for the same pattern.
           let remaining = Math.ceil(ms / 1000);
           function tick() {
             const m = Math.floor(remaining / 60);
             const s = remaining % 60;
             const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-            if (el) {
-              el.textContent = txt;
-              el.classList.toggle("timer-urgent", remaining <= 30);
-            }
-            if (elMobile) {
-              elMobile.textContent = txt;
-              elMobile.classList.toggle("timer-urgent", remaining <= 30);
-            }
+            window.setRoundTimer?.(txt, remaining <= 30);
             if (remaining <= 0) {
               stopRoundTimer();
-              if (el) el.textContent = "⏱ 0:00";
-              if (elMobile) elMobile.textContent = "⏱ 0:00";
+              window.setRoundTimer?.("⏱ 0:00", false);
             }
           }
           tick();
@@ -1795,16 +1759,7 @@
             clearInterval(_roundTimerInterval);
             _roundTimerInterval = null;
           }
-          const el = document.getElementById("phase-timer");
-          if (el) {
-            el.style.display = "none";
-            el.classList.remove("timer-urgent");
-          }
-          const elMobile = document.getElementById("mobile-round-timer");
-          if (elMobile) {
-            elMobile.style.display = "none";
-            elMobile.classList.remove("timer-urgent");
-          }
+          window.hideRoundTimer?.();
         }
 
         // Expose so other functions can start/stop the countdown
@@ -1974,7 +1929,7 @@
         G.lastBoardSnap = [];
         G.lastEnemySnap = null;
         document.getElementById("game").style.display = "flex";
-        document.getElementById("h-fmt").textContent = `BO${fmt}`;
+        window.setBattleFmt?.(`BO${fmt}`);
         document.getElementById("log").innerHTML = "";
         if (!pvpMode) {
           window.HFBot.initDuel();
@@ -2172,37 +2127,28 @@
       //  RENDER SYSTEM
       // ═══════════════════════════════════════════════════
       function setBanner(t, c) {
-        const b = document.getElementById("banner");
-        b.textContent = t;
-        b.className = c;
+        // Phase 2 of #16: dispatch into BattlePage. Helper kept so existing
+        // call sites (~30 of them) don't need to change.
+        window.setBanner?.(t, c);
       }
 
       function renderDuelBar() {
-        const dp = document.getElementById("dots-p"),
-          de = document.getElementById("dots-e");
-        dp.innerHTML = "";
-        de.innerHTML = "";
-        const mdp = document.getElementById("mobile-dots-p");
-        const mde = document.getElementById("mobile-dots-e");
-        if (mdp) mdp.innerHTML = "";
-        if (mde) mde.innerHTML = "";
+        // Build score-dot arrays of 'w' (won), 'l' (lost), 'e' (empty/pending)
+        // and dispatch in one shot. BattlePage renders the four dot containers
+        // (#dots-p, #dots-e, #mobile-dots-p, #mobile-dots-e) from this state.
         const battles = G.duelStats.battles; // [{winner:"p"|"e"}, ...]
+        const p = [], e = [];
         for (let i = 0; i < G.format; i++) {
-          const pd = document.createElement("div"),
-            ed = document.createElement("div");
           if (i < battles.length) {
             const w = battles[i].winner;
-            pd.className = `dot ${w === "p" ? "dot-w" : "dot-l"}`;
-            ed.className = `dot ${w === "e" ? "dot-w" : "dot-l"}`;
+            p.push(w === "p" ? "w" : "l");
+            e.push(w === "e" ? "w" : "l");
           } else {
-            pd.className = "dot dot-e";
-            ed.className = "dot dot-e";
+            p.push("e");
+            e.push("e");
           }
-          dp.appendChild(pd);
-          de.appendChild(ed);
-          if (mdp) { const m = document.createElement("div"); m.className = pd.className; mdp.appendChild(m); }
-          if (mde) { const m = document.createElement("div"); m.className = ed.className; mde.appendChild(m); }
         }
+        window.setBattleScoreDots?.({ p, e });
       }
 
       // ═══════════════════════════════════════════════════
@@ -3110,8 +3056,7 @@
         document.getElementById("bfight").disabled = G.phase !== "shop";
         const n = G.board.filter(Boolean).length,
           mx = maxUnits();
-        const acEl = document.getElementById("army-count");
-        if (acEl) acEl.textContent = `${n}/${mx}`;
+        window.setBattleArmyCount?.(`${n}/${mx}`);
         if (G.phase === "shop") {
           const selUnit = G.bsel ? G.bench.find((u) => u.cid === G.bsel) : null;
           const hint = selUnit
@@ -3132,13 +3077,8 @@
       // ── Boot ──
       function _bootBattle() {
         initGame(); // async: auto-start happens inside after data loads
-        // Show username badge in header
-        const uEl = document.getElementById("h-user");
-        if (uEl) {
-          uEl.textContent = window._HF_SESSION?.username
-            ? "@" + window._HF_SESSION.username
-            : "@you";
-        }
+        // The header username badge (#h-user) is populated by BattlePage from
+        // the React session state — no longer set imperatively here.
       }
       // If loaded dynamically after DOM is ready (React SPA), fire immediately
       if (document.readyState === "loading") {

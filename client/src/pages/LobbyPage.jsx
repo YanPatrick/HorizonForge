@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import '@styles/lobby.css'
 import GrimoireView from './GrimoireView'
+import { getSession } from '../lib/session'
 
 /* ── helpers ────────────────────────────────────────────── */
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
-}
 function prefKey(name, username) {
   return username ? `hf_${name}_${username}` : `hf_${name}`
 }

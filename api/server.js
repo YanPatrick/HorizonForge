@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { neon } from '@neondatabase/serverless';
 import { fileURLToPath } from 'url';
@@ -235,6 +236,16 @@ const io = new SocketIO(httpServer, {
   cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'] },
 });
 
+// Security headers (defense in depth):
+//   • X-Content-Type-Options: nosniff
+//   • Strict-Transport-Security
+//   • X-Frame-Options: SAMEORIGIN, X-DNS-Prefetch-Control, Referrer-Policy, etc.
+// CSP is intentionally disabled — the app loads scripts dynamically (battle.js,
+// bot-ai.js, simulate.js, socket.io) and would need a curated `script-src` /
+// `connect-src` policy that allows the Hive RPC nodes and the Keychain bridge.
+// Enabling it correctly is its own audit; better to ship the rest of helmet
+// now than to ship a broken CSP that requires emergency disablement.
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
 // Em produção serve o build do React; em dev o Vite roda separado
@@ -1208,6 +1219,11 @@ function tryMatch() {
 }
 
 const ROUND_TIME_MS = 2 * 60 * 1000; // 2 minutes per round
+// Grace window for a disconnected player to reconnect before the active
+// round forfeits to their opponent. Long enough to cover a page refresh or a
+// brief network blip; short enough that ragequits don't trap the opponent
+// in the 2-minute round timer.
+const DISCONNECT_GRACE_MS = 45 * 1000;
 
 function armForfeitTimer(matchId, u1, u2, ms) {
   const m = activeMatches.get(matchId);
@@ -1449,6 +1465,12 @@ io.on('connection', socket => {
       if (m.p1 === connectedUser || m.p2 === connectedUser) {
         if (m.p1 === connectedUser) m.s1 = socket; else m.s2 = socket;
         socket.join(m.matchId);
+        // They came back via the lobby — cancel any pending forfeit timer.
+        if (m.disconnectTimer) {
+          clearTimeout(m.disconnectTimer);
+          m.disconnectTimer = null;
+          socket.to(m.matchId).emit('opponent_reconnected', { username: connectedUser });
+        }
         const reconNeedsPayment = m.wager > 0 && !!HIVE_GAME_ACCOUNT && m.status === 'waiting_payments';
         socket.emit('match_found', {
           matchId: m.matchId,
@@ -1493,6 +1515,12 @@ io.on('connection', socket => {
     if (m.p1 === connectedUser) m.s1 = socket;
     else m.s2 = socket;
     socket.join(matchId);
+    // Cancel any pending forfeit-on-disconnect timer — they came back in time.
+    if (m.disconnectTimer) {
+      clearTimeout(m.disconnectTimer);
+      m.disconnectTimer = null;
+      socket.to(matchId).emit('opponent_reconnected', { username: connectedUser });
+    }
     socket.emit('rejoin_ok', {
       matchId,
       p1: m.p1, p2: m.p2,
@@ -1623,12 +1651,32 @@ io.on('connection', socket => {
     if (connectedUser) {
       matchQueue.delete(connectedUser);
       broadcastQueueSize();
-      // Notify opponent if in active match
+      // Auto-forfeit if disconnected during an active match and the player
+      // doesn't reconnect within the grace window. Without this, a ragequit
+      // forces the opponent to wait out the full 2-minute round timer.
       for (const [, m] of activeMatches) {
-        if (m.p1 === connectedUser || m.p2 === connectedUser) {
-          socket.to(m.matchId).emit('opponent_disconnected', { username: connectedUser });
-          break;
-        }
+        if (m.p1 !== connectedUser && m.p2 !== connectedUser) continue;
+        socket.to(m.matchId).emit('opponent_disconnected', {
+          username: connectedUser,
+          graceMs: DISCONNECT_GRACE_MS,
+        });
+        if (m.disconnectTimer) clearTimeout(m.disconnectTimer);
+        m.disconnectTimer = setTimeout(() => {
+          const cur = activeMatches.get(m.matchId);
+          if (!cur) return;
+          // Did they come back? Their socket reference would have been
+          // updated in rejoin_match or join_queue.
+          const sock = cur.p1 === connectedUser ? cur.s1 : cur.s2;
+          if (sock && sock.connected) return;
+          // Only forfeit when the match is mid-play. In waiting_payments we
+          // already have the payment timeout doing the right thing; in
+          // resolving/done the match is already terminal.
+          if (cur.status !== 'waiting_teams') return;
+          const winner = cur.p1 === connectedUser ? cur.p2 : cur.p1;
+          console.log(`🚪 ${connectedUser} did not reconnect within ${DISCONNECT_GRACE_MS}ms — forfeiting round to ${winner}`);
+          forfeitBattle(cur.matchId, winner);
+        }, DISCONNECT_GRACE_MS);
+        break;
       }
     }
   });

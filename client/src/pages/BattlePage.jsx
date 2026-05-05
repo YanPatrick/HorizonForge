@@ -1,20 +1,63 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
-}
+import { getSession } from '../lib/session'
 
 export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
   const [cssReady, setCssReady] = useState(false)
+  // Tracks whether the imperative scripts (battle.js + bot-ai.js + simulate.js
+  // + socket.io + mobile.js) have all loaded. Buttons in this page dispatch
+  // through globals those scripts register (window.startBattle, openQuitModal,
+  // toggleBattleSpeed, etc.) — clicking before they're loaded silently does
+  // nothing. Hiding the page until both CSS and scripts are ready avoids that.
+  const [scriptsReady, setScriptsReady] = useState(false)
 
   // ── Modal visibility (was: classList toggling driven by globals in battle.js)
   // Phase 1 of #16 — UI chrome is React-driven; battle.js still calls
   // window.openQuitModal etc. via the registered shims below.
   const [quitOpen, setQuitOpen] = useState(false)
   const [howToOpen, setHowToOpen] = useState(false)
+
+  // ── Round/phase timer (Phase 2 of #16, first slice)
+  // Was: battle.js mutated #phase-timer.textContent and toggled .timer-urgent
+  // every second from inside startPhaseTimer / startRoundTimer. Now battle.js
+  // dispatches via window.setRoundTimer / window.hideRoundTimer, registered
+  // below. Same pattern as the modal shims — proves out the imperative→React
+  // direction before we extend it to score, banner, opponent name, etc.
+  const [timerText, setTimerText] = useState('')
+  const [timerUrgent, setTimerUrgent] = useState(false)
+
+  // ── Header / HUD reactive state (Phase 2 of #16, finishes the Header)
+  // All of these were imperative DOM mutations in battle.js (renderDuelBar,
+  // setBanner, applyBattleSpeed, updateFieldLabels, etc.). Each one is now a
+  // pure React state slice; battle.js dispatches via the window shims
+  // registered below. Once the Barracks/Shop/Field migration lands in
+  // Phase 3, the entire #hdr block will be read-from-state.
+  const sessionForBadge = getSession()
+  const [userBadge] = useState(
+    sessionForBadge?.username ? `@${sessionForBadge.username}` : '@you'
+  )
+  const [formatLabel, setFormatLabel] = useState('BO3')
+  const [bannerText, setBannerText] = useState(
+    '🛍️ Analyze the enemy, buy cards and build your army!'
+  )
+  const [bannerClass, setBannerClass] = useState('bshop')
+  const [oppName, setOppName] = useState('Enemy')
+  const [armyCount, setArmyCount] = useState('')
+  // Score dots: arrays of 'w' (won), 'l' (lost), 'e' (empty/pending). Length
+  // matches G.format. battle.js's renderDuelBar() now computes these arrays
+  // and dispatches them in one shot.
+  const [scoreDots, setScoreDots] = useState({ p: [], e: [] })
+  // Speed toggle: read the stored preference once on mount so the initial
+  // render matches what battle.js's initBattleSpeed IIFE would have written.
+  const [speed, setSpeed] = useState(() => {
+    try {
+      const n = Number(localStorage.getItem('hf_battle_speed'))
+      const fast = !(n === 1)
+      return { label: fast ? '2x' : '1x', fast }
+    } catch { return { label: '2x', fast: true } }
+  })
 
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
@@ -37,12 +80,36 @@ export default function BattlePage() {
     window.confirmQuit    = confirmQuit
     window.openHowTo      = () => setHowToOpen(true)
     window.closeHowTo     = () => setHowToOpen(false)
+    // Round timer — battle.js calls these from its tick() functions.
+    window.setRoundTimer  = (text, urgent) => {
+      setTimerText(text || '')
+      setTimerUrgent(!!urgent)
+    }
+    window.hideRoundTimer = () => {
+      setTimerText('')
+      setTimerUrgent(false)
+    }
+    // Header / HUD dispatchers — see state declarations above.
+    window.setBanner             = (text, cls) => { setBannerText(text || ''); setBannerClass(cls || '') }
+    window.setBattleFmt          = (label) => setFormatLabel(label || '')
+    window.setBattleOpp          = (name) => setOppName(name || 'Enemy')
+    window.setBattleArmyCount    = (text) => setArmyCount(text || '')
+    window.setBattleScoreDots    = ({ p, e }) => setScoreDots({ p: p || [], e: e || [] })
+    window.setBattleSpeed        = ({ label, fast }) => setSpeed({ label: label || '2x', fast: !!fast })
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
       delete window.confirmQuit
       delete window.openHowTo
       delete window.closeHowTo
+      delete window.setRoundTimer
+      delete window.hideRoundTimer
+      delete window.setBanner
+      delete window.setBattleFmt
+      delete window.setBattleOpp
+      delete window.setBattleArmyCount
+      delete window.setBattleScoreDots
+      delete window.setBattleSpeed
     }
   }, [closeQuit, confirmQuit])
 
@@ -93,13 +160,19 @@ export default function BattlePage() {
     // _bootBattle fires (which is right after battle.js evaluates). Serialize
     // the order: simulate (module) → bot-ai → battle. socket.io and mobile.js
     // can load in parallel — battle.js doesn't touch them at top-level.
+    //
+    // setScriptsReady fires after battle.js's onload — by that point its
+    // _bootBattle has run synchronously, so dispatched globals like
+    // window.startBattle / window.toggleBattleSpeed / window.setMobileStep
+    // are guaranteed to be registered.
     addScript('/shared/simulate.js', { type: 'module' })
       .then(() => addScript('/js/bot-ai.js'))
-      .then(() => {
-        addScript('/socket.io/socket.io.js')
-        addScript('/js/battle.js')
-        addScript('/mobile.js')
-      })
+      .then(() => Promise.all([
+        addScript('/socket.io/socket.io.js'),
+        addScript('/js/battle.js'),
+        addScript('/mobile.js'),
+      ]))
+      .then(() => setScriptsReady(true))
 
     return () => {
       links.forEach(el => el.remove())
@@ -109,8 +182,9 @@ export default function BattlePage() {
     }
   }, [navigate])
 
+  const ready = cssReady && scriptsReady
   return (
-    <div style={cssReady ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
+    <div style={ready ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" className={quitOpen ? 'open' : ''}
            onClick={e => e.target === e.currentTarget && closeQuit()}>
@@ -133,26 +207,31 @@ export default function BattlePage() {
         <div id="hdr">
           <div className="hdr-row-top">
             <div className="duelbar-center">
-              <span className="sb suser" id="h-user">@you</span>
-              <div className="dscore" id="dots-p"></div>
+              <span className="sb suser" id="h-user">{userBadge}</span>
+              <div className="dscore" id="dots-p">
+                {scoreDots.p.map((s, i) => <div key={`p${i}`} className={`dot dot-${s}`} />)}
+              </div>
               <span className="duel-vs">⚔️</span>
-              <div className="dscore" id="dots-e"></div>
-              <span className="sb sopp" id="lbl-score-enemy">Enemy</span>
+              <div className="dscore" id="dots-e">
+                {scoreDots.e.map((s, i) => <div key={`e${i}`} className={`dot dot-${s}`} />)}
+              </div>
+              <span className="sb sopp" id="lbl-score-enemy">{oppName}</span>
             </div>
           </div>
           <div className="hdr-row-bottom">
-            <span className="sb sfmt" id="h-fmt">BO3</span>
+            <span className="sb sfmt" id="h-fmt">{formatLabel}</span>
             <span id="h-timer">⏱ 2:00</span>
-            <div id="banner" className="bshop">
-              🛍️ Analyze the enemy, buy cards and build your army!
+            <div id="banner" className={bannerClass}>
+              {bannerText}
             </div>
             <button
               id="battle-speed-toggle"
               type="button"
+              className={speed.fast ? 'is-fast' : ''}
               onClick={() => window.toggleBattleSpeed?.()}
               title="Toggle battle speed"
             >
-              2x
+              {speed.label}
             </button>
             <button className="htp-btn hback-btn" onClick={() => window.openQuitModal?.()} title="Back to Lobby">
               ← Lobby
@@ -163,23 +242,34 @@ export default function BattlePage() {
         {/* ══ MOBILE HUD OVERLAY ══ */}
         <div id="mobile-hud">
           <div id="mobile-opp-badge">
-            <span id="mobile-opp-name">Enemy</span>
+            <span id="mobile-opp-name">{oppName}</span>
           </div>
 
-          <span id="mobile-round-timer"></span>
+          <span
+            id="mobile-round-timer"
+            className={timerUrgent ? 'timer-urgent' : ''}
+            style={{ display: timerText ? 'block' : 'none' }}
+          >
+            {timerText}
+          </span>
 
           <button
             id="mobile-speed-btn"
             type="button"
+            className={speed.fast ? 'is-fast' : ''}
             onClick={() => window.toggleBattleSpeed?.()}
           >
-            2x
+            {speed.label}
           </button>
 
           <div id="mobile-dots-right">
-            <div id="mobile-dots-e" className="mdots"></div>
+            <div id="mobile-dots-e" className="mdots">
+              {scoreDots.e.map((s, i) => <div key={`me${i}`} className={`dot dot-${s}`} />)}
+            </div>
             <div className="mdots-divider"></div>
-            <div id="mobile-dots-p" className="mdots"></div>
+            <div id="mobile-dots-p" className="mdots">
+              {scoreDots.p.map((s, i) => <div key={`mp${i}`} className={`dot dot-${s}`} />)}
+            </div>
           </div>
         </div>
 
@@ -193,7 +283,7 @@ export default function BattlePage() {
             <div className="fwrap">
               <div className="flbl flbl-row">
                 <span id="lbl-player" style={{ color: '#88aaff' }}>⚔ Your Army</span>
-                <span id="army-count"></span>
+                <span id="army-count">{armyCount}</span>
               </div>
               <div className="field pf" id="pfield"></div>
             </div>
@@ -224,7 +314,13 @@ export default function BattlePage() {
               <button className="btn bbtn" id="bfight" onClick={() => window.startBattle?.()}>
                 Battle!
               </button>
-              <div id="phase-timer"></div>
+              <div
+                id="phase-timer"
+                className={timerUrgent ? 'timer-urgent' : ''}
+                style={{ display: timerText ? 'block' : 'none' }}
+              >
+                {timerText}
+              </div>
             </div>
             <div id="log"></div>
           </div>

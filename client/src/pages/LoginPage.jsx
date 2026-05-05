@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/index.css'
-
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
-}
+import { getSession } from '../lib/session'
 
 export default function LoginPage() {
   const navigate = useNavigate()
