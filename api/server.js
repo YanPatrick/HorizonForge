@@ -260,6 +260,8 @@ app.use('/heroes', express.static(join(__dirname, '../public/heroes'), noCacheOp
 app.use('/shared', express.static(join(__dirname, '../shared'), noCacheOpts));
 app.use('/js', express.static(join(__dirname, '../public/js'), noCacheOpts));
 app.use('/css', express.static(join(__dirname, '../public/css'), noCacheOpts));
+app.use('/mobile.js', express.static(join(__dirname, '../public/mobile.js'), noCacheOpts));
+app.use('/mobile.css', express.static(join(__dirname, '../public/mobile.css'), noCacheOpts));
 // Unique ID generated at every server boot — used by the client to detect
 // a new deploy and force a hard reload instead of serving stale bfcache pages.
 // The full version key combines the semantic version (from package.json, bumped

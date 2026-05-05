@@ -39,7 +39,9 @@
       "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" log --oneline -20)",
       "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44 -- public/css/battle.css)",
       "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44 --stat)",
-      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44:public/css/battle.css)"
+      "Bash(git -C \"c:/Fontes_Javascript/HorizonForge\" show f168e44:public/css/battle.css)",
+      "Bash(git tag *)",
+      "Bash(xargs wc -l)"
     ]
   }
 }
