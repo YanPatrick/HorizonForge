@@ -2936,94 +2936,75 @@
           G.gold < HF.value_new_recruitment || !active;
       }
 
+      // Phase 3 of #16, first slice: bench is React-rendered.
+      // Build a pure render shape and dispatch — BattlePage owns the DOM.
+      // Card events delegate back via window.benchCard* / window.benchInfo*
+      // shims defined below.
       function renderBench() {
-        const row = document.getElementById("benchrow");
-        row.innerHTML = "";
         const active = G.phase === "shop";
-        if (!G.bench.length) {
-          const m = document.createElement("div");
-          m.className = "bench-msg";
-          m.textContent = "Barracks empty — buy heroes from Recruitment →";
-          row.appendChild(m);
-        } else {
-          G.bench.forEach((u, bi) => {
-            const cc = C[u.cid],
-              isSel = G.bsel === u.cid;
-            const isNewRecruit = G._newBenchCids && G._newBenchCids.has(u.cid);
-            if (isNewRecruit) G._newBenchCids.delete(u.cid);
-            const card = document.createElement("div");
-            card.className = `bcard${isSel ? " bsel" : ""}${isNewRecruit ? " bcard-enter" : ""}`;
-            if (isNewRecruit) card.style.animationDelay = bi * 40 + "ms";
-            card.dataset.cid = u.cid;
-            card.style.cssText = `background:${cc.bg};border-color:${isSel ? "#88ccff" : cc.col}`;
-            const dotColor =
-              u.lv === 1
-                ? cc.col
-                : u.lv === 2
-                  ? "#4488ff"
-                  : u.lv === 3
-                    ? "#aa44ff"
-                    : "#ffaa00";
-            const nextLbl = u.lv < 5 ? ` → ${LS[u.lv + 1]}` : "(MAX)";
-            let dotsHtml = `<div class="bprog" style="color:${dotColor}">`;
-            for (let d = 0; d < 3; d++)
-              dotsHtml += `<div class="bprog-dot ${d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
-            dotsHtml += `</div>`;
-
-            card.innerHTML = `<div class="blvl">${LS[u.lv]}</div><div class="hf-info-btn" title="">i</div><div class="cportrait ${cc.portrait ? "has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div>${dotsHtml}`;
-
-            if (active) {
-              card.addEventListener("click", () => {
-                G.bsel = G.bsel === u.cid ? null : u.cid;
-                render();
-              });
-              card.draggable = true;
-              card.addEventListener("dragstart", (e) => {
-                e.dataTransfer.setData("benchCid", u.cid);
-                e.dataTransfer.effectAllowed = "move";
-                G.bsel = u.cid;
-                setTimeout(() => {
-                  card.classList.add("dragging");
-                  document
-                    .querySelectorAll("#pfield .cell:not(.occ)")
-                    .forEach((c) => c.classList.add("dr"));
-                }, 0);
-              });
-              card.addEventListener("dragend", () => {
-                card.classList.remove("dragging");
-                G.bsel = null;
-                render();
-              });
-            }
-
-            // ✅ ADICIONAR ISTO FORA do if(active), DEPOIS de appendChild
-            row.appendChild(card);
-
-            const benchInfoBtn = card.querySelector(".hf-info-btn");
-            if (benchInfoBtn) {
-              benchInfoBtn.addEventListener("mouseenter", () =>
-                SkillTip.show(benchInfoBtn, generateHeroInfoHtml(u)),
-              );
-              benchInfoBtn.addEventListener("mouseleave", () =>
-                SkillTip.hide(),
-              );
-              benchInfoBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                SkillTip.show(benchInfoBtn, generateHeroInfoHtml(u));
-              });
-            }
-          });
-          for (let i = G.bench.length; i < BARRACKS_MAX; i++) {
-            const ph = document.createElement("div");
-            ph.className = "bcard-empty";
-            row.appendChild(ph);
-          }
-        }
-        const bc = document.getElementById("bcount");
-        if (bc) bc.textContent = `${G.bench.length}/${BARRACKS_MAX}`;
-        const bw = document.getElementById("benchwrap");
-        if (bw) bw.classList.toggle("expanded", G.bench.length > 0);
+        const cards = G.bench.map((u) => {
+          const cc = C[u.cid];
+          const isSel = G.bsel === u.cid;
+          const isNewRecruit = !!(G._newBenchCids && G._newBenchCids.has(u.cid));
+          if (isNewRecruit) G._newBenchCids.delete(u.cid);
+          const dotColor =
+            u.lv === 1 ? cc.col :
+            u.lv === 2 ? "#4488ff" :
+            u.lv === 3 ? "#aa44ff" : "#ffaa00";
+          return {
+            cid: u.cid,
+            lv: u.lv,
+            stack: u.stack,
+            isSel, isNewRecruit,
+            bg: cc.bg,
+            borderCol: cc.col,
+            portraitUrl: cc.portrait || null,
+            ico: u.ico,
+            dotColor,
+            levelLabel: LS[u.lv],
+          };
+        });
+        window.setBenchState?.({
+          active,
+          count: G.bench.length,
+          max: BARRACKS_MAX,
+          emptyMessage: G.bench.length ? null : "Barracks empty — buy heroes from Recruitment →",
+          cards,
+        });
       }
+
+      // ── Bench card event handlers (called from BattlePage's JSX) ─────────
+      window.benchCardClick = function (cid) {
+        if (G.phase !== "shop") return;
+        G.bsel = G.bsel === cid ? null : cid;
+        render();
+      };
+      window.benchCardDragStart = function (cid, ev) {
+        if (G.phase !== "shop") return;
+        ev.dataTransfer.setData("benchCid", cid);
+        ev.dataTransfer.effectAllowed = "move";
+        G.bsel = cid;
+        // Match the original behaviour: defer the .dragging class so the
+        // ghost image snapshot (taken synchronously) doesn't include it.
+        setTimeout(() => {
+          const card = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
+          if (card) card.classList.add("dragging");
+          document
+            .querySelectorAll("#pfield .cell:not(.occ)")
+            .forEach((c) => c.classList.add("dr"));
+        }, 0);
+      };
+      window.benchCardDragEnd = function (cid) {
+        const card = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
+        if (card) card.classList.remove("dragging");
+        G.bsel = null;
+        render();
+      };
+      window.benchInfoShow = function (cid, anchorEl) {
+        const u = G.bench.find((x) => x && x.cid === cid);
+        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+      };
+      window.benchInfoHide = function () { SkillTip.hide(); };
 
       // ✅ FUNÇÃO AUXILIAR para escapar HTML no tooltip
       function escapeHtml(text) {

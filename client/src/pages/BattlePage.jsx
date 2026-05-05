@@ -59,6 +59,21 @@ export default function BattlePage() {
     } catch { return { label: '2x', fast: true } }
   })
 
+  // ── Barracks (bench) — Phase 3 of #16, first slice
+  // battle.js's renderBench() previously cleared #benchrow.innerHTML and
+  // rebuilt every card by hand on every state change. Now it computes a
+  // pure render shape and dispatches via window.setBenchState; React owns
+  // the DOM. Click/drag/hover events on the cards delegate back to battle.js
+  // through the window.benchCard* shims so existing G mutations / merge
+  // animations / drag-drop interactions keep working unchanged.
+  const [bench, setBench] = useState({
+    active: false,
+    count: 0,
+    max: 5,
+    emptyMessage: null,
+    cards: [],
+  })
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -96,6 +111,14 @@ export default function BattlePage() {
     window.setBattleArmyCount    = (text) => setArmyCount(text || '')
     window.setBattleScoreDots    = ({ p, e }) => setScoreDots({ p: p || [], e: e || [] })
     window.setBattleSpeed        = ({ label, fast }) => setSpeed({ label: label || '2x', fast: !!fast })
+    // Barracks — full render shape. battle.js builds it; React renders.
+    window.setBenchState         = (state) => setBench({
+      active: !!state?.active,
+      count: state?.count ?? 0,
+      max: state?.max ?? 5,
+      emptyMessage: state?.emptyMessage ?? null,
+      cards: state?.cards ?? [],
+    })
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -110,6 +133,7 @@ export default function BattlePage() {
       delete window.setBattleArmyCount
       delete window.setBattleScoreDots
       delete window.setBattleSpeed
+      delete window.setBenchState
     }
   }, [closeQuit, confirmQuit])
 
@@ -300,12 +324,62 @@ export default function BattlePage() {
         {/* ══ BOTTOM ZONE ══ */}
         <div id="bottom-zone">
           {/* LEFT: Barracks */}
-          <div id="benchwrap">
+          <div id="benchwrap" className={bench.count > 0 ? 'expanded' : ''}>
             <div className="sec-hdr">
               <span className="sec-title barracks-title">Barracks</span>
-              <span className="sec-title bcount-lbl" id="bcount"></span>
+              <span className="sec-title bcount-lbl" id="bcount">
+                {`${bench.count}/${bench.max}`}
+              </span>
             </div>
-            <div id="benchrow"></div>
+            <div id="benchrow">
+              {bench.emptyMessage && (
+                <div className="bench-msg">{bench.emptyMessage}</div>
+              )}
+              {bench.cards.map((c, bi) => (
+                <div
+                  key={c.cid}
+                  data-cid={c.cid}
+                  className={`bcard${c.isSel ? ' bsel' : ''}${c.isNewRecruit ? ' bcard-enter' : ''}`}
+                  style={{
+                    background: c.bg,
+                    borderColor: c.isSel ? '#88ccff' : c.borderCol,
+                    ...(c.isNewRecruit ? { animationDelay: `${bi * 40}ms` } : {}),
+                  }}
+                  draggable={bench.active}
+                  onClick={bench.active ? () => window.benchCardClick?.(c.cid) : undefined}
+                  onDragStart={bench.active ? (e) => window.benchCardDragStart?.(c.cid, e.nativeEvent) : undefined}
+                  onDragEnd={bench.active ? () => window.benchCardDragEnd?.(c.cid) : undefined}
+                >
+                  <div className="blvl">{c.levelLabel}</div>
+                  <div
+                    className="hf-info-btn"
+                    title=""
+                    onMouseEnter={(e) => window.benchInfoShow?.(c.cid, e.currentTarget)}
+                    onMouseLeave={() => window.benchInfoHide?.()}
+                    onClick={(e) => { e.stopPropagation(); window.benchInfoShow?.(c.cid, e.currentTarget) }}
+                  >i</div>
+                  <div
+                    className={`cportrait${c.portraitUrl ? ' has-portrait' : ''}`}
+                    style={c.portraitUrl ? { '--portrait-url': `url('${c.portraitUrl}')` } : undefined}
+                  >
+                    <div className="cico">{c.ico}</div>
+                  </div>
+                  <div className="bprog" style={{ color: c.dotColor }}>
+                    {[0, 1, 2].map((d) => (
+                      <div
+                        key={d}
+                        className={`bprog-dot ${d < c.stack ? 'filled' : 'empty'}`}
+                        style={{ borderColor: c.dotColor }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {bench.cards.length > 0 && Array.from(
+                { length: Math.max(0, bench.max - bench.cards.length) },
+                (_, i) => <div key={`empty-${i}`} className="bcard-empty" />,
+              )}
+            </div>
           </div>
 
           {/* CENTER: Battle button + Log */}
