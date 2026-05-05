@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createServer } from 'http';
 import { Server as SocketIO } from 'socket.io';
-import { createHmac, timingSafeEqual, randomBytes } from 'crypto';
+import { createHmac, timingSafeEqual, randomBytes, randomUUID } from 'crypto';
 import { createRequire } from 'module';
 import { simulate } from '../shared/simulate.js';
 import { Client as HiveClient, PrivateKey as HiveKey, Signature, cryptoUtils } from '@hiveio/dhive';
@@ -287,7 +287,7 @@ const VERSION_KEY = `${APP_VERSION}-${BUILD_ID}`;
 
 app.get('/api/version', (_req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.json({ v: VERSION_KEY, app: APP_VERSION });
+  res.json({ v: VERSION_KEY, app: APP_VERSION, hivePay: !!(HIVE_GAME_ACCOUNT && HIVE_ACTIVE_KEY) });
 });
 
 // ── DB connection ─────────────────────────────────────────
@@ -832,8 +832,34 @@ app.put('/api/formations', async (req, res) => {
 });
 
 // ── POST /api/auth/verify ─────────────────────────────────────────────────────
-// Verifies a Hive Keychain signature server-side and returns a signed token.
+// ── Auth nonce store ──────────────────────────────────────────────────────────
+// One-shot nonces issued by /api/auth/challenge and consumed by /api/auth/verify.
+// Prevents replay attacks: a captured signature cannot be reused because the
+// nonce is deleted server-side on first use.
+const NONCE_TTL_MS = 5 * 60 * 1000;
+const nonceStore = new Map(); // nonce → expiresAt
+setInterval(() => {
+  const now = Date.now();
+  for (const [n, exp] of nonceStore) if (exp < now) nonceStore.delete(n);
+}, 60_000);
+
+// GET /api/auth/challenge — issues a one-shot nonce the client must embed in the memo.
+const authChallengeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many challenge requests. Please wait.' },
+});
+app.get('/api/auth/challenge', authChallengeLimiter, (_req, res) => {
+  const nonce = randomUUID();
+  nonceStore.set(nonce, Date.now() + NONCE_TTL_MS);
+  res.json({ nonce });
+});
+
+// POST /api/auth/verify
 // Body: { username, memo, signature }
+// memo must be exactly `horizon-forge-login-{nonce}` where nonce was issued by /api/auth/challenge.
 // Returns: { ok: true, token } on success, { error } on failure.
 //
 // Rate-limited because each call hits Hive RPC (`condenser_api.get_accounts`)
@@ -851,12 +877,17 @@ app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
     return res.status(400).json({ error: 'Missing fields.' });
   }
 
-  // Validate memo format and freshness (5-minute window)
-  const memoMatch = /^horizon-forge-login-(\d+)$/.exec(memo);
+  // Validate memo embeds a valid server-issued nonce (UUID v4 format)
+  const memoMatch = /^horizon-forge-login-([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i.exec(memo);
   if (!memoMatch) return res.status(400).json({ error: 'Invalid memo format.' });
-  if (Math.abs(Date.now() - parseInt(memoMatch[1], 10)) > 5 * 60 * 1000) {
-    return res.status(400).json({ error: 'Login request expired. Please try again.' });
+
+  const nonce = memoMatch[1];
+  const nonceExp = nonceStore.get(nonce);
+  if (!nonceExp || Date.now() > nonceExp) {
+    nonceStore.delete(nonce);
+    return res.status(400).json({ error: 'Login request expired or invalid. Please try again.' });
   }
+  nonceStore.delete(nonce); // one-shot: consume before any async work
 
   try {
     const accounts = await hiveRpc('condenser_api.get_accounts', [[username.toLowerCase()]]);

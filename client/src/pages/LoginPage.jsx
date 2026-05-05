@@ -17,7 +17,7 @@ export default function LoginPage() {
     if (getSession()) navigate('/lobby', { replace: true })
   }, [navigate])
 
-  function doLogin() {
+  async function doLogin() {
     setErr('')
     const raw = username.trim()
     if (!raw) { setErr('Please enter your Hive username.'); return }
@@ -30,7 +30,19 @@ export default function LoginPage() {
     }
     setShowKcWarn(false)
 
-    const memo = `horizon-forge-login-${Date.now()}`
+    // Fetch a one-shot server nonce before asking Keychain to sign.
+    // This prevents replay attacks: the nonce is deleted on first use server-side.
+    let nonce
+    try {
+      const cr = await fetch('/api/auth/challenge')
+      if (!cr.ok) { setErr('Could not start login. Please try again.'); return }
+      ;({ nonce } = await cr.json())
+    } catch {
+      setErr('Network error. Please try again.')
+      return
+    }
+
+    const memo = `horizon-forge-login-${nonce}`
     window.hive_keychain.requestSignBuffer(user, memo, 'Posting', async (resp) => {
       if (!resp.success) { setErr(resp.message || 'Login cancelled or failed.'); return }
       try {

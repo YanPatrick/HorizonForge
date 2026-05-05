@@ -370,6 +370,7 @@ export default function LobbyPage() {
   const [aiFmtOpen, setAiFmtOpen] = useState(false)
   const [pvpBetOpen, setPvpBetOpen] = useState(false)
   const [pvpFmtOpen, setPvpFmtOpen] = useState(false)
+  const [hivePay, setHivePay] = useState(true)
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -408,6 +409,12 @@ export default function LobbyPage() {
 
     fetch('/api/config').then(r => r.json()).then(({ config }) => {
       setPayoutPct({ liquid: config?.percent_payout_liquid, stake: config?.percent_payout_stake })
+    }).catch(() => {})
+
+    fetch('/api/version').then(r => r.json()).then(d => {
+      const pay = !!d.hivePay
+      setHivePay(pay)
+      if (!pay) setPvpBet(0)
     }).catch(() => {})
 
     // socket.io
@@ -770,7 +777,7 @@ export default function LobbyPage() {
                         </button>
                         {pvpBetOpen && (
                           <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
-                            {BET_OPTS.map(o => (
+                            {BET_OPTS.filter(o => o.val === 0 || hivePay).map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === pvpBet ? ' active' : ''}`} onClick={() => { setPvpBet(o.val); savePref('pvp_bet', username, o.val); setPvpBetOpen(false) }}>{o.label}</button>
                             ))}
                           </div>
