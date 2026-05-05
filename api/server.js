@@ -285,6 +285,136 @@ app.get('/api/version', (_req, res) => {
 // ── DB connection ─────────────────────────────────────────
 const sql = neon(process.env.DATABASE_URL);
 
+// ── Admin auth (also used by /api/migrate and /api/admin/*) ───────────────────
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+
+function requireAdmin(req, res) {
+  if (!ADMIN_SECRET) { res.status(503).json({ error: 'Admin endpoint not configured (set ADMIN_SECRET)' }); return false; }
+  if (req.headers['x-admin-secret'] !== ADMIN_SECRET) { res.status(401).json({ error: 'Unauthorized' }); return false; }
+  return true;
+}
+
+// ── Server-side stat table & board materialization ───────────────────────────
+// Critical security boundary: the client must NOT be trusted for unit stats.
+// `submit_team` only accepts {cid, lv, id} per slot; the server reconstructs
+// atk/maxHp/skillPower/etc. from the database before passing to simulate().
+// Without this, any client could submit { atk: 999999, maxHp: 999999 } and
+// auto-win every PvP match — including paid HIVE wagers.
+
+const STAT_CACHE_TTL_MS = 10 * 60 * 1000; // refresh every 10 min
+let _statsCache = null;
+let _statsLoadedAt = 0;
+
+async function loadStatsTable() {
+  const rows = await sql`
+    SELECT
+      c.cid,
+      c.name,
+      c.target_type,
+      ls.level,
+      FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
+      FLOOR(cb.atk * ls.multiplier)::int      AS atk,
+      cb.atk_speed::float                     AS atk_speed,
+      cb.crit_chance::float                   AS crit_chance,
+      cb.crit_rate::float                     AS crit_rate,
+      cb.skill_power::float                   AS base_skill_power,
+      ls.skill_power_multiplier::float        AS spm
+    FROM characters c
+    JOIN characters_base cb ON cb.character_id = c.id
+    CROSS JOIN level_scale ls
+    ORDER BY c.cid, ls.level
+  `;
+  // First pass: bucket by cid
+  const map = new Map();
+  for (const r of rows) {
+    if (!map.has(r.cid)) {
+      map.set(r.cid, {
+        cid: r.cid,
+        name: r.name,
+        target_type: r.target_type,
+        _baseSkillPower: r.base_skill_power,
+        _spmByLevel: {},
+        levels: {},
+      });
+    }
+    const ch = map.get(r.cid);
+    ch._spmByLevel[r.level] = r.spm;
+    ch.levels[r.level] = {
+      max_hp: r.max_hp,
+      atk: r.atk,
+      atk_speed: r.atk_speed,
+      crit_chance: r.crit_chance,
+      crit_rate: r.crit_rate,
+      skill_power: null, // filled below
+    };
+  }
+  // Second pass: same iterative skill_power formula used by /api/characters
+  for (const ch of map.values()) {
+    const sp = computeSkillPowerLevels(ch._baseSkillPower, ch._spmByLevel);
+    for (let lv = 1; lv <= 5; lv++) {
+      if (ch.levels[lv]) ch.levels[lv].skill_power = sp[lv];
+    }
+    delete ch._baseSkillPower;
+    delete ch._spmByLevel;
+  }
+  return map;
+}
+
+async function getStatsTable() {
+  if (!_statsCache || Date.now() - _statsLoadedAt > STAT_CACHE_TTL_MS) {
+    _statsCache = await loadStatsTable();
+    _statsLoadedAt = Date.now();
+  }
+  return _statsCache;
+}
+
+function validateClientBoard(board) {
+  if (!Array.isArray(board) || board.length !== 9) throw new Error('Board must have 9 slots');
+  let nonNull = 0;
+  for (const u of board) {
+    if (u === null) continue;
+    if (!u || typeof u !== 'object') throw new Error('Slot must be unit object or null');
+    if (typeof u.cid !== 'string' || u.cid.length === 0 || u.cid.length > 30) throw new Error('Invalid cid');
+    if (!Number.isInteger(u.lv) || u.lv < 1 || u.lv > 5) throw new Error('lv must be integer 1..5');
+    if (typeof u.id !== 'string' || u.id.length === 0 || u.id.length > 40) throw new Error('Invalid id');
+    nonNull++;
+  }
+  if (nonNull === 0) throw new Error('Board cannot be empty');
+}
+
+// Strip the client's submitted board down to the only fields we trust
+// (cid, lv, id). Stats are looked up from the DB at resolve time.
+function stripBoard(board) {
+  return board.map(u => u ? { cid: u.cid, lv: u.lv, id: u.id } : null);
+}
+
+// Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
+// with the authoritative stats from the database.
+async function materializeBoard(board) {
+  const stats = await getStatsTable();
+  return board.map((u) => {
+    if (!u) return null;
+    const ch = stats.get(u.cid);
+    if (!ch) throw new Error(`Unknown character cid: ${u.cid}`);
+    const lvStats = ch.levels[u.lv];
+    if (!lvStats) throw new Error(`No stats for ${u.cid} at level ${u.lv}`);
+    return {
+      id: u.id,
+      cid: u.cid,
+      lv: u.lv,
+      name: ch.name,
+      tp: ch.target_type,
+      atk: Math.floor(lvStats.atk),
+      maxHp: lvStats.max_hp,
+      hp: lvStats.max_hp,
+      spd: lvStats.atk_speed,
+      critChance: lvStats.crit_chance,
+      critRate: lvStats.crit_rate,
+      skillPower: lvStats.skill_power,
+    };
+  });
+}
+
 // ── Routes ────────────────────────────────────────────────
 
 /**
@@ -457,8 +587,10 @@ app.get('/api/config', async (_req, res) => {
 /**
  * POST /api/migrate
  * Cria as tabelas se não existirem. Seguro para re-executar.
+ * Requer ADMIN_SECRET no header `x-admin-secret`.
  */
-app.post('/api/migrate', async (_req, res) => {
+app.post('/api/migrate', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     await sql`
       CREATE TABLE IF NOT EXISTS characters (
@@ -549,6 +681,14 @@ app.post('/api/migrate', async (_req, res) => {
     await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS format    INT NOT NULL DEFAULT 5`.catch(() => { });
     await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`.catch(() => { });
     await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`.catch(() => { });
+    // Persist active-match state so a server restart doesn't lose paid wagers.
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS battle_num   INT  NOT NULL DEFAULT 1`.catch(() => { });
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payments     JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payout_prefs JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS merges       JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
+    // Tracks which players have been refunded — prevents double-refund if a
+    // crash happens mid-cancellation and rehydrate then re-runs the refund loop.
+    await sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`.catch(() => { });
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
@@ -733,6 +873,105 @@ function mirrorBoard(board) {
   return result;
 }
 
+// ── Match-state persistence ───────────────────────────────────────────────────
+// activeMatches is in-memory; without these helpers a server restart would
+// silently drop paid wagers (the refund timeout couldn't fire because the
+// match wouldn't exist anymore). We snapshot mutable state to Postgres on
+// every transition and rehydrate any non-terminal matches on boot.
+
+async function persistMatchState(m) {
+  if (!m) return;
+  try {
+    await sql`
+      UPDATE matches SET
+        status       = ${m.status},
+        score_p1     = ${m.scores[m.p1] ?? 0},
+        score_p2     = ${m.scores[m.p2] ?? 0},
+        battle_num   = ${m.battleNum ?? 1},
+        payments     = ${JSON.stringify(m.payments || {})}::jsonb,
+        payout_prefs = ${JSON.stringify(m.payoutPrefs || {})}::jsonb,
+        merges       = ${JSON.stringify(m.merges || {})}::jsonb,
+        refunded     = ${JSON.stringify(m.refunded || {})}::jsonb
+      WHERE id = ${m.matchId}
+    `;
+  } catch (err) {
+    console.error('[persistMatchState]', err.message);
+  }
+}
+
+// Idempotent refund: skips if this player was already refunded for this match.
+async function refundOnce(m, player) {
+  if (!m) return { ok: false, error: 'no match' };
+  m.refunded ||= {};
+  if (m.refunded[player]) {
+    console.log(`↩️  Skipping duplicate refund for ${player} (match ${m.matchId})`);
+    return { ok: true, skipped: true };
+  }
+  const r = await refundHiveWager(player, m.wager, m.matchId);
+  if (r.ok) {
+    m.refunded[player] = true;
+    await persistMatchState(m);
+  }
+  return r;
+}
+
+async function rehydrateMatches() {
+  try {
+    const rows = await sql`
+      SELECT id, player1, player2, wager_hive, format, status,
+             score_p1, score_p2, battle_num, payments, payout_prefs, merges, refunded,
+             EXTRACT(EPOCH FROM created_at) * 1000 AS created_ms
+        FROM matches
+       WHERE status IN ('waiting_payments', 'waiting_teams', 'cancelling', 'resolving')
+    `;
+    for (const r of rows) {
+      const wager = Number(r.wager_hive);
+      const winsNeeded = r.format === 10 ? 6 : Math.ceil(r.format / 2);
+      const m = {
+        matchId: r.id,
+        p1: r.player1, p2: r.player2,
+        s1: null, s2: null, // sockets reattach when players reconnect
+        wager,
+        format: r.format,
+        winsNeeded,
+        battleNum: r.battle_num || 1,
+        scores: { [r.player1]: r.score_p1 || 0, [r.player2]: r.score_p2 || 0 },
+        payments:    Object.assign({ [r.player1]: false, [r.player2]: false }, r.payments     || {}),
+        payoutPrefs: Object.assign({ [r.player1]: 'liquid', [r.player2]: 'liquid' }, r.payout_prefs || {}),
+        merges:      Object.assign({ [r.player1]: 0, [r.player2]: 0 }, r.merges || {}),
+        refunded:    r.refunded || {},
+        teams: {},
+        status: r.status === 'resolving' ? 'waiting_teams' : r.status, // re-collect teams; old in-flight sim is lost
+        createdAt: Number(r.created_ms),
+      };
+      activeMatches.set(m.matchId, m);
+      // Re-arm timers based on rehydrated status
+      if (m.status === 'waiting_payments' || m.status === 'cancelling') {
+        // Force-cancel: the original 30s window has almost certainly expired,
+        // and we have no sockets to ask for fresh keychain signatures. Refund
+        // any player who already paid (idempotent — won't double-refund if a
+        // previous cancellation pass already paid them out).
+        m.status = 'cancelling';
+        await persistMatchState(m);
+        const paid = [m.p1, m.p2].filter(p => m.payments[p]);
+        for (const player of paid) {
+          await refundOnce(m, player);
+          console.log(`↩️  Restart-refund: ${m.wager} HIVE → ${player} (match ${m.matchId})`);
+        }
+        await sql`UPDATE matches SET status='cancelled', resolved_at=now() WHERE id=${m.matchId}`
+          .catch(err => console.error('[rehydrate cancel]', err.message));
+        activeMatches.delete(m.matchId);
+      } else if (m.status === 'waiting_teams') {
+        // Restart the round timer; players will reconnect via rejoin_match.
+        armForfeitTimer(m.matchId, m.p1, m.p2, ROUND_TIME_MS);
+      }
+    }
+    if (rows.length) console.log(`🔄 Rehydrated ${rows.length} active match(es) from DB`);
+  } catch (err) {
+    console.error('[rehydrateMatches]', err.message);
+  }
+}
+
 // ── Match pairing ─────────────────────────────────────────────────────────────
 function tryMatch() {
   if (matchQueue.size < 2) return;
@@ -744,8 +983,8 @@ function tryMatch() {
     for (let j = i + 1; j < entries.length; j++) {
       const [u1, e1] = entries[i];
       const [u2, e2] = entries[j];
-      // Only match on wager amount — payout type is each player's own preference
-      if (e1.wager === e2.wager) {
+      // Match on wager amount AND format — payout type is each player's own preference
+      if (e1.wager === e2.wager && e1.format === e2.format) {
         matched = { u1, e1, u2, e2 };
         break outer;
       }
@@ -757,7 +996,7 @@ function tryMatch() {
       const [[u1, e1], [u2, e2]] = entries;
       console.log(
         `⚠️  tryMatch: no compatible pair found. ` +
-        `${u1}[wager=${e1.wager}] vs ${u2}[wager=${e2.wager}]`
+        `${u1}[wager=${e1.wager} fmt=${e1.format}] vs ${u2}[wager=${e2.wager} fmt=${e2.format}]`
       );
     }
     return;
@@ -787,14 +1026,20 @@ function tryMatch() {
     payments: { [u1]: false, [u2]: false },
     payoutPrefs: { [u1]: 'liquid', [u2]: 'liquid' },
     merges: { [u1]: 0, [u2]: 0 },
+    refunded: {},
     teams: {},
     status: initStatus,
     createdAt: Date.now(),
   };
   activeMatches.set(matchId, matchData);
 
-  sql`INSERT INTO matches (id, player1, player2, wager_hive, wager_type, format, status)
-      VALUES (${matchId}, ${u1}, ${u2}, ${e1.wager}, 'HIVE', ${fmt}, ${initStatus})`
+  sql`INSERT INTO matches (id, player1, player2, wager_hive, wager_type, format, status,
+                            battle_num, payments, payout_prefs, merges)
+      VALUES (${matchId}, ${u1}, ${u2}, ${e1.wager}, 'HIVE', ${fmt}, ${initStatus},
+              1,
+              ${JSON.stringify(matchData.payments)}::jsonb,
+              ${JSON.stringify(matchData.payoutPrefs)}::jsonb,
+              ${JSON.stringify(matchData.merges)}::jsonb)`
     .catch(err => console.error('[match DB insert]', err.message));
 
   e1.socket.join(matchId);
@@ -823,6 +1068,7 @@ function tryMatch() {
       const m = activeMatches.get(matchId);
       if (!m || m.status !== 'waiting_payments') return;
       m.status = 'cancelling';
+      await persistMatchState(m);
       console.log(`⏰ Payment timeout for match ${matchId} — waiting 6s for in-progress verifications...`);
 
       // Grace period: let any ongoing verifyHivePayment finish
@@ -840,10 +1086,14 @@ function tryMatch() {
           // genuinely didn't pay
         }
       }
+      await persistMatchState(m);
 
       const paid = [u1, u2].filter(p => m.payments[p]);
       const unpaid = [u1, u2].filter(p => !m.payments[p]);
       activeMatches.delete(matchId);
+      // Mark cancelled in DB so rehydrate won't pick it up on next boot
+      sql`UPDATE matches SET status='cancelled', resolved_at=now() WHERE id=${matchId}`
+        .catch(err => console.error('[cancel update]', err.message));
 
       io.to(matchId).emit('match_cancelled', {
         reason: unpaid.length
@@ -870,9 +1120,9 @@ function tryMatch() {
         broadcastQueueSize();
       }
 
-      // Refund players who already paid
+      // Refund players who already paid (idempotent against rehydrate-after-restart)
       for (const player of paid) {
-        const r = await refundHiveWager(player, m.wager, matchId);
+        const r = await refundOnce(m, player);
         const sock = m.p1 === player ? m.s1 : m.s2;
         if (sock) {
           if (r.ok) sock.emit('wager_refunded', { amount: m.wager, reason: unpaid.length ? 'Opponent did not confirm payment in time.' : 'Match cancelled.' });
@@ -913,16 +1163,20 @@ function armForfeitTimer(matchId, u1, u2, ms) {
 }
 
 // ── Resolve one battle round (called when both teams submitted) ───────────────
-function resolveBattleRound(matchId) {
+async function resolveBattleRound(matchId) {
   const m = activeMatches.get(matchId);
   if (!m || m.status !== 'waiting_teams') return;
   m.status = 'resolving';
 
-  const p1Board = m.teams[m.p1];
-  const p2Board = m.teams[m.p2];
+  const p1Stripped = m.teams[m.p1];
+  const p2Stripped = m.teams[m.p2];
 
-  let result, roundWinner;
+  let result, roundWinner, p1Board, p2Board;
   try {
+    // Reconstruct stat-bearing units from the database — never trust stats
+    // sent by the client. The client only supplied (cid, lv, id) per slot.
+    p1Board = await materializeBoard(p1Stripped);
+    p2Board = await materializeBoard(p2Stripped);
     // p1 submits normally (front = col 2, simulation expects player front at col 2 ✓)
     // p2 builds on their own pfield (front = col 2) but simulation expects enemy front at col 0,
     // so we mirror p2's board before simulating.
@@ -984,6 +1238,7 @@ function resolveBattleRound(matchId) {
   io.to(matchId).emit('round_result', roundPayload);
 
   if (seriesOver) {
+    m.status = 'done';
     sql`UPDATE matches SET status='done', winner=${matchWinner},
             score_p1=${m.scores[m.p1]}, score_p2=${m.scores[m.p2]},
             resolved_at=now()
@@ -1019,6 +1274,8 @@ function resolveBattleRound(matchId) {
     // after the new battle has already started. The fresh round_result for the
     // new battle will be stored as soon as both teams are resolved.
     m.lastRoundResult = null;
+    // Snapshot battleNum/scores so a restart resumes mid-series correctly.
+    persistMatchState(m);
     // Reset the forfeit timer for the new round
     armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
@@ -1046,6 +1303,7 @@ function forfeitBattle(matchId, winner) {
     reason: 'forfeit',
   });
   if (seriesOver) {
+    m.status = 'done';
     sql`UPDATE matches SET status='done', winner=${winner},
             score_p1=${m.scores[m.p1]}, score_p2=${m.scores[m.p2]},
             resolved_at=now()
@@ -1069,6 +1327,7 @@ function forfeitBattle(matchId, winner) {
     m.teams = {};
     m.status = 'waiting_teams';
     m.lastRoundResult = null;
+    persistMatchState(m);
     // Reset the forfeit timer for the new round
     armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
@@ -1098,6 +1357,13 @@ io.on('connection', socket => {
     }
     if (!VALID_WAGERS.includes(wager)) {
       socket.emit('error', { message: 'Invalid wager amount.' });
+      return;
+    }
+    if (wager > 0 && (!HIVE_GAME_ACCOUNT || !HIVE_ACTIVE_KEY)) {
+      // Refuse to take real-money wagers when the server can't process payouts.
+      // Without this guard, the match would run as a "free" match (no payment
+      // requested, no prize sent), which the winner would fairly call theft.
+      socket.emit('error', { message: 'Wagered matches are not available on this server. Please choose Free.' });
       return;
     }
     if (format !== undefined && !VALID_FORMATS.includes(format)) {
@@ -1183,25 +1449,35 @@ io.on('connection', socket => {
     if (connectedUser !== m.p1 && connectedUser !== m.p2) {
       socket.emit('error', { message: 'You are not in this match.' }); return;
     }
-    if (!Array.isArray(board) || board.length !== 9) {
-      socket.emit('error', { message: 'Invalid board format.' }); return;
+    try {
+      validateClientBoard(board);
+    } catch (err) {
+      socket.emit('error', { message: `Invalid board: ${err.message}` });
+      return;
     }
     if (m.teams[connectedUser]) {
       socket.emit('error', { message: 'Team already submitted.' }); return;
     }
 
-    m.teams[connectedUser] = board;
+    // Store only the trusted fields. atk/maxHp/skillPower/etc. are looked up
+    // from the DB at resolve time — never trust the client's stat values.
+    const stripped = stripBoard(board);
+    m.teams[connectedUser] = stripped;
     if (typeof merges === 'number') m.merges[connectedUser] = merges;
 
     sql`INSERT INTO match_teams (match_id, player, battle_num, team_json)
-        VALUES (${matchId}, ${connectedUser}, ${m.battleNum}, ${JSON.stringify(board)})`
+        VALUES (${matchId}, ${connectedUser}, ${m.battleNum}, ${JSON.stringify(stripped)})`
       .catch(err => console.error('[team DB insert]', err.message));
 
     socket.emit('team_submitted', { matchId });
     console.log(`📋 ${connectedUser} submitted team for match ${matchId} round ${m.battleNum}`);
 
     if (m.teams[m.p1] && m.teams[m.p2]) {
-      resolveBattleRound(matchId);
+      // resolveBattleRound is async; rejection is caught by the global
+      // unhandledRejection handler — internal try/catch covers the sim path.
+      resolveBattleRound(matchId).catch(err =>
+        console.error('[resolveBattleRound]', err.message)
+      );
     } else {
       socket.to(matchId).emit('opponent_ready', { matchId });
     }
@@ -1245,12 +1521,16 @@ io.on('connection', socket => {
         // Update payments on the original object so the timeout refund loop sees it
         m.payments[connectedUser] = true;
         m.payoutPrefs[connectedUser] = payoutPref;
+        await persistMatchState(m);
         return;
       }
 
       mNow.payments[connectedUser] = true;
       mNow.payoutPrefs[connectedUser] = payoutPref;
       console.log(`✅ Payment confirmed: ${connectedUser} | pref: ${payoutPref}`);
+      // Persist immediately so a crash before payments_confirmed still preserves
+      // the paid state — rehydrate will refund this player on next boot.
+      await persistMatchState(mNow);
 
       // Notify opponent
       socket.to(matchId).emit('opponent_paid', { username: connectedUser });
@@ -1258,6 +1538,7 @@ io.on('connection', socket => {
       // Check if both players have now paid
       if (mNow.payments[mNow.p1] && mNow.payments[mNow.p2]) {
         mNow.status = 'waiting_teams';
+        await persistMatchState(mNow);
         io.to(matchId).emit('payments_confirmed', { matchId });
         console.log(`✅ Both players paid for match ${matchId} — starting match`);
         armForfeitTimer(matchId, mNow.p1, mNow.p2, ROUND_TIME_MS);
@@ -1329,13 +1610,7 @@ setInterval(runDailyCleanup, 24 * 60 * 60 * 1000);
 // Usage: POST /api/admin/send-prize  { to, amount, type: 'liquid'|'stake', matchId }
 //        POST /api/admin/send-refund { to, amount, matchId }
 // Header: x-admin-secret: <ADMIN_SECRET>
-const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
-
-function requireAdmin(req, res) {
-  if (!ADMIN_SECRET) { res.status(503).json({ error: 'Admin endpoint not configured (set ADMIN_SECRET)' }); return false; }
-  if (req.headers['x-admin-secret'] !== ADMIN_SECRET) { res.status(401).json({ error: 'Unauthorized' }); return false; }
-  return true;
-}
+// (ADMIN_SECRET and requireAdmin are declared above, near the DB init block.)
 
 app.post('/api/admin/send-prize', async (req, res) => {
   if (!requireAdmin(req, res)) return;
@@ -1391,4 +1666,8 @@ httpServer.listen(PORT, () => {
   console.log(`   HIVE acct: ${HIVE_GAME_ACCOUNT ? `✅ ${HIVE_GAME_ACCOUNT}` : '❌ HIVE_GAME_ACCOUNT not set'}`);
   console.log(`   HIVE key:  ${HIVE_ACTIVE_KEY ? '✅ Set' : '❌ HIVE_ACTIVE_KEY not set'}`);
   console.log(`   Admin:     ${ADMIN_SECRET ? '✅ Protected' : '⚠️  ADMIN_SECRET not set (endpoint disabled)'}`);
+  // Rehydrate any matches that were active at the time of the previous shutdown.
+  // Refunds get processed automatically for paid players whose match can no
+  // longer be resumed (e.g. payment phase that timed out across the restart).
+  rehydrateMatches();
 });
