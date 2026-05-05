@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function getSession() {
@@ -9,6 +9,42 @@ export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
   const [cssReady, setCssReady] = useState(false)
+
+  // ── Modal visibility (was: classList toggling driven by globals in battle.js)
+  // Phase 1 of #16 — UI chrome is React-driven; battle.js still calls
+  // window.openQuitModal etc. via the registered shims below.
+  const [quitOpen, setQuitOpen] = useState(false)
+  const [howToOpen, setHowToOpen] = useState(false)
+
+  const closeQuit = useCallback(() => setQuitOpen(false), [])
+  const confirmQuit = useCallback(() => {
+    setQuitOpen(false)
+    // Disconnect any live PvP socket so the server marks us as quit, not just
+    // dropped — and hard-redirect rather than navigate(): battle.js attaches
+    // a lot of imperative side effects on this page that we want fully torn
+    // down. A hard reload is the simplest way to clean them up.
+    if (window._PVP?.socket) window._PVP.socket.disconnect()
+    window.location.href = '/lobby'
+  }, [])
+
+  useEffect(() => {
+    // Register the globals battle.js dispatches through. Removing the legacy
+    // function definitions in battle.js (openQuitModal, closeQuitModal,
+    // confirmQuit, openHowTo, closeHowTo) means these shims are now the
+    // single source of truth for modal state.
+    window.openQuitModal  = () => setQuitOpen(true)
+    window.closeQuitModal = closeQuit
+    window.confirmQuit    = confirmQuit
+    window.openHowTo      = () => setHowToOpen(true)
+    window.closeHowTo     = () => setHowToOpen(false)
+    return () => {
+      delete window.openQuitModal
+      delete window.closeQuitModal
+      delete window.confirmQuit
+      delete window.openHowTo
+      delete window.closeHowTo
+    }
+  }, [closeQuit, confirmQuit])
 
   useEffect(() => {
     if (!getSession()) { navigate('/', { replace: true }); return }
@@ -36,14 +72,16 @@ export default function BattlePage() {
       return el
     })
 
-    // ── Load scripts in PARALLEL (not sequential!) ──
-    // socket.io is only used inside pvpInit(), not at module level in battle.js
-    // So all 3 can load simultaneously. battle.js boot just needs DOM ready.
+    // ── Load scripts ──
+    // Order: shared/simulate.js (ES module, exposes window.HFSimulate) must
+    // resolve before battle.js, which reads it. Everything else loads in
+    // parallel afterward. battle.js boot only needs DOM ready.
     const scripts = []
-    function addScript(src) {
+    function addScript(src, opts = {}) {
       return new Promise((resolve) => {
         const s = document.createElement('script')
         s.src = src
+        if (opts.type) s.type = opts.type
         s.onload = resolve
         s.onerror = resolve // don't block on error
         document.body.appendChild(s)
@@ -51,12 +89,17 @@ export default function BattlePage() {
       })
     }
 
-    // Start all downloads at once
-    Promise.all([
-      addScript('/socket.io/socket.io.js'),
-      addScript('/js/battle.js'),
-      addScript('/mobile.js'),
-    ])
+    // bot-ai.js exposes window.HFBot and must be present before battle.js's
+    // _bootBattle fires (which is right after battle.js evaluates). Serialize
+    // the order: simulate (module) → bot-ai → battle. socket.io and mobile.js
+    // can load in parallel — battle.js doesn't touch them at top-level.
+    addScript('/shared/simulate.js', { type: 'module' })
+      .then(() => addScript('/js/bot-ai.js'))
+      .then(() => {
+        addScript('/socket.io/socket.io.js')
+        addScript('/js/battle.js')
+        addScript('/mobile.js')
+      })
 
     return () => {
       links.forEach(el => el.remove())
@@ -69,7 +112,8 @@ export default function BattlePage() {
   return (
     <div style={cssReady ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
-      <div id="quit-overlay" onClick={e => e.target === e.currentTarget && window.closeQuitModal?.()}>
+      <div id="quit-overlay" className={quitOpen ? 'open' : ''}
+           onClick={e => e.target === e.currentTarget && closeQuit()}>
         <div id="quit-modal">
           <div className="qm-icon">⚠️</div>
           <div className="qm-title">Quit Match?</div>
@@ -77,8 +121,8 @@ export default function BattlePage() {
             You will lose all progress in this match and return to the Lobby.
           </div>
           <div className="qm-btns">
-            <button className="qm-btn qm-cancel" onClick={() => window.closeQuitModal?.()}>Keep Playing</button>
-            <button className="qm-btn qm-confirm" onClick={() => window.confirmQuit?.()}>Quit</button>
+            <button className="qm-btn qm-cancel" onClick={closeQuit}>Keep Playing</button>
+            <button className="qm-btn qm-confirm" onClick={confirmQuit}>Quit</button>
           </div>
         </div>
       </div>
@@ -324,9 +368,10 @@ export default function BattlePage() {
       </div>
 
       {/* ══ HOW TO PLAY ══ */}
-      <div id="howto">
+      <div id="howto" className={howToOpen ? 'open' : ''}
+           onClick={e => e.target === e.currentTarget && setHowToOpen(false)}>
         <div id="htp-box">
-          <button id="htp-close" onClick={() => window.closeHowTo?.()}>✕ Close</button>
+          <button id="htp-close" onClick={() => setHowToOpen(false)}>✕ Close</button>
           <div className="htp-h1">📖 How To Play — Horizon Forge</div>
           <div className="htp-h2">🎯 Objective</div>
           <p className="htp-p">

@@ -25,3 +25,6 @@ desktop.ini
 # Logs
 *.log
 npm-debug.log*
+
+# Local audit notes (Claude Code working docs — never commit)
+audit-notes/
