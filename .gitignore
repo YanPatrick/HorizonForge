@@ -1,7 +1,27 @@
+# Dependências
 node_modules/
+
+# Ambiente — NUNCA commitar
 .env
+
+# Claude Code — configurações locais (caminhos e permissões são específicos de cada máquina)
+.claude/settings.local.json
 .claude/.worktrees/
+
+# Superpowers (gerado localmente)
 .superpowers
 .docs/superpowers/
 .playwright-mcp/
+skills-lock.json
+
+# Testes
 tests/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
