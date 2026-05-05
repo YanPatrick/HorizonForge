@@ -1,9 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
-}
+import { getSession } from '../lib/session'
 
 export default function BattlePage() {
   const navigate = useNavigate()

@@ -2,10 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import LobbyPage from './pages/LobbyPage'
 import BattlePage from './pages/BattlePage'
-
-function getSession() {
-  try { return JSON.parse(sessionStorage.getItem('hf_session')) } catch { return null }
-}
+import { getSession } from './lib/session'
 
 function RequireAuth({ children }) {
   return getSession() ? children : <Navigate to="/" replace />
