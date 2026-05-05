@@ -1,4 +1,4 @@
-      // ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
+﻿      // ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
       const BASE_W = 1280; // resolução de referência (seu design base)
       const BASE_H = 720;
 
@@ -955,7 +955,7 @@
           }
           G.phase = "waiting";
           log("📤 Team submitted! Waiting for opponent...", "lr");
-          setBanner(
+          _dispatchBanner(
             `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
             "bbattle",
           );
@@ -978,7 +978,7 @@
         // animates (same code path PvP already exercises).
         document.getElementById("log").innerHTML = "";
         log("⚔️ Battle begins!", "lr");
-        setBanner(
+        _dispatchBanner(
           `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
           "bbattle",
         );
@@ -1490,10 +1490,10 @@
           const pw = G.duelScore.p > G.duelScore.e;
           if (pw) {
             G.duelsWon++;
-            setBanner(`🏆 DUEL WON! ${G.duelScore.p}–${G.duelScore.e}`, "bwin");
+            _dispatchBanner(`🏆 DUEL WON! ${G.duelScore.p}–${G.duelScore.e}`, "bwin");
           } else {
             G.duelsLost++;
-            setBanner(
+            _dispatchBanner(
               `💔 DUEL LOST! ${G.duelScore.p}–${G.duelScore.e}`,
               "blose",
             );
@@ -1502,7 +1502,7 @@
             `${pw ? "🏆" : "💔"} Duel ${G.duelNum} over! You ${G.duelScore.p} × ${G.duelScore.e}`,
             "lr",
           );
-          setTimeout(() => showDuelResult(pw), 500);
+          setTimeout(() => _dispatchDuelResult(pw), 500);
           nb.className = "btn gnbtn";
           if (window._PVP) {
             nb.textContent = "🏠 Back to Lobby";
@@ -1517,7 +1517,7 @@
         } else {
           const inc = betweenIncome();
           const sc = `${G.duelScore.p}–${G.duelScore.e}`;
-          setBanner(
+          _dispatchBanner(
             `⚔️ Battle ${G.battleNum}/${G.format}: ${sc}. ${w === "p" ? "Victory!" : "Defeat!"}`,
             w === "p" ? "bwin" : "blose",
           );
@@ -1554,7 +1554,7 @@
       // dispatch via window.showDuelResult. The PvP "submitting..." 3s
       // mock is now a useEffect in BattlePage. The Next/Back-to-Lobby
       // button delegates to window.duelResultNext below.
-      function showDuelResult(pw) {
+      function _dispatchDuelResult(pw) {
         const isPvP = !!window._PVP;
         const summarizeUnits = (arr) =>
           (arr || []).filter(Boolean).map((u) => ({
@@ -1821,7 +1821,7 @@
               );
             });
 
-          setBanner(
+          _dispatchBanner(
             `⚔️ Battle ${data.battleNum}/${G.format} in progress...`,
             "bbattle",
           );
@@ -1931,10 +1931,23 @@
         }
       }
 
+      // Removes all battle.js DOM mutations (dead class, HP bar) before React
+      // re-renders the shop phase. Without this, React skips DOM updates because
+      // its fiber thinks props haven't changed (e.g. className still 'unit l1')
+      // even though battle.js set el.classList.add('dead') / el.style.width='20%'.
+      function _cleanupBattleDOM() {
+        document.querySelectorAll('#pfield .unit, #efield .unit').forEach(el => {
+          el.classList.remove('dead', 'low-hp', 'hit', 'vfx-crit', 'mg');
+          const uhf = el.querySelector('.uhf');
+          if (uhf) { uhf.style.width = '100%'; uhf.className = 'uhf hi'; }
+        });
+      }
+
       function nextBattle() {
         setShopLocked(false);
         G.battleNum++;
         restoreFieldHp();
+        _cleanupBattleDOM();
         const inc = betweenIncome();
         G.gold += inc;
         G.phase = "shop";
@@ -2045,6 +2058,7 @@
           d.innerHTML = "&nbsp;";
           _logEl.appendChild(d);
         }
+        _cleanupBattleDOM();
         render();
         updateHdr();
         log(
@@ -2085,7 +2099,7 @@
       // ═══════════════════════════════════════════════════
       //  RENDER SYSTEM
       // ═══════════════════════════════════════════════════
-      function setBanner(t, c) {
+      function _dispatchBanner(t, c) {
         // Phase 2 of #16: dispatch into BattlePage. Helper kept so existing
         // call sites (~30 of them) don't need to change.
         window.setBanner?.(t, c);
@@ -2675,7 +2689,7 @@
             : G.bench.length
               ? "Click a Barracks card to select, then click a field slot"
               : "Buy heroes from Recruitment, then place them on your field";
-          setBanner(hint, "bshop");
+          _dispatchBanner(hint, "bshop");
         }
         // ── Mobile sync (runs every render regardless of call site) ──
         const mbb = document.getElementById("mobile-battle-btn");
