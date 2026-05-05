@@ -122,6 +122,8 @@ export default function BattlePage() {
             <span id="mobile-opp-name">Enemy</span>
           </div>
 
+          <span id="mobile-round-timer"></span>
+
           <button
             id="mobile-speed-btn"
             type="button"

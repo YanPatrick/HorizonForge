@@ -1426,17 +1426,27 @@
         if (window._PVP) return; // PvP uses server-driven timer inside pvpInit
         stopPhaseTimer();
         const el = document.getElementById("phase-timer");
-        if (!el) return;
-        el.style.display = "block";
+        const elMobile = document.getElementById("mobile-round-timer");
+        if (!el && !elMobile) return;
+        if (el) el.style.display = "block";
+        if (elMobile) elMobile.style.display = "block";
         let remaining = Math.ceil(ms / 1000);
         function tick() {
           const m = Math.floor(remaining / 60);
           const s = remaining % 60;
-          el.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-          el.classList.toggle("timer-urgent", remaining <= 30);
+          const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
+          if (el) {
+            el.textContent = txt;
+            el.classList.toggle("timer-urgent", remaining <= 30);
+          }
+          if (elMobile) {
+            elMobile.textContent = txt;
+            elMobile.classList.toggle("timer-urgent", remaining <= 30);
+          }
           if (remaining <= 0) {
             stopPhaseTimer();
-            el.textContent = "⏱ 0:00";
+            if (el) el.textContent = "⏱ 0:00";
+            if (elMobile) elMobile.textContent = "⏱ 0:00";
             startBattle();
           }
         }
@@ -1456,6 +1466,11 @@
         if (el) {
           el.style.display = "none";
           el.classList.remove("timer-urgent");
+        }
+        const elMobile = document.getElementById("mobile-round-timer");
+        if (elMobile) {
+          elMobile.style.display = "none";
+          elMobile.classList.remove("timer-urgent");
         }
       }
 
@@ -2352,17 +2367,27 @@
         function startRoundTimer(ms) {
           stopRoundTimer();
           const el = document.getElementById("phase-timer");
-          if (!el) return;
-          el.style.display = "block";
+          const elMobile = document.getElementById("mobile-round-timer");
+          if (!el && !elMobile) return;
+          if (el) el.style.display = "block";
+          if (elMobile) elMobile.style.display = "block";
           let remaining = Math.ceil(ms / 1000);
           function tick() {
             const m = Math.floor(remaining / 60);
             const s = remaining % 60;
-            el.textContent = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-            el.classList.toggle("timer-urgent", remaining <= 30);
+            const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
+            if (el) {
+              el.textContent = txt;
+              el.classList.toggle("timer-urgent", remaining <= 30);
+            }
+            if (elMobile) {
+              elMobile.textContent = txt;
+              elMobile.classList.toggle("timer-urgent", remaining <= 30);
+            }
             if (remaining <= 0) {
               stopRoundTimer();
-              el.textContent = "⏱ 0:00";
+              if (el) el.textContent = "⏱ 0:00";
+              if (elMobile) elMobile.textContent = "⏱ 0:00";
             }
           }
           tick();
@@ -2381,6 +2406,11 @@
           if (el) {
             el.style.display = "none";
             el.classList.remove("timer-urgent");
+          }
+          const elMobile = document.getElementById("mobile-round-timer");
+          if (elMobile) {
+            elMobile.style.display = "none";
+            elMobile.classList.remove("timer-urgent");
           }
         }
 
