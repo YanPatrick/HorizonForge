@@ -28,6 +28,37 @@ export default function BattlePage() {
   const [timerText, setTimerText] = useState('')
   const [timerUrgent, setTimerUrgent] = useState(false)
 
+  // ── Header / HUD reactive state (Phase 2 of #16, finishes the Header)
+  // All of these were imperative DOM mutations in battle.js (renderDuelBar,
+  // setBanner, applyBattleSpeed, updateFieldLabels, etc.). Each one is now a
+  // pure React state slice; battle.js dispatches via the window shims
+  // registered below. Once the Barracks/Shop/Field migration lands in
+  // Phase 3, the entire #hdr block will be read-from-state.
+  const sessionForBadge = getSession()
+  const [userBadge] = useState(
+    sessionForBadge?.username ? `@${sessionForBadge.username}` : '@you'
+  )
+  const [formatLabel, setFormatLabel] = useState('BO3')
+  const [bannerText, setBannerText] = useState(
+    '🛍️ Analyze the enemy, buy cards and build your army!'
+  )
+  const [bannerClass, setBannerClass] = useState('bshop')
+  const [oppName, setOppName] = useState('Enemy')
+  const [armyCount, setArmyCount] = useState('')
+  // Score dots: arrays of 'w' (won), 'l' (lost), 'e' (empty/pending). Length
+  // matches G.format. battle.js's renderDuelBar() now computes these arrays
+  // and dispatches them in one shot.
+  const [scoreDots, setScoreDots] = useState({ p: [], e: [] })
+  // Speed toggle: read the stored preference once on mount so the initial
+  // render matches what battle.js's initBattleSpeed IIFE would have written.
+  const [speed, setSpeed] = useState(() => {
+    try {
+      const n = Number(localStorage.getItem('hf_battle_speed'))
+      const fast = !(n === 1)
+      return { label: fast ? '2x' : '1x', fast }
+    } catch { return { label: '2x', fast: true } }
+  })
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -58,6 +89,13 @@ export default function BattlePage() {
       setTimerText('')
       setTimerUrgent(false)
     }
+    // Header / HUD dispatchers — see state declarations above.
+    window.setBanner             = (text, cls) => { setBannerText(text || ''); setBannerClass(cls || '') }
+    window.setBattleFmt          = (label) => setFormatLabel(label || '')
+    window.setBattleOpp          = (name) => setOppName(name || 'Enemy')
+    window.setBattleArmyCount    = (text) => setArmyCount(text || '')
+    window.setBattleScoreDots    = ({ p, e }) => setScoreDots({ p: p || [], e: e || [] })
+    window.setBattleSpeed        = ({ label, fast }) => setSpeed({ label: label || '2x', fast: !!fast })
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -66,6 +104,12 @@ export default function BattlePage() {
       delete window.closeHowTo
       delete window.setRoundTimer
       delete window.hideRoundTimer
+      delete window.setBanner
+      delete window.setBattleFmt
+      delete window.setBattleOpp
+      delete window.setBattleArmyCount
+      delete window.setBattleScoreDots
+      delete window.setBattleSpeed
     }
   }, [closeQuit, confirmQuit])
 
@@ -163,26 +207,31 @@ export default function BattlePage() {
         <div id="hdr">
           <div className="hdr-row-top">
             <div className="duelbar-center">
-              <span className="sb suser" id="h-user">@you</span>
-              <div className="dscore" id="dots-p"></div>
+              <span className="sb suser" id="h-user">{userBadge}</span>
+              <div className="dscore" id="dots-p">
+                {scoreDots.p.map((s, i) => <div key={`p${i}`} className={`dot dot-${s}`} />)}
+              </div>
               <span className="duel-vs">⚔️</span>
-              <div className="dscore" id="dots-e"></div>
-              <span className="sb sopp" id="lbl-score-enemy">Enemy</span>
+              <div className="dscore" id="dots-e">
+                {scoreDots.e.map((s, i) => <div key={`e${i}`} className={`dot dot-${s}`} />)}
+              </div>
+              <span className="sb sopp" id="lbl-score-enemy">{oppName}</span>
             </div>
           </div>
           <div className="hdr-row-bottom">
-            <span className="sb sfmt" id="h-fmt">BO3</span>
+            <span className="sb sfmt" id="h-fmt">{formatLabel}</span>
             <span id="h-timer">⏱ 2:00</span>
-            <div id="banner" className="bshop">
-              🛍️ Analyze the enemy, buy cards and build your army!
+            <div id="banner" className={bannerClass}>
+              {bannerText}
             </div>
             <button
               id="battle-speed-toggle"
               type="button"
+              className={speed.fast ? 'is-fast' : ''}
               onClick={() => window.toggleBattleSpeed?.()}
               title="Toggle battle speed"
             >
-              2x
+              {speed.label}
             </button>
             <button className="htp-btn hback-btn" onClick={() => window.openQuitModal?.()} title="Back to Lobby">
               ← Lobby
@@ -193,7 +242,7 @@ export default function BattlePage() {
         {/* ══ MOBILE HUD OVERLAY ══ */}
         <div id="mobile-hud">
           <div id="mobile-opp-badge">
-            <span id="mobile-opp-name">Enemy</span>
+            <span id="mobile-opp-name">{oppName}</span>
           </div>
 
           <span
@@ -207,15 +256,20 @@ export default function BattlePage() {
           <button
             id="mobile-speed-btn"
             type="button"
+            className={speed.fast ? 'is-fast' : ''}
             onClick={() => window.toggleBattleSpeed?.()}
           >
-            2x
+            {speed.label}
           </button>
 
           <div id="mobile-dots-right">
-            <div id="mobile-dots-e" className="mdots"></div>
+            <div id="mobile-dots-e" className="mdots">
+              {scoreDots.e.map((s, i) => <div key={`me${i}`} className={`dot dot-${s}`} />)}
+            </div>
             <div className="mdots-divider"></div>
-            <div id="mobile-dots-p" className="mdots"></div>
+            <div id="mobile-dots-p" className="mdots">
+              {scoreDots.p.map((s, i) => <div key={`mp${i}`} className={`dot dot-${s}`} />)}
+            </div>
           </div>
         </div>
 
@@ -229,7 +283,7 @@ export default function BattlePage() {
             <div className="fwrap">
               <div className="flbl flbl-row">
                 <span id="lbl-player" style={{ color: '#88aaff' }}>⚔ Your Army</span>
-                <span id="army-count"></span>
+                <span id="army-count">{armyCount}</span>
               </div>
               <div className="field pf" id="pfield"></div>
             </div>
