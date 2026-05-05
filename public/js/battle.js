@@ -2271,11 +2271,21 @@
         return tA || tC || null;
       }
 
+      // Phase 3 of #16, third slice (final panel): both fields render from
+      // React state. battle.js builds a per-side render shape (uid, lv,
+      // stack, ico, bg, dotColor, levelLabel, portraitUrl + Sacred Aura
+      // HP bonus for the player side) and dispatches via setFieldState.
+      // Click/drag/drop/hover events delegate back via window.fieldCell*
+      // and window.fieldInfo* shims defined below.
+      //
+      // Transient visual feedback stays imperative on the React-rendered
+      // DOM: target-preview/target-preview-splash/target-preview-ally
+      // classes for hover, dnd-over for drag, .dragging on dragstart.
+      // Battle playback (HP bar widths, kill animations) also continues
+      // to mutate the React-rendered DOM directly between renders —
+      // safe because the data-uid/data-cid attributes are stable.
       function renderField(fid, board, isP) {
-        const f = document.getElementById(fid);
-        f.innerHTML = "";
-
-        // Compute Sacred Aura HP bonus for adjacent allies when Paladin is on player field
+        // Sacred Aura HP bonus for adjacent allies (player side, shop phase)
         const auraBonus = {};
         if (isP && G.phase === "shop") {
           for (let s = 0; s < 9; s++) {
@@ -2291,259 +2301,198 @@
             }
           }
         }
-
-        for (let i = 0; i < 9; i++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          cell.dataset.i = i;
-          const u = board[i];
-          if (u) {
-            cell.classList.add("occ");
-            const cc = C[u.cid];
-            const el = document.createElement("div");
-            el.className = `unit l${u.lv}`;
-            el.dataset.uid = u.id;
-            el.dataset.cid = u.cid;
-
-            if (!cc) {
-              console.warn(`Invalid cid: ${u.cid}`);
-              return;
-            } // Proteção
-
-            el.style.background = cc.bg;
-
-            el.title = "";
-
-            const dotColor =
-              u.lv === 1
-                ? cc.col
-                : u.lv === 2
-                  ? "#4488ff"
-                  : u.lv === 3
-                    ? "#aa44ff"
-                    : "#ffaa00";
-            let uDotsHtml =
-              '<div class="uprog" style="color:' + dotColor + '">';
-            for (let d = 0; d < 3; d++)
-              uDotsHtml += `<div class="uprog-dot ${u.lv >= 5 || d < u.stack ? "filled" : "empty"}" style="border-color:${dotColor}"></div>`;
-            uDotsHtml += "</div>";
-            const hpBonus = auraBonus[i] || 0;
-            const hpDisplay = hpBonus > 0 ? u.hp + hpBonus : u.hp;
-            const hpClass = hpBonus > 0 ? "ustv-aura" : "ustv";
-            el.innerHTML = `<div class="ulvl">${LS[u.lv]}</div><div class="hf-info-btn" title="">i</div><div class="cportrait${cc.portrait ? " has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div><div class="uhb"><div class="uhf hi" style="width:100%"></div></div>${uDotsHtml}`;
-
-            el.addEventListener("dragstart", () => SkillTip.hide());
-            const infoBtn = el.querySelector(".hf-info-btn");
-            if (infoBtn) {
-              infoBtn.addEventListener("mouseenter", () =>
-                SkillTip.show(infoBtn, generateHeroInfoHtml(u)),
-              );
-              infoBtn.addEventListener("mouseleave", () => SkillTip.hide());
-              infoBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                SkillTip.show(infoBtn, generateHeroInfoHtml(u));
-              });
-            }
-            // Long press on field cell → sticky info (mobile)
-            let _lpTimer = null;
-            el.addEventListener("touchstart", () => {
-              _lpTimer = setTimeout(() => {
-                SkillTip.showSticky(el, generateHeroInfoHtml(u));
-              }, 500);
-            }, { passive: true });
-            el.addEventListener("touchend", () => clearTimeout(_lpTimer));
-            el.addEventListener("touchmove", () => clearTimeout(_lpTimer));
-
-            if (isP && G.phase === "shop") {
-              el.draggable = true;
-              el.addEventListener("dragstart", (e) => {
-                e.dataTransfer.setData("fromSlot", String(i));
-                e.dataTransfer.effectAllowed = "move";
-                G.fieldDrag = i;
-                clearAttackArrows();
-                setTimeout(() => {
-                  el.classList.add("dragging");
-                  document
-                    .querySelectorAll("#pfield .cell:not(.occ)")
-                    .forEach((c) => c.classList.add("dr"));
-                }, 0);
-              });
-              el.addEventListener("dragend", () => {
-                el.classList.remove("dragging");
-                G.fieldDrag = null;
-                render();
-              });
-              cell.addEventListener("click", (e) => {
-                if (G.fieldSel === i) {
-                  G.fieldSel = null;
-                } else if (G.fieldSel !== null) {
-                  const tmp = G.board[G.fieldSel];
-                  G.board[G.fieldSel] = G.board[i];
-                  G.board[i] = tmp;
-                  G.fieldSel = null;
-                } else {
-                  G.fieldSel = i;
-                  G.bsel = null;
-                }
-                render();
-              });
-            }
-            // ── Hover: preview do alvo ──
-            if (isP && u) {
-              const unitWithSlot = { ...u, slot: i };
-              cell.addEventListener("mouseenter", () => {
-                _activeHoverCell = cell;
-                const enemyBoard = G.phase === "battle" ? G.enemy : G.duelEnemy;
-                if (!enemyBoard) return;
-                const efieldEl = document.getElementById("efield");
-                const pfieldEl = document.getElementById("pfield");
-
-                // ── Primary attack target (red outline) ──
-                const target = previewTarget(unitWithSlot, enemyBoard);
-                if (target) {
-                  const tgtCellEl = efieldEl?.querySelector(
-                    `[data-i="${target.slot}"]`,
-                  );
-                  tgtCellEl?.classList.add("target-preview");
-
-                  // Mage Fireball: adjacent enemies in + shape (orange outline)
-                  if (unitWithSlot.cid === "mage") {
-                    const adj = adjacentSlots(target.slot);
-                    enemyBoard.forEach((eu, ei) => {
-                      if (eu && ei !== target.slot && adj.includes(ei)) {
-                        efieldEl
-                          ?.querySelector(`[data-i="${ei}"]`)
-                          ?.classList.add("target-preview-splash");
-                      }
-                    });
-                  }
-
-                  // Archmage Chain Lightning: same row, deeper cols (orange outline)
-                  if (unitWithSlot.cid === "archmage") {
-                    const tRow = Math.floor(target.slot / 3);
-                    const pCol = target.slot % 3;
-                    const chain = [];
-                    enemyBoard.forEach((eu, ei) => {
-                      if (
-                        eu &&
-                        ei !== target.slot &&
-                        Math.floor(ei / 3) === tRow &&
-                        ei % 3 > pCol
-                      )
-                        chain.push(ei);
-                    });
-                    chain
-                      .sort((a, b) => (a % 3) - (b % 3))
-                      .slice(0, 2)
-                      .forEach((ei) => {
-                        efieldEl
-                          ?.querySelector(`[data-i="${ei}"]`)
-                          ?.classList.add("target-preview-splash");
-                      });
-                  }
-                }
-
-                // ── Paladin Sacred Aura: adjacent allies (green outline) ──
-                if (unitWithSlot.cid === "paladin") {
-                  const adj = adjacentSlots(unitWithSlot.slot);
-                  G.board.forEach((pu, pi) => {
-                    if (pu && pi !== unitWithSlot.slot && adj.includes(pi))
-                      pfieldEl
-                        ?.querySelector(`[data-i="${pi}"]`)
-                        ?.classList.add("target-preview-ally");
-                  });
-                }
-              });
-              cell.addEventListener("mouseleave", () => {
-                if (_activeHoverCell !== cell) return;
-                _activeHoverCell = null;
-                document
-                  .querySelectorAll(".target-preview")
-                  .forEach((el) => el.classList.remove("target-preview"));
-                document
-                  .querySelectorAll(".target-preview-splash")
-                  .forEach((el) =>
-                    el.classList.remove("target-preview-splash"),
-                  );
-                document
-                  .querySelectorAll(".target-preview-ally")
-                  .forEach((el) => el.classList.remove("target-preview-ally"));
-              });
-            }
-
-            cell.appendChild(el);
-          } else {
-            if (
-              isP &&
-              G.phase === "shop" &&
-              (G.bsel !== null || G.fieldSel !== null)
-            )
-              cell.classList.add("dr");
-            if (isP && G.phase === "shop") {
-              cell.addEventListener("click", () => {
-                if (G.fieldSel !== null) {
-                  G.board[i] = G.board[G.fieldSel];
-                  G.board[G.fieldSel] = null;
-                  G.fieldSel = null;
-                  render();
-                } else placeUnit(i);
-              });
-              cell.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-              });
-              cell.addEventListener("dragenter", (e) => {
-                e.preventDefault();
-                cell.classList.add("dnd-over");
-              });
-              cell.addEventListener("dragleave", () =>
-                cell.classList.remove("dnd-over"),
-              );
-              cell.addEventListener("drop", (e) => {
-                e.preventDefault();
-                cell.classList.remove("dnd-over");
-                const fromSlot = e.dataTransfer.getData("fromSlot"),
-                  benchCid = e.dataTransfer.getData("benchCid");
-                if (fromSlot !== "") {
-                  G.board[i] = G.board[parseInt(fromSlot)];
-                  G.board[parseInt(fromSlot)] = null;
-                  G.fieldDrag = null;
-                  render();
-                } else if (benchCid) placeUnit(i, benchCid);
-              });
-            }
+        const cells = board.map((u, i) => {
+          if (!u) return null;
+          const cc = C[u.cid];
+          if (!cc) {
+            console.warn(`Invalid cid: ${u.cid}`);
+            return null;
           }
-          // Drop on occupied slot: swap
-          if (isP && G.phase === "shop" && u) {
-            cell.addEventListener("dragover", (e) => {
-              e.preventDefault();
-              e.dataTransfer.dropEffect = "move";
-            });
-            cell.addEventListener("dragenter", (e) => {
-              e.preventDefault();
-              cell.classList.add("dnd-over");
-            });
-            cell.addEventListener("dragleave", () =>
-              cell.classList.remove("dnd-over"),
-            );
-            cell.addEventListener("drop", (e) => {
-              e.preventDefault();
-              cell.classList.remove("dnd-over");
-              const fromSlot = e.dataTransfer.getData("fromSlot");
-              if (fromSlot !== "" && fromSlot !== String(i)) {
-                const src = parseInt(fromSlot);
-                const tmp = G.board[src];
-                G.board[src] = G.board[i];
-                G.board[i] = tmp;
-                G.fieldDrag = null;
-                render();
+          const dotColor =
+            u.lv === 1 ? cc.col :
+            u.lv === 2 ? "#4488ff" :
+            u.lv === 3 ? "#aa44ff" : "#ffaa00";
+          return {
+            uid: u.id,
+            cid: u.cid,
+            lv: u.lv,
+            stack: u.stack,
+            ico: u.ico,
+            bg: cc.bg,
+            portraitUrl: cc.portrait || null,
+            dotColor,
+            levelLabel: LS[u.lv],
+            hpBonus: auraBonus[i] || 0,
+          };
+        });
+        // Dispatch only the changed side. Render() calls renderField twice;
+        // the second call merges its update into the first.
+        const interactive = isP && G.phase === "shop";
+        const dropMode = isP && (G.bsel !== null || G.fieldSel !== null);
+        if (isP) {
+          window.setFieldState?.({
+            p: cells,
+            interactive,
+            fieldSel: G.fieldSel,
+            dropMode,
+          });
+        } else {
+          window.setFieldState?.({ e: cells });
+        }
+      }
+
+      // ── Field cell event handlers (delegated from BattlePage's JSX) ──────
+      window.fieldCellClick = function (side, slot) {
+        if (side !== "p" || G.phase !== "shop") return;
+        if (G.board[slot]) {
+          // Click on occupied: select / deselect / swap
+          if (G.fieldSel === slot) {
+            G.fieldSel = null;
+          } else if (G.fieldSel !== null) {
+            const tmp = G.board[G.fieldSel];
+            G.board[G.fieldSel] = G.board[slot];
+            G.board[slot] = tmp;
+            G.fieldSel = null;
+          } else {
+            G.fieldSel = slot;
+            G.bsel = null;
+          }
+        } else {
+          // Click on empty: move selected field unit, or place selected bench unit
+          if (G.fieldSel !== null) {
+            G.board[slot] = G.board[G.fieldSel];
+            G.board[G.fieldSel] = null;
+            G.fieldSel = null;
+          } else {
+            placeUnit(slot);
+          }
+        }
+        render();
+      };
+
+      window.fieldCellDragStart = function (side, slot, ev) {
+        if (side !== "p" || G.phase !== "shop") return;
+        SkillTip.hide();
+        ev.dataTransfer.setData("fromSlot", String(slot));
+        ev.dataTransfer.effectAllowed = "move";
+        G.fieldDrag = slot;
+        clearAttackArrows();
+        // Defer the .dragging class so the ghost-image snapshot doesn't include it.
+        setTimeout(() => {
+          const el = document.querySelector(`#pfield [data-i="${slot}"] .unit`);
+          if (el) el.classList.add("dragging");
+          document
+            .querySelectorAll("#pfield .cell:not(.occ)")
+            .forEach((c) => c.classList.add("dr"));
+        }, 0);
+      };
+
+      window.fieldCellDragEnd = function (side, slot) {
+        const el = document.querySelector(`#pfield [data-i="${slot}"] .unit`);
+        if (el) el.classList.remove("dragging");
+        G.fieldDrag = null;
+        render();
+      };
+
+      window.fieldCellDrop = function (side, slot, ev) {
+        if (side !== "p" || G.phase !== "shop") return;
+        const fromSlot = ev.dataTransfer.getData("fromSlot");
+        const benchCid = ev.dataTransfer.getData("benchCid");
+        if (fromSlot !== "") {
+          const src = parseInt(fromSlot);
+          if (src === slot) return; // dropped on self — no-op
+          if (G.board[slot]) {
+            // Swap with occupied target
+            const tmp = G.board[src];
+            G.board[src] = G.board[slot];
+            G.board[slot] = tmp;
+          } else {
+            // Move into empty cell
+            G.board[slot] = G.board[src];
+            G.board[src] = null;
+          }
+          G.fieldDrag = null;
+          render();
+        } else if (benchCid) {
+          placeUnit(slot, benchCid);
+        }
+      };
+
+      // Hover preview: red outline on attack target, orange splash for AOE
+      // skills (Mage Fireball, Archmage Chain Lightning), green outline on
+      // adjacent allies for Paladin Sacred Aura. Pure imperative classList
+      // toggling on the React-rendered cells via data-i lookups.
+      window.fieldCellMouseEnter = function (side, slot) {
+        if (side !== "p") return;
+        const u = G.board[slot];
+        if (!u) return;
+        const enemyBoard = G.phase === "battle" ? G.enemy : G.duelEnemy;
+        if (!enemyBoard) return;
+        const efieldEl = document.getElementById("efield");
+        const pfieldEl = document.getElementById("pfield");
+        const unitWithSlot = { ...u, slot };
+        const target = previewTarget(unitWithSlot, enemyBoard);
+        if (target) {
+          efieldEl?.querySelector(`[data-i="${target.slot}"]`)?.classList.add("target-preview");
+          if (unitWithSlot.cid === "mage") {
+            const adj = adjacentSlots(target.slot);
+            enemyBoard.forEach((eu, ei) => {
+              if (eu && ei !== target.slot && adj.includes(ei)) {
+                efieldEl?.querySelector(`[data-i="${ei}"]`)?.classList.add("target-preview-splash");
               }
             });
           }
-          if (isP && G.fieldSel === i) cell.classList.add("field-sel");
-          f.appendChild(cell);
+          if (unitWithSlot.cid === "archmage") {
+            const tRow = Math.floor(target.slot / 3);
+            const pCol = target.slot % 3;
+            const chain = [];
+            enemyBoard.forEach((eu, ei) => {
+              if (eu && ei !== target.slot && Math.floor(ei / 3) === tRow && ei % 3 > pCol) chain.push(ei);
+            });
+            chain.sort((a, b) => (a % 3) - (b % 3)).slice(0, 2).forEach((ei) => {
+              efieldEl?.querySelector(`[data-i="${ei}"]`)?.classList.add("target-preview-splash");
+            });
+          }
         }
-      }
+        if (unitWithSlot.cid === "paladin") {
+          const adj = adjacentSlots(slot);
+          G.board.forEach((pu, pi) => {
+            if (pu && pi !== slot && adj.includes(pi)) {
+              pfieldEl?.querySelector(`[data-i="${pi}"]`)?.classList.add("target-preview-ally");
+            }
+          });
+        }
+      };
+
+      window.fieldCellMouseLeave = function () {
+        document.querySelectorAll(".target-preview")
+          .forEach((el) => el.classList.remove("target-preview"));
+        document.querySelectorAll(".target-preview-splash")
+          .forEach((el) => el.classList.remove("target-preview-splash"));
+        document.querySelectorAll(".target-preview-ally")
+          .forEach((el) => el.classList.remove("target-preview-ally"));
+      };
+
+      window.fieldInfoShow = function (side, slot, anchorEl) {
+        const board = side === "p" ? G.board : (G.phase === "battle" ? G.enemy : G.duelEnemy);
+        const u = board?.[slot];
+        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+      };
+      window.fieldInfoHide = function () { SkillTip.hide(); };
+
+      // Long-press on a field cell shows a sticky tooltip (mobile).
+      let _fieldLpTimer = null;
+      window.fieldTouchStart = function (side, slot, anchorEl) {
+        const board = side === "p" ? G.board : (G.phase === "battle" ? G.enemy : G.duelEnemy);
+        const u = board?.[slot];
+        if (!u || !anchorEl) return;
+        clearTimeout(_fieldLpTimer);
+        _fieldLpTimer = setTimeout(() => {
+          SkillTip.showSticky(anchorEl, generateHeroInfoHtml(u));
+        }, 500);
+      };
+      window.fieldTouchEnd = function () { clearTimeout(_fieldLpTimer); };
+      window.fieldTouchMove = function () { clearTimeout(_fieldLpTimer); };
 
       // ── Shop Rendering (animated with absolute positioning) ──
       const SHOP_SLOTS = 5;

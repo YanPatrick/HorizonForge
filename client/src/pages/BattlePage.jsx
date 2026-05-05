@@ -87,6 +87,21 @@ export default function BattlePage() {
   })
   const [hoveredCombo, setHoveredCombo] = useState(null)
 
+  // ── Field (pfield + efield) — Phase 3 of #16, third slice (final panel)
+  // Both fields render from a single state object. battle.js's renderField
+  // builds a render shape per side; click/drag/drop/hover events delegate
+  // back via window.fieldCell* callbacks. Transient visual feedback
+  // (target-preview highlights on hover, dnd-over on drag, attack arrow
+  // overlays) stays imperative — battle.js querySelector-toggles classes
+  // on the React-rendered cells using their stable data-i/data-side attrs.
+  const [field, setField] = useState({
+    p: Array(9).fill(null),
+    e: Array(9).fill(null),
+    interactive: false,    // true if shop phase (player field accepts input)
+    fieldSel: null,        // selected pfield slot index
+    dropMode: false,       // any selection active → highlight empty cells with .dr
+  })
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -141,6 +156,16 @@ export default function BattlePage() {
       rerollDisabled: state?.rerollDisabled ?? prev.rerollDisabled,
       cards:          state?.cards          ?? prev.cards,
     }))
+    // Field — accepts partial updates. battle.js's renderField sends both
+    // sides + interaction flags; isolated mutations (e.g. selection
+    // changes) can dispatch only the slice they need.
+    window.setFieldState         = (state) => setField((prev) => ({
+      p:           state?.p           ?? prev.p,
+      e:           state?.e           ?? prev.e,
+      interactive: state?.interactive ?? prev.interactive,
+      fieldSel:    state?.fieldSel === undefined ? prev.fieldSel : state.fieldSel,
+      dropMode:    state?.dropMode    ?? prev.dropMode,
+    }))
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -157,6 +182,7 @@ export default function BattlePage() {
       delete window.setBattleSpeed
       delete window.setBenchState
       delete window.setShopState
+      delete window.setFieldState
     }
   }, [closeQuit, confirmQuit])
 
@@ -228,6 +254,82 @@ export default function BattlePage() {
       if (root) root.style.cssText = ''
     }
   }, [navigate])
+
+  // Render the 9 cells of a field side. Cell layout, occupancy, selection,
+  // and drop-target highlighting come from React state. Transient effects
+  // (target-preview on hover, dnd-over on drag, attack arrow overlays)
+  // remain imperative — battle.js querySelectors them by data-i/data-side.
+  const renderFieldCells = (side) => {
+    const cells = field[side]
+    const interactive = side === 'p' && field.interactive
+    return Array.from({ length: 9 }, (_, i) => {
+      const u = cells[i]
+      const isSel = side === 'p' && field.fieldSel === i
+      const isDrop = side === 'p' && field.dropMode && !u && field.interactive
+      const cls = `cell${u ? ' occ' : ''}${isSel ? ' field-sel' : ''}${isDrop ? ' dr' : ''}`
+      return (
+        <div
+          key={i}
+          data-i={i}
+          data-side={side}
+          className={cls}
+          onClick={interactive ? () => window.fieldCellClick?.(side, i) : undefined}
+          onDragOver={interactive ? (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } : undefined}
+          onDragEnter={interactive ? (e) => { e.preventDefault(); e.currentTarget.classList.add('dnd-over') } : undefined}
+          onDragLeave={interactive ? (e) => e.currentTarget.classList.remove('dnd-over') : undefined}
+          onDrop={interactive ? (e) => {
+            e.preventDefault()
+            e.currentTarget.classList.remove('dnd-over')
+            window.fieldCellDrop?.(side, i, e.nativeEvent)
+          } : undefined}
+          onMouseEnter={interactive && u ? () => window.fieldCellMouseEnter?.(side, i) : undefined}
+          onMouseLeave={interactive && u ? () => window.fieldCellMouseLeave?.(side, i) : undefined}
+        >
+          {u && (
+            <div
+              className={`unit l${u.lv}`}
+              data-uid={u.uid}
+              data-cid={u.cid}
+              style={{ background: u.bg }}
+              draggable={interactive}
+              onDragStart={interactive ? (e) => window.fieldCellDragStart?.(side, i, e.nativeEvent) : undefined}
+              onDragEnd={interactive ? () => window.fieldCellDragEnd?.(side, i) : undefined}
+              onTouchStart={(e) => window.fieldTouchStart?.(side, i, e.currentTarget)}
+              onTouchEnd={() => window.fieldTouchEnd?.()}
+              onTouchMove={() => window.fieldTouchMove?.()}
+            >
+              <div className="ulvl">{u.levelLabel}</div>
+              <div
+                className="hf-info-btn"
+                title=""
+                onMouseEnter={(e) => window.fieldInfoShow?.(side, i, e.currentTarget)}
+                onMouseLeave={() => window.fieldInfoHide?.()}
+                onClick={(e) => { e.stopPropagation(); window.fieldInfoShow?.(side, i, e.currentTarget) }}
+              >i</div>
+              <div
+                className={`cportrait${u.portraitUrl ? ' has-portrait' : ''}`}
+                style={u.portraitUrl ? { '--portrait-url': `url('${u.portraitUrl}')` } : undefined}
+              >
+                <div className="cico">{u.ico}</div>
+              </div>
+              <div className="uhb">
+                <div className="uhf hi" style={{ width: '100%' }}></div>
+              </div>
+              <div className="uprog" style={{ color: u.dotColor }}>
+                {[0, 1, 2].map((d) => (
+                  <div
+                    key={d}
+                    className={`uprog-dot ${u.lv >= 5 || d < u.stack ? 'filled' : 'empty'}`}
+                    style={{ borderColor: u.dotColor }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    })
+  }
 
   const ready = cssReady && scriptsReady
   return (
@@ -332,14 +434,14 @@ export default function BattlePage() {
                 <span id="lbl-player" style={{ color: '#88aaff' }}>⚔ Your Army</span>
                 <span id="army-count">{armyCount}</span>
               </div>
-              <div className="field pf" id="pfield"></div>
+              <div className="field pf" id="pfield">{renderFieldCells('p')}</div>
             </div>
             <div id="vs"><span className="vstxt">VS</span></div>
             <div className="fwrap">
               <div className="flbl" style={{ color: '#ff8888' }}>
                 <span id="lbl-enemy">☠ Opponent</span>
               </div>
-              <div className="field ef" id="efield"></div>
+              <div className="field ef" id="efield">{renderFieldCells('e')}</div>
             </div>
           </div>
         </div>
