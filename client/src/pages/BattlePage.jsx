@@ -6,12 +6,27 @@ export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
   const [cssReady, setCssReady] = useState(false)
+  // Tracks whether the imperative scripts (battle.js + bot-ai.js + simulate.js
+  // + socket.io + mobile.js) have all loaded. Buttons in this page dispatch
+  // through globals those scripts register (window.startBattle, openQuitModal,
+  // toggleBattleSpeed, etc.) — clicking before they're loaded silently does
+  // nothing. Hiding the page until both CSS and scripts are ready avoids that.
+  const [scriptsReady, setScriptsReady] = useState(false)
 
   // ── Modal visibility (was: classList toggling driven by globals in battle.js)
   // Phase 1 of #16 — UI chrome is React-driven; battle.js still calls
   // window.openQuitModal etc. via the registered shims below.
   const [quitOpen, setQuitOpen] = useState(false)
   const [howToOpen, setHowToOpen] = useState(false)
+
+  // ── Round/phase timer (Phase 2 of #16, first slice)
+  // Was: battle.js mutated #phase-timer.textContent and toggled .timer-urgent
+  // every second from inside startPhaseTimer / startRoundTimer. Now battle.js
+  // dispatches via window.setRoundTimer / window.hideRoundTimer, registered
+  // below. Same pattern as the modal shims — proves out the imperative→React
+  // direction before we extend it to score, banner, opponent name, etc.
+  const [timerText, setTimerText] = useState('')
+  const [timerUrgent, setTimerUrgent] = useState(false)
 
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
@@ -34,12 +49,23 @@ export default function BattlePage() {
     window.confirmQuit    = confirmQuit
     window.openHowTo      = () => setHowToOpen(true)
     window.closeHowTo     = () => setHowToOpen(false)
+    // Round timer — battle.js calls these from its tick() functions.
+    window.setRoundTimer  = (text, urgent) => {
+      setTimerText(text || '')
+      setTimerUrgent(!!urgent)
+    }
+    window.hideRoundTimer = () => {
+      setTimerText('')
+      setTimerUrgent(false)
+    }
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
       delete window.confirmQuit
       delete window.openHowTo
       delete window.closeHowTo
+      delete window.setRoundTimer
+      delete window.hideRoundTimer
     }
   }, [closeQuit, confirmQuit])
 
@@ -90,13 +116,19 @@ export default function BattlePage() {
     // _bootBattle fires (which is right after battle.js evaluates). Serialize
     // the order: simulate (module) → bot-ai → battle. socket.io and mobile.js
     // can load in parallel — battle.js doesn't touch them at top-level.
+    //
+    // setScriptsReady fires after battle.js's onload — by that point its
+    // _bootBattle has run synchronously, so dispatched globals like
+    // window.startBattle / window.toggleBattleSpeed / window.setMobileStep
+    // are guaranteed to be registered.
     addScript('/shared/simulate.js', { type: 'module' })
       .then(() => addScript('/js/bot-ai.js'))
-      .then(() => {
-        addScript('/socket.io/socket.io.js')
-        addScript('/js/battle.js')
-        addScript('/mobile.js')
-      })
+      .then(() => Promise.all([
+        addScript('/socket.io/socket.io.js'),
+        addScript('/js/battle.js'),
+        addScript('/mobile.js'),
+      ]))
+      .then(() => setScriptsReady(true))
 
     return () => {
       links.forEach(el => el.remove())
@@ -106,8 +138,9 @@ export default function BattlePage() {
     }
   }, [navigate])
 
+  const ready = cssReady && scriptsReady
   return (
-    <div style={cssReady ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
+    <div style={ready ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" className={quitOpen ? 'open' : ''}
            onClick={e => e.target === e.currentTarget && closeQuit()}>
@@ -163,7 +196,13 @@ export default function BattlePage() {
             <span id="mobile-opp-name">Enemy</span>
           </div>
 
-          <span id="mobile-round-timer"></span>
+          <span
+            id="mobile-round-timer"
+            className={timerUrgent ? 'timer-urgent' : ''}
+            style={{ display: timerText ? 'block' : 'none' }}
+          >
+            {timerText}
+          </span>
 
           <button
             id="mobile-speed-btn"
@@ -221,7 +260,13 @@ export default function BattlePage() {
               <button className="btn bbtn" id="bfight" onClick={() => window.startBattle?.()}>
                 Battle!
               </button>
-              <div id="phase-timer"></div>
+              <div
+                id="phase-timer"
+                className={timerUrgent ? 'timer-urgent' : ''}
+                style={{ display: timerText ? 'block' : 'none' }}
+              >
+                {timerText}
+              </div>
             </div>
             <div id="log"></div>
           </div>

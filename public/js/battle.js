@@ -858,28 +858,19 @@
       function startPhaseTimer(ms) {
         if (window._PVP) return; // PvP uses server-driven timer inside pvpInit
         stopPhaseTimer();
-        const el = document.getElementById("phase-timer");
-        const elMobile = document.getElementById("mobile-round-timer");
-        if (!el && !elMobile) return;
-        if (el) el.style.display = "block";
-        if (elMobile) elMobile.style.display = "block";
+        // Phase 2 of #16: timer state lives in BattlePage. Dispatch via the
+        // setRoundTimer / hideRoundTimer shims registered there. Safe-call (?.)
+        // makes this a no-op if BattlePage hasn't mounted yet — the interval
+        // still ticks down so startBattle() fires on schedule.
         let remaining = Math.ceil(ms / 1000);
         function tick() {
           const m = Math.floor(remaining / 60);
           const s = remaining % 60;
           const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-          if (el) {
-            el.textContent = txt;
-            el.classList.toggle("timer-urgent", remaining <= 30);
-          }
-          if (elMobile) {
-            elMobile.textContent = txt;
-            elMobile.classList.toggle("timer-urgent", remaining <= 30);
-          }
+          window.setRoundTimer?.(txt, remaining <= 30);
           if (remaining <= 0) {
             stopPhaseTimer();
-            if (el) el.textContent = "⏱ 0:00";
-            if (elMobile) elMobile.textContent = "⏱ 0:00";
+            window.setRoundTimer?.("⏱ 0:00", false);
             startBattle();
           }
         }
@@ -895,16 +886,7 @@
           clearInterval(_aiTimerInterval);
           _aiTimerInterval = null;
         }
-        const el = document.getElementById("phase-timer");
-        if (el) {
-          el.style.display = "none";
-          el.classList.remove("timer-urgent");
-        }
-        const elMobile = document.getElementById("mobile-round-timer");
-        if (elMobile) {
-          elMobile.style.display = "none";
-          elMobile.classList.remove("timer-urgent");
-        }
+        window.hideRoundTimer?.();
       }
 
       function updateFieldLabels() {
@@ -1759,28 +1741,17 @@
 
         function startRoundTimer(ms) {
           stopRoundTimer();
-          const el = document.getElementById("phase-timer");
-          const elMobile = document.getElementById("mobile-round-timer");
-          if (!el && !elMobile) return;
-          if (el) el.style.display = "block";
-          if (elMobile) elMobile.style.display = "block";
+          // Phase 2 of #16: dispatch through the BattlePage shims. See
+          // startPhaseTimer above for the same pattern.
           let remaining = Math.ceil(ms / 1000);
           function tick() {
             const m = Math.floor(remaining / 60);
             const s = remaining % 60;
             const txt = `⏱ ${m}:${String(s).padStart(2, "0")}`;
-            if (el) {
-              el.textContent = txt;
-              el.classList.toggle("timer-urgent", remaining <= 30);
-            }
-            if (elMobile) {
-              elMobile.textContent = txt;
-              elMobile.classList.toggle("timer-urgent", remaining <= 30);
-            }
+            window.setRoundTimer?.(txt, remaining <= 30);
             if (remaining <= 0) {
               stopRoundTimer();
-              if (el) el.textContent = "⏱ 0:00";
-              if (elMobile) elMobile.textContent = "⏱ 0:00";
+              window.setRoundTimer?.("⏱ 0:00", false);
             }
           }
           tick();
@@ -1795,16 +1766,7 @@
             clearInterval(_roundTimerInterval);
             _roundTimerInterval = null;
           }
-          const el = document.getElementById("phase-timer");
-          if (el) {
-            el.style.display = "none";
-            el.classList.remove("timer-urgent");
-          }
-          const elMobile = document.getElementById("mobile-round-timer");
-          if (elMobile) {
-            elMobile.style.display = "none";
-            elMobile.classList.remove("timer-urgent");
-          }
+          window.hideRoundTimer?.();
         }
 
         // Expose so other functions can start/stop the countdown
