@@ -225,6 +225,14 @@
             console.warn("[battle] HFBot module not loaded — AI mode unavailable");
           }
 
+          // Inject deps into the tooltip module (Phase 4 of #16). Tooltip
+          // builders read C lazily, so this just hands them the accessor.
+          if (window.HFTooltip && typeof window.HFTooltip.init === "function") {
+            window.HFTooltip.init({ getC: () => C });
+          } else {
+            console.warn("[battle] HFTooltip module not loaded — tooltips unavailable");
+          }
+
           hideLoader();
           if (window._HF_BATTLE_CFG) {
             const _cfg = window._HF_BATTLE_CFG;
@@ -2323,7 +2331,7 @@
 
       window.fieldCellDragStart = function (side, slot, ev) {
         if (side !== "p" || G.phase !== "shop") return;
-        SkillTip.hide();
+        window.HFTooltip?.hide();
         ev.dataTransfer.setData("fromSlot", String(slot));
         ev.dataTransfer.effectAllowed = "move";
         G.fieldDrag = slot;
@@ -2427,9 +2435,9 @@
       window.fieldInfoShow = function (side, slot, anchorEl) {
         const board = side === "p" ? G.board : (G.phase === "battle" ? G.enemy : G.duelEnemy);
         const u = board?.[slot];
-        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
       };
-      window.fieldInfoHide = function () { SkillTip.hide(); };
+      window.fieldInfoHide = function () { window.HFTooltip?.hide(); };
 
       // Long-press on a field cell shows a sticky tooltip (mobile).
       let _fieldLpTimer = null;
@@ -2439,7 +2447,7 @@
         if (!u || !anchorEl) return;
         clearTimeout(_fieldLpTimer);
         _fieldLpTimer = setTimeout(() => {
-          SkillTip.showSticky(anchorEl, generateHeroInfoHtml(u));
+          window.HFTooltip?.showSticky(anchorEl, window.HFTooltip.heroInfoHtml(u));
         }, 500);
       };
       window.fieldTouchEnd = function () { clearTimeout(_fieldLpTimer); };
@@ -2454,237 +2462,14 @@
       }
 
       // ═══════════════════════════════════════════════════
-      //  SKILL DESCRIPTIONS & TOOLTIP SYSTEM
+      //  SKILL TOOLTIP (extracted to /js/skill-tooltip.js)
       // ═══════════════════════════════════════════════════
+      // The tooltip module lives in its own file now (window.HFTooltip).
+      // HFTooltip.init({ getC: () => C }) is called from initGame() once
+      // C/CK have been populated. Call sites in this file use the public
+      // API: HFTooltip.show / showSticky / hide / heroInfoHtml /
+      // skillTooltipHtml / skillTooltipText.
 
-      const SKILL_DESCRIPTIONS = {
-        iron_defense: {
-          name: "Iron Defense",
-          desc: "Reduces damage taken.",
-          format: (skillPower, level) => {
-            const reduction = Math.floor(skillPower * 100);
-            return `Reduces ${reduction}% of the damage received`;
-          },
-        },
-        fireball: {
-          name: "Fireball",
-          desc: "Full damage to the target tile. Splash damage to tiles in a + shape around it.",
-          format: (skillPower, level, atk) => {
-            const splashDmg = Math.floor(atk * skillPower);
-            return `Full damage: ${atk}. Splash damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
-          },
-        },
-        precise_shot: {
-          name: "Precise Shot",
-          desc: "Increases the chance of landing a critical hit.",
-          format: (skillPower, level) => {
-            const critChanceBonus = Math.floor(skillPower * 100);
-            return `+${critChanceBonus}% critical chance`;
-          },
-        },
-        healing: {
-          name: "Healing",
-          desc: "Heals the ally with lowest HP.",
-          format: (skillPower, level, atk) => {
-            const healAmount = Math.floor(atk * skillPower);
-            return `Heals the most injured ally for ${healAmount} HP (${Math.floor(skillPower * 100)}% of ATK)`;
-          },
-        },
-        sneak_strike: {
-          name: "Sneak Strike",
-          desc: "At battle start, performs a sneak attack on lowest-HP enemy.",
-          format: (skillPower, level, atk) => {
-            const sneakDmg = Math.floor(atk * skillPower);
-            return `Sneak attack damage: ${sneakDmg} (${Math.floor(skillPower * 100)}% of ATK)`;
-          },
-        },
-        sacred_aura: {
-          name: "Sacred Aura",
-          desc: "At battle start, grants adjacent allies, max HP bonus. Buff persists even paladin dies.",
-          format: (skillPower, level) => {
-            return `Adjacent allies gain +${Math.floor(skillPower * 100)}% max HP bonus`;
-          },
-        },
-        chain_lightning: {
-          name: "Chain Lightning",
-          desc: "Horizontal line attack. Full damage on first target. Subsequent targets receive reduced damage.",
-          format: (skillPower, level, atk) => {
-            const dmg1 = atk;
-            const dmg2 = Math.floor(atk * skillPower);
-            const dmg3 = Math.floor((atk * skillPower) / 2);
-            return `1º target: ${dmg1}<br>
-                    2º target: ${dmg2} (${Math.floor(skillPower * 100)}%)<br>
-                    3º target: ${dmg3} (${Math.floor(skillPower * 50)}%)`;
-          },
-        },
-        fury: {
-          name: "Fury",
-          desc: "When HP drops below 60%, permanently gain bonus attack for the rest of the battle.",
-          format: (skillPower, level) => {
-            const atkBonus = Math.floor(skillPower * 100);
-            return `When HP below 60%: +${atkBonus}% permanent ATK`;
-          },
-        },
-      };
-
-      // Função para gerar o tooltip
-      function generateSkillTooltip(unit) {
-        const skillKey = C[unit.cid]?.abi?.key;
-        if (!skillKey || !SKILL_DESCRIPTIONS[skillKey]) {
-          return `${C[unit.cid]?.abi?.name || "Skill"}: No description`;
-        }
-
-        const skillInfo = SKILL_DESCRIPTIONS[skillKey];
-        const skillPower = unit.skillPower || 0;
-        const atk = unit.atk || 0;
-        const maxHp = unit.maxHp || 0;
-        const level = unit.lv || 1;
-
-        const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
-
-        // ✅ Retorna APENAS TEXTO, não HTML
-        return `${skillInfo.name}\n${skillInfo.desc}\n\n${calculatedValue}`;
-      }
-
-      // ── Skill Tooltip Rico ──────────────────────────────────
-      function generateSkillTooltipHtml(unit) {
-        const cc = C[unit.cid];
-        const skillKey = cc?.abi?.key;
-        const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
-        const icon = cc?.abi?.ico || "✨";
-        const name = cc?.abi?.name || "Skill";
-
-        if (!skillInfo) {
-          return `<div class="stp-header"><span class="stp-icon">${icon}</span><span class="stp-name">${name}</span></div>`;
-        }
-
-        const skillPower = unit.skillPower || 0;
-        const atk = unit.atk || 0;
-        const maxHp = unit.maxHp || 0;
-        const level = unit.lv || 1;
-        const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
-
-        return `
-                <div class="stp-header">
-                  <span class="stp-icon">${icon}</span>
-                  <span class="stp-name">${skillInfo.name}</span>
-                </div>
-                <div class="stp-divider"></div>
-                <div class="stp-desc">${skillInfo.desc}</div>
-                <div class="stp-power">
-                  <span class="stp-power-label">Current Effect</span>
-                  <span class="stp-power-value">${calculatedValue}</span>
-                </div>`;
-      }
-
-      function generateHeroInfoHtml(u) {
-        const cc = C[u.cid];
-        const st = cc?.levels?.[u.lv];
-        const skillKey = cc?.abi?.key;
-        const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
-        const abiIco = cc?.abi?.ico || "✨";
-        const abiName = cc?.abi?.name || "Skill";
-
-        const hp = st?.max_hp ?? "—";
-        const atk = st?.atk ?? "—";
-        const spd =
-          st?.atk_speed != null ? Number(st.atk_speed).toFixed(2) : "—";
-
-        let skillSection = "";
-        if (skillInfo) {
-          const sp = u.skillPower ?? 0;
-          const av = u.atk ?? 0;
-          const mhp = u.maxHp ?? u.hp ?? 0;
-          const lv = u.lv || 1;
-          const calc = skillInfo.format(sp, lv, av, mhp);
-          skillSection = `<div class="stp-divider"></div>
-            <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>
-            <div class="stp-desc">${skillInfo.desc}</div>
-            <div class="stp-power"><span class="stp-power-label">Effect</span><span class="stp-power-value">${calc}</span></div>`;
-        } else {
-          skillSection = `<div class="stp-divider"></div>
-            <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>`;
-        }
-
-        const heroClass = u.cid
-          ? u.cid.charAt(0).toUpperCase() + u.cid.slice(1)
-          : "";
-        const roleLabel = [heroClass, cc.role || ""]
-          .filter(Boolean)
-          .join(" · ");
-
-        return `<div class="stp-hero-header">
-          <span class="stp-hero-ico">${u.ico}</span>
-          <div><div class="stp-hero-name">${cc.name}</div><div class="stp-hero-role">${roleLabel}</div></div>
-        </div>
-        <div class="stp-divider"></div>
-        <div class="stp-stats">
-          <div class="stp-stat"><span class="stp-stat-v">${hp}</span><span class="stp-stat-l">HP</span></div>
-          <div class="stp-stat"><span class="stp-stat-v">${atk}</span><span class="stp-stat-l">ATK</span></div>
-          <div class="stp-stat"><span class="stp-stat-v">${spd}</span><span class="stp-stat-l">SPD</span></div>
-        </div>${skillSection}`;
-      }
-
-      const SkillTip = (() => {
-        let el = null;
-        let hideTimer = null;
-
-        function getEl() {
-          if (!el) {
-            el = document.createElement("div");
-            el.className = "skill-tip";
-            document.body.appendChild(el);
-          }
-          return el;
-        }
-
-        function show(anchor, html) {
-          clearTimeout(hideTimer);
-          const tip = getEl();
-          tip.innerHTML = html;
-          tip.classList.remove("stp-visible");
-
-          const tipW = 234;
-          const rect = anchor.getBoundingClientRect();
-          let left = rect.left + rect.width / 2 - tipW / 2;
-          left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
-          tip.style.left = left + "px";
-          tip.style.top = "-9999px";
-
-          requestAnimationFrame(() => {
-            const tipH = tip.offsetHeight;
-            let top = rect.top - tipH - 10;
-            if (top < 8) top = rect.bottom + 10;
-            tip.style.top = top + "px";
-            requestAnimationFrame(() => tip.classList.add("stp-visible"));
-          });
-        }
-
-        function showSticky(anchor, html) {
-          show(anchor, html);
-          setTimeout(() => {
-            function dismiss(e) {
-              const tip = getEl();
-              if (!tip.contains(e.target)) {
-                hide();
-                document.removeEventListener("touchstart", dismiss);
-                document.removeEventListener("click", dismiss);
-              }
-            }
-            document.addEventListener("touchstart", dismiss, { passive: true });
-            document.addEventListener("click", dismiss);
-          }, 150);
-        }
-
-        function hide() {
-          clearTimeout(hideTimer);
-          hideTimer = setTimeout(() => {
-            if (el) el.classList.remove("stp-visible");
-          }, 80);
-        }
-
-        return { show, showSticky, hide };
-      })();
 
       // Phase 3 of #16, second slice: shop is React-rendered.
       // Build a render shape (each card's targetLeft, all visual flags) and
@@ -2774,9 +2559,9 @@
       };
       window.shopInfoShow = function (uid, anchorEl) {
         const u = G.shop.find((x) => x && x.id === uid);
-        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
       };
-      window.shopInfoHide = function () { SkillTip.hide(); };
+      window.shopInfoHide = function () { window.HFTooltip?.hide(); };
 
       // Phase 3 of #16, first slice: bench is React-rendered.
       // Build a pure render shape and dispatch — BattlePage owns the DOM.
@@ -2844,9 +2629,9 @@
       };
       window.benchInfoShow = function (cid, anchorEl) {
         const u = G.bench.find((x) => x && x.cid === cid);
-        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
       };
-      window.benchInfoHide = function () { SkillTip.hide(); };
+      window.benchInfoHide = function () { window.HFTooltip?.hide(); };
 
       // ✅ FUNÇÃO AUXILIAR para escapar HTML no tooltip
       function escapeHtml(text) {

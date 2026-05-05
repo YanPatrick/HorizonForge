@@ -403,17 +403,21 @@ export default function BattlePage() {
       })
     }
 
-    // bot-ai.js exposes window.HFBot and must be present before battle.js's
-    // _bootBattle fires (which is right after battle.js evaluates). Serialize
-    // the order: simulate (module) → bot-ai → battle. socket.io and mobile.js
-    // can load in parallel — battle.js doesn't touch them at top-level.
+    // bot-ai.js exposes window.HFBot and skill-tooltip.js exposes
+    // window.HFTooltip — both must be present before battle.js's
+    // _bootBattle fires (which is right after battle.js evaluates).
+    // Serialize: simulate (module) → bot-ai + skill-tooltip → battle.
+    // socket.io and mobile.js load in parallel.
     //
     // setScriptsReady fires after battle.js's onload — by that point its
     // _bootBattle has run synchronously, so dispatched globals like
     // window.startBattle / window.toggleBattleSpeed / window.setMobileStep
     // are guaranteed to be registered.
     addScript('/shared/simulate.js', { type: 'module' })
-      .then(() => addScript('/js/bot-ai.js'))
+      .then(() => Promise.all([
+        addScript('/js/bot-ai.js'),
+        addScript('/js/skill-tooltip.js'),
+      ]))
       .then(() => Promise.all([
         addScript('/socket.io/socket.io.js'),
         addScript('/js/battle.js'),
