@@ -102,6 +102,16 @@ export default function BattlePage() {
     dropMode: false,       // any selection active → highlight empty cells with .dr
   })
 
+  // ── Mobile orchestration — Phase 4 of #16
+  // Single mutually-exclusive state for the mobile panel layer. Only one
+  // can be visible at a time: a gameplay panel ('recruit'/'barracks'),
+  // the log overlay ('log'), the menu ('menu'), or none (null).
+  // battle.js's setMobileStep / togglePanel / toggleMobileMenu wrappers
+  // dispatch via window.setMobileView; React drives every visibility
+  // class. Replaces a tangle of classList toggles across 5 elements.
+  const [mobileView, setMobileView] = useState(null)
+  const [fsBtnText, setFsBtnText] = useState('Enter Fullscreen')
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -166,6 +176,11 @@ export default function BattlePage() {
       fieldSel:    state?.fieldSel === undefined ? prev.fieldSel : state.fieldSel,
       dropMode:    state?.dropMode    ?? prev.dropMode,
     }))
+    // Mobile view — single mutually-exclusive value. battle.js's
+    // setMobileStep / togglePanel / toggleMobileMenu wrappers compute
+    // the next view (toggle behavior, etc.) and dispatch the result.
+    window.setMobileView         = (view) => setMobileView(view ?? null)
+    window.setFullscreenBtnText  = (txt) => setFsBtnText(txt || 'Enter Fullscreen')
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -183,6 +198,8 @@ export default function BattlePage() {
       delete window.setBenchState
       delete window.setShopState
       delete window.setFieldState
+      delete window.setMobileView
+      delete window.setFullscreenBtnText
     }
   }, [closeQuit, confirmQuit])
 
@@ -449,7 +466,7 @@ export default function BattlePage() {
         {/* ══ BOTTOM ZONE ══ */}
         <div id="bottom-zone">
           {/* LEFT: Barracks */}
-          <div id="benchwrap" className={bench.count > 0 ? 'expanded' : ''}>
+          <div id="benchwrap" className={`${bench.count > 0 ? 'expanded' : ''}${mobileView === 'barracks' ? ' mobile-open' : ''}`.trim()}>
             <div className="sec-hdr">
               <span className="sec-title barracks-title">Barracks</span>
               <span className="sec-title bcount-lbl" id="bcount">
@@ -525,7 +542,7 @@ export default function BattlePage() {
           </div>
 
           {/* RIGHT: Recruitment */}
-          <div id="shopwrap">
+          <div id="shopwrap" className={mobileView === 'recruit' ? 'mobile-open' : ''}>
             <div className="sec-hdr">
               <span className="sec-title recruit-title">
                 Recruitment <span className="sb sg" id="h-gold">{`💰 ${shop.gold}`}</span>
@@ -606,14 +623,14 @@ export default function BattlePage() {
       </div>
 
       {/* ══ MOBILE LOG OVERLAY ══ */}
-      <div id="mobile-log-overlay">
+      <div id="mobile-log-overlay" className={mobileView === 'log' ? 'open' : ''}>
         <div className="mob-log-handle" onClick={() => window.togglePanel?.('log')}></div>
         <div className="mob-log-title">Battle Log</div>
         <div id="mobile-log-entries"></div>
       </div>
 
       {/* ══ MOBILE MENU PANEL ══ */}
-      <div id="mobile-menu-overlay">
+      <div id="mobile-menu-overlay" className={mobileView === 'menu' ? 'open' : ''}>
         <div className="mob-log-handle" onClick={() => window.toggleMobileMenu?.()}></div>
         <div className="mmp-title">Menu</div>
 
@@ -632,7 +649,7 @@ export default function BattlePage() {
           id="mmp-fs-btn"
           onClick={() => window.toggleFullscreen?.()}
         >
-          Enter Fullscreen
+          {fsBtnText}
         </button>
 
         <button
@@ -648,19 +665,27 @@ export default function BattlePage() {
 
       {/* ══ MOBILE ACTION BAR ══ */}
       <div className="mobile-actions">
-        <button type="button" data-step="recruit" onClick={() => window.setMobileStep?.('recruit')}>
+        <button type="button" data-step="recruit"
+                className={mobileView === 'recruit' ? 'ms-active' : ''}
+                onClick={() => window.setMobileStep?.('recruit')}>
           🛍️<span>Recruit</span>
         </button>
-        <button type="button" data-step="barracks" onClick={() => window.setMobileStep?.('barracks')}>
+        <button type="button" data-step="barracks"
+                className={mobileView === 'barracks' ? 'ms-active' : ''}
+                onClick={() => window.setMobileStep?.('barracks')}>
           🏕️<span>Barracks</span>
         </button>
         <div className="mab-center">
           <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>⚔️</button>
         </div>
-        <button type="button" data-step="log" onClick={() => window.togglePanel?.('log')}>
+        <button type="button" data-step="log"
+                className={mobileView === 'log' ? 'ms-active' : ''}
+                onClick={() => window.togglePanel?.('log')}>
           📜<span>Log</span>
         </button>
-        <button type="button" data-step="menu" onClick={() => window.toggleMobileMenu?.()}>
+        <button type="button" data-step="menu"
+                className={mobileView === 'menu' ? 'ms-active' : ''}
+                onClick={() => window.toggleMobileMenu?.()}>
           ⚙️<span>Menu</span>
         </button>
       </div>

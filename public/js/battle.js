@@ -2963,82 +2963,68 @@
       }
 
       // ── Mobile phase navigation ──
+      // Phase 4 of #16: mobile panel visibility is React-driven. This module
+      // keeps a `_mobileView` mirror of the React state for callers that need
+      // to read it (e.g. _mobilePhaseSync below). All panel-visibility class
+      // toggling on shopwrap/benchwrap/overlays/nav-buttons is gone — JSX
+      // computes those classes from the same state value.
+      let _mobileView = null;
+      // Backwards-compat alias for old code that read `_mobileStep`.
       let _mobileStep = null;
 
+      function _setMobileView(next) {
+        _mobileView = next;
+        _mobileStep = next === "recruit" || next === "barracks" ? next : null;
+        window.setMobileView?.(next);
+      }
+
       function setMobileStep(step) {
-        if (step === _mobileStep) step = null;
-        _mobileStep = step;
-        document.getElementById("shopwrap")?.classList.remove("mobile-open");
-        document.getElementById("benchwrap")?.classList.remove("mobile-open");
-        document.getElementById("mobile-log-overlay")?.classList.remove("open");
-        document.getElementById("mobile-menu-overlay")?.classList.remove("open");
-        if (step === "recruit") document.getElementById("shopwrap")?.classList.add("mobile-open");
-        else if (step === "barracks") document.getElementById("benchwrap")?.classList.add("mobile-open");
-        document.querySelectorAll(".mobile-actions button[data-step]").forEach((btn) => {
-          btn.classList.toggle("ms-active", btn.dataset.step === step && step !== null);
-        });
+        // Toggle: clicking the active step closes it.
+        const next = step === _mobileView ? null : step;
+        _setMobileView(next);
       }
       window.setMobileStep = setMobileStep;
 
+      // Copy entries from #log into #mobile-log-entries when the mobile log
+      // panel opens. The log itself is still imperatively populated by
+      // battle.js's log() function — this is a one-shot snapshot per open.
+      function _syncLogToMobile() {
+        const src = document.getElementById("log");
+        const dest = document.getElementById("mobile-log-entries");
+        if (!src || !dest) return;
+        dest.innerHTML = "";
+        Array.from(src.children).forEach((el) => {
+          if (el.innerHTML.trim() === "&nbsp;" || el.innerHTML.trim() === "") return;
+          dest.appendChild(el.cloneNode(true));
+        });
+        requestAnimationFrame(() => { dest.scrollTop = dest.scrollHeight; });
+      }
+
       function togglePanel(type) {
         if (type !== "log") return;
-        const overlay = document.getElementById("mobile-log-overlay");
-        if (!overlay) return;
-        const opening = !overlay.classList.contains("open");
-        if (opening) {
-          // Fechar outros painéis
-          document.getElementById("shopwrap")?.classList.remove("mobile-open");
-          document.getElementById("benchwrap")?.classList.remove("mobile-open");
-          document.getElementById("mobile-menu-overlay")?.classList.remove("open");
-          _mobileStep = null;
-          document.querySelectorAll(".mobile-actions button[data-step]")
-            .forEach(b => b.classList.remove("ms-active"));
-          // Sincronizar histórico completo do log, ignorando spacers (div.le vazios)
-          const src = document.getElementById("log");
-          const dest = document.getElementById("mobile-log-entries");
-          if (src && dest) {
-            dest.innerHTML = "";
-            Array.from(src.children).forEach(el => {
-              if (el.innerHTML.trim() === "&nbsp;" || el.innerHTML.trim() === "") return;
-              dest.appendChild(el.cloneNode(true));
-            });
-            requestAnimationFrame(() => { dest.scrollTop = dest.scrollHeight; });
-          }
-        }
-        overlay.classList.toggle("open");
-        const logBtn = document.querySelector('.mobile-actions button[data-step="log"]');
-        if (logBtn) logBtn.classList.toggle("ms-active", overlay.classList.contains("open"));
+        const next = _mobileView === "log" ? null : "log";
+        if (next === "log") _syncLogToMobile();
+        _setMobileView(next);
       }
       window.togglePanel = togglePanel;
 
       function toggleMobileMenu() {
-        const overlay = document.getElementById("mobile-menu-overlay");
-        if (!overlay) return;
-        const opening = !overlay.classList.contains("open");
-        if (opening) {
-          // Fechar outros painéis
-          document.getElementById("shopwrap")?.classList.remove("mobile-open");
-          document.getElementById("benchwrap")?.classList.remove("mobile-open");
-          document.getElementById("mobile-log-overlay")?.classList.remove("open");
-          _mobileStep = null;
-          document.querySelectorAll('.mobile-actions button[data-step]:not([data-step="menu"])')
-            .forEach(b => b.classList.remove("ms-active"));
-          const fsBtn = document.getElementById("mmp-fs-btn");
-          if (fsBtn) fsBtn.textContent = document.fullscreenElement ? "Exit Fullscreen" : "Enter Fullscreen";
+        const next = _mobileView === "menu" ? null : "menu";
+        if (next === "menu") {
+          // Update the fullscreen button label based on current FS state.
+          window.setFullscreenBtnText?.(
+            document.fullscreenElement || document.webkitFullscreenElement
+              ? "Exit Fullscreen"
+              : "Enter Fullscreen"
+          );
         }
-        overlay.classList.toggle("open");
-        const menuBtn = document.querySelector('.mobile-actions button[data-step="menu"]');
-        if (menuBtn) menuBtn.classList.toggle("ms-active", overlay.classList.contains("open"));
+        _setMobileView(next);
       }
       function openMobileMenu() {
-        const overlay = document.getElementById("mobile-menu-overlay");
-        if (overlay && !overlay.classList.contains("open")) toggleMobileMenu();
+        if (_mobileView !== "menu") toggleMobileMenu();
       }
       function closeMobileMenu() {
-        const overlay = document.getElementById("mobile-menu-overlay");
-        if (!overlay) return;
-        overlay.classList.remove("open");
-        document.querySelector('.mobile-actions button[data-step="menu"]')?.classList.remove("ms-active");
+        if (_mobileView === "menu") _setMobileView(null);
       }
       // window.openHowTo is registered by BattlePage.jsx (Phase 1 of #16);
       // the local openHowTo definition that used to live here was a
@@ -3119,24 +3105,21 @@
           if (!window.matchMedia("(max-width: 768px)").matches &&
               !window.matchMedia("(pointer: coarse)").matches) return;
 
-          // Transição para combat: fecha painéis
+          // Transição para combat: fecha painéis (close any open mobile panel)
           if (phase === "combat" && _lastPhase !== "combat") {
-            document.getElementById("shopwrap")?.classList.remove("mobile-open");
-            document.getElementById("benchwrap")?.classList.remove("mobile-open");
+            if (_mobileView === "recruit" || _mobileView === "barracks") {
+              _setMobileView(null);
+            }
           }
           // Transição para shop (nova rodada): sempre abre recruit.
-          // Zera _mobileStep antes de chamar setMobileStep para evitar que o
-          // comportamento de toggle feche o painel caso já estivesse em "recruit".
+          // Force open by clearing first so setMobileStep's toggle doesn't
+          // close it if it happened to already be "recruit".
           if (phase === "shop" && _lastPhase !== "shop") {
-            _mobileStep = null;
+            _setMobileView(null);
             setMobileStep("recruit");
           }
           // Auto-avança para barracks quando não tem mais ação de compra possível.
-          // Usa cardCost(c.cid) porque mkUnit() não popula c.cost nos cards da loja.
-          // canReroll usa ">" (não ">=") para garantir que após pagar o reroll ainda
-          // sobre gold suficiente para comprar algo — com gold == value_new_recruitment
-          // o jogador ficaria com 0 gold após reroll e ainda sem conseguir comprar nada.
-          if (phase === "shop" && _mobileStep === "recruit") {
+          if (phase === "shop" && _mobileView === "recruit") {
             const gold = G.gold;
             const shop = G.shop ?? [];
             const canBuy = shop.some((c) => {
