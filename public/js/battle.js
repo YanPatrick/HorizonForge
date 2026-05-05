@@ -215,6 +215,24 @@
             };
           }
           CK = Object.keys(C);
+
+          // Inject deps into the bot module now that C/CK/HF are populated.
+          // HFBot.* methods will throw if called before this point.
+          if (window.HFBot && typeof window.HFBot.init === "function") {
+            window.HFBot.init({
+              get C() { return C; },
+              get CK() { return CK; },
+              mkUnit,
+              upgradeUnit,
+              randCid,
+              START_GOLD,
+              BENCH_SLOTS,
+              getHF: () => HF,
+            });
+          } else {
+            console.warn("[battle] HFBot module not loaded — AI mode unavailable");
+          }
+
           hideLoader();
           if (window._HF_BATTLE_CFG) {
             const _cfg = window._HF_BATTLE_CFG;
@@ -737,634 +755,31 @@
       }
 
       // ═══════════════════════════════════════════════════
-      //  BOT AI SYSTEM
+      //  BOT AI SYSTEM (extracted to /js/bot-ai.js)
       // ═══════════════════════════════════════════════════
-      // difficulty: "easy" | "medium" | "hard"
-      const BOT_DIFFICULTY = "hard";
-      const BOT_CFG_TABLE = {
-        easy: {
-          mergeWeight: 0.7,
-          adaptRate: 0.4,
-          mistakeRate: 0.22,
-          maxRerolls: 1,
-        },
-        medium: {
-          mergeWeight: 0.88,
-          adaptRate: 0.7,
-          mistakeRate: 0.08,
-          maxRerolls: 2,
-        },
-        hard: {
-          mergeWeight: 1.1,
-          adaptRate: 1.0,
-          mistakeRate: 0.0,
-          maxRerolls: 4,
-        },
-      };
-      const BOT_CFG = { label: "🤖 AI", ...BOT_CFG_TABLE[BOT_DIFFICULTY] };
-      const FRONT_SLOTS = [2, 5, 8, 1, 4, 7],
-        MID_SLOTS = [1, 4, 7],
-        BACK_SLOTS = [0, 3, 6];
-      const ROLE_SLOT = {
-        Tank: FRONT_SLOTS,
-        Paladin: FRONT_SLOTS,
-        Assassin: MID_SLOTS,
-        Support: MID_SLOTS,
-        Mage: BACK_SLOTS,
-        Archmage: BACK_SLOTS,
-        Shooter: BACK_SLOTS,
-      };
-      // Bot uses inverted columns: col 0 = closest to player (bot's front), col 2 = bot's back
-      const BOT_ROLE_SLOT = {
-        Tank: BACK_SLOTS,
-        Paladin: BACK_SLOTS,
-        Assassin: MID_SLOTS,
-        Support: MID_SLOTS,
-        Mage: FRONT_SLOTS,
-        Archmage: FRONT_SLOTS,
-        Shooter: FRONT_SLOTS,
-      };
-      const UNIT_SCORE = {
-        knight: 6,
-        paladin: 7,
-        barbarian: 6,
-        healer: 8,
-        assassin: 9,
-        archer: 7,
-        mage: 8,
-        archmage: 10,
-      };
-      const LM = [0, 1.0, 1.3, 1.6, 1.9, 2.2];
+      // The bot lives in its own module now (window.HFBot). HFBot.init()
+      // is called from initGame() once the API has populated C/CK/HF.
 
-      let BOT = {
-        gold: 7,
-        bench: [],
-        board: Array(9).fill(null),
-        shop: [],
-        lastResult: null,
-        battleNum: 1,
-        threatMap: {},
-      };
 
-      function botCardCost(cid) {
-        return BOT.bench.some((u) => u.cid === cid) ||
-          BOT.board.some((u) => u && u.cid === cid)
-          ? 2
-          : 3;
-      }
-      function botApplyMerge(u) {
-        while (u.stack >= 3 && u.lv < 5) {
-          u.stack = u.stack - 3;
-          u.lv++;
-          upgradeUnit(u);
-        }
-        if (u.stack > 3) u.stack = 3;
-        return u;
-      }
-      function botGenShop() {
-        BOT.shop = Array.from({ length: 5 }, () => mkUnit(randCid(), 1));
-      }
-
-      function botScoreCard(cid) {
-        let score = UNIT_SCORE[cid] || 5;
-        const owned =
-          BOT.bench.find((u) => u.cid === cid) ||
-          BOT.board.find((u) => u && u.cid === cid);
-        if (owned) {
-          score += BOT_CFG.mergeWeight * 8;
-          if (owned.stack === 2) score += 7;
-        }
-        if (Math.random() < BOT_CFG.mistakeRate) score += rnd(6) - 3;
-        const topThreats = Object.keys(BOT.threatMap)
-          .sort((a, b) => BOT.threatMap[b] - BOT.threatMap[a])
-          .slice(0, 2);
-        topThreats.forEach((threat) => {
-          const w = BOT_CFG.adaptRate;
-          if (threat === "assassin" && (cid === "knight" || cid === "paladin"))
-            score += w * 5;
-          if (
-            threat === "archmage" &&
-            (cid === "knight" || cid === "barbarian")
-          )
-            score += w * 4;
-          if (threat === "mage" && cid === "assassin") score += w * 4;
-          if (threat === "archer" && (cid === "knight" || cid === "healer"))
-            score += w * 3;
-          if (threat === "barbarian" && cid === "assassin") score += w * 3;
-          if (threat === "healer" && cid === "archmage") score += w * 4;
-        });
-        return score;
-      }
-
-      function botBuyPhase() {
-        const REROLL_COST = HF.value_new_recruitment;
-        // Bot collection cap: double the player bench — lets it accumulate units across rounds
-        // without hitting a hard wall. botPosition always picks the best N for the board.
-        const COLLECTION_MAX = BENCH_SLOTS() * 2;
-
-        function buyBest() {
-          if (BOT.bench.length >= COLLECTION_MAX) return false;
-          const candidates = BOT.shop
-            .map((card, i) =>
-              card
-                ? {
-                    i,
-                    cid: card.cid,
-                    cost: botCardCost(card.cid),
-                    score: botScoreCard(card.cid),
-                  }
-                : null,
-            )
-            .filter((c) => c && BOT.gold >= c.cost)
-            .sort((a, b) => b.score - a.score);
-          if (!candidates.length) return false;
-
-          const pick = candidates[0];
-          BOT.gold -= pick.cost;
-          BOT.shop[pick.i] = null;
-          const existing = BOT.bench.find((u) => u.cid === pick.cid);
-          if (existing) {
-            existing.stack++;
-            botApplyMerge(existing);
-          } else {
-            const nu = mkUnit(pick.cid, 1);
-            nu.stack = 1;
-            BOT.bench.push(nu);
-          }
-          return true;
-        }
-
-        // 1. Buy everything affordable from current shop
-        while (buyBest()) {}
-
-        // 2. Reroll if we still have room and gold — but not if there are merge targets waiting
-        let rerolls = 0;
-        while (
-          rerolls < BOT_CFG.maxRerolls &&
-          BOT.gold >= REROLL_COST + 2 &&
-          BOT.bench.length < COLLECTION_MAX
-        ) {
-          const hasMerge = BOT.shop.some(
-            (s) => s && BOT.bench.some((u) => u.cid === s.cid),
-          );
-          if (hasMerge) break; // finish buying merge targets first
-          BOT.gold -= REROLL_COST;
-          botGenShop();
-          rerolls++;
-          while (buyBest()) {}
-        }
-      }
-
-      function botPosition() {
-        BOT.board = Array(9).fill(null);
-        const maxSlots = Math.min(3 + G.duelNum, 9);
-        const pool = [...BOT.bench].sort(
-          (a, b) =>
-            (UNIT_SCORE[b.cid] || 5) * LM[b.lv] -
-            (UNIT_SCORE[a.cid] || 5) * LM[a.lv],
-        );
-        const used = new Set();
-        const place = (u, preferred) => {
-          for (const s of preferred) {
-            if (!BOT.board[s]) {
-              BOT.board[s] = { ...u };
-              used.add(u.cid);
-              return true;
-            }
-          }
-          for (let s = 0; s < 9; s++) {
-            if (!BOT.board[s]) {
-              BOT.board[s] = { ...u };
-              used.add(u.cid);
-              return true;
-            }
-          }
-          return false;
-        };
-        let placed = 0;
-        for (const u of pool) {
-          if (placed >= maxSlots) break;
-          if (place(u, BOT_ROLE_SLOT[C[u.cid].role] || MID_SLOTS)) placed++;
-        }
-        BOT.bench = BOT.bench.filter((u) => !used.has(u.cid));
-      }
-
-      function botNextBattle(playerWon) {
-        BOT.lastResult = playerWon ? "loss" : "win";
-        BOT.battleNum++;
-        const inc = 1 + G.battleNum; // same formula as player, no win bonus
-        BOT.gold += inc;
-        BOT.board.forEach((u) => {
-          if (!u) return;
-          const ex = BOT.bench.find((b) => b.cid === u.cid);
-          if (ex) {
-            ex.stack = ex.stack + u.stack;
-            botApplyMerge(ex);
-          } else if (BOT.bench.length < BENCH_SLOTS()) BOT.bench.push({ ...u });
-        });
-        BOT.board = Array(9).fill(null);
-      }
-
-      function botLearnFromBattle(evs, umap) {
-        evs
-          .filter((e) => e.type === "atk" || e.type === "kill")
-          .forEach((ev) => {
-            const attacker = umap[ev.uid];
-            if (!attacker || attacker.side !== "p") return;
-            BOT.threatMap[attacker.cid] =
-              (BOT.threatMap[attacker.cid] || 0) + ev.amt;
-          });
-      }
-
-      function botRunTurn() {
-        botGenShop();
-        botBuyPhase();
-        botPosition();
-      }
-
-      function botInitDuel() {
-        BOT.gold = START_GOLD();
-        BOT.bench = [];
-        BOT.board = Array(9).fill(null);
-        BOT.shop = [];
-        BOT.lastResult = null;
-        BOT.battleNum = 1;
-        BOT.threatMap = {};
-        botRunTurn();
-      }
-
-      // ═══════════════════════════════════════════════════
-      //  SIMULATION
-      // ═══════════════════════════════════════════════════
+      // ───────────────────────────────────────────────────
+      //  SIMULATION (shim → shared/simulate.js)
+      // ───────────────────────────────────────────────────
+      // The local copy of simulate() previously lived here (~370 lines)
+      // and was kept in sync by hand with shared/simulate.js. Bugs fixed
+      // in one copy frequently lagged the other, producing AI-vs-PvP
+      // parity drift. We now delegate to the same shared simulator the
+      // server uses — guaranteeing identical mechanics in both modes.
       function simulate(pb, eb) {
-        const ps = pb
-          .map((u, i) =>
-            u
-              ? { ...u, slot: i, side: "p", alive: true, enraged: false }
-              : null,
-          )
-          .filter(Boolean);
-        const es = eb
-          .map((u, i) =>
-            u
-              ? { ...u, slot: i, side: "e", alive: true, enraged: false }
-              : null,
-          )
-          .filter(Boolean);
-        const evs = [];
-        let tick = 0;
-        const foes = (s) =>
-          s === "p" ? es.filter((u) => u.alive) : ps.filter((u) => u.alive);
-        const alliesOf = (s) =>
-          s === "p" ? ps.filter((u) => u.alive) : es.filter((u) => u.alive);
-
-        function dealDmg(atk, tgt, d, isCrit = false) {
-          let dmg = d;
-          // Knight Iron Defense: clamp at 0 so a future skillPower > 1
-          // can't heal Knight on hit (kept in sync with shared/simulate.js).
-          if (tgt.cid === "knight")
-            dmg = Math.floor(dmg * Math.max(0, 1 - tgt.skillPower));
-          tgt.hp = Math.max(0, tgt.hp - dmg);
-          if (tgt.hp <= 0) {
-            tgt.alive = false;
-            evs.push({
-              type: "kill",
-              uid: atk.id,
-              tid: tgt.id,
-              amt: dmg,
-              isCrit,
-              tick,
-            });
-          } else
-            evs.push({
-              type: "atk",
-              uid: atk.id,
-              tid: tgt.id,
-              amt: dmg,
-              isCrit,
-              tick,
-            });
-        }
-
-        function applyStart(units) {
-          units.forEach((u) => {
-            if (u.cid !== "paladin") return;
-            const adj = adjacentSlots(u.slot);
-            const bonusMap = {};
-            units
-              .filter((a) => a.id !== u.id && adj.includes(a.slot))
-              .forEach((a) => {
-                const b = Math.floor(a.maxHp * u.skillPower);
-                a.maxHp += b;
-                a.hp += b;
-                bonusMap[a.id] = b;
-              });
-            evs.push({
-              type: "ability",
-              uid: u.id,
-              abilName: "Sacred Aura",
-              tick: -1,
-              auraBonus: bonusMap,
-            });
-          });
-        }
-
-        // Player Sacred Aura was already applied to G.board before simulate() was called;
-        // the ps copies inherit those boosted values, so we skip applyStart(ps) here.
-        applyStart(es);
-
-        // Sneak Strike: pick targets simultaneously on the pre-strike state,
-        // then apply damage in randomized order. Mirrors shared/simulate.js so
-        // PvP and AI behave identically.
-        (function applySneakStrikesFairly(sideA, sideB) {
-          const strikes = [];
-          const collect = (attackers, defenders) => {
-            attackers
-              .filter((u) => u.cid === "assassin")
-              .forEach((u) => {
-                const targets = defenders.filter((f) => f.alive);
-                if (!targets.length) return;
-                const t = [...targets].sort((a, b) => a.hp - b.hp)[0];
-                const dmg = Math.floor(u.atk * u.skillPower);
-                strikes.push({ u, t, dmg });
-              });
-          };
-          collect(sideA, sideB);
-          collect(sideB, sideA);
-          for (let i = strikes.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [strikes[i], strikes[j]] = [strikes[j], strikes[i]];
-          }
-          strikes.forEach(({ u, t, dmg }) => {
-            evs.push({
-              type: "ability",
-              uid: u.id,
-              targetId: t.id,
-              abilName: "Sneak Strike",
-              amount: dmg,
-              tick,
-            });
-            dealDmg(u, t, dmg, false);
-          });
-        })(ps, es);
-
-        function pickTarget(unit) {
-          const f = foes(unit.side);
-          if (!f.length) return null;
-
-          const isM = (u) => u.tp !== "ranged";
-          const unitRow = Math.floor(unit.slot / 3);
-
-          // "Front" of the target side depends on the attacker:
-          //   Player (side "p") attacks enemy: enemy col 0 is closest → ascending
-          //   Enemy  (side "e") attacks player: player col 2 is closest → descending
-          const colCmp =
-            unit.side === "p"
-              ? (a, b) => (a.slot % 3) - (b.slot % 3) // col 0 first (enemy front)
-              : (a, b) => (b.slot % 3) - (a.slot % 3); // col 2 first (player front)
-
-          const bestInRow = (row) => {
-            const units = f.filter((e) => Math.floor(e.slot / 3) === row);
-            if (!units.length) return null;
-            return units.slice().sort((a, b) => {
-              const cc = colCmp(a, b);
-              if (cc !== 0) return cc;
-              return isM(a) === isM(b) ? 0 : isM(a) ? -1 : 1;
-            })[0];
-          };
-
-          // Ordem de busca: linha própria → linhas adjacentes por proximidade.
-          // No mobile vertical (player embaixo, inimigo em cima) as linhas são espelhadas:
-          // pfield row 0 = frente do player (topo, perto do VS) ↔ efield row 2 = frente inimiga.
-          // Por isso invertemos o índice de busca com (2 - unitRow) quando mobileVertical.
-          const searchRow = window.mobileVertical ? 2 - unitRow : unitRow;
-          if (searchRow === 0) {
-            return bestInRow(0) || bestInRow(1) || bestInRow(2) || null;
-          }
-          if (searchRow === 2) {
-            return bestInRow(2) || bestInRow(1) || bestInRow(0) || null;
-          }
-          // Linha B: própria primeiro, depois A e C aleatório
-          const t = bestInRow(1);
-          if (t) return t;
-          const tA = bestInRow(0),
-            tC = bestInRow(2);
-          if (tA && tC) return Math.random() < 0.5 ? tA : tC;
-          return tA || tC || null;
-        }
-
-        const isMelee = (u) => u.tp !== "ranged";
-        function buildQueue() {
-          return [...ps, ...es]
-            .filter((u) => u.alive)
-            .sort((a, b) => {
-              if (Math.abs(b.spd - a.spd) > 0.001) return b.spd - a.spd;
-              if (isMelee(a) !== isMelee(b)) return isMelee(a) ? -1 : 1;
-              if (b.lv !== a.lv) return b.lv - a.lv;
-              return Math.random() - 0.5;
-            });
-        }
-        let queue = buildQueue();
-
-        function emitQueue() {
-          evs.push({
-            type: "queue",
-            order: queue.filter((u) => u.alive).map((u) => u.id),
-            tick,
-          });
-        }
-        emitQueue();
-
-        let safety = 2000;
-        while (safety-- > 0) {
-          const pa = ps.filter((u) => u.alive),
-            ea = es.filter((u) => u.alive);
-          if (!pa.length || !ea.length) break;
-          queue = queue.filter((u) => u.alive);
-          if (!queue.length) {
-            queue = buildQueue();
-            if (!queue.length) break;
-          }
-          emitQueue();
-          const unit = queue.shift();
-          if (!unit.alive) continue;
-
-          if (
-            unit.cid === "barbarian" &&
-            !unit.enraged &&
-            unit.hp < unit.maxHp * 0.6
-          ) {
-            unit.enraged = true;
-            unit.atk = Math.floor(unit.atk * (1 + unit.skillPower));
-            evs.push({ type: "ability", uid: unit.id, abilName: "Fury", tick });
-          }
-
-          if (unit.cid === "healer") {
-            const al = alliesOf(unit.side).filter(
-              (a) => a.id !== unit.id && a.alive && a.hp < a.maxHp,
-            );
-            if (al.length) {
-              const target = [...al].sort(
-                (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-              )[0];
-              const h = Math.floor(unit.atk * unit.skillPower);
-              target.hp = Math.min(target.maxHp, target.hp + h);
-              evs.push({
-                type: "heal",
-                uid: unit.id,
-                tid: target.id,
-                amt: h,
-                tick,
-              });
-              evs.push({
-                type: "ability",
-                uid: unit.id,
-                abilName: "Healing",
-                tick,
-                silent: true,
-              });
-            }
-            const et = pickTarget(unit);
-            if (et && et.alive) dealDmg(unit, et, unit.atk);
-          } else {
-            const t = pickTarget(unit);
-
-            if (t && t.alive) {
-              let dmg = unit.atk,
-                isCrit = false;
-
-              const effCC =
-                unit.critChance + (unit.cid === "archer" ? unit.skillPower : 0);
-              const effCR = unit.critRate;
-
-              if (Math.random() < effCC) {
-                isCrit = true;
-                dmg = Math.floor(dmg * effCR);
-              }
-
-              dealDmg(unit, t, dmg, isCrit);
-              if (unit.cid === "archer" && isCrit) {
-                evs.push({
-                  type: "ability",
-                  uid: unit.id,
-                  abilName: "Precise Shot",
-                  tick,
-                  silent: true,
-                });
-              }
-              if (unit.cid === "mage") {
-                const adj = adjacentSlots(t.slot);
-                const splash = foes(unit.side).filter(
-                  (f) => f.id !== t.id && f.alive && adj.includes(f.slot),
-                );
-                if (splash.length) {
-                  splash.forEach((f) =>
-                    dealDmg(unit, f, Math.floor(unit.atk * unit.skillPower)),
-                  );
-                  evs.push({
-                    type: "ability",
-                    uid: unit.id,
-                    abilName: "Fireball",
-                    tick,
-                    silent: true,
-                  });
-                }
-              }
-              if (unit.cid === "archmage") {
-                // Chain goes deeper into the TARGET's territory.
-                // Player (side "p") → higher col (col 0→1→2 into enemy back)
-                // Enemy  (side "e") → lower  col (col 2→1→0 into player back)
-                const targetRow = Math.floor(t.slot / 3);
-                const primaryCol = t.slot % 3;
-                const goDeeper =
-                  unit.side === "p"
-                    ? (f) => f.slot % 3 > primaryCol
-                    : (f) => f.slot % 3 < primaryCol;
-                const chain = foes(unit.side)
-                  .filter(
-                    (f) =>
-                      f.id !== t.id &&
-                      f.alive &&
-                      Math.floor(f.slot / 3) === targetRow &&
-                      goDeeper(f),
-                  )
-                  .sort(
-                    (a, b) =>
-                      unit.side === "p"
-                        ? (a.slot % 3) - (b.slot % 3) // ascending: next col toward back
-                        : (b.slot % 3) - (a.slot % 3), // descending: next col toward back
-                  );
-                if (chain.length > 0)
-                  dealDmg(
-                    unit,
-                    chain[0],
-                    Math.floor(unit.atk * unit.skillPower),
-                  );
-                if (chain.length > 1)
-                  dealDmg(
-                    unit,
-                    chain[1],
-                    Math.floor((unit.atk * unit.skillPower) / 2),
-                  );
-              }
-            }
-          }
-          if (unit.alive) queue.push(unit);
-          tick++;
-        }
-
-        const pa = ps.filter((u) => u.alive),
-          ea = es.filter((u) => u.alive);
-        let winner;
-        if (pa.length && !ea.length) winner = "p";
-        else if (ea.length && !pa.length) winner = "e";
-        else {
-          // Fair tiebreaker: more survivors → more total HP → coin flip.
-          // Kept in sync with shared/simulate.js.
-          if (pa.length !== ea.length) {
-            winner = pa.length > ea.length ? "p" : "e";
-          } else {
-            const ph = pa.reduce((s, u) => s + u.hp, 0),
-              eh = ea.reduce((s, u) => s + u.hp, 0);
-            if (ph !== eh) winner = ph > eh ? "p" : "e";
-            else winner = Math.random() < 0.5 ? "p" : "e";
-          }
-        }
-        let dmgP = 0,
-          dmgE = 0,
-          killsP = 0,
-          killsE = 0;
-        evs
-          .filter((e) => e.tick >= 0 && (e.type === "atk" || e.type === "kill"))
-          .forEach((e) => {
-            const u = [...ps, ...es].find((x) => x.id === e.uid);
-            if (!u) return;
-            if (u.side === "p") {
-              dmgP += e.amt;
-              if (e.type === "kill") killsP++;
-            } else {
-              dmgE += e.amt;
-              if (e.type === "kill") killsE++;
-            }
-          });
-        const umap = {};
-        [...ps, ...es].forEach((u) => (umap[u.id] = u));
-        return {
-          evs,
-          winner,
-          umap,
-          stats: {
-            dmgP,
-            dmgE,
-            killsP,
-            killsE,
-            survP: pa.length,
-            survE: ea.length,
-            boardSnap: [...ps],
-            enemySnap: [...es],
-          },
-        };
+        const res = window.HFSimulate.simulate(pb, eb);
+        // Legacy: the local sim returned final unit snapshots in stats
+        // for the duel-result UI. Derive them from umap to preserve the
+        // shape (PvP already does this fallback in endBattle).
+        const all = Object.values(res.umap);
+        res.stats.boardSnap = all.filter(u => u.side === 'p');
+        res.stats.enemySnap = all.filter(u => u.side === 'e');
+        return res;
       }
+
 
       // ═══════════════════════════════════════════════════
       //  PLAYBACK
@@ -1575,26 +990,9 @@
         G.fieldSel = null;
         G.fieldDrag = null;
 
-        // Apply Sacred Aura bonus to G.board units before render/simulate
-        // so the displayed HP and simulation base both use the boosted value.
-        // (simulate's applyStart only runs for enemy side now — no double-apply)
-        const _auraData = new Map(); // paladin_id → { ally_id: bonus }
-        for (let s = 0; s < 9; s++) {
-          const pal = G.board[s];
-          if (!pal || pal.cid !== "paladin") continue;
-          const bonusMap = {};
-          adjacentSlots(s).forEach((as) => {
-            const ally = G.board[as];
-            if (ally && ally.cid !== "paladin") {
-              const bonus = Math.floor(ally.maxHp * pal.skillPower);
-              ally.maxHp += bonus;
-              ally.hp += bonus;
-              bonusMap[ally.id] = bonus;
-            }
-          });
-          _auraData.set(pal.id, bonusMap);
-        }
-
+        // No pre-apply pass: shared/simulate.js applies Sacred Aura on both
+        // sides during simulation and emits the aura events the prep phase
+        // animates (same code path PvP already exercises).
         document.getElementById("log").innerHTML = "";
         log("⚔️ Battle begins!", "lr");
         setBanner(
@@ -1603,18 +1001,7 @@
         );
         render();
         const res = simulate(G.board, G.enemy);
-        botLearnFromBattle(res.evs, res.umap);
-        // Inject player-side Sacred Aura events so the prep phase can animate them
-        // (simulate only adds enemy-side Sacred Aura; player side was pre-applied)
-        _auraData.forEach((bonusMap, pid) => {
-          res.evs.unshift({
-            type: "ability",
-            uid: pid,
-            abilName: "Sacred Aura",
-            tick: -1,
-            auraBonus: bonusMap,
-          });
-        });
+        window.HFBot?.learnFromBattle(res.evs, res.umap);
         playback(res);
       }
 
@@ -2274,21 +1661,9 @@
       // ═══════════════════════════════════════════════════
       //  GAME FLOW
       // ═══════════════════════════════════════════════════
-      function openQuitModal() {
-        document.getElementById("quit-overlay").classList.add("open");
-      }
-
-      function closeQuitModal() {
-        document.getElementById("quit-overlay").classList.remove("open");
-      }
-
-      function confirmQuit() {
-        closeQuitModal();
-        if (window._PVP && window._PVP.socket) {
-          window._PVP.socket.disconnect();
-        }
-        window.location.href = "/lobby";
-      }
+      // Quit-modal state lives in BattlePage.jsx (Phase 1 of #16). The
+      // window.openQuitModal / closeQuitModal / confirmQuit shims registered
+      // there are now the single source of truth — nothing here.
 
       // ═══════════════════════════════════════════════════
       //  PvP MODE
@@ -2602,9 +1977,9 @@
         document.getElementById("h-fmt").textContent = `BO${fmt}`;
         document.getElementById("log").innerHTML = "";
         if (!pvpMode) {
-          botInitDuel();
+          window.HFBot.initDuel();
           validateGameState();
-          G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+          G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
         }
         genShop();
         render();
@@ -2654,9 +2029,9 @@
         G.fieldDrag = null;
         genShop();
         if (!window._PVP) {
-          botNextBattle(G.lastBattleResult === "win" ? "loss" : "win");
-          botRunTurn();
-          G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+          window.HFBot.nextBattle(G.lastBattleResult === "win" ? "loss" : "win");
+          window.HFBot.runTurn();
+          G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
         } else {
           // Hide opponent's board during shop phase — only revealed when battle starts.
           G.duelEnemy = Array(9).fill(null);
@@ -2742,8 +2117,8 @@
           mergesE: 0,
           battles: [],
         };
-        botInitDuel();
-        G.duelEnemy = BOT.board.map((u) => (u ? { ...u } : null));
+        window.HFBot.initDuel();
+        G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
         G.enemy = Array(9).fill(null);
         genShop();
         document.getElementById("bnext")?.remove();
@@ -2789,15 +2164,9 @@
           ? `<span class="lcrit">💥 ${amt} CRIT</span>`
           : `<span class="ldmg">${amt}</span>`;
       }
-      function openHowTo() {
-        document.getElementById("howto").classList.add("open");
-      }
-      function closeHowTo() {
-        document.getElementById("howto").classList.remove("open");
-      }
-      document.getElementById("howto").addEventListener("click", (e) => {
-        if (e.target === document.getElementById("howto")) closeHowTo();
-      });
+      // How-to-play modal state lives in BattlePage.jsx (Phase 1 of #16).
+      // window.openHowTo / closeHowTo shims registered there drive the React
+      // state. The click-outside-to-close handler is on the JSX onClick.
 
       // ═══════════════════════════════════════════════════
       //  RENDER SYSTEM
@@ -3856,13 +3225,12 @@
         overlay.classList.remove("open");
         document.querySelector('.mobile-actions button[data-step="menu"]')?.classList.remove("ms-active");
       }
-      function openHowTo() {
-        document.getElementById("howto")?.classList.add("open");
-      }
+      // window.openHowTo is registered by BattlePage.jsx (Phase 1 of #16);
+      // the local openHowTo definition that used to live here was a
+      // duplicate of the one earlier in this file and has been removed.
       window.toggleMobileMenu = toggleMobileMenu;
       window.openMobileMenu = openMobileMenu;
       window.closeMobileMenu = closeMobileMenu;
-      window.openHowTo = openHowTo;
 
       // ── Fullscreen ───────────────────────────────────────────────
       (function () {

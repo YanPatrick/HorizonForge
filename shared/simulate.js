@@ -400,6 +400,12 @@ function simulate(pb, eb) {
 
 // ── Universal export ──────────────────────────────────────────────────────────
 // Node.js ESM  → import { simulate } from '../shared/simulate.js'
-// Browser      → <script type="module"> import { simulate } from '/shared/simulate.js'
-//                OR loaded via /shared/simulate.js as module script
+// Browser ESM  → import { simulate } from '/shared/simulate.js'
+// Browser side-effect load (classic-script consumers like public/js/battle.js):
+//   <script type="module" src="/shared/simulate.js"></script>
+//   then read window.HFSimulate.simulate
 export { simulate, adjacentSlots };
+
+if (typeof window !== "undefined") {
+  window.HFSimulate = { simulate, adjacentSlots };
+}
