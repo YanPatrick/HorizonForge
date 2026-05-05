@@ -2786,48 +2786,42 @@
         return { show, showSticky, hide };
       })();
 
+      // Phase 3 of #16, second slice: shop is React-rendered.
+      // Build a render shape (each card's targetLeft, all visual flags) and
+      // dispatch via window.setShopState. BattlePage owns the DOM and CSS
+      // transitions on `left` / `border-color` etc. handle the slide
+      // animation between renders. Card events delegate via the
+      // window.shopCard* / window.shopInfo* shims defined below.
+      //
+      // Two minor UX changes vs the previous imperative version:
+      //  (1) Bought cards disappear instantly instead of fading up + scaling
+      //      out (240ms transform/opacity transition is dropped).
+      //  (2) New cards appear in place rather than sliding in from offscreen.
+      // Other cards STILL slide smoothly when their `left` value changes
+      // (CSS transition on `left` is set as part of the inline style).
       function renderShop() {
-        const row = document.getElementById("shoprow"),
-          active = G.phase === "shop";
+        const active = G.phase === "shop";
         const combos = G.shopCombos || (G.shopCombo ? [G.shopCombo] : []);
-        // Map each shop index → its combo object
         const comboByIdx = {};
         combos.forEach((c) => c.idxs.forEach((i) => (comboByIdx[i] = c)));
-        const combo = G.shopCombo; // kept for legacy references below
+
         const s =
           parseFloat(
             getComputedStyle(document.documentElement).getPropertyValue("--s"),
           ) || 1;
-        const cardW = Math.round(90 * s),
-          gap = Math.round(6 * s);
+        const cardW = Math.round(90 * s);
+        const gap = Math.round(6 * s);
         const shopWrapInner = Math.round(500 * s) - Math.round(8 * s) * 2;
         const contW = shopWrapInner;
 
-        const domById = {};
-        row
-          .querySelectorAll(".scard[data-uid]")
-          .forEach((el) => (domById[el.dataset.uid] = el));
-        const keepIds = new Set(G.shop.filter(Boolean).map((u) => u.id));
-        Object.keys(domById).forEach((uid) => {
-          if (!keepIds.has(uid)) {
-            const el = domById[uid];
-            el.style.transition = "transform .22s ease-in,opacity .2s ease-in";
-            el.style.transform = "translateY(-24px) scale(.82)";
-            el.style.opacity = "0";
-            el.style.pointerEvents = "none";
-            setTimeout(() => el.remove(), 240);
-          }
-        });
-
+        const cards = [];
         G.shop.forEach((u, i) => {
           if (!u) return;
-          const targetLeft = _shopSlotLeft(i, cardW, gap, contW);
           const cc = C[u.cid];
           if (!cc) {
             console.warn(`Invalid character ID: ${u.cid}`);
             return;
           }
-
           const isOwned =
             G.bench.find((b) => b.cid === u.cid) ||
             G.board.find((b) => b && b.cid === u.cid);
@@ -2837,104 +2831,52 @@
           const isCombo = !!cardCombo;
           const canBuy =
             !isAtMax && G.gold >= (isCombo ? cardCombo.cost : cost) && active;
-          const cntLabel = isAtMax
-            ? "🏆 MAX"
-            : isOwned
-              ? `🔗${isOwned.stack}/3`
-              : "★";
-          const actionLbl = canBuy
-            ? isCombo
-              ? `⚡ Combo ×${cardCombo.type} for ${cardCombo.cost}💰`
-              : isOwned
-                ? `▶ Stack ${cost}💰`
-                : `▶ Recruit ${cost}💰`
-            : isAtMax
-              ? "Nível Máximo"
-              : "";
-          const priceLbl = isAtMax
-            ? "MAX"
-            : isCombo
-              ? `${cardCombo.cost}💰`
-              : `${cost}💰`;
-          const priceClass = isAtMax
-            ? "pmax"
-            : isOwned
-              ? "pcombo"
-              : isCombo
-                ? "pcombo"
-                : "pnew";
-
-          const inner = `<div class="sprice ${priceClass}">${priceLbl}</div><div class="scnt ${isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew"}">${cntLabel}</div><div class="cportrait ${cc.portrait ? "has-portrait" : ""}"${cc.portrait ? ` style="--portrait-url: url('${cc.portrait}')"` : ""}><div class="cico">${u.ico}</div></div><div class="hf-info-btn" title="">i</div><div class="caction">${actionLbl}</div>`;
-
-          let el = domById[u.id];
-          const isNew = !el;
-          if (isNew) {
-            el = document.createElement("div");
-            el.dataset.uid = u.id;
-            el.style.left = `${contW + cardW}px`;
-            el.style.opacity = "0";
-            el.style.transition = "none";
-            row.appendChild(el);
-            el.offsetWidth;
-          }
-          el.className = `scard${isCombo ? " combo-card" : ""}${isAtMax ? " maxed" : canBuy ? " buyable" : " broke"}${isNew ? " scard-new" : ""}`;
-          if (isNew) el.style.animationDelay = i * 55 + "ms";
-          el.innerHTML = inner;
-          el.style.background = cc.bg;
-          el.style.borderColor = isCombo ? "#44ff88" : cc.col;
-          el.onclick = canBuy
-            ? isCombo
-              ? () => buyCombo(cardCombo)
-              : () => buyCard(i)
-            : null;
-          el.onmouseenter = isCombo
-            ? () => {
-                cardCombo.idxs.forEach((ci) => {
-                  row
-                    .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)
-                    ?.classList.add("combo-lift");
-                });
-              }
-            : null;
-          el.onmouseleave = isCombo
-            ? (e) => {
-                // Check if moving into another card of the SAME combo
-                const relUid =
-                  e.relatedTarget?.closest?.("[data-uid]")?.dataset?.uid;
-                const stayingInCombo =
-                  relUid &&
-                  cardCombo.idxs.some((ci) => G.shop[ci]?.id === relUid);
-                if (!stayingInCombo)
-                  cardCombo.idxs.forEach((ci) => {
-                    row
-                      .querySelector(`.scard[data-uid="${G.shop[ci]?.id}"]`)
-                      ?.classList.remove("combo-lift");
-                  });
-              }
-            : null;
-
-          requestAnimationFrame(() => {
-            el.style.transition =
-              "left .38s cubic-bezier(.22,.68,0,1.2),opacity .26s ease,transform .18s ease,filter .18s ease,box-shadow .18s ease";
-            el.style.left = `${targetLeft}px`;
-            el.style.opacity = "1";
+          cards.push({
+            uid: u.id,
+            slotIdx: i,
+            cid: u.cid,
+            ico: u.ico,
+            bg: cc.bg,
+            borderCol: isCombo ? "#44ff88" : cc.col,
+            portraitUrl: cc.portrait || null,
+            isCombo, isAtMax, canBuy,
+            // Stable per-render key shared by all cards in the same combo —
+            // BattlePage uses it to apply combo-lift on hover.
+            comboKey: isCombo ? `combo-${cardCombo.idxs.join("-")}` : null,
+            countLabel: isAtMax ? "🏆 MAX" : isOwned ? `🔗${isOwned.stack}/3` : "★",
+            countClass: isAtMax ? "cmax" : isOwned ? "ccombo" : "cnew",
+            priceLabel: isAtMax ? "MAX" : isCombo ? `${cardCombo.cost}💰` : `${cost}💰`,
+            priceClass: isAtMax ? "pmax" : isOwned ? "pcombo" : isCombo ? "pcombo" : "pnew",
+            actionLabel: canBuy
+              ? isCombo
+                ? `⚡ Combo ×${cardCombo.type} for ${cardCombo.cost}💰`
+                : isOwned ? `▶ Stack ${cost}💰` : `▶ Recruit ${cost}💰`
+              : isAtMax ? "Nível Máximo" : "",
+            targetLeft: _shopSlotLeft(i, cardW, gap, contW),
           });
-
-          const shopInfoBtn = el.querySelector(".hf-info-btn");
-          if (shopInfoBtn) {
-            shopInfoBtn.addEventListener("mouseenter", () =>
-              SkillTip.show(shopInfoBtn, generateHeroInfoHtml(u)),
-            );
-            shopInfoBtn.addEventListener("mouseleave", () => SkillTip.hide());
-            shopInfoBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              SkillTip.show(shopInfoBtn, generateHeroInfoHtml(u));
-            });
-          }
         });
-        document.getElementById("breroll").disabled =
-          G.gold < HF.value_new_recruitment || !active;
+
+        window.setShopState?.({
+          active,
+          gold: G.gold,
+          rerollDisabled: G.gold < HF.value_new_recruitment || !active,
+          cards,
+        });
       }
+
+      // ── Shop card event handlers (called from BattlePage's JSX) ──────────
+      window.shopCardClick = function (slotIdx) {
+        if (G.phase !== "shop") return;
+        const combos = G.shopCombos || (G.shopCombo ? [G.shopCombo] : []);
+        const combo = combos.find((c) => c.idxs.includes(slotIdx));
+        if (combo) buyCombo(combo);
+        else buyCard(slotIdx);
+      };
+      window.shopInfoShow = function (uid, anchorEl) {
+        const u = G.shop.find((x) => x && x.id === uid);
+        if (u && anchorEl) SkillTip.show(anchorEl, generateHeroInfoHtml(u));
+      };
+      window.shopInfoHide = function () { SkillTip.hide(); };
 
       // Phase 3 of #16, first slice: bench is React-rendered.
       // Build a pure render shape and dispatch — BattlePage owns the DOM.
@@ -3018,9 +2960,12 @@
         return text.replace(/[&<>"']/g, (m) => map[m]);
       }
 
-      function updateHdr() {
-        document.getElementById("h-gold").textContent = `💰 ${G.gold}`;
-      }
+      // updateHdr() refreshes the gold display only — used by call sites that
+      // mutate G.gold without otherwise re-rendering the shop (e.g. endBattle
+      // grants between-battle income before the next render() runs).
+      // setShopState merges, so this doesn't disturb the card list or other
+      // shop fields.
+      function updateHdr() { window.setShopState?.({ gold: G.gold }); }
 
       function render() {
         clearAttackArrows();

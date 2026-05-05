@@ -74,6 +74,19 @@ export default function BattlePage() {
     cards: [],
   })
 
+  // ── Recruitment (shop) — Phase 3 of #16, second slice
+  // Same pattern as bench: battle.js's renderShop computes a render shape
+  // (each card's targetLeft, price/count labels, classes) and dispatches via
+  // window.setShopState. Click/hover events delegate to window.shopCardClick
+  // and window.shopInfo*. Combo-hover lift is React-managed via hoveredCombo.
+  const [shop, setShop] = useState({
+    active: false,
+    gold: 0,
+    rerollDisabled: true,
+    cards: [],
+  })
+  const [hoveredCombo, setHoveredCombo] = useState(null)
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -119,6 +132,15 @@ export default function BattlePage() {
       emptyMessage: state?.emptyMessage ?? null,
       cards: state?.cards ?? [],
     })
+    // Recruitment — render shape including gold + reroll state. Accepts
+    // partial updates (e.g. updateHdr() in battle.js dispatches just `{ gold }`
+    // to refresh the header without rebuilding the full card list).
+    window.setShopState          = (state) => setShop((prev) => ({
+      active:         state?.active         ?? prev.active,
+      gold:           state?.gold           ?? prev.gold,
+      rerollDisabled: state?.rerollDisabled ?? prev.rerollDisabled,
+      cards:          state?.cards          ?? prev.cards,
+    }))
     return () => {
       delete window.openQuitModal
       delete window.closeQuitModal
@@ -134,6 +156,7 @@ export default function BattlePage() {
       delete window.setBattleScoreDots
       delete window.setBattleSpeed
       delete window.setBenchState
+      delete window.setShopState
     }
   }, [closeQuit, confirmQuit])
 
@@ -403,15 +426,79 @@ export default function BattlePage() {
           <div id="shopwrap">
             <div className="sec-hdr">
               <span className="sec-title recruit-title">
-                Recruitment <span className="sb sg" id="h-gold">💰 7</span>
+                Recruitment <span className="sb sg" id="h-gold">{`💰 ${shop.gold}`}</span>
               </span>
               <div className="recruit-controls">
-                <button className="rrbtn" id="breroll" onClick={() => window.rerollShop?.()}>
+                <button
+                  className="rrbtn"
+                  id="breroll"
+                  disabled={shop.rerollDisabled}
+                  onClick={() => window.rerollShop?.()}
+                >
                   New Recruitment (2💰)
                 </button>
               </div>
             </div>
-            <div id="shoprow"></div>
+            <div id="shoprow">
+              {shop.cards.map((c) => {
+                const isLifted = !!c.comboKey && hoveredCombo === c.comboKey
+                const cls = `scard${c.isCombo ? ' combo-card' : ''}${
+                  c.isAtMax ? ' maxed' : c.canBuy ? ' buyable' : ' broke'
+                }${isLifted ? ' combo-lift' : ''}`
+                return (
+                  <div
+                    key={c.uid}
+                    data-uid={c.uid}
+                    className={cls}
+                    style={{
+                      left: `${c.targetLeft}px`,
+                      background: c.bg,
+                      borderColor: c.borderCol,
+                      transition:
+                        'left .38s cubic-bezier(.22,.68,0,1.2),' +
+                        'opacity .26s ease,transform .18s ease,' +
+                        'filter .18s ease,box-shadow .18s ease',
+                    }}
+                    onClick={c.canBuy ? () => window.shopCardClick?.(c.slotIdx) : undefined}
+                    onMouseEnter={
+                      c.comboKey ? () => setHoveredCombo(c.comboKey) : undefined
+                    }
+                    onMouseLeave={
+                      c.comboKey
+                        ? (e) => {
+                            // Don't clear if moving into another card of the same combo
+                            const relUid = e.relatedTarget?.closest?.('[data-uid]')?.dataset?.uid
+                            const stayingInCombo = relUid && shop.cards.some(
+                              (x) => x.uid === relUid && x.comboKey === c.comboKey,
+                            )
+                            if (!stayingInCombo) setHoveredCombo(null)
+                          }
+                        : undefined
+                    }
+                  >
+                    <div className={`sprice ${c.priceClass}`}>{c.priceLabel}</div>
+                    <div className={`scnt ${c.countClass}`}>{c.countLabel}</div>
+                    <div
+                      className={`cportrait${c.portraitUrl ? ' has-portrait' : ''}`}
+                      style={c.portraitUrl ? { '--portrait-url': `url('${c.portraitUrl}')` } : undefined}
+                    >
+                      <div className="cico">{c.ico}</div>
+                    </div>
+                    <div
+                      className="hf-info-btn"
+                      title=""
+                      onMouseEnter={(e) => window.shopInfoShow?.(c.uid, e.currentTarget)}
+                      onMouseLeave={() => window.shopInfoHide?.()}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        window.shopInfoShow?.(c.uid, e.currentTarget)
+                      }}
+                    >i</div>
+                    <div className="caction">{c.actionLabel}</div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>
