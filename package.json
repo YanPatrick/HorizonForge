@@ -10,7 +10,7 @@
     "dev:client": "npm run dev --prefix client",
     "build": "npm --prefix client install --include=dev && npm run build --prefix client",
     "start": "node api/server.js",
-    "migrate": "curl -s -X POST http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\"",
+    "migrate": "curl -s -X POST -H \"x-admin-secret: ${ADMIN_SECRET}\" http://localhost:3000/api/migrate | node -e \"process.stdin.resume();let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>console.log(JSON.parse(d)))\"",
     "release": "node scripts/release.js"
   },
   "dependencies": {
