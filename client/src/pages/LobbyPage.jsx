@@ -150,7 +150,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
     try {
       const res = await fetch('/api/formations', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.token}` },
         body: JSON.stringify({ player: session.username, slot: editingSlot + 1, name: f.name || `format${editingSlot + 1}`, hero_ids: f.hero_ids }),
       })
       const d = await res.json()
@@ -500,7 +500,9 @@ export default function LobbyPage() {
       setFormationsLoaded(true)
       return
     }
-    fetch(`/api/formations?player=${encodeURIComponent(username)}`).then(r => r.json()).then(d => {
+    fetch(`/api/formations?player=${encodeURIComponent(username)}`, {
+      headers: { 'Authorization': `Bearer ${session?.token}` },
+    }).then(r => r.json()).then(d => {
       if (d.ok && Array.isArray(d.formations)) {
         setFormations([1, 2, 3].map(slot => {
           const found = d.formations.find(f => f.slot === slot)
@@ -638,7 +640,9 @@ export default function LobbyPage() {
   /* ── ensure active deck ──────────────────────────────── */
   async function ensureActiveDeck() {
     if (session?.mode !== 'guest' && !formationsLoaded) {
-      const res = await fetch(`/api/formations?player=${encodeURIComponent(username)}`)
+      const res = await fetch(`/api/formations?player=${encodeURIComponent(username)}`, {
+        headers: { 'Authorization': `Bearer ${session?.token}` },
+      })
       const d = await res.json()
       if (d.ok && Array.isArray(d.formations)) {
         const loaded = [1, 2, 3].map(slot => {

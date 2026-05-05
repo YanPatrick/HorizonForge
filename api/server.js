@@ -215,12 +215,19 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const httpServer = createServer(app);
 
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// Em produção define CLIENT_URL (ex: https://horizonforge.com).
+// Em dev sem CLIENT_URL, permite as origens do Vite e do Express local.
+const ALLOWED_ORIGINS = process.env.CLIENT_URL
+  ? [process.env.CLIENT_URL]
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
 // ── Socket.io ─────────────────────────────────────────────────────────────────
 const io = new SocketIO(httpServer, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { origin: ALLOWED_ORIGINS, methods: ['GET', 'POST'] },
 });
 
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
 // Em produção serve o build do React; em dev o Vite roda separado
 const CLIENT_DIST = join(__dirname, '../public/dist');
@@ -603,12 +610,24 @@ app.post('/api/migrate', async (_req, res) => {
   }
 });
 
+// Helper: extrai e valida Bearer token do header Authorization
+function authFromRequest(req) {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  return verifyToken(token);
+}
+
 /**
  * GET /api/formations?player=X
+ * Requer token do próprio jogador.
  */
 app.get('/api/formations', async (req, res) => {
   const { player } = req.query;
   if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
   try {
     const rows = await sql`SELECT slot, name, hero_ids FROM formations WHERE player = ${player} ORDER BY slot`;
     res.json({ ok: true, formations: rows });
@@ -621,11 +640,16 @@ app.get('/api/formations', async (req, res) => {
 /**
  * PUT /api/formations
  * Body: { player, slot, name, hero_ids }
+ * Requer token do próprio jogador.
  */
 app.put('/api/formations', async (req, res) => {
   const { player, slot, name, hero_ids } = req.body;
   if (!player || !slot) return res.status(400).json({ ok: false, error: 'player and slot required' });
   if (slot < 1 || slot > 3) return res.status(400).json({ ok: false, error: 'slot must be 1-3' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
   try {
     await sql`
       INSERT INTO formations (player, slot, name, hero_ids, updated_at)
@@ -1063,13 +1087,25 @@ io.on('connection', socket => {
   let connectedUser = socket.data.username;
 
   // Player joins matchmaking queue
+  // Valores permitidos — espelham BET_OPTS e FMT_OPTS do cliente
+  const VALID_WAGERS  = [0, 1, 5, 10];
+  const VALID_FORMATS = [3, 5, 7];
+
   socket.on('join_queue', ({ wager, wagerType, format }) => {
     if (!connectedUser) {
       socket.emit('error', { message: 'Authentication required to join queue.' });
       return;
     }
-    if (typeof wager !== 'number' || wager < 0) {
-      socket.emit('error', { message: 'Invalid queue parameters.' });
+    if (!VALID_WAGERS.includes(wager)) {
+      socket.emit('error', { message: 'Invalid wager amount.' });
+      return;
+    }
+    if (format !== undefined && !VALID_FORMATS.includes(format)) {
+      socket.emit('error', { message: 'Invalid match format.' });
+      return;
+    }
+    if (wagerType !== undefined && wagerType !== 'HIVE') {
+      socket.emit('error', { message: 'Invalid wager type.' });
       return;
     }
 
