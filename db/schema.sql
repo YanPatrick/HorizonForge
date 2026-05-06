@@ -134,7 +134,7 @@ JOIN (VALUES
   ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',                             'Skill'),
   ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',             'Skill'),
   ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',                                'ATK Modifier'),
-  ('barbarian', 'fury',            'Fury',            'When HP drops below 60%, permanently gain skill_power% bonus attack for the rest of the battle. Scales with level.',                         'Skill')
+  ('barbarian', 'fury',            'Fury',            'While HP is below 60%, gain skill_power% bonus attack. Scales with level.',                                                                   'Skill')
 ) AS v(cid, skill_key, name, description, skill_type) ON c.cid = v.cid
 ON CONFLICT (character_id) DO UPDATE SET
   skill_key   = EXCLUDED.skill_key,
