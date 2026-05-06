@@ -2531,7 +2531,7 @@
         background: rgba(6, 3, 20, 0.97);
         border-top: 1px solid rgba(180, 130, 255, 0.14);
         backdrop-filter: blur(18px);
-        z-index: 100;
+        z-index: 1000;
         align-items: stretch;
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
@@ -3278,9 +3278,10 @@
         transform: translateX(0);
       }
 
-      /* On mobile the drawer is never shown — bottom sheet takes over */
+      /* On mobile the drawer and backdrop are hidden — slide page takes over */
       @media (max-width: 640px) {
-        .hf-hero-drawer {
+        .hf-hero-drawer,
+        .hf-detail-backdrop {
           display: none !important;
         }
       }
