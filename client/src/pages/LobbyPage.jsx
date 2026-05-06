@@ -107,7 +107,7 @@ function MobileHeroPage({ hero, onClose }) {
   return (
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
       <div className="hf-mhp-header">
-        <button className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
+        <button type="button" className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
         <span className="hf-mhp-title">{hero?.name ?? ''}</span>
       </div>
       {hero && (
@@ -132,7 +132,7 @@ function MobileHeroPage({ hero, onClose }) {
               <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
               <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
             </div>
-            <button className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
+            <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
               <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
               <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
             </button>
@@ -231,6 +231,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
   return (
     <div id="view-formation" className="lv active">
       {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} />}
+      <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} />
       <div className="fv-wrap">
         <div className="fv-hero-frame">
           <div className="fv-filter-bar">
