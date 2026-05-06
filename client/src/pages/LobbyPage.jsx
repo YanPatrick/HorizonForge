@@ -94,6 +94,68 @@ function HeroDetail({ hero, onClose }) {
   )
 }
 
+/* ── MobileHeroPage — slide-in detail for mobile ───────── */
+function MobileHeroPage({ hero, onClose }) {
+  const [expanded, setExpanded] = useState(false)
+  useEffect(() => { if (!hero) setExpanded(false) }, [hero])
+
+  const cat = hero ? roleCategory(hero.role) : ''
+  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
+  const lv1 = hero?.levels?.[1] || {}
+  const levelKeys = Object.keys(hero?.levels || {}).map(Number).sort((a, b) => a - b)
+
+  return (
+    <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
+      <div className="hf-mhp-header">
+        <button className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
+        <span className="hf-mhp-title">{hero?.name ?? ''}</span>
+      </div>
+      {hero && (
+        <div className="hf-mhp-body">
+          <div
+            className={`hf-mhp-portrait${hero.url_portrait ? ' has-portrait' : ''}`}
+            style={hero.url_portrait ? { '--portrait-url': `url('${hero.url_portrait}')` } : {}}
+          >
+            {!hero.url_portrait && <div className="hf-mhp-ico">{hero.icon}</div>}
+          </div>
+          <div className="hf-mhp-content">
+            <div className="hf-detail-role-wrap">
+              <span className={`gr-hero-role role-${cat}`}>{label}</span>
+            </div>
+            <div className="hf-detail-section-label">Skill</div>
+            <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
+            <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
+            <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
+            <div className="hf-detail-stats">
+              <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
+              <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
+              <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
+              <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
+            </div>
+            <button className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
+              <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
+              <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
+            </button>
+            {expanded && (
+              <div className="hf-detail-l2 expanded">
+                <table className="hf-detail-l2-table">
+                  <thead><tr><th>Level</th><th>HP</th><th>ATK</th><th>Skill Power</th></tr></thead>
+                  <tbody>
+                    {levelKeys.map(lv => {
+                      const s = hero.levels[lv] || {}
+                      return <tr key={lv}><td>{lv}</td><td>{s.max_hp}</td><td>{s.atk}</td><td>{s.skill_power != null ? fmtSP(s.skill_power) : '—'}</td></tr>
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── FormationView ──────────────────────────────────────── */
 function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast }) {
   const [editingSlot, setEditingSlot] = useState(null)
