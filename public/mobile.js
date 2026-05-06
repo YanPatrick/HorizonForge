@@ -4,13 +4,19 @@
   ─────────────────────────────────────────────────────────── */
   window.mobileVertical = false;
 
+  // Guard against re-evaluation across React remounts. Each /lobby ↔ /battle
+  // round-trip re-evaluates this script; without these flags we'd stack
+  // duplicate rotate overlays, log buttons, and render() wrappers.
+  var alreadySetup = window.__hfMobileSetup === true;
+  window.__hfMobileSetup = true;
+
   var isTouch = window.matchMedia('(pointer: coarse)').matches;
   var isMobile = window.matchMedia('(max-width: 768px)').matches;
 
   /* ─── Rotate overlay (touch only) ─────────────────────────
      CSS shows/hides based on orientation media query.
   ─────────────────────────────────────────────────────────── */
-  if (isTouch) {
+  if (isTouch && !alreadySetup) {
     var rotateOverlay = document.createElement('div');
     rotateOverlay.id = 'mobile-rotate-msg';
     rotateOverlay.innerHTML =
@@ -24,7 +30,7 @@
      The overlay element is injected by React JSX; we just
      wire up the close button and move #log into it.
   ─────────────────────────────────────────────────────────── */
-  if (isTouch || isMobile) {
+  if ((isTouch || isMobile) && !alreadySetup) {
     function setupLog() {
       var logOverlay = document.getElementById('mobile-log-overlay');
       if (!logOverlay) return;
@@ -93,13 +99,20 @@
     });
   }
 
-  var _origRender = window.render;
-  if (typeof _origRender === 'function') {
-    window.render = function () {
-      _origRender.apply(this, arguments);
-      applyHighlight();
-    };
+  // Wrap window.render exactly once (never on remount). battle.js loads
+  // before this script (per BattlePage.jsx's serialized chain), so
+  // window.render is guaranteed to exist by the time we run.
+  if (!alreadySetup) {
+    var _origRender = window.render;
+    if (typeof _origRender === 'function') {
+      window.render = function () {
+        _origRender.apply(this, arguments);
+        applyHighlight();
+      };
+    }
   }
+
+  if (alreadySetup) return;
 
   document.addEventListener('click', function (e) {
     var cell = e.target.closest('#pfield .cell');

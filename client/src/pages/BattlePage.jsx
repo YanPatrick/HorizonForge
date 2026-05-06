@@ -239,26 +239,41 @@ export default function BattlePage() {
     })
     window.closeDuelResult       = () => setDuelResult((prev) => ({ ...prev, open: false }))
     return () => {
-      delete window.openQuitModal
-      delete window.closeQuitModal
-      delete window.confirmQuit
-      delete window.openHowTo
-      delete window.closeHowTo
-      delete window.setRoundTimer
-      delete window.hideRoundTimer
-      delete window.setBanner
-      delete window.setBattleFmt
-      delete window.setBattleOpp
-      delete window.setBattleArmyCount
-      delete window.setBattleScoreDots
-      delete window.setBattleSpeed
-      delete window.setBenchState
-      delete window.setShopState
-      delete window.setFieldState
-      delete window.setMobileView
-      delete window.setFullscreenBtnText
-      delete window.showDuelResult
-      delete window.closeDuelResult
+      // React-side dispatchers (this useEffect registered them above).
+      // Critical to remove — they hold setState closures that would warn
+      // on unmount if invoked.
+      const reactSide = [
+        'openQuitModal', 'closeQuitModal', 'confirmQuit',
+        'openHowTo', 'closeHowTo',
+        'setRoundTimer', 'hideRoundTimer',
+        'setBanner', 'setBattleFmt', 'setBattleOpp', 'setBattleArmyCount',
+        'setBattleScoreDots', 'setBattleSpeed',
+        'setBenchState', 'setShopState', 'setFieldState',
+        'setMobileView', 'setFullscreenBtnText',
+        'showDuelResult', 'closeDuelResult',
+      ]
+      // battle.js-side callbacks that delegate from JSX. Not React state, but
+      // they hold closures over battle.js's `G` global; cleaning them up
+      // prevents stale handlers from firing if the script-load chain is
+      // racing on a quick remount, and frees the closures for GC.
+      const battleSide = [
+        'duelResultNext',
+        'fieldCellClick', 'fieldCellDragStart', 'fieldCellDragEnd', 'fieldCellDrop',
+        'fieldCellMouseEnter', 'fieldCellMouseLeave',
+        'fieldInfoShow', 'fieldInfoHide',
+        'fieldTouchStart', 'fieldTouchEnd', 'fieldTouchMove',
+        'shopCardClick', 'shopInfoShow', 'shopInfoHide',
+        'benchCardClick', 'benchCardDragStart', 'benchCardDragEnd',
+        'benchInfoShow', 'benchInfoHide',
+        'setMobileStep', 'togglePanel',
+        'toggleMobileMenu', 'openMobileMenu', 'closeMobileMenu',
+        // Top-level `function …()` declarations also become globals on
+        // window. Listed here so the unmount sweep is exhaustive.
+        'startBattle', 'rerollShop', 'toggleBattleSpeed',
+        'render',
+      ]
+      for (const name of reactSide) delete window[name]
+      for (const name of battleSide) delete window[name]
     }
   }, [closeQuit, confirmQuit])
 
@@ -413,6 +428,15 @@ export default function BattlePage() {
     // _bootBattle has run synchronously, so dispatched globals like
     // window.startBattle / window.toggleBattleSpeed / window.setMobileStep
     // are guaranteed to be registered.
+    // Load order matters:
+    //   1. simulate.js (module) registers window.HFSimulate.
+    //   2. bot-ai.js + skill-tooltip.js register window.HFBot/HFTooltip.
+    //   3. battle.js evaluates _bootBattle which reads all of the above.
+    //      socket.io.js can load in parallel — battle.js doesn't touch it
+    //      at top level.
+    //   4. mobile.js wraps window.render and must run AFTER battle.js
+    //      registers it; loading them in parallel was a race that silently
+    //      dropped the touch-cell highlight feature.
     addScript('/shared/simulate.js', { type: 'module' })
       .then(() => Promise.all([
         addScript('/js/bot-ai.js'),
@@ -421,8 +445,8 @@ export default function BattlePage() {
       .then(() => Promise.all([
         addScript('/socket.io/socket.io.js'),
         addScript('/js/battle.js'),
-        addScript('/mobile.js'),
       ]))
+      .then(() => addScript('/mobile.js'))
       .then(() => setScriptsReady(true))
 
     return () => {

@@ -19,9 +19,14 @@
         );
       }
 
-      // Dispara ao carregar e a cada resize
+      // Dispara ao carregar e a cada resize. Guard against listener stacking
+      // across React remounts (each /lobby ↔ /battle round-trip re-evaluates
+      // this script): we skip re-attaching if a previous load already did.
       updateScale();
-      window.addEventListener("resize", updateScale);
+      if (!window.__hfScaleAttached) {
+        window.addEventListener("resize", updateScale);
+        window.__hfScaleAttached = true;
+      }
 
       // ── Auth & battle config injected by lobby ──────────
       (function () {
@@ -1857,7 +1862,7 @@
       function startGame(fmt, pvpMode = false) {
         // Reset completo do estado para garantir partida limpa
         G.format = fmt;
-        G.winsNeeded = fmt === 10 ? 6 : Math.ceil(fmt / 2);
+        G.winsNeeded = Math.ceil(fmt / 2);
         G.phase = "shop";
         G.duelNum = 1;
         G.battleNum = 1;

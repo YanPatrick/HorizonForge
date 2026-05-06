@@ -387,8 +387,24 @@ async function getStatsTable() {
   return _statsCache;
 }
 
+// Maximum units a player can deploy at once. Sourced from
+// horizon_forge_details.qtd_max_heroes (5 by default), cached for the
+// process lifetime — the value is set once at game install and rarely
+// retuned. Falls back to 5 if the config row is missing.
+let _maxUnitsCap = 5;
+async function refreshMaxUnitsCap() {
+  try {
+    const [row] = await sql`SELECT value FROM horizon_forge_details WHERE key = 'qtd_max_heroes'`;
+    if (row) _maxUnitsCap = Math.max(1, Math.min(9, Number(row.value) || 5));
+  } catch (e) {
+    console.warn('[refreshMaxUnitsCap] using fallback 5:', e.message);
+  }
+}
+
 function validateClientBoard(board) {
   if (!Array.isArray(board) || board.length !== 9) throw new Error('Board must have 9 slots');
+  const seenCids = new Set();
+  const seenIds = new Set();
   let nonNull = 0;
   for (const u of board) {
     if (u === null) continue;
@@ -396,9 +412,17 @@ function validateClientBoard(board) {
     if (typeof u.cid !== 'string' || u.cid.length === 0 || u.cid.length > 30) throw new Error('Invalid cid');
     if (!Number.isInteger(u.lv) || u.lv < 1 || u.lv > 5) throw new Error('lv must be integer 1..5');
     if (typeof u.id !== 'string' || u.id.length === 0 || u.id.length > 40) throw new Error('Invalid id');
+    // One stack per cid — matches the bench/merge mechanic. Without this,
+    // a cheater could submit 9× the same hero (the original "client trusts
+    // stats" vuln at the count layer).
+    if (seenCids.has(u.cid)) throw new Error(`Duplicate cid in board: ${u.cid}`);
+    seenCids.add(u.cid);
+    if (seenIds.has(u.id)) throw new Error(`Duplicate id in board: ${u.id}`);
+    seenIds.add(u.id);
     nonNull++;
   }
   if (nonNull === 0) throw new Error('Board cannot be empty');
+  if (nonNull > _maxUnitsCap) throw new Error(`Too many units (max ${_maxUnitsCap})`);
 }
 
 // Strip the client's submitted board down to the only fields we trust
@@ -781,6 +805,9 @@ app.post('/api/migrate', async (req, res) => {
       )
     `;
 
+    // Refresh cached config that's seeded by this migration (e.g. max-units cap).
+    await refreshMaxUnitsCap();
+
     res.json({ ok: true, message: 'Migration complete.' });
   } catch (err) {
     console.error('[/api/migrate]', err.message);
@@ -958,6 +985,17 @@ function mirrorBoard(board) {
 // match wouldn't exist anymore). We snapshot mutable state to Postgres on
 // every transition and rehydrate any non-terminal matches on boot.
 
+// Cancel any pending timers a match may have left behind (round-forfeit
+// timer, payment-timeout timer, disconnect-grace timer). Always called
+// before activeMatches.delete to prevent leaked Node timers from firing
+// on stale match data after the match has terminated.
+function clearMatchTimers(m) {
+  if (!m) return;
+  if (m.forfeitTimer) { clearTimeout(m.forfeitTimer); m.forfeitTimer = null; }
+  if (m.disconnectTimer) { clearTimeout(m.disconnectTimer); m.disconnectTimer = null; }
+  if (m.paymentTimer) { clearTimeout(m.paymentTimer); m.paymentTimer = null; }
+}
+
 async function persistMatchState(m) {
   if (!m) return;
   try {
@@ -1005,7 +1043,7 @@ async function rehydrateMatches() {
     `;
     for (const r of rows) {
       const wager = Number(r.wager_hive);
-      const winsNeeded = r.format === 10 ? 6 : Math.ceil(r.format / 2);
+      const winsNeeded = Math.ceil(r.format / 2);
       const m = {
         matchId: r.id,
         p1: r.player1, p2: r.player2,
@@ -1039,6 +1077,7 @@ async function rehydrateMatches() {
         }
         await sql`UPDATE matches SET status='cancelled', resolved_at=now() WHERE id=${m.matchId}`
           .catch(err => console.error('[rehydrate cancel]', err.message));
+        clearMatchTimers(m);
         activeMatches.delete(m.matchId);
       } else if (m.status === 'waiting_teams') {
         // Restart the round timer; players will reconnect via rejoin_match.
@@ -1088,7 +1127,7 @@ function tryMatch() {
 
   const matchId = makeMatchId();
   const fmt = e1.format || 5;
-  const winsNeed = fmt === 10 ? 6 : Math.ceil(fmt / 2);
+  const winsNeed = Math.ceil(fmt / 2);
   const needsPayment = e1.wager > 0 && !!HIVE_GAME_ACCOUNT;
   const initStatus = needsPayment ? 'waiting_payments' : 'waiting_teams';
 
@@ -1143,9 +1182,10 @@ function tryMatch() {
     // 2. Wait 6s grace period for any in-progress blockchain verifications
     // 3. Final chain scan for unpaid players (3 attempts)
     // 4. Refund paid players; re-queue unpaid players to restart matchmaking
-    setTimeout(async () => {
+    matchData.paymentTimer = setTimeout(async () => {
       const m = activeMatches.get(matchId);
       if (!m || m.status !== 'waiting_payments') return;
+      m.paymentTimer = null;
       m.status = 'cancelling';
       await persistMatchState(m);
       console.log(`⏰ Payment timeout for match ${matchId} — waiting 6s for in-progress verifications...`);
@@ -1169,6 +1209,7 @@ function tryMatch() {
 
       const paid = [u1, u2].filter(p => m.payments[p]);
       const unpaid = [u1, u2].filter(p => !m.payments[p]);
+      clearMatchTimers(m);
       activeMatches.delete(matchId);
       // Mark cancelled in DB so rehydrate won't pick it up on next boot
       sql`UPDATE matches SET status='cancelled', resolved_at=now() WHERE id=${matchId}`
@@ -1238,6 +1279,7 @@ function armForfeitTimer(matchId, u1, u2, ms) {
     const missing = [u1, u2].filter(u => !m.teams[u]);
     if (missing.length === 2) {
       io.to(matchId).emit('match_cancelled', { reason: 'No teams submitted in time.' });
+      clearMatchTimers(m);
       activeMatches.delete(matchId);
     } else {
       const forfeitWinner = [u1, u2].find(u => m.teams[u]);
@@ -1269,6 +1311,7 @@ async function resolveBattleRound(matchId) {
   } catch (err) {
     console.error('[simulate]', err.message);
     io.to(matchId).emit('match_cancelled', { reason: 'Simulation error.' });
+    clearMatchTimers(m);
     activeMatches.delete(matchId);
     return;
   }
@@ -1349,6 +1392,7 @@ async function resolveBattleRound(matchId) {
       }).catch(err => console.error('[sendHivePrize] Unexpected rejection:', err.message));
     }
 
+    clearMatchTimers(m);
     activeMatches.delete(matchId);
   } else {
     m.battleNum++;
@@ -1405,6 +1449,7 @@ function forfeitBattle(matchId, winner) {
         }
       }).catch(err => console.error('[sendHivePrize] Unexpected rejection:', err.message));
     }
+    clearMatchTimers(m);
     activeMatches.delete(matchId);
   } else {
     m.battleNum++;
@@ -1664,6 +1709,7 @@ io.on('connection', socket => {
         m.disconnectTimer = setTimeout(() => {
           const cur = activeMatches.get(m.matchId);
           if (!cur) return;
+          cur.disconnectTimer = null;
           // Did they come back? Their socket reference would have been
           // updated in rejoin_match or join_queue.
           const sock = cur.p1 === connectedUser ? cur.s1 : cur.s2;
@@ -1672,6 +1718,20 @@ io.on('connection', socket => {
           // already have the payment timeout doing the right thing; in
           // resolving/done the match is already terminal.
           if (cur.status !== 'waiting_teams') return;
+          // The disconnected player already submitted their team — don't
+          // punish them for losing connectivity at the exact wrong moment.
+          // If both teams happen to be in by now, resolve the round; if
+          // only the disconnected player's team is in, wait — the round
+          // forfeit timer (armForfeitTimer) will eventually award the
+          // round to whoever submitted in time.
+          if (cur.teams[connectedUser]) {
+            if (cur.teams[cur.p1] && cur.teams[cur.p2]) {
+              resolveBattleRound(cur.matchId).catch(err =>
+                console.error('[resolveBattleRound from disconnect]', err.message)
+              );
+            }
+            return;
+          }
           const winner = cur.p1 === connectedUser ? cur.p2 : cur.p1;
           console.log(`🚪 ${connectedUser} did not reconnect within ${DISCONNECT_GRACE_MS}ms — forfeiting round to ${winner}`);
           forfeitBattle(cur.matchId, winner);
@@ -1782,6 +1842,9 @@ httpServer.listen(PORT, () => {
   console.log(`   HIVE acct: ${HIVE_GAME_ACCOUNT ? `✅ ${HIVE_GAME_ACCOUNT}` : '❌ HIVE_GAME_ACCOUNT not set'}`);
   console.log(`   HIVE key:  ${HIVE_ACTIVE_KEY ? '✅ Set' : '❌ HIVE_ACTIVE_KEY not set'}`);
   console.log(`   Admin:     ${ADMIN_SECRET ? '✅ Protected' : '⚠️  ADMIN_SECRET not set (endpoint disabled)'}`);
+  // Load the max-units cap from horizon_forge_details before accepting any
+  // submit_team. Falls back to 5 if the table or row is missing.
+  refreshMaxUnitsCap();
   // Rehydrate any matches that were active at the time of the previous shutdown.
   // Refunds get processed automatically for paid players whose match can no
   // longer be resumed (e.g. payment phase that timed out across the restart).

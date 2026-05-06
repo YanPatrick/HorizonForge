@@ -1,10 +1,20 @@
 -- ============================================================
--- HORIZON FORGE — Database Schema (v2)
--- Tabelas: level_scale · characters · characters_base · skills
+-- HORIZON FORGE — Database Schema (v3)
+--
+-- Static tables seeded by this file:
+--   level_scale · characters · characters_base · skills · horizon_forge_details
+--
+-- Runtime/PvP tables created by POST /api/migrate:
+--   matches · match_teams · match_transactions · formations
+--
 -- character_stats foi REMOVIDA — stats são calculados em runtime:
 --   max_hp / atk   = base × level_scale.multiplier
 --   atk_speed / crit_chance / crit_rate = fixos (sem escala)
 --   skill_power    = base × level_scale.skill_power_multiplier
+--
+-- Running this file on a fresh DB gives you the seed data and the static
+-- tables; you ALSO need to hit POST /api/migrate (with x-admin-secret) to
+-- create the PvP/match/formation tables. Both paths are idempotent.
 -- ============================================================
 
 -- --------------------------------------------------------
@@ -131,3 +141,87 @@ ON CONFLICT (character_id) DO UPDATE SET
   name        = EXCLUDED.name,
   description = EXCLUDED.description,
   skill_type  = EXCLUDED.skill_type;
+-- ============================================================
+-- Game config (key/value table read by /api/config)
+-- Seeded with default tuning values; safe to UPDATE at runtime.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS horizon_forge_details (
+  key   TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+INSERT INTO horizon_forge_details (key, value) VALUES
+  ('initial_gold',           '7'),
+  ('value_buy_card',         '3'),
+  ('value_new_recruitment',  '2'),
+  ('value_sell_card',        '1'),
+  ('value_chance_combo3',    '0.10'),
+  ('value_gold_combo3',      '2'),
+  ('value_chance_combo2',    '0.30'),
+  ('value_gold_combo2',      '1'),
+  ('qtd_max_heroes',         '5'),
+  -- Prize payout %: matches PAYOUT_RATE_FALLBACK in api/server.js.
+  -- Adjust live in DB to retune treasury cut without a redeploy.
+  ('percent_payout_liquid',  '80'),
+  ('percent_payout_stake',   '90')
+ON CONFLICT (key) DO NOTHING;
+
+-- ============================================================
+-- PvP matches (matchmaking + payment + state persistence)
+-- /api/migrate runs the same CREATE TABLE + ALTER TABLE chain;
+-- both produce the same final shape.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS matches (
+  id            TEXT          PRIMARY KEY,
+  player1       TEXT          NOT NULL,
+  player2       TEXT,
+  wager_hive    NUMERIC(10,3) NOT NULL DEFAULT 0,
+  wager_type    TEXT          NOT NULL DEFAULT 'HIVE',
+  format        INT           NOT NULL DEFAULT 5,
+  status        TEXT          NOT NULL DEFAULT 'waiting',
+  winner        TEXT,
+  score_p1      INT           NOT NULL DEFAULT 0,
+  score_p2      INT           NOT NULL DEFAULT 0,
+  battle_num    INT           NOT NULL DEFAULT 1,
+  -- JSONB blobs persisted on every state transition so a server crash
+  -- doesn't lose paid wagers — see persistMatchState/rehydrateMatches.
+  payments      JSONB         NOT NULL DEFAULT '{}'::jsonb,
+  payout_prefs  JSONB         NOT NULL DEFAULT '{}'::jsonb,
+  merges        JSONB         NOT NULL DEFAULT '{}'::jsonb,
+  -- Tracks which players have been refunded — guards refundOnce against
+  -- a double-refund if a crash falls mid-cancellation and rehydrate
+  -- re-runs the refund loop on next boot.
+  refunded      JSONB         NOT NULL DEFAULT '{}'::jsonb,
+  created_at    TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  resolved_at   TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS match_teams (
+  match_id      TEXT          NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  player        TEXT          NOT NULL,
+  battle_num    INT           NOT NULL DEFAULT 1,
+  team_json     JSONB         NOT NULL,
+  submitted_at  TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  PRIMARY KEY (match_id, player, battle_num)
+);
+
+CREATE TABLE IF NOT EXISTS match_transactions (
+  tx_id        TEXT          PRIMARY KEY,
+  match_id     TEXT          REFERENCES matches(id),
+  player       TEXT          NOT NULL,
+  amount       NUMERIC(10,3) NOT NULL,
+  direction    TEXT          NOT NULL,
+  created_at   TIMESTAMPTZ   NOT NULL DEFAULT now()
+);
+
+-- ============================================================
+-- Saved hero formations (per player, up to 3 slots)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS formations (
+  player      TEXT NOT NULL,
+  slot        INT  NOT NULL CHECK (slot BETWEEN 1 AND 3),
+  name        TEXT NOT NULL DEFAULT '',
+  hero_ids    JSONB NOT NULL DEFAULT '[]',
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (player, slot)
+);
