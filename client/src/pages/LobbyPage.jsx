@@ -24,6 +24,10 @@ function roleCategory(role) {
   return 'dps'
 }
 
+function fmtSP(v) {
+  return v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
+}
+
 const FMT_OPTS = [{ val: 3, label: 'BO3' }, { val: 5, label: 'BO5' }, { val: 7, label: 'BO7' }]
 const BET_OPTS = [{ val: 0, label: 'Free' }, { val: 1, label: '1 HIVE' }, { val: 5, label: '5 HIVE' }, { val: 10, label: '10 HIVE' }]
 
@@ -40,7 +44,6 @@ function HeroDetail({ hero, onClose }) {
   const cat = roleCategory(hero.role)
   const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
   const lv1 = hero.levels?.[1] || {}
-  const fmtSP = v => v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
   const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
 
   return (
