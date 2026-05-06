@@ -2454,7 +2454,7 @@
       window.fieldInfoShow = function (side, slot, anchorEl) {
         const board = side === "p" ? G.board : (G.phase === "battle" ? G.enemy : G.duelEnemy);
         const u = board?.[slot];
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.fieldInfoHide = function () { window.HFTooltip?.hide(); };
 
@@ -2578,7 +2578,7 @@
       };
       window.shopInfoShow = function (uid, anchorEl) {
         const u = G.shop.find((x) => x && x.id === uid);
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.shopInfoHide = function () { window.HFTooltip?.hide(); };
 
@@ -2648,9 +2648,20 @@
       };
       window.benchInfoShow = function (cid, anchorEl) {
         const u = G.bench.find((x) => x && x.cid === cid);
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.benchInfoHide = function () { window.HFTooltip?.hide(); };
+
+      function showHeroInfo(anchorEl, unit) {
+        const html = window.HFTooltip?.heroInfoHtml?.(unit);
+        if (!html) return;
+        const sticky = window.matchMedia?.("(pointer: coarse)")?.matches;
+        if (sticky && typeof window.HFTooltip?.showSticky === "function") {
+          window.HFTooltip.showSticky(anchorEl, html);
+          return;
+        }
+        window.HFTooltip?.show(anchorEl, html);
+      }
 
       // ✅ FUNÇÃO AUXILIAR para escapar HTML no tooltip
       function escapeHtml(text) {

@@ -297,7 +297,7 @@
       "source_file": "client\\eslint.config.js",
       "source_location": "L1",
       "id": "client_eslint_config_js",
-      "community": 15,
+      "community": 16,
       "norm_label": "eslint.config.js"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "client\\vite.config.js",
       "source_location": "L1",
       "id": "client_vite_config_js",
-      "community": 16,
+      "community": 17,
       "norm_label": "vite.config.js"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "client\\src\\App.jsx",
       "source_location": "L1",
       "id": "client_src_app_jsx",
-      "community": 3,
+      "community": 1,
       "norm_label": "app.jsx"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "client\\src\\App.jsx",
       "source_location": "L7",
       "id": "app_requireauth",
-      "community": 3,
+      "community": 1,
       "norm_label": "requireauth()"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "client\\src\\App.jsx",
       "source_location": "L11",
       "id": "app_app",
-      "community": 3,
+      "community": 1,
       "norm_label": "app()"
     },
     {
@@ -342,7 +342,7 @@
       "source_file": "client\\src\\main.jsx",
       "source_location": "L1",
       "id": "client_src_main_jsx",
-      "community": 17,
+      "community": 18,
       "norm_label": "main.jsx"
     },
     {
@@ -351,7 +351,7 @@
       "source_file": "client\\src\\lib\\session.js",
       "source_location": "L1",
       "id": "client_src_lib_session_js",
-      "community": 3,
+      "community": 1,
       "norm_label": "session.js"
     },
     {
@@ -360,7 +360,7 @@
       "source_file": "client\\src\\lib\\session.js",
       "source_location": "L15",
       "id": "session_getsession",
-      "community": 3,
+      "community": 1,
       "norm_label": "getsession()"
     },
     {
@@ -369,7 +369,7 @@
       "source_file": "client\\src\\pages\\BattlePage.jsx",
       "source_location": "L1",
       "id": "client_src_pages_battlepage_jsx",
-      "community": 3,
+      "community": 1,
       "norm_label": "battlepage.jsx"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "client\\src\\pages\\BattlePage.jsx",
       "source_location": "L5",
       "id": "battlepage_battlepage",
-      "community": 3,
+      "community": 1,
       "norm_label": "battlepage()"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "client\\src\\pages\\GrimoireView.jsx",
       "source_location": "L1",
       "id": "client_src_pages_grimoireview_jsx",
-      "community": 13,
+      "community": 14,
       "norm_label": "grimoireview.jsx"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "client\\src\\pages\\GrimoireView.jsx",
       "source_location": "L8",
       "id": "grimoireview_grimoireview",
-      "community": 13,
+      "community": 14,
       "norm_label": "grimoireview()"
     },
     {
@@ -405,88 +405,106 @@
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
       "source_location": "L1",
       "id": "client_src_pages_lobbypage_jsx",
-      "community": 3,
+      "community": 1,
       "norm_label": "lobbypage.jsx"
     },
     {
       "label": "prefKey()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "id": "lobbypage_prefkey",
-      "community": 3,
+      "community": 1,
       "norm_label": "prefkey()"
     },
     {
       "label": "loadPref()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L12",
+      "source_location": "L13",
       "id": "lobbypage_loadpref",
-      "community": 3,
+      "community": 1,
       "norm_label": "loadpref()"
     },
     {
       "label": "savePref()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "id": "lobbypage_savepref",
-      "community": 3,
+      "community": 1,
       "norm_label": "savepref()"
     },
     {
       "label": "roleCategory()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L19",
+      "source_location": "L20",
       "id": "lobbypage_rolecategory",
-      "community": 3,
+      "community": 1,
       "norm_label": "rolecategory()"
+    },
+    {
+      "label": "fmtSP()",
+      "file_type": "code",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L28",
+      "id": "lobbypage_fmtsp",
+      "community": 1,
+      "norm_label": "fmtsp()"
     },
     {
       "label": "HeroDetail()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L37",
+      "source_location": "L42",
       "id": "lobbypage_herodetail",
-      "community": 3,
+      "community": 1,
       "norm_label": "herodetail()"
+    },
+    {
+      "label": "MobileHeroPage()",
+      "file_type": "code",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L99",
+      "id": "lobbypage_mobileheropage",
+      "community": 1,
+      "norm_label": "mobileheropage()"
     },
     {
       "label": "FormationView()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L95",
+      "source_location": "L162",
       "id": "lobbypage_formationview",
-      "community": 3,
+      "community": 1,
       "norm_label": "formationview()"
     },
     {
       "label": "SettingsView()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L259",
+      "source_location": "L327",
       "id": "lobbypage_settingsview",
-      "community": 3,
+      "community": 1,
       "norm_label": "settingsview()"
     },
     {
       "label": "SearchOverlay()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L308",
+      "source_location": "L376",
       "id": "lobbypage_searchoverlay",
-      "community": 3,
+      "community": 1,
       "norm_label": "searchoverlay()"
     },
     {
       "label": "LobbyPage()",
       "file_type": "code",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L350",
+      "source_location": "L418",
       "id": "lobbypage_lobbypage",
-      "community": 3,
+      "community": 1,
       "norm_label": "lobbypage()"
     },
     {
@@ -495,7 +513,7 @@
       "source_file": "client\\src\\pages\\LoginPage.jsx",
       "source_location": "L1",
       "id": "client_src_pages_loginpage_jsx",
-      "community": 14,
+      "community": 15,
       "norm_label": "loginpage.jsx"
     },
     {
@@ -504,7 +522,7 @@
       "source_file": "client\\src\\pages\\LoginPage.jsx",
       "source_location": "L6",
       "id": "loginpage_loginpage",
-      "community": 14,
+      "community": 15,
       "norm_label": "loginpage()"
     },
     {
@@ -513,7 +531,7 @@
       "source_file": "public\\mobile.js",
       "source_location": "L1",
       "id": "public_mobile_js",
-      "community": 10,
+      "community": 12,
       "norm_label": "mobile.js"
     },
     {
@@ -522,7 +540,7 @@
       "source_file": "public\\mobile.js",
       "source_location": "L34",
       "id": "mobile_setuplog",
-      "community": 10,
+      "community": 12,
       "norm_label": "setuplog()"
     },
     {
@@ -531,7 +549,7 @@
       "source_file": "public\\mobile.js",
       "source_location": "L52",
       "id": "mobile_injectlogbtn",
-      "community": 10,
+      "community": 12,
       "norm_label": "injectlogbtn()"
     },
     {
@@ -540,7 +558,7 @@
       "source_file": "public\\mobile.js",
       "source_location": "L86",
       "id": "mobile_applyhighlight",
-      "community": 10,
+      "community": 12,
       "norm_label": "applyhighlight()"
     },
     {
@@ -549,7 +567,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1",
       "id": "public_js_battle_js",
-      "community": 4,
+      "community": 2,
       "norm_label": "battle.js"
     },
     {
@@ -558,7 +576,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L5",
       "id": "battle_updatescale",
-      "community": 4,
+      "community": 2,
       "norm_label": "updatescale()"
     },
     {
@@ -567,7 +585,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L70",
       "id": "battle_bench_slots",
-      "community": 2,
+      "community": 8,
       "norm_label": "bench_slots()"
     },
     {
@@ -576,7 +594,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L73",
       "id": "battle_field_max",
-      "community": 1,
+      "community": 7,
       "norm_label": "field_max()"
     },
     {
@@ -585,7 +603,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L76",
       "id": "battle_distinctheroes",
-      "community": 2,
+      "community": 8,
       "norm_label": "distinctheroes()"
     },
     {
@@ -594,7 +612,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L79",
       "id": "battle_canaddnewhero",
-      "community": 5,
+      "community": 8,
       "norm_label": "canaddnewhero()"
     },
     {
@@ -603,7 +621,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L98",
       "id": "battle_start_gold",
-      "community": 2,
+      "community": 3,
       "norm_label": "start_gold()"
     },
     {
@@ -612,7 +630,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L103",
       "id": "battle_getbattlespeedmultiplier",
-      "community": 9,
+      "community": 2,
       "norm_label": "getbattlespeedmultiplier()"
     },
     {
@@ -621,7 +639,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L106",
       "id": "battle_getbattleframedelay",
-      "community": 9,
+      "community": 2,
       "norm_label": "getbattleframedelay()"
     },
     {
@@ -630,7 +648,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L109",
       "id": "battle_getbattlefxduration",
-      "community": 9,
+      "community": 2,
       "norm_label": "getbattlefxduration()"
     },
     {
@@ -639,7 +657,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L112",
       "id": "battle_applybattlespeed",
-      "community": 9,
+      "community": 2,
       "norm_label": "applybattlespeed()"
     },
     {
@@ -648,7 +666,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L125",
       "id": "battle_togglebattlespeed",
-      "community": 9,
+      "community": 2,
       "norm_label": "togglebattlespeed()"
     },
     {
@@ -657,7 +675,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L141",
       "id": "battle_showloader",
-      "community": 6,
+      "community": 5,
       "norm_label": "showloader()"
     },
     {
@@ -666,7 +684,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L148",
       "id": "battle_hideloader",
-      "community": 6,
+      "community": 5,
       "norm_label": "hideloader()"
     },
     {
@@ -675,7 +693,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L155",
       "id": "battle_validategamestate",
-      "community": 6,
+      "community": 5,
       "norm_label": "validategamestate()"
     },
     {
@@ -684,7 +702,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L172",
       "id": "battle_initgame",
-      "community": 6,
+      "community": 5,
       "norm_label": "initgame()"
     },
     {
@@ -693,7 +711,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L297",
       "id": "battle_skillicon",
-      "community": 6,
+      "community": 5,
       "norm_label": "skillicon()"
     },
     {
@@ -702,7 +720,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L315",
       "id": "battle_mkunit",
-      "community": 5,
+      "community": 9,
       "norm_label": "mkunit()"
     },
     {
@@ -711,7 +729,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L336",
       "id": "battle_upgradeunit",
-      "community": 2,
+      "community": 3,
       "norm_label": "upgradeunit()"
     },
     {
@@ -720,7 +738,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L350",
       "id": "battle_playerrandcid",
-      "community": 11,
+      "community": 9,
       "norm_label": "playerrandcid()"
     },
     {
@@ -729,7 +747,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L406",
       "id": "battle_rnd",
-      "community": 11,
+      "community": 9,
       "norm_label": "rnd()"
     },
     {
@@ -738,7 +756,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L409",
       "id": "battle_randcid",
-      "community": 11,
+      "community": 9,
       "norm_label": "randcid()"
     },
     {
@@ -747,7 +765,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L412",
       "id": "battle_shuffle",
-      "community": 11,
+      "community": 9,
       "norm_label": "shuffle()"
     },
     {
@@ -756,7 +774,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L419",
       "id": "battle_adjacentslots",
-      "community": 4,
+      "community": 7,
       "norm_label": "adjacentslots()"
     },
     {
@@ -765,7 +783,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L433",
       "id": "battle_cardcost",
-      "community": 5,
+      "community": 8,
       "norm_label": "cardcost()"
     },
     {
@@ -774,7 +792,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L436",
       "id": "battle_totalowned",
-      "community": 5,
+      "community": 8,
       "norm_label": "totalowned()"
     },
     {
@@ -783,7 +801,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L443",
       "id": "battle_applymerge",
-      "community": 2,
+      "community": 3,
       "norm_label": "applymerge()"
     },
     {
@@ -792,7 +810,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L454",
       "id": "battle_detectcombos",
-      "community": 5,
+      "community": 9,
       "norm_label": "_detectcombos()"
     },
     {
@@ -801,7 +819,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L504",
       "id": "battle_genshop",
-      "community": 5,
+      "community": 9,
       "norm_label": "genshop()"
     },
     {
@@ -810,7 +828,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L530",
       "id": "battle_rerollshop",
-      "community": 5,
+      "community": 9,
       "norm_label": "rerollshop()"
     },
     {
@@ -819,7 +837,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L542",
       "id": "battle_showmergebadge",
-      "community": 4,
+      "community": 2,
       "norm_label": "showmergebadge()"
     },
     {
@@ -828,7 +846,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L555",
       "id": "battle_addtobench",
-      "community": 5,
+      "community": 8,
       "norm_label": "_addtobench()"
     },
     {
@@ -837,7 +855,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L642",
       "id": "battle_slideshop",
-      "community": 5,
+      "community": 9,
       "norm_label": "_slideshop()"
     },
     {
@@ -846,7 +864,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L649",
       "id": "battle_buycard",
-      "community": 5,
+      "community": 8,
       "norm_label": "buycard()"
     },
     {
@@ -855,7 +873,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L668",
       "id": "battle_buycombo",
-      "community": 5,
+      "community": 8,
       "norm_label": "buycombo()"
     },
     {
@@ -864,7 +882,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L705",
       "id": "battle_betweenincome",
-      "community": 1,
+      "community": 4,
       "norm_label": "betweenincome()"
     },
     {
@@ -873,7 +891,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L712",
       "id": "battle_maxunits",
-      "community": 1,
+      "community": 7,
       "norm_label": "maxunits()"
     },
     {
@@ -882,7 +900,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L716",
       "id": "battle_placeunit",
-      "community": 1,
+      "community": 7,
       "norm_label": "placeunit()"
     },
     {
@@ -891,7 +909,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L735",
       "id": "battle_retbench",
-      "community": 2,
+      "community": 8,
       "norm_label": "retbench()"
     },
     {
@@ -900,7 +918,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L754",
       "id": "battle_restorefieldhp",
-      "community": 1,
+      "community": 4,
       "norm_label": "restorefieldhp()"
     },
     {
@@ -909,7 +927,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L777",
       "id": "battle_simulate",
-      "community": 1,
+      "community": 10,
       "norm_label": "simulate()"
     },
     {
@@ -918,7 +936,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L804",
       "id": "battle_renderturnpanel",
-      "community": 4,
+      "community": 10,
       "norm_label": "renderturnpanel()"
     },
     {
@@ -927,7 +945,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L855",
       "id": "battle_hideturnpanel",
-      "community": 1,
+      "community": 4,
       "norm_label": "hideturnpanel()"
     },
     {
@@ -936,7 +954,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L863",
       "id": "battle_startphasetimer",
-      "community": 1,
+      "community": 10,
       "norm_label": "startphasetimer()"
     },
     {
@@ -945,7 +963,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L889",
       "id": "battle_stopphasetimer",
-      "community": 1,
+      "community": 10,
       "norm_label": "stopphasetimer()"
     },
     {
@@ -954,7 +972,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L897",
       "id": "battle_updatefieldlabels",
-      "community": 6,
+      "community": 5,
       "norm_label": "updatefieldlabels()"
     },
     {
@@ -963,7 +981,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L918",
       "id": "battle_setshoplocked",
-      "community": 1,
+      "community": 4,
       "norm_label": "setshoplocked()"
     },
     {
@@ -972,7 +990,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L927",
       "id": "battle_startbattle",
-      "community": 1,
+      "community": 10,
       "norm_label": "startbattle()"
     },
     {
@@ -981,7 +999,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L996",
       "id": "battle_playback",
-      "community": 4,
+      "community": 10,
       "norm_label": "playback()"
     },
     {
@@ -990,7 +1008,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1458",
       "id": "battle_endbattle",
-      "community": 1,
+      "community": 4,
       "norm_label": "endbattle()"
     },
     {
@@ -999,7 +1017,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1562",
       "id": "battle_dispatchduelresult",
-      "community": 4,
+      "community": 2,
       "norm_label": "_dispatchduelresult()"
     },
     {
@@ -1008,7 +1026,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1615",
       "id": "battle_mirrorboard",
-      "community": 4,
+      "community": 2,
       "norm_label": "mirrorboard()"
     },
     {
@@ -1017,7 +1035,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1626",
       "id": "battle_pvpflipresult",
-      "community": 4,
+      "community": 2,
       "norm_label": "pvpflipresult()"
     },
     {
@@ -1026,7 +1044,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1645",
       "id": "battle_pvpinit",
-      "community": 6,
+      "community": 5,
       "norm_label": "pvpinit()"
     },
     {
@@ -1044,7 +1062,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1862",
       "id": "battle_startgame",
-      "community": 6,
+      "community": 5,
       "norm_label": "startgame()"
     },
     {
@@ -1053,7 +1071,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1943",
       "id": "battle_cleanupbattledom",
-      "community": 1,
+      "community": 4,
       "norm_label": "_cleanupbattledom()"
     },
     {
@@ -1062,7 +1080,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L1951",
       "id": "battle_nextbattle",
-      "community": 1,
+      "community": 4,
       "norm_label": "nextbattle()"
     },
     {
@@ -1071,7 +1089,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2029",
       "id": "battle_nextduel",
-      "community": 1,
+      "community": 4,
       "norm_label": "nextduel()"
     },
     {
@@ -1089,7 +1107,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2087",
       "id": "battle_utag",
-      "community": 4,
+      "community": 2,
       "norm_label": "utag()"
     },
     {
@@ -1098,7 +1116,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2091",
       "id": "battle_nametag",
-      "community": 4,
+      "community": 2,
       "norm_label": "nametag()"
     },
     {
@@ -1107,7 +1125,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2095",
       "id": "battle_dmgtag",
-      "community": 4,
+      "community": 2,
       "norm_label": "dmgtag()"
     },
     {
@@ -1116,7 +1134,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2107",
       "id": "battle_dispatchbanner",
-      "community": 1,
+      "community": 10,
       "norm_label": "_dispatchbanner()"
     },
     {
@@ -1125,7 +1143,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2113",
       "id": "battle_renderduelbar",
-      "community": 1,
+      "community": 4,
       "norm_label": "renderduelbar()"
     },
     {
@@ -1134,7 +1152,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2137",
       "id": "battle_drawattackarrow",
-      "community": 4,
+      "community": 2,
       "norm_label": "drawattackarrow()"
     },
     {
@@ -1143,7 +1161,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2212",
       "id": "battle_clearattackarrows",
-      "community": 1,
+      "community": 7,
       "norm_label": "clearattackarrows()"
     },
     {
@@ -1152,7 +1170,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2218",
       "id": "battle_previewtarget",
-      "community": 4,
+      "community": 2,
       "norm_label": "previewtarget()"
     },
     {
@@ -1161,7 +1179,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2265",
       "id": "battle_renderfield",
-      "community": 4,
+      "community": 7,
       "norm_label": "renderfield()"
     },
     {
@@ -1170,7 +1188,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2477",
       "id": "battle_shopslotleft",
-      "community": 4,
+      "community": 2,
       "norm_label": "_shopslotleft()"
     },
     {
@@ -1179,7 +1197,7 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2506",
       "id": "battle_rendershop",
-      "community": 1,
+      "community": 7,
       "norm_label": "rendershop()"
     },
     {
@@ -1188,106 +1206,115 @@
       "source_file": "public\\js\\battle.js",
       "source_location": "L2589",
       "id": "battle_renderbench",
-      "community": 1,
+      "community": 7,
       "norm_label": "renderbench()"
+    },
+    {
+      "label": "showHeroInfo()",
+      "file_type": "code",
+      "source_file": "public\\js\\battle.js",
+      "source_location": "L2655",
+      "id": "battle_showheroinfo",
+      "community": 6,
+      "norm_label": "showheroinfo()"
     },
     {
       "label": "escapeHtml()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2656",
+      "source_location": "L2667",
       "id": "battle_escapehtml",
-      "community": 4,
+      "community": 2,
       "norm_label": "escapehtml()"
     },
     {
       "label": "updateHdr()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2672",
+      "source_location": "L2683",
       "id": "battle_updatehdr",
-      "community": 1,
+      "community": 4,
       "norm_label": "updatehdr()"
     },
     {
       "label": "render()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2674",
+      "source_location": "L2685",
       "id": "battle_render",
-      "community": 1,
+      "community": 7,
       "norm_label": "render()"
     },
     {
       "label": "_bootBattle()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2708",
+      "source_location": "L2719",
       "id": "battle_bootbattle",
-      "community": 6,
+      "community": 5,
       "norm_label": "_bootbattle()"
     },
     {
       "label": "_setMobileView()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2730",
+      "source_location": "L2741",
       "id": "battle_setmobileview",
-      "community": 8,
+      "community": 11,
       "norm_label": "_setmobileview()"
     },
     {
       "label": "setMobileStep()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2736",
+      "source_location": "L2747",
       "id": "battle_setmobilestep",
-      "community": 8,
+      "community": 11,
       "norm_label": "setmobilestep()"
     },
     {
       "label": "_syncLogToMobile()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2746",
+      "source_location": "L2757",
       "id": "battle_synclogtomobile",
-      "community": 8,
+      "community": 11,
       "norm_label": "_synclogtomobile()"
     },
     {
       "label": "togglePanel()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2758",
+      "source_location": "L2769",
       "id": "battle_togglepanel",
-      "community": 8,
+      "community": 11,
       "norm_label": "togglepanel()"
     },
     {
       "label": "toggleMobileMenu()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2766",
+      "source_location": "L2777",
       "id": "battle_togglemobilemenu",
-      "community": 8,
+      "community": 11,
       "norm_label": "togglemobilemenu()"
     },
     {
       "label": "openMobileMenu()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2778",
+      "source_location": "L2789",
       "id": "battle_openmobilemenu",
-      "community": 8,
+      "community": 11,
       "norm_label": "openmobilemenu()"
     },
     {
       "label": "closeMobileMenu()",
       "file_type": "code",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2781",
+      "source_location": "L2792",
       "id": "battle_closemobilemenu",
-      "community": 8,
+      "community": 11,
       "norm_label": "closemobilemenu()"
     },
     {
@@ -1296,7 +1323,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L1",
       "id": "public_js_bot_ai_js",
-      "community": 2,
+      "community": 3,
       "norm_label": "bot-ai.js"
     },
     {
@@ -1305,7 +1332,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L68",
       "id": "bot_ai_makeinitialbot",
-      "community": 2,
+      "community": 3,
       "norm_label": "makeinitialbot()"
     },
     {
@@ -1314,7 +1341,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L82",
       "id": "bot_ai_deps",
-      "community": 2,
+      "community": 3,
       "norm_label": "deps()"
     },
     {
@@ -1323,7 +1350,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L86",
       "id": "bot_ai_init",
-      "community": 2,
+      "community": 3,
       "norm_label": "init()"
     },
     {
@@ -1332,7 +1359,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L91",
       "id": "bot_ai_botcardcost",
-      "community": 2,
+      "community": 3,
       "norm_label": "botcardcost()"
     },
     {
@@ -1341,7 +1368,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L98",
       "id": "bot_ai_botapplymerge",
-      "community": 2,
+      "community": 3,
       "norm_label": "botapplymerge()"
     },
     {
@@ -1350,7 +1377,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L109",
       "id": "bot_ai_botgenshop",
-      "community": 2,
+      "community": 3,
       "norm_label": "botgenshop()"
     },
     {
@@ -1359,7 +1386,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L114",
       "id": "bot_ai_botscorecard",
-      "community": 2,
+      "community": 3,
       "norm_label": "botscorecard()"
     },
     {
@@ -1368,7 +1395,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L139",
       "id": "bot_ai_botbuyphase",
-      "community": 2,
+      "community": 3,
       "norm_label": "botbuyphase()"
     },
     {
@@ -1377,7 +1404,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L193",
       "id": "bot_ai_botposition",
-      "community": 2,
+      "community": 3,
       "norm_label": "botposition()"
     },
     {
@@ -1386,7 +1413,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L222",
       "id": "bot_ai_botnextbattle",
-      "community": 2,
+      "community": 3,
       "norm_label": "botnextbattle()"
     },
     {
@@ -1395,7 +1422,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L238",
       "id": "bot_ai_botlearnfrombattle",
-      "community": 2,
+      "community": 3,
       "norm_label": "botlearnfrombattle()"
     },
     {
@@ -1404,7 +1431,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L250",
       "id": "bot_ai_botrunturn",
-      "community": 2,
+      "community": 3,
       "norm_label": "botrunturn()"
     },
     {
@@ -1413,7 +1440,7 @@
       "source_file": "public\\js\\bot-ai.js",
       "source_location": "L256",
       "id": "bot_ai_botinitduel",
-      "community": 2,
+      "community": 3,
       "norm_label": "botinitduel()"
     },
     {
@@ -1422,7 +1449,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L1",
       "id": "public_js_skill_tooltip_js",
-      "community": 7,
+      "community": 6,
       "norm_label": "skill-tooltip.js"
     },
     {
@@ -1431,7 +1458,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L94",
       "id": "skill_tooltip_init",
-      "community": 6,
+      "community": 5,
       "norm_label": "init()"
     },
     {
@@ -1440,7 +1467,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L95",
       "id": "skill_tooltip_getc",
-      "community": 7,
+      "community": 6,
       "norm_label": "getc()"
     },
     {
@@ -1449,7 +1476,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L101",
       "id": "skill_tooltip_skilltooltiptext",
-      "community": 7,
+      "community": 6,
       "norm_label": "skilltooltiptext()"
     },
     {
@@ -1458,7 +1485,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L116",
       "id": "skill_tooltip_skilltooltiphtml",
-      "community": 7,
+      "community": 6,
       "norm_label": "skilltooltiphtml()"
     },
     {
@@ -1467,7 +1494,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L144",
       "id": "skill_tooltip_heroinfohtml",
-      "community": 7,
+      "community": 6,
       "norm_label": "heroinfohtml()"
     },
     {
@@ -1476,7 +1503,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L192",
       "id": "skill_tooltip_gettipel",
-      "community": 7,
+      "community": 6,
       "norm_label": "gettipel()"
     },
     {
@@ -1485,7 +1512,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L201",
       "id": "skill_tooltip_show",
-      "community": 7,
+      "community": 6,
       "norm_label": "show()"
     },
     {
@@ -1494,7 +1521,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L223",
       "id": "skill_tooltip_showsticky",
-      "community": 7,
+      "community": 6,
       "norm_label": "showsticky()"
     },
     {
@@ -1503,7 +1530,7 @@
       "source_file": "public\\js\\skill-tooltip.js",
       "source_location": "L239",
       "id": "skill_tooltip_hide",
-      "community": 7,
+      "community": 6,
       "norm_label": "hide()"
     },
     {
@@ -1512,7 +1539,7 @@
       "source_file": "scripts\\release.js",
       "source_location": "L1",
       "id": "scripts_release_js",
-      "community": 18,
+      "community": 19,
       "norm_label": "release.js"
     },
     {
@@ -1521,7 +1548,7 @@
       "source_file": "shared\\simulate.js",
       "source_location": "L1",
       "id": "shared_simulate_js",
-      "community": 12,
+      "community": 13,
       "norm_label": "simulate.js"
     },
     {
@@ -1530,7 +1557,7 @@
       "source_file": "shared\\simulate.js",
       "source_location": "L22",
       "id": "simulate_adjacentslots",
-      "community": 12,
+      "community": 13,
       "norm_label": "adjacentslots()"
     },
     {
@@ -1539,7 +1566,7 @@
       "source_file": "shared\\simulate.js",
       "source_location": "L42",
       "id": "simulate_simulate",
-      "community": 12,
+      "community": 13,
       "norm_label": "simulate()"
     }
   ],
@@ -2460,7 +2487,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L9",
+      "source_location": "L10",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_prefkey",
@@ -2472,7 +2499,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_loadpref",
@@ -2484,7 +2511,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_savepref",
@@ -2496,7 +2523,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L19",
+      "source_location": "L20",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_rolecategory",
@@ -2508,7 +2535,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L37",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_src": "client_src_pages_lobbypage_jsx",
+      "_tgt": "lobbypage_fmtsp",
+      "source": "client_src_pages_lobbypage_jsx",
+      "target": "lobbypage_fmtsp",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L42",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_herodetail",
@@ -2520,7 +2559,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L95",
+      "source_location": "L99",
+      "weight": 1.0,
+      "_src": "client_src_pages_lobbypage_jsx",
+      "_tgt": "lobbypage_mobileheropage",
+      "source": "client_src_pages_lobbypage_jsx",
+      "target": "lobbypage_mobileheropage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L162",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_formationview",
@@ -2532,7 +2583,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L259",
+      "source_location": "L327",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_settingsview",
@@ -2544,7 +2595,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L308",
+      "source_location": "L376",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_searchoverlay",
@@ -2556,7 +2607,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L350",
+      "source_location": "L418",
       "weight": 1.0,
       "_src": "client_src_pages_lobbypage_jsx",
       "_tgt": "lobbypage_lobbypage",
@@ -2568,7 +2619,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L13",
+      "source_location": "L14",
       "weight": 1.0,
       "_src": "lobbypage_loadpref",
       "_tgt": "lobbypage_prefkey",
@@ -2580,7 +2631,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0,
       "_src": "lobbypage_savepref",
       "_tgt": "lobbypage_prefkey",
@@ -2592,12 +2643,48 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "client\\src\\pages\\LobbyPage.jsx",
-      "source_location": "L40",
+      "source_location": "L45",
       "weight": 1.0,
       "_src": "lobbypage_herodetail",
       "_tgt": "lobbypage_rolecategory",
       "source": "lobbypage_rolecategory",
       "target": "lobbypage_herodetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L103",
+      "weight": 1.0,
+      "_src": "lobbypage_mobileheropage",
+      "_tgt": "lobbypage_rolecategory",
+      "source": "lobbypage_rolecategory",
+      "target": "lobbypage_mobileheropage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L73",
+      "weight": 1.0,
+      "_src": "lobbypage_herodetail",
+      "_tgt": "lobbypage_fmtsp",
+      "source": "lobbypage_fmtsp",
+      "target": "lobbypage_herodetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "client\\src\\pages\\LobbyPage.jsx",
+      "source_location": "L134",
+      "weight": 1.0,
+      "_src": "lobbypage_mobileheropage",
+      "_tgt": "lobbypage_fmtsp",
+      "source": "lobbypage_fmtsp",
+      "target": "lobbypage_mobileheropage",
       "confidence_score": 1.0
     },
     {
@@ -3504,7 +3591,19 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2656",
+      "source_location": "L2655",
+      "weight": 1.0,
+      "_src": "public_js_battle_js",
+      "_tgt": "battle_showheroinfo",
+      "source": "public_js_battle_js",
+      "target": "battle_showheroinfo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "public\\js\\battle.js",
+      "source_location": "L2667",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_escapehtml",
@@ -3516,7 +3615,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2672",
+      "source_location": "L2683",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_updatehdr",
@@ -3528,7 +3627,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2674",
+      "source_location": "L2685",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_render",
@@ -3540,7 +3639,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2708",
+      "source_location": "L2719",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_bootbattle",
@@ -3552,7 +3651,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2730",
+      "source_location": "L2741",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_setmobileview",
@@ -3564,7 +3663,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2736",
+      "source_location": "L2747",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_setmobilestep",
@@ -3576,7 +3675,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2746",
+      "source_location": "L2757",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_synclogtomobile",
@@ -3588,7 +3687,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2758",
+      "source_location": "L2769",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_togglepanel",
@@ -3600,7 +3699,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2766",
+      "source_location": "L2777",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_togglemobilemenu",
@@ -3612,7 +3711,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2778",
+      "source_location": "L2789",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_openmobilemenu",
@@ -3624,7 +3723,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2781",
+      "source_location": "L2792",
       "weight": 1.0,
       "_src": "public_js_battle_js",
       "_tgt": "battle_closemobilemenu",
@@ -3888,7 +3987,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2709",
+      "source_location": "L2720",
       "weight": 1.0,
       "_src": "battle_bootbattle",
       "_tgt": "battle_initgame",
@@ -4344,7 +4443,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2688",
+      "source_location": "L2699",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_maxunits",
@@ -4812,7 +4911,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2697",
+      "source_location": "L2708",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_dispatchbanner",
@@ -4824,7 +4923,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2685",
+      "source_location": "L2696",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_renderduelbar",
@@ -4836,7 +4935,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2675",
+      "source_location": "L2686",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_clearattackarrows",
@@ -4848,7 +4947,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2676",
+      "source_location": "L2687",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_renderfield",
@@ -4860,7 +4959,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2682",
+      "source_location": "L2693",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_rendershop",
@@ -4872,7 +4971,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2683",
+      "source_location": "L2694",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_renderbench",
@@ -4882,9 +4981,45 @@
     },
     {
       "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public\\js\\battle.js",
+      "source_location": "L2656",
+      "weight": 1.0,
+      "_src": "battle_showheroinfo",
+      "_tgt": "skill_tooltip_heroinfohtml",
+      "source": "battle_showheroinfo",
+      "target": "skill_tooltip_heroinfohtml"
+    },
+    {
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public\\js\\battle.js",
+      "source_location": "L2660",
+      "weight": 1.0,
+      "_src": "battle_showheroinfo",
+      "_tgt": "skill_tooltip_showsticky",
+      "source": "battle_showheroinfo",
+      "target": "skill_tooltip_showsticky"
+    },
+    {
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "public\\js\\battle.js",
+      "source_location": "L2663",
+      "weight": 1.0,
+      "_src": "battle_showheroinfo",
+      "_tgt": "skill_tooltip_show",
+      "source": "battle_showheroinfo",
+      "target": "skill_tooltip_show"
+    },
+    {
+      "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2684",
+      "source_location": "L2695",
       "weight": 1.0,
       "_src": "battle_render",
       "_tgt": "battle_updatehdr",
@@ -4896,7 +5031,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2739",
+      "source_location": "L2750",
       "weight": 1.0,
       "_src": "battle_setmobilestep",
       "_tgt": "battle_setmobileview",
@@ -4908,7 +5043,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2762",
+      "source_location": "L2773",
       "weight": 1.0,
       "_src": "battle_togglepanel",
       "_tgt": "battle_setmobileview",
@@ -4920,7 +5055,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2776",
+      "source_location": "L2787",
       "weight": 1.0,
       "_src": "battle_togglemobilemenu",
       "_tgt": "battle_setmobileview",
@@ -4932,7 +5067,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2782",
+      "source_location": "L2793",
       "weight": 1.0,
       "_src": "battle_closemobilemenu",
       "_tgt": "battle_setmobileview",
@@ -4944,7 +5079,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2761",
+      "source_location": "L2772",
       "weight": 1.0,
       "_src": "battle_togglepanel",
       "_tgt": "battle_synclogtomobile",
@@ -4956,7 +5091,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "public\\js\\battle.js",
-      "source_location": "L2779",
+      "source_location": "L2790",
       "weight": 1.0,
       "_src": "battle_openmobilemenu",
       "_tgt": "battle_togglemobilemenu",

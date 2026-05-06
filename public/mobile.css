@@ -142,8 +142,11 @@
    ══════════════════════════════════════════ */
 
 @media (pointer: coarse) {
-  /* Kill hover tooltips (stuck on touch devices) */
-  .skill-tip { display: none !important; }
+  /* Info panels open as sticky tap tooltips on touch devices. */
+  .skill-tip {
+    display: block !important;
+    max-width: calc(100vw - 24px);
+  }
 
   /* Safe-area top padding */
   #game {
