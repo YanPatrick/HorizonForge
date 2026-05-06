@@ -329,6 +329,7 @@ async function loadStatsTable() {
     SELECT
       c.cid,
       c.name,
+      c.icon,
       c.target_type,
       ls.level,
       FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
@@ -350,6 +351,7 @@ async function loadStatsTable() {
       map.set(r.cid, {
         cid: r.cid,
         name: r.name,
+        icon: r.icon,
         target_type: r.target_type,
         _baseSkillPower: r.base_skill_power,
         _spmByLevel: {},
@@ -446,6 +448,7 @@ async function materializeBoard(board) {
       cid: u.cid,
       lv: u.lv,
       name: ch.name,
+      ico: ch.icon,
       tp: ch.target_type,
       atk: Math.floor(lvStats.atk),
       maxHp: lvStats.max_hp,
@@ -1486,13 +1489,6 @@ io.on('connection', socket => {
     }
     if (!VALID_WAGERS.includes(wager)) {
       socket.emit('error', { message: 'Invalid wager amount.' });
-      return;
-    }
-    if (wager > 0 && (!HIVE_GAME_ACCOUNT || !HIVE_ACTIVE_KEY)) {
-      // Refuse to take real-money wagers when the server can't process payouts.
-      // Without this guard, the match would run as a "free" match (no payment
-      // requested, no prize sent), which the winner would fairly call theft.
-      socket.emit('error', { message: 'Wagered matches are not available on this server. Please choose Free.' });
       return;
     }
     if (format !== undefined && !VALID_FORMATS.includes(format)) {

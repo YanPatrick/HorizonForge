@@ -31,6 +31,25 @@ function fmtSP(v) {
 
 const FMT_OPTS = [{ val: 3, label: 'BO3' }, { val: 5, label: 'BO5' }, { val: 7, label: 'BO7' }]
 const BET_OPTS = [{ val: 0, label: 'Free' }, { val: 1, label: '1 HIVE' }, { val: 5, label: '5 HIVE' }, { val: 10, label: '10 HIVE' }]
+const MODE_TIPS = {
+  ai: {
+    title: 'Solo Battle',
+    body: 'Fight against an AI opponent. Choose the duel format, build your army through recruitment, and win the required number of battles.',
+    theme: 'ai',
+    sections: [
+      { label: 'Format', rows: [['BO3', 'First to 2 wins'], ['BO5', 'First to 3 wins'], ['BO7', 'First to 4 wins']] },
+    ],
+  },
+  pvp: {
+    title: 'PvP Match',
+    body: 'Find another player with the same wager and duel format. Paid matches use Hive Keychain to confirm the wager before the match starts.',
+    theme: 'pvp',
+    sections: [
+      { label: 'Format', rows: [['BO3', 'First to 2 wins'], ['BO5', 'First to 3 wins'], ['BO7', 'First to 4 wins']] },
+      { label: 'Wager', rows: [['Free', 'No HIVE transfer'], ['Paid', 'Both players send the selected amount']] },
+    ],
+  },
+}
 
 const EMPTY_FORMATIONS = [
   { slot: 1, name: '', hero_ids: [] },
@@ -436,7 +455,7 @@ export default function LobbyPage() {
   const [aiFmtOpen, setAiFmtOpen] = useState(false)
   const [pvpBetOpen, setPvpBetOpen] = useState(false)
   const [pvpFmtOpen, setPvpFmtOpen] = useState(false)
-  const [hivePay, setHivePay] = useState(true)
+  const [activeInfoTip, setActiveInfoTip] = useState(null)
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -451,6 +470,45 @@ export default function LobbyPage() {
     clearTimeout(toastTimerRef.current)
     toastTimerRef.current = setTimeout(() => setToastMsg(''), 2800)
   }, [])
+
+  function getInfoTipPosition(anchor) {
+    const rect = anchor.getBoundingClientRect()
+    const width = Math.min(260, window.innerWidth - 32)
+    const left = Math.max(16, Math.min(rect.left + rect.width / 2 - width / 2, window.innerWidth - width - 16))
+    const below = rect.bottom + 10
+    const top = below + 230 > window.innerHeight ? Math.max(12, rect.top - 230) : below
+    return { left, top, width }
+  }
+
+  function showInfoTip(id, anchor) {
+    const tip = MODE_TIPS[id]
+    if (!tip || !anchor) return
+    setActiveInfoTip({ id, ...getInfoTipPosition(anchor) })
+  }
+
+  function hideInfoTip() {
+    setActiveInfoTip(null)
+  }
+
+  useEffect(() => {
+    if (!activeInfoTip) return undefined
+    function closeFromOutside(e) {
+      if (!e.target.closest?.('.info-trigger')) hideInfoTip()
+    }
+    function closeOnViewportChange() {
+      hideInfoTip()
+    }
+    document.addEventListener('pointerdown', closeFromOutside)
+    window.addEventListener('resize', closeOnViewportChange)
+    window.addEventListener('scroll', closeOnViewportChange, true)
+    return () => {
+      document.removeEventListener('pointerdown', closeFromOutside)
+      window.removeEventListener('resize', closeOnViewportChange)
+      window.removeEventListener('scroll', closeOnViewportChange, true)
+    }
+  }, [activeInfoTip])
+
+  useEffect(() => { hideInfoTip() }, [view])
 
   /* ── fetch balance ───────────────────────────────────── */
   async function fetchBalance(user) {
@@ -475,12 +533,6 @@ export default function LobbyPage() {
 
     fetch('/api/config').then(r => r.json()).then(({ config }) => {
       setPayoutPct({ liquid: config?.percent_payout_liquid, stake: config?.percent_payout_stake })
-    }).catch(() => {})
-
-    fetch('/api/version').then(r => r.json()).then(d => {
-      const pay = !!d.hivePay
-      setHivePay(pay)
-      if (!pay) setPvpBet(0)
     }).catch(() => {})
 
     // socket.io
@@ -818,7 +870,21 @@ export default function LobbyPage() {
                           </div>
                         )}
                       </div>
-                      <button className="info-trigger" id="info-ai" data-tip-id="ai" aria-label="More info">i</button>
+                      <button
+                        className={`info-trigger${activeInfoTip?.id === 'ai' ? ' tip-active' : ''}`}
+                        id="info-ai"
+                        data-tip-id="ai"
+                        aria-label="More info"
+                        type="button"
+                        onMouseEnter={e => showInfoTip('ai', e.currentTarget)}
+                        onMouseLeave={hideInfoTip}
+                        onFocus={e => showInfoTip('ai', e.currentTarget)}
+                        onBlur={hideInfoTip}
+                        onClick={e => {
+                          e.stopPropagation()
+                          showInfoTip('ai', e.currentTarget)
+                        }}
+                      >i</button>
                     </div>
                   </div>
                   <div className="banner-expand">
@@ -837,19 +903,6 @@ export default function LobbyPage() {
                     <div className="banner-title-row">
                       <span className="banner-type-badge">PVP</span>
                       <div className="hf-select" style={{ position:'relative' }}>
-                        <button className="hf-sel-trigger" type="button" onClick={() => setPvpBetOpen(x => !x)}>
-                          <span className="hf-sel-value">{BET_OPTS.find(o => o.val === pvpBet)?.label}</span>
-                          <span className="hf-sel-chevron">▾</span>
-                        </button>
-                        {pvpBetOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
-                            {BET_OPTS.filter(o => o.val === 0 || hivePay).map(o => (
-                              <button key={o.val} className={`hf-sel-opt${o.val === pvpBet ? ' active' : ''}`} onClick={() => { setPvpBet(o.val); savePref('pvp_bet', username, o.val); setPvpBetOpen(false) }}>{o.label}</button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="hf-select" style={{ position:'relative' }}>
                         <button className="hf-sel-trigger" type="button" onClick={() => setPvpFmtOpen(x => !x)}>
                           <span className="hf-sel-value">{FMT_OPTS.find(o => o.val === pvpFmt)?.label}</span>
                           <span className="hf-sel-chevron">▾</span>
@@ -862,7 +915,34 @@ export default function LobbyPage() {
                           </div>
                         )}
                       </div>
-                      <button className="info-trigger" id="info-pvp" data-tip-id="pvp" aria-label="More info">i</button>
+                      <div className="hf-select" style={{ position:'relative' }}>
+                        <button className="hf-sel-trigger" type="button" onClick={() => setPvpBetOpen(x => !x)}>
+                          <span className="hf-sel-value">{BET_OPTS.find(o => o.val === pvpBet)?.label}</span>
+                          <span className="hf-sel-chevron">▾</span>
+                        </button>
+                        {pvpBetOpen && (
+                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
+                            {BET_OPTS.map(o => (
+                              <button key={o.val} className={`hf-sel-opt${o.val === pvpBet ? ' active' : ''}`} onClick={() => { setPvpBet(o.val); savePref('pvp_bet', username, o.val); setPvpBetOpen(false) }}>{o.label}</button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className={`info-trigger${activeInfoTip?.id === 'pvp' ? ' tip-active' : ''}`}
+                        id="info-pvp"
+                        data-tip-id="pvp"
+                        aria-label="More info"
+                        type="button"
+                        onMouseEnter={e => showInfoTip('pvp', e.currentTarget)}
+                        onMouseLeave={hideInfoTip}
+                        onFocus={e => showInfoTip('pvp', e.currentTarget)}
+                        onBlur={hideInfoTip}
+                        onClick={e => {
+                          e.stopPropagation()
+                          showInfoTip('pvp', e.currentTarget)
+                        }}
+                      >i</button>
                     </div>
                   </div>
                   <div className="banner-expand">
@@ -909,7 +989,45 @@ export default function LobbyPage() {
       />
 
       {toast && <div className="toast show">{toast}</div>}
-      <div id="desc-tooltip"></div>
+      <div
+        id="desc-tooltip"
+        className={activeInfoTip ? 'visible' : ''}
+        data-theme={activeInfoTip ? MODE_TIPS[activeInfoTip.id]?.theme : undefined}
+        style={activeInfoTip ? {
+          left: `${activeInfoTip.left}px`,
+          top: `${activeInfoTip.top}px`,
+          width: `${activeInfoTip.width}px`,
+        } : undefined}
+      >
+        {activeInfoTip && (() => {
+          const tip = MODE_TIPS[activeInfoTip.id]
+          return (
+            <>
+              <div className="tip-title">{tip.title}</div>
+              <div className="tip-body">{tip.body}</div>
+              {tip.sections.map(section => (
+                <div key={section.label} style={{ marginTop: 9 }}>
+                  <div
+                    style={{
+                      borderTop: `1px solid ${tip.theme === 'pvp' ? 'rgba(220, 150, 30, 0.14)' : 'rgba(160, 120, 255, 0.14)'}`,
+                      marginBottom: 7,
+                    }}
+                  />
+                  <div className="tip-section" style={{ borderBottom: 'none', paddingBottom: 0 }}>{section.label}</div>
+                  <div className="tip-rows">
+                    {section.rows.map(([key, value]) => (
+                      <div className="tip-row" key={`${section.label}-${key}`}>
+                        <span className="tip-key">{key}</span>
+                        <span>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </>
+          )
+        })()}
+      </div>
     </>
   )
 }
