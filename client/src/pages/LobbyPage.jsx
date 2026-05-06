@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import '@styles/lobby.css'
@@ -104,7 +105,7 @@ function MobileHeroPage({ hero, onClose }) {
   const lv1 = hero?.levels?.[1] || {}
   const levelKeys = Object.keys(hero?.levels || {}).map(Number).sort((a, b) => a - b)
 
-  return (
+  return createPortal(
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
       <div className="hf-mhp-header">
         <button type="button" className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
@@ -152,7 +153,8 @@ function MobileHeroPage({ hero, onClose }) {
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
 
