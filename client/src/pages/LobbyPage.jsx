@@ -55,7 +55,7 @@ function HeroDetail({ hero, onClose }) {
             <span className="hf-detail-ico">{hero.icon}</span>
             <span className="hf-detail-hero-name">{hero.name}</span>
           </div>
-          <button className="hf-detail-close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
         <div className="hf-detail-scroll">
           <div className="hf-detail-role-wrap">
@@ -71,7 +71,7 @@ function HeroDetail({ hero, onClose }) {
             <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
             <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
           </div>
-          <button className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
+          <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
             <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
             <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
           </button>
@@ -97,7 +97,7 @@ function HeroDetail({ hero, onClose }) {
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
 function MobileHeroPage({ hero, onClose }) {
   const [expanded, setExpanded] = useState(false)
-  useEffect(() => { if (!hero) setExpanded(false) }, [hero])
+  useEffect(() => { setExpanded(false) }, [hero])
 
   const cat = hero ? roleCategory(hero.role) : ''
   const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
@@ -113,7 +113,7 @@ function MobileHeroPage({ hero, onClose }) {
       {hero && (
         <div className="hf-mhp-body">
           <div
-            className={`hf-mhp-portrait${hero.url_portrait ? ' has-portrait' : ''}`}
+            className="hf-mhp-portrait"
             style={hero.url_portrait ? { '--portrait-url': `url('${hero.url_portrait}')` } : {}}
           >
             {!hero.url_portrait && <div className="hf-mhp-ico">{hero.icon}</div>}
