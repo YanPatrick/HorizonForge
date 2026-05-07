@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS skills (
   skill_key       VARCHAR(40)  NOT NULL,
   name            VARCHAR(60)  NOT NULL,
   description     TEXT         NOT NULL,
+  lore          TEXT,           
   skill_type      VARCHAR(30)  NOT NULL
 );
 
@@ -123,23 +124,24 @@ ON CONFLICT (character_id) DO UPDATE SET
   crit_rate   = EXCLUDED.crit_rate,
   skill_power = EXCLUDED.skill_power;
 
-INSERT INTO skills (character_id, skill_key, name, description, skill_type)
-SELECT c.id, v.skill_key, v.name, v.description, v.skill_type
+INSERT INTO skills (character_id, skill_key, name, description, lore, skill_type)
+SELECT c.id, v.skill_key, v.name, v.description, v.lore, v.skill_type
 FROM characters c
 JOIN (VALUES
-  ('knight',    'iron_defense',    'Iron Defense',    'Reduces skill_power% of damage taken each hit. Scales with level.',                                                                           'Passive'),
-  ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.',                         'ATK Modifier'),
-  ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power as a bonus to crit_chance. Scales with level.',                                                                            'Passive'),
-  ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = atk x skill_power. Then attacks nearest enemy. Scales with level.',                                    'Skill'),
-  ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',                             'Skill'),
-  ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',             'Skill'),
-  ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',                                'ATK Modifier'),
-  ('barbarian', 'fury',            'Fury',            'While HP is below 60%, gain skill_power% bonus attack. Scales with level.',                                                                   'Skill')
-) AS v(cid, skill_key, name, description, skill_type) ON c.cid = v.cid
+  ('knight',    'iron_defense',    'Iron Defense',    'Reduces skill_power% of damage taken each hit. Scales with level.',  'The weight of armor is nothing compared to the weight of duty.',                                                       'Passive'),
+  ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.', 'Fire obeys no one; it only accepts invitations.',                       'ATK Modifier'),
+  ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power as a bonus to crit_chance. Scales with level.',    'The wind blows, but my arrow chooses its own path.',                                                                    'Passive'),
+  ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = atk x skill_power. Then attacks nearest enemy. Scales with level.',    'Life is a garden that blooms under the right hands.',                          'Skill'),
+  ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',    'Silence is the last thing my enemies hear.',                            'Skill'),
+  ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',   'My aura is the shield the gods lent to mortals.',        'Skill'),
+  ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',       'Lightning never strikes the same place twice... unless I want it to.',  'ATK Modifier'),
+  ('barbarian', 'fury',            'Fury',            'While HP is below 60%, gain skill_power% bonus attack. Scales with level.',           'His fury is the echo of a thousand forgotten battles.',                                               'Skill')
+) AS v(cid, skill_key, name, description, lore, skill_type) ON c.cid = v.cid
 ON CONFLICT (character_id) DO UPDATE SET
   skill_key   = EXCLUDED.skill_key,
   name        = EXCLUDED.name,
   description = EXCLUDED.description,
+  lore        = EXCLUDED.lore,
   skill_type  = EXCLUDED.skill_type;
 -- ============================================================
 -- Game config (key/value table read by /api/config)
