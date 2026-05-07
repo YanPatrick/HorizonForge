@@ -21,6 +21,7 @@
     iron_defense: {
       name: "Iron Defense",
       desc: "Reduces damage taken.",
+      lore: "The weight of armor is nothing compared to the weight of duty.",
       format: (skillPower) => {
         const reduction = Math.floor(skillPower * 100);
         return `Reduces ${reduction}% of the damage received`;
@@ -29,6 +30,7 @@
     fireball: {
       name: "Fireball",
       desc: "Full damage to the target tile. Splash damage to tiles in a + shape around it.",
+      lore: "Fire obeys no one; it only accepts invitations.",
       format: (skillPower, _level, atk) => {
         const splashDmg = Math.floor(atk * skillPower);
         return `Full damage: ${atk}. Splash damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
@@ -37,6 +39,7 @@
     precise_shot: {
       name: "Precise Shot",
       desc: "Increases the chance of landing a critical hit.",
+      lore: "The wind blows, but my arrow chooses its own path.",
       format: (skillPower) => {
         const critChanceBonus = Math.floor(skillPower * 100);
         return `+${critChanceBonus}% critical chance`;
@@ -45,6 +48,7 @@
     healing: {
       name: "Healing",
       desc: "Heals the ally with lowest HP.",
+      lore: "Life is a garden that blooms under the right hands.",
       format: (skillPower, _level, atk) => {
         const healAmount = Math.floor(atk * skillPower);
         return `Heals the most injured ally for ${healAmount} HP (${Math.floor(skillPower * 100)}% of ATK)`;
@@ -53,6 +57,7 @@
     sneak_strike: {
       name: "Sneak Strike",
       desc: "At battle start, performs a sneak attack on lowest-HP enemy.",
+      lore: "Silence is the last thing my enemies hear.",
       format: (skillPower, _level, atk) => {
         const sneakDmg = Math.floor(atk * skillPower);
         return `Sneak attack damage: ${sneakDmg} (${Math.floor(skillPower * 100)}% of ATK)`;
@@ -61,6 +66,7 @@
     sacred_aura: {
       name: "Sacred Aura",
       desc: "At battle start, grants adjacent allies, max HP bonus. Buff persists even paladin dies.",
+      lore: "My aura is the shield the gods lent to mortals.",
       format: (skillPower) => {
         return `Adjacent allies gain +${Math.floor(skillPower * 100)}% max HP bonus`;
       },
@@ -68,6 +74,7 @@
     chain_lightning: {
       name: "Chain Lightning",
       desc: "Horizontal line attack. Full damage on first target. Subsequent targets receive reduced damage.",
+      lore: "Lightning never strikes the same place twice... unless I want it to.",
       format: (skillPower, _level, atk) => {
         const dmg1 = atk;
         const dmg2 = Math.floor(atk * skillPower);
@@ -79,7 +86,8 @@
     },
     fury: {
       name: "Fury",
-      desc: "When HP drops below 60%, permanently gain bonus attack for the rest of the battle.",
+      desc: "While HP is below 60%, gain bonus attack.",
+      lore: "His fury is the echo of a thousand forgotten battles.",
       format: (skillPower) => {
         const atkBonus = Math.floor(skillPower * 100);
         return `When HP below 60%: +${atkBonus}% permanent ATK`;
@@ -135,7 +143,7 @@
             </div>
             <div class="stp-divider"></div>
             <div class="stp-desc">${skillInfo.desc}</div>
-            <div class="stp-power">
+            ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.7; font-size: 0.9em; margin-top: 8px; color: #aaa;">"${skillInfo.lore}"</div>` : ''}            <div class="stp-power">
               <span class="stp-power-label">Current Effect</span>
               <span class="stp-power-value">${calculatedValue}</span>
             </div>`;
@@ -164,6 +172,7 @@
       skillSection = `<div class="stp-divider"></div>
         <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>
         <div class="stp-desc">${skillInfo.desc}</div>
+        ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.7; font-size: 0.9em; margin-top: 8px; color: #aaa;">"${skillInfo.lore}"</div>` : ''}
         <div class="stp-power"><span class="stp-power-label">Effect</span><span class="stp-power-value">${calc}</span></div>`;
     } else {
       skillSection = `<div class="stp-divider"></div>

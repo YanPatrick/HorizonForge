@@ -206,6 +206,7 @@
                 ico: skillIcon(char.skill.key),
                 name: char.skill.name,
                 desc: char.skill.description,
+                lore: char.skill.lore,
                 type: char.skill.type,
                 key: char.skill.key,
               },

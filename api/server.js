@@ -528,6 +528,7 @@ app.get('/api/characters', async (_req, res) => {
         sk.skill_key,
         sk.name        AS skill_name,
         sk.description AS skill_desc,
+        sk.lore,
         sk.skill_type,
         ls.level,
         FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
@@ -561,6 +562,7 @@ app.get('/api/characters', async (_req, res) => {
             key: r.skill_key,
             name: r.skill_name,
             description: r.skill_desc,
+            lore: r.lore,
             type: r.skill_type,
           },
           _baseSkillPower: r.base_skill_power,
@@ -694,6 +696,7 @@ app.post('/api/migrate', async (req, res) => {
         skill_key    TEXT NOT NULL,
         name         TEXT NOT NULL,
         description  TEXT NOT NULL,
+        lore         TEXT,
         skill_type   TEXT NOT NULL
       )
     `;
@@ -753,6 +756,8 @@ app.post('/api/migrate', async (req, res) => {
     // Tracks which players have been refunded — prevents double-refund if a
     // crash happens mid-cancellation and rehydrate then re-runs the refund loop.
     await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.refunded');
+    // Add lore column to skills 
+    await safeMigrate(sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS lore TEXT`, 'skills.lore');
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
