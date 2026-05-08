@@ -166,7 +166,7 @@ function MobileHeroPage({ hero, onClose }) {
   return (
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
       <div className="hf-mhp-header">
-        <button className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
+        <button className="hf-mhp-back-btn" onClick={onClose}>← Back</button>
         <span className="hf-mhp-title">{hero?.name ?? ''}</span>
       </div>
       {hero && (
@@ -375,7 +375,7 @@ With dev server running, open `http://localhost:5173` in DevTools with a mobile 
 - Role badge, skill name/description, 4 stats are visible
 - "View full stats" button is visible and tappable
 - Bottom nav stays visible below the slide page
-- Tap "← Voltar" — page slides back out to the right
+- Tap "← Back" — page slides back out to the right
 
 - [ ] **Step 4: Verify desktop is unchanged**
 
@@ -426,7 +426,7 @@ git commit -m "build: production build with mobile hero detail slide page"
 - [x] Desktop drawer unchanged — `HeroDetail` still renders on desktop, hidden on mobile via CSS
 - [x] Backdrop fixed — `.hf-detail-backdrop` hidden on mobile, no more "screen darkens but nothing shows"
 - [x] Slide animation — `translateX(100%) → translateX(0)` with `cubic-bezier(0.34, 1.06, 0.64, 1)`
-- [x] Back button — "← Voltar", no swipe gesture
+- [x] Back button — "← Back", no swipe gesture
 - [x] Bottom nav visible — `z-index: 1000` on `.mobile-bottom-tabs`, slide page at `900`
 - [x] Safe-area — `bottom: calc(60px + env(safe-area-inset-bottom, 0px))`
 - [x] All stats shown — HP, ATK, SPD, SP + "View full stats" table

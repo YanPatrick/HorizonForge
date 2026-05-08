@@ -1,11 +1,11 @@
-# Graph Report - HorizonForge  (2026-05-06)
+# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-06)
 
 ## Corpus Check
-- 16 files · ~99,177 words
+- 16 files · ~113,187 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 175 nodes · 338 edges · 8 communities detected
+- 175 nodes · 338 edges · 15 communities detected
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -17,7 +17,14 @@
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
 - [[_COMMUNITY_Community 6|Community 6]]
+- [[_COMMUNITY_Community 7|Community 7]]
 - [[_COMMUNITY_Community 8|Community 8]]
+- [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `log()` - 22 edges
@@ -33,15 +40,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `resolveBattleRound()` --calls--> `simulate()`  [INFERRED]
-  api\server.js → shared\simulate.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\shared\simulate.js
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `initGame()` --calls--> `init()`  [INFERRED]
-  public\js\battle.js → public\js\skill-tooltip.js
+  C:\Fontes_Javascript\HorizonForge\public\js\battle.js → C:\Fontes_Javascript\HorizonForge\public\js\skill-tooltip.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 
 ## Communities
 
@@ -73,12 +80,50 @@ Nodes (10): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), sk
 Cohesion: 0.36
 Nodes (8): showHeroInfo(), getC(), getTipEl(), heroInfoHtml(), show(), showSticky(), skillTooltipHtml(), skillTooltipText()
 
+### Community 7 - "Community 7"
+Cohesion: 0.5
+Nodes (0): 
+
 ### Community 8 - "Community 8"
 Cohesion: 1.0
 Nodes (2): adjacentSlots(), simulate()
 
+### Community 9 - "Community 9"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 10 - "Community 10"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 11 - "Community 11"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 12 - "Community 12"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 13 - "Community 13"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 14 - "Community 14"
+Cohesion: 1.0
+Nodes (0): 
+
 ## Knowledge Gaps
-- **Thin community `Community 8`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
+- **Thin community `Community 9`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 10`** (2 nodes): `LoginPage.jsx`, `LoginPage()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 11`** (1 nodes): `eslint.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 12`** (1 nodes): `vite.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 13`** (1 nodes): `main.jsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 14`** (1 nodes): `release.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions

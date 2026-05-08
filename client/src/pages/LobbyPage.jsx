@@ -127,7 +127,7 @@ function MobileHeroPage({ hero, onClose }) {
   return createPortal(
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
       <div className="hf-mhp-header">
-        <button type="button" className="hf-mhp-back-btn" onClick={onClose}>← Voltar</button>
+        <button type="button" className="hf-mhp-back-btn" onClick={onClose}>← Back</button>
         <span className="hf-mhp-title">{hero?.name ?? ''}</span>
       </div>
       {hero && (
