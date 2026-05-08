@@ -84,6 +84,21 @@ function HeroDetail({ hero, onClose }) {
           <div className="hf-detail-section-label">Skill</div>
           <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
           <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
+          {hero.skill?.lore && (
+          <div className="hf-detail-skill-lore" style={{ 
+            fontStyle: 'italic', 
+            opacity: 0.6, 
+            fontSize: '0.9em', 
+            marginTop: '8px', 
+            marginBottom: '12px',
+            color: '#ccc',
+            lineHeight: '1.4',
+            paddingLeft: '10px',
+            borderLeft: '2px solid rgba(255,255,255,0.1)'
+          }}>
+            "{hero.skill.lore}"
+          </div>
+        )}
           <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
           <div className="hf-detail-stats">
             <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
