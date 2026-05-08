@@ -143,7 +143,7 @@
             </div>
             <div class="stp-divider"></div>
             <div class="stp-desc">${skillInfo.desc}</div>
-            ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.7; font-size: 0.9em; margin-top: 8px; color: #aaa;">"${skillInfo.lore}"</div>` : ''}            <div class="stp-power">
+            ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.6; font-size: 0.85em; margin: 8px 0; display: block; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 8px; line-height: 1.2;">"${skillInfo.lore}"</div>` : ''}            <div class="stp-power">
               <span class="stp-power-label">Current Effect</span>
               <span class="stp-power-value">${calculatedValue}</span>
             </div>`;
@@ -172,7 +172,7 @@
       skillSection = `<div class="stp-divider"></div>
         <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>
         <div class="stp-desc">${skillInfo.desc}</div>
-        ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.7; font-size: 0.9em; margin-top: 8px; color: #aaa;">"${skillInfo.lore}"</div>` : ''}
+        ${skillInfo.lore ? `<div class="stp-lore" style="font-style: italic; opacity: 0.6; font-size: 0.85em; margin: 8px 0; display: block; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 8px; line-height: 1.2;">"${skillInfo.lore}"</div>` : ''}
         <div class="stp-power"><span class="stp-power-label">Effect</span><span class="stp-power-value">${calc}</span></div>`;
     } else {
       skillSection = `<div class="stp-divider"></div>
