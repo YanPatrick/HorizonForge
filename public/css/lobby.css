@@ -7239,26 +7239,29 @@
 
       /* Viewport do Slider */
       .detail-slider-viewport {
-        flex: 1;
-        overflow: hidden;
-        position: relative;
-      }
+  flex: 1;
+  width: 100%; /* Garante a largura total da aba */
+  overflow: hidden;
+  position: relative;
+}
 
-      .detail-slider-track {
-        display: flex;
-        width: 200%;
-        height: 100%;
-        transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
-      }
+.detail-slider-track {
+  display: flex;
+  width: 200%; /* Duas telas exatas */
+  height: 100%;
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+}
 
       .detail-slider-track.view-stats { transform: translateX(0); }
-      .detail-slider-track.view-gear { transform: translateX(-50%); }
+.detail-slider-track.view-gear { transform: translateX(-50%); }
 
-      .detail-slide {
-        width: 50%;
-        height: 100%;
-        flex-shrink: 0;
-      }
+.detail-slide {
+  width: 50%;
+  flex: 0 0 50% !important; /* O SEGREDO ESTÁ AQUI: Proíbe o CSS de encolher as telas */
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
       /* Layout de Gear */
       .gear-pane {
