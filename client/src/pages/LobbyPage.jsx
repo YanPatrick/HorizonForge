@@ -177,6 +177,7 @@ function HeroDetail({ hero, onClose }) {
               <p className="rpg-note">Attributes used for item requirements and penalties.</p>
             </div>
           )}
+          </div>
            {/* PAINEL 2: EQUIPAMENTOS (A NOVA ABA) */}
             <div className="detail-slide gear-pane hf-detail-scroll">
               <div className="gear-container">
@@ -200,7 +201,6 @@ function HeroDetail({ hero, onClose }) {
         </div>
         </div>
       </div>
-    </div>
    </>
   )
 }
