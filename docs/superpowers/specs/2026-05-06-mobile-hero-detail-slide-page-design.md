@@ -31,7 +31,7 @@ MobileHeroPage({ hero, onClose })
   - Renders always (not conditionally) so exit animation works
   - className: "hf-mobile-hero-page" + " active" when hero !== null
   - Content: same as HeroDetail (role badge, skill, stats grid, "View full stats" table)
-  - Back button: "← Voltar" at top-left, calls onClose
+  - Back button: "← Back" at top-left, calls onClose
   - Uses same helpers: roleCategory(), fmtSP(), expanded state
 ```
 
@@ -96,7 +96,7 @@ All new rules are scoped to `@media (max-width: 640px)`.
 | Class | Purpose |
 |---|---|
 | `.hf-mhp-header` | Top bar: back button + hero name |
-| `.hf-mhp-back-btn` | "← Voltar" button, left-aligned |
+| `.hf-mhp-back-btn` | "← Back" button, left-aligned |
 | `.hf-mhp-portrait` | Hero portrait area, full width, ~160px tall |
 | `.hf-mhp-body` | Scrollable content: role, skill, stats |
 | `.hf-mhp-role-wrap` | Wraps the role badge |

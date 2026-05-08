@@ -758,6 +758,20 @@ app.post('/api/migrate', async (req, res) => {
     await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.refunded');
     // Add lore column to skills 
     await safeMigrate(sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS lore TEXT`, 'skills.lore');
+    await sql`
+      UPDATE skills SET lore = v.lore
+      FROM (VALUES
+        ('iron_defense',    'The weight of armor is nothing compared to the weight of duty.'),
+        ('fireball',        'Fire obeys no one; it only accepts invitations.'),
+        ('precise_shot',    'The wind blows, but my arrow chooses its own path.'),
+        ('healing',         'Life is a garden that blooms under the right hands.'),
+        ('sneak_strike',    'Silence is the last thing my enemies hear.'),
+        ('sacred_aura',     'My aura is the shield the gods lent to mortals.'),
+        ('chain_lightning', 'Lightning never strikes the same place twice... unless I want it to.'),
+        ('fury',            'His fury is the echo of a thousand forgotten battles.')
+      ) AS v(skill_key, lore)
+      WHERE skills.skill_key = v.skill_key AND skills.lore IS NULL
+    `;
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
