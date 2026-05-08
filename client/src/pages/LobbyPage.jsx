@@ -112,7 +112,7 @@ function HeroDetail({ hero, onClose }) {
           </button>
         </div>
         <div className="detail-slider-viewport">
-        <div className={`detail-slider-track view-${activeTab}`}></div>
+        <div className={`detail-slider-track view-${activeTab}`}>
         <div className="detail-slide stats-pane hf-detail-scroll">
           <div className="hf-detail-role-wrap">
             <span className={`gr-hero-role role-${cat}`}>{label}</span>
@@ -198,9 +198,10 @@ function HeroDetail({ hero, onClose }) {
               </div>
             </div>
         </div>
+        </div>
       </div>
     </div>
-    </>
+   </>
   )
 }
 
