@@ -148,7 +148,7 @@ function HeroDetail({ hero, onClose }) {
           )}
           {/* BOTÃO DA FICHA RPG */}
           <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
-            <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet (D&D Style)'}</span>
+            <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
             <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
           </button>
 
