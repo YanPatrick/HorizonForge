@@ -24,6 +24,17 @@ function roleCategory(role) {
   return 'dps'
 }
 
+const RPG_ATTRIBUTES = {
+  knight:    { str: 9.0,  dex: 10.0, con: 20.0, int: 6.0,  wis: 8.0,  cha: 12.0 },
+  paladin:   { str: 8.6,  dex: 6.6,  con: 20.0, int: 6.8,  wis: 8.0,  cha: 15.0 },
+  barbarian: { str: 9.5,  dex: 13.3, con: 17.1, int: 5.0,  wis: 7.1,  cha: 13.0 },
+  assassin:  { str: 11.0, dex: 20.0, con: 6.7,  int: 10.0, wis: 7.3,  cha: 10.0 },
+  mage:      { str: 4.0,  dex: 3.3,  con: 7.9,  int: 16.8, wis: 15.0, cha: 18.0 },
+  archer:    { str: 11.8, dex: 16.6, con: 8.0,  int: 6.0,  wis: 12.6, cha: 10.0 },
+  archmage:  { str: 2.8,  dex: 3.3,  con: 8.6,  int: 18.6, wis: 18.7, cha: 13.0 },
+  healer:    { str: 5.0,  dex: 6.6,  con: 7.2,  int: 13.0, wis: 18.2, cha: 15.0 }
+};
+
 const FMT_OPTS = [{ val: 3, label: 'BO3' }, { val: 5, label: 'BO5' }, { val: 7, label: 'BO7' }]
 const BET_OPTS = [{ val: 0, label: 'Free' }, { val: 1, label: '1 HIVE' }, { val: 5, label: '5 HIVE' }, { val: 10, label: '10 HIVE' }]
 
@@ -36,6 +47,7 @@ const EMPTY_FORMATIONS = [
 /* ── HeroDetail modal ───────────────────────────────────── */
 function HeroDetail({ hero, onClose }) {
   const [expanded, setExpanded] = useState(false)
+  const [rpgExpanded, setRpgExpanded] = useState(false); // Novo estado
   if (!hero) return null
   const cat = roleCategory(hero.role)
   const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
@@ -43,16 +55,25 @@ function HeroDetail({ hero, onClose }) {
   const fmtSP = v => v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
   const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
 
+  // Busca os atributos da ficha que criamos no Passo 1
+  const attrs = RPG_ATTRIBUTES[hero.cid] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+
+  // Função para calcular o modificador (estilo D&D)
+  const getMod = (val) => {
+    const mod = Math.floor((val - 10) / 2);
+    return mod >= 0 ? `+${mod}` : mod;
+  };
+
   return (
     <>
-      <div className="hf-detail-backdrop hf-open" onClick={onClose} />
+       <div className="hf-detail-backdrop hf-open" onClick={onClose} />
       <div className={`hf-hero-drawer hf-open`} role="dialog" aria-modal="true">
         <div className="hf-detail-close-row">
           <div className="hf-detail-hero-header">
             <span className="hf-detail-ico">{hero.icon}</span>
             <span className="hf-detail-hero-name">{hero.name}</span>
           </div>
-          <button className="hf-detail-close-btn" onClick={onClose}>✕</button>
+          <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
         <div className="hf-detail-scroll">
           <div className="hf-detail-role-wrap">
@@ -103,6 +124,29 @@ function HeroDetail({ hero, onClose }) {
               </table>
             </div>
           )}
+          {/* BOTÃO DA FICHA RPG */}
+          <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
+            <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet (D&D Style)'}</span>
+            <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
+          </button>
+
+          {rpgExpanded && (
+            <div className="rpg-sheet-container animate-fade-in">
+              <div className="rpg-grid">
+                {Object.entries(attrs).map(([key, val]) => (
+                  <div key={key} className="rpg-stat-box">
+                    <span className="rpg-stat-name">{key.toUpperCase()}</span>
+                    {/* Aqui usamos Math.round para mostrar 9 em vez de 8.6 */}
+                    <span className="rpg-stat-value">{Math.round(val)}</span> 
+                    {/* O modificador também deve ser calculado sobre o valor arredondado */}
+                    <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
+                  </div>
+                ))}
+              </div>
+              <p className="rpg-note">Attributes used for item requirements and penalties.</p>
+            </div>
+          )}
+          
         </div>
       </div>
     </>
