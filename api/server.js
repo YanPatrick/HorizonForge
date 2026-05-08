@@ -329,6 +329,7 @@ async function loadStatsTable() {
     SELECT
       c.cid,
       c.name,
+      c.icon,
       c.target_type,
       ls.level,
       FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
@@ -350,6 +351,7 @@ async function loadStatsTable() {
       map.set(r.cid, {
         cid: r.cid,
         name: r.name,
+        icon: r.icon,
         target_type: r.target_type,
         _baseSkillPower: r.base_skill_power,
         _spmByLevel: {},
@@ -446,6 +448,7 @@ async function materializeBoard(board) {
       cid: u.cid,
       lv: u.lv,
       name: ch.name,
+      ico: ch.icon,
       tp: ch.target_type,
       atk: Math.floor(lvStats.atk),
       maxHp: lvStats.max_hp,
@@ -755,6 +758,20 @@ app.post('/api/migrate', async (req, res) => {
     await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.refunded');
     // Add lore column to skills 
     await safeMigrate(sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS lore TEXT`, 'skills.lore');
+    await sql`
+      UPDATE skills SET lore = v.lore
+      FROM (VALUES
+        ('iron_defense',    'The weight of armor is nothing compared to the weight of duty.'),
+        ('fireball',        'Fire obeys no one; it only accepts invitations.'),
+        ('precise_shot',    'The wind blows, but my arrow chooses its own path.'),
+        ('healing',         'Life is a garden that blooms under the right hands.'),
+        ('sneak_strike',    'Silence is the last thing my enemies hear.'),
+        ('sacred_aura',     'My aura is the shield the gods lent to mortals.'),
+        ('chain_lightning', 'Lightning never strikes the same place twice... unless I want it to.'),
+        ('fury',            'His fury is the echo of a thousand forgotten battles.')
+      ) AS v(skill_key, lore)
+      WHERE skills.skill_key = v.skill_key AND skills.lore IS NULL
+    `;
 
     await sql`
       CREATE TABLE IF NOT EXISTS match_teams (
@@ -1491,13 +1508,6 @@ io.on('connection', socket => {
     }
     if (!VALID_WAGERS.includes(wager)) {
       socket.emit('error', { message: 'Invalid wager amount.' });
-      return;
-    }
-    if (wager > 0 && (!HIVE_GAME_ACCOUNT || !HIVE_ACTIVE_KEY)) {
-      // Refuse to take real-money wagers when the server can't process payouts.
-      // Without this guard, the match would run as a "free" match (no payment
-      // requested, no prize sent), which the winner would fairly call theft.
-      socket.emit('error', { message: 'Wagered matches are not available on this server. Please choose Free.' });
       return;
     }
     if (format !== undefined && !VALID_FORMATS.includes(format)) {

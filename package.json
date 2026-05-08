@@ -1,6 +1,6 @@
 {
   "name": "horizon-forge",
-  "version": "1.3.5",
+  "version": "1.4.0",
   "description": "Horizon Forge — Auto Battler game API",
   "type": "module",
   "main": "api/server.js",

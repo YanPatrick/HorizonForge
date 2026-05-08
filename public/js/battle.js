@@ -858,6 +858,15 @@
         _tpPrev = [];
       }
 
+      function clearFieldPlacementHints() {
+        document
+          .querySelectorAll("#pfield .cell.dr, #pfield .cell.dnd-over")
+          .forEach((el) => el.classList.remove("dr", "dnd-over"));
+        document
+          .querySelectorAll("#pfield .unit.dragging, #benchrow .bcard.dragging")
+          .forEach((el) => el.classList.remove("dragging"));
+      }
+
       // ── Global phase timer (AI mode) ──────────────────────────────────────
       let _aiTimerInterval = null;
 
@@ -937,6 +946,10 @@
         if (window._PVP?.stopRoundTimer) window._PVP.stopRoundTimer();
         if (typeof setMobileStep === "function") setMobileStep(null);
         setShopLocked(true);
+        G.bsel = null;
+        G.fieldSel = null;
+        G.fieldDrag = null;
+        clearFieldPlacementHints();
 
         // ── PvP mode: submit team to server and wait ──────
         if (window._PVP) {
@@ -965,6 +978,7 @@
             `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
             "bbattle",
           );
+          render();
           pvp.socket.emit("submit_team", {
             matchId: pvp.matchId,
             board,
@@ -976,9 +990,6 @@
         // ── AI mode ───────────────────────────────────────
         G.phase = "battle";
         G.enemy = G.duelEnemy.map((u) => (u ? { ...u } : null));
-        G.fieldSel = null;
-        G.fieldDrag = null;
-
         // No pre-apply pass: shared/simulate.js applies Sacred Aura on both
         // sides during simulation and emits the aura events the prep phase
         // animates (same code path PvP already exercises).
@@ -2307,7 +2318,12 @@
         // Dispatch only the changed side. Render() calls renderField twice;
         // the second call merges its update into the first.
         const interactive = isP && G.phase === "shop";
-        const dropMode = isP && (G.bsel !== null || G.fieldSel !== null);
+        const hasRoomForBench = G.board.filter(Boolean).length < maxUnits();
+        const dropMode = isP && (
+          G.fieldSel !== null ||
+          G.fieldDrag !== null ||
+          (G.bsel !== null && hasRoomForBench)
+        );
         if (isP) {
           window.setFieldState?.({
             p: cells,
@@ -2323,8 +2339,9 @@
       // ── Field cell event handlers (delegated from BattlePage's JSX) ──────
       window.fieldCellClick = function (side, slot) {
         if (side !== "p" || G.phase !== "shop") return;
+        if (G._suppressFieldClickUntil && Date.now() < G._suppressFieldClickUntil) return;
         if (G.board[slot]) {
-          // Click on occupied: select / deselect / swap
+          // Click on occupied: select/deselect/swap field units.
           if (G.fieldSel === slot) {
             G.fieldSel = null;
           } else if (G.fieldSel !== null) {
@@ -2337,7 +2354,7 @@
             G.bsel = null;
           }
         } else {
-          // Click on empty: move selected field unit, or place selected bench unit
+          // Click on empty: move selected field unit, or place selected Barracks unit.
           if (G.fieldSel !== null) {
             G.board[slot] = G.board[G.fieldSel];
             G.board[G.fieldSel] = null;
@@ -2354,15 +2371,21 @@
         window.HFTooltip?.hide();
         ev.dataTransfer.setData("fromSlot", String(slot));
         ev.dataTransfer.effectAllowed = "move";
+        G.bsel = null;
+        G.fieldSel = null;
         G.fieldDrag = slot;
         clearAttackArrows();
         // Defer the .dragging class so the ghost-image snapshot doesn't include it.
         setTimeout(() => {
+          if (G.phase !== "shop" || G.fieldDrag !== slot) return;
           const el = document.querySelector(`#pfield [data-i="${slot}"] .unit`);
           if (el) el.classList.add("dragging");
           document
             .querySelectorAll("#pfield .cell:not(.occ)")
             .forEach((c) => c.classList.add("dr"));
+          document
+            .querySelector(`#pfield .cell[data-i="${slot}"]`)
+            ?.classList.add("dr");
         }, 0);
       };
 
@@ -2370,6 +2393,8 @@
         const el = document.querySelector(`#pfield [data-i="${slot}"] .unit`);
         if (el) el.classList.remove("dragging");
         G.fieldDrag = null;
+        G._suppressFieldClickUntil = Date.now() + 200;
+        clearFieldPlacementHints();
         render();
       };
 
@@ -2379,7 +2404,12 @@
         const benchCid = ev.dataTransfer.getData("benchCid");
         if (fromSlot !== "") {
           const src = parseInt(fromSlot);
-          if (src === slot) return; // dropped on self — no-op
+          if (src === slot) {
+            G.fieldDrag = null;
+            clearFieldPlacementHints();
+            render();
+            return; // dropped on self — no-op
+          }
           if (G.board[slot]) {
             // Swap with occupied target
             const tmp = G.board[src];
@@ -2394,6 +2424,9 @@
           render();
         } else if (benchCid) {
           placeUnit(slot, benchCid);
+          G.bsel = null;
+          clearFieldPlacementHints();
+          render();
         }
       };
 
@@ -2455,7 +2488,7 @@
       window.fieldInfoShow = function (side, slot, anchorEl) {
         const board = side === "p" ? G.board : (G.phase === "battle" ? G.enemy : G.duelEnemy);
         const u = board?.[slot];
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.fieldInfoHide = function () { window.HFTooltip?.hide(); };
 
@@ -2579,7 +2612,7 @@
       };
       window.shopInfoShow = function (uid, anchorEl) {
         const u = G.shop.find((x) => x && x.id === uid);
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.shopInfoHide = function () { window.HFTooltip?.hide(); };
 
@@ -2634,24 +2667,39 @@
         // Match the original behaviour: defer the .dragging class so the
         // ghost image snapshot (taken synchronously) doesn't include it.
         setTimeout(() => {
+          if (G.phase !== "shop" || G.bsel !== cid) return;
           const card = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
           if (card) card.classList.add("dragging");
-          document
-            .querySelectorAll("#pfield .cell:not(.occ)")
-            .forEach((c) => c.classList.add("dr"));
+          if (G.board.filter(Boolean).length < maxUnits()) {
+            document
+              .querySelectorAll("#pfield .cell:not(.occ)")
+              .forEach((c) => c.classList.add("dr"));
+          }
         }, 0);
       };
       window.benchCardDragEnd = function (cid) {
         const card = document.querySelector(`#benchrow .bcard[data-cid="${cid}"]`);
         if (card) card.classList.remove("dragging");
         G.bsel = null;
+        clearFieldPlacementHints();
         render();
       };
       window.benchInfoShow = function (cid, anchorEl) {
         const u = G.bench.find((x) => x && x.cid === cid);
-        if (u && anchorEl) window.HFTooltip?.show(anchorEl, window.HFTooltip.heroInfoHtml(u));
+        if (u && anchorEl) showHeroInfo(anchorEl, u);
       };
       window.benchInfoHide = function () { window.HFTooltip?.hide(); };
+
+      function showHeroInfo(anchorEl, unit) {
+        const html = window.HFTooltip?.heroInfoHtml?.(unit);
+        if (!html) return;
+        const sticky = window.matchMedia?.("(pointer: coarse)")?.matches;
+        if (sticky && typeof window.HFTooltip?.showSticky === "function") {
+          window.HFTooltip.showSticky(anchorEl, html);
+          return;
+        }
+        window.HFTooltip?.show(anchorEl, html);
+      }
 
       // ✅ FUNÇÃO AUXILIAR para escapar HTML no tooltip
       function escapeHtml(text) {
