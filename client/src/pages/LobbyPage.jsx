@@ -71,16 +71,13 @@ const EMPTY_FORMATIONS = [
 function HeroDetail({ hero, onClose }) {
   const [expanded, setExpanded] = useState(false)
   const [rpgExpanded, setRpgExpanded] = useState(false); // Novo estado
+  const [activeTab, setActiveTab] = useState('stats'); // 'stats' ou 'gear'
   if (!hero) return null
   const cat = roleCategory(hero.role)
   const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
   const lv1 = hero.levels?.[1] || {}
   const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
-
-  // Busca os atributos da ficha que criamos no Passo 1
   const attrs = RPG_ATTRIBUTES[hero.cid] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
-
-  // Função para calcular o modificador (estilo D&D)
   const getMod = (val) => {
     const mod = Math.floor((val - 10) / 2);
     return mod >= 0 ? `+${mod}` : mod;
@@ -97,7 +94,24 @@ function HeroDetail({ hero, onClose }) {
           </div>
           <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
-        <div className="hf-detail-scroll">
+        {/* NOVA BARRA DE NAVEGAÇÃO ENTRE ABAS */}
+        <div className="hf-detail-tabs">
+          <button 
+            className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('stats')}
+          >
+            INFO
+          </button>
+          <button 
+            className={`hf-tab-item ${activeTab === 'gear' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('gear')}
+          >
+            GEAR
+          </button>
+        </div>
+        <div className="detail-slider-viewport">
+        <div className={`detail-slider-track view-${activeTab}`}></div>
+        <div className="detail-slide stats-pane hf-detail-scroll">
           <div className="hf-detail-role-wrap">
             <span className={`gr-hero-role role-${cat}`}>{label}</span>
           </div>
@@ -106,18 +120,11 @@ function HeroDetail({ hero, onClose }) {
           <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
           {hero.skill?.lore && (
             <div className="hf-detail-skill-lore" style={{ 
-              fontStyle: 'italic', 
-              opacity: 0.55, 
-              fontSize: '0.88em', 
-              marginTop: '15px', 
-              marginBottom: '20px', 
-              color: '#fff',
-              lineHeight: '1.6',
-              paddingTop: '12px',
-              borderTop: '1px solid rgba(255,255,255,0.12)', // Linha divisória horizontal
-              textAlign: 'center', // ISSO AQUI TIRA A IMPRESSÃO DE TORTO
-              width: '100%',
-              display: 'block'
+               fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em', 
+               marginTop: '15px', marginBottom: '20px', color: '#fff',
+               lineHeight: '1.6', paddingTop: '12px',
+               borderTop: '1px solid rgba(255,255,255,0.12)',
+               textAlign: 'center', width: '100%', display: 'block'
             }}>
               “{hero.skill.lore}”
             </div>
@@ -168,9 +175,29 @@ function HeroDetail({ hero, onClose }) {
               <p className="rpg-note">Attributes used for item requirements and penalties.</p>
             </div>
           )}
-          
+           {/* PAINEL 2: EQUIPAMENTOS (A NOVA ABA) */}
+            <div className="detail-slide gear-pane hf-detail-scroll">
+              <div className="gear-container">
+                <div className="gear-slot head" data-label="ELMO">🪖</div>
+                <div className="gear-middle-row">
+                  <div className="gear-slot hand-l" data-label="ARMA">⚔️</div>
+                  <div className="gear-slot chest" data-label="ARMADURA">🛡️</div>
+                  <div className="gear-slot hand-r" data-label="ALT">📜</div>
+                </div>
+                <div className="gear-slot belt" data-label="CINTO">🏷️</div>
+                <div className="gear-slot feet" data-label="BOTAS">🥾</div>
+              </div>
+
+              <div className="inventory-preview">
+                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
+                <div className="inv-grid">
+                   {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
+                </div>
+              </div>
+            </div>
         </div>
       </div>
+    </div>
     </>
   )
 }
