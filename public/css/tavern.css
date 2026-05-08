@@ -1,0 +1,258 @@
+/* ── Taverna — sidebar e painel mobile ─────────────────────────────────────── */
+
+/* Sidebar (desktop) */
+.tv-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: 72px; /* altura do topnav */
+}
+
+.tv-panel {
+  background: var(--card-bg, rgba(255,255,255,0.04));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Cabeçalho */
+.tv-header,
+.tv-mobile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tv-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #e8e8e0);
+  letter-spacing: 0.01em;
+}
+
+.tv-count {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  background: rgba(255,255,255,0.06);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+/* Grupos */
+.tv-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted, #666);
+  margin: 8px 0 2px;
+}
+.tv-group-label:first-of-type {
+  margin-top: 2px;
+}
+
+/* Linha de usuário */
+.tv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.tv-row:last-child {
+  border-bottom: none;
+}
+
+/* Avatar */
+.tv-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.tv-avatar-tavern   { background: rgba(40, 200, 120, 0.15); color: #4ade80; }
+.tv-avatar-searching { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.tv-avatar-battle  { background: rgba(239, 68, 68, 0.15);  color: #f87171; }
+
+/* Info (nome + detalhe) */
+.tv-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tv-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #ddd);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tv-detail {
+  font-size: 10px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Badge de status */
+.tv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.tv-badge-tavern   { background: rgba(40, 200, 120, 0.12); color: #4ade80; }
+.tv-badge-searching { background: rgba(245, 158, 11, 0.12); color: #fbbf24; }
+.tv-badge-battle   { background: rgba(239, 68, 68, 0.12);  color: #f87171; }
+
+/* Ponto animado */
+.tv-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.tv-badge-battle .tv-dot {
+  animation: tv-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tv-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+/* Estado vazio */
+.tv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0;
+  color: var(--text-muted, #666);
+  font-size: 12px;
+  text-align: center;
+}
+.tv-empty-icon {
+  font-size: 24px;
+  opacity: 0.5;
+}
+
+/* ── Mobile — painel de view ──────────────────────────────────────────────── */
+.tv-panel-mobile {
+  padding: 16px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  height: 100%;
+}
+.tv-panel-mobile .tv-mobile-header {
+  margin-bottom: 12px;
+}
+.tv-panel-mobile .tv-title {
+  font-size: 15px;
+}
+.tv-panel-mobile .tv-row {
+  padding: 8px 0;
+}
+.tv-panel-mobile .tv-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: 13px;
+}
+.tv-panel-mobile .tv-name {
+  font-size: 13px;
+}
+.tv-panel-mobile .tv-detail {
+  font-size: 11px;
+}
+.tv-panel-mobile .tv-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+}
+
+/* ── Tab badge (contador no ícone da tab mobile) ──────────────────────────── */
+.mbt-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+}
+
+/* ── Desktop: sidebar à esquerda + conteúdo à direita ───────────────────── */
+@media (min-width: 901px) {
+  /* Sobrepõe o display:block !important do lobby.css (tavern.css carrega depois) */
+  .lobby-with-tavern {
+    display: flex !important;
+    flex-direction: row;
+    align-items: stretch;
+    overflow: hidden;
+    padding: 0;
+    gap: 0;
+  }
+
+  /* Sidebar: largura fixa, rolável, com espaçamento da borda esquerda */
+  .tv-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    align-self: stretch;
+    position: relative; /* cancela sticky — overflow:hidden no pai impediria de qualquer forma */
+    top: auto;          /* anula o top:72px da regra global (era para sticky, vira deslocamento em relative) */
+    padding: 12px 8px 12px 8px;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .tv-panel {
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Cada view ocupa o espaço restante */
+  .lobby-with-tavern > .lv,
+  .lobby-with-tavern > div:not(.tv-sidebar) {
+    flex: 1;
+    width: auto !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+}
+
+/* Em telas menores que 900px, esconde a sidebar (a tab cuida do mobile) */
+@media (max-width: 900px) {
+  .tv-sidebar {
+    display: none;
+  }
+}

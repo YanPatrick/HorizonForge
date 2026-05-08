@@ -5,6 +5,8 @@ import { io } from 'socket.io-client'
 import '@styles/lobby.css'
 import GrimoireView from './GrimoireView'
 import { getSession } from '../lib/session'
+import TavernPanel from './TavernPanel'          // IMP tavern
+import '@styles/tavern.css'                       // Imp tavern
 
 /* ── helpers ────────────────────────────────────────────── */
 function prefKey(name, username) {
@@ -26,14 +28,14 @@ function roleCategory(role) {
 }
 
 const RPG_ATTRIBUTES = {
-  knight:    { str: 9.0,  dex: 10.0, con: 20.0, int: 6.0,  wis: 8.0,  cha: 12.0 },
-  paladin:   { str: 8.6,  dex: 6.6,  con: 20.0, int: 6.8,  wis: 8.0,  cha: 15.0 },
-  barbarian: { str: 9.5,  dex: 13.3, con: 17.1, int: 5.0,  wis: 7.1,  cha: 13.0 },
-  assassin:  { str: 11.0, dex: 20.0, con: 6.7,  int: 10.0, wis: 7.3,  cha: 10.0 },
-  mage:      { str: 4.0,  dex: 3.3,  con: 7.9,  int: 16.8, wis: 15.0, cha: 18.0 },
-  archer:    { str: 11.8, dex: 16.6, con: 8.0,  int: 6.0,  wis: 12.6, cha: 10.0 },
-  archmage:  { str: 2.8,  dex: 3.3,  con: 8.6,  int: 18.6, wis: 18.7, cha: 13.0 },
-  healer:    { str: 5.0,  dex: 6.6,  con: 7.2,  int: 13.0, wis: 18.2, cha: 15.0 }
+  knight: { str: 9.0, dex: 10.0, con: 20.0, int: 6.0, wis: 8.0, cha: 12.0 },
+  paladin: { str: 8.6, dex: 6.6, con: 20.0, int: 6.8, wis: 8.0, cha: 15.0 },
+  barbarian: { str: 9.5, dex: 13.3, con: 17.1, int: 5.0, wis: 7.1, cha: 13.0 },
+  assassin: { str: 11.0, dex: 20.0, con: 6.7, int: 10.0, wis: 7.3, cha: 10.0 },
+  mage: { str: 4.0, dex: 3.3, con: 7.9, int: 16.8, wis: 15.0, cha: 18.0 },
+  archer: { str: 11.8, dex: 16.6, con: 8.0, int: 6.0, wis: 12.6, cha: 10.0 },
+  archmage: { str: 2.8, dex: 3.3, con: 8.6, int: 18.6, wis: 18.7, cha: 13.0 },
+  healer: { str: 5.0, dex: 6.6, con: 7.2, int: 13.0, wis: 18.2, cha: 15.0 }
 };
 function fmtSP(v) {
   return v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
@@ -85,7 +87,7 @@ function HeroDetail({ hero, onClose }) {
 
   return (
     <>
-       <div className="hf-detail-backdrop hf-open" onClick={onClose} />
+      <div className="hf-detail-backdrop hf-open" onClick={onClose} />
       <div className={`hf-hero-drawer hf-open`} role="dialog" aria-modal="true">
         <div className="hf-detail-close-row">
           <div className="hf-detail-hero-header">
@@ -166,7 +168,7 @@ function HeroDetail({ hero, onClose }) {
                   <div key={key} className="rpg-stat-box">
                     <span className="rpg-stat-name">{key.toUpperCase()}</span>
                     {/* Aqui usamos Math.round para mostrar 9 em vez de 8.6 */}
-                    <span className="rpg-stat-value">{Math.round(val)}</span> 
+                    <span className="rpg-stat-value">{Math.round(val)}</span>
                     {/* O modificador também deve ser calculado sobre o valor arredondado */}
                     <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
                   </div>
@@ -345,7 +347,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
         <div className="fv-hero-frame">
           <div className="fv-filter-bar">
             <input className="fv-search" type="text" placeholder="🔍 Search hero…" value={search} onChange={e => setSearch(e.target.value)} />
-            {[['all','All'],['tank','🛡️'],['dps','⚔️'],['support','💚']].map(([r, label]) => (
+            {[['all', 'All'], ['tank', '🛡️'], ['dps', '⚔️'], ['support', '💚']].map(([r, label]) => (
               <button key={r} className={`fv-role-btn${roleFilter === r ? ' active' : ''}`} onClick={() => setRoleFilter(r)}>{label}</button>
             ))}
           </div>
@@ -362,7 +364,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
                     onClick={() => { if (editingSlot !== null && !isDisabled) toggleHero(h.cid); else if (editingSlot === null) setDetailHero(h) }}
                   >
                     <button className="fhc-info-btn" aria-label="Hero info" onClick={e => { e.stopPropagation(); setDetailHero(h) }}>i</button>
-                    <div className={`form-hc-portrait${h.url_portrait ? ' has-portrait' : ''}`} style={h.url_portrait ? {'--portrait-url': `url('${h.url_portrait}')`} : {}}>
+                    <div className={`form-hc-portrait${h.url_portrait ? ' has-portrait' : ''}`} style={h.url_portrait ? { '--portrait-url': `url('${h.url_portrait}')` } : {}}>
                       {!h.url_portrait && <div className="form-hc-ico">{h.icon}</div>}
                     </div>
                     <div className="form-hc-name">{h.name}</div>
@@ -452,7 +454,7 @@ function SettingsView({ session, payoutPct }) {
             <div className="stg-section-title">Payout Preference</div>
             <div className="stg-section-desc">How you receive HIVE when you win a PvP match.</div>
             <div className="stg-payout-pills">
-              {[['liquid','💧','Hive Liquid'],['stake','⚡','Hive Power']].map(([val, ico, name]) => (
+              {[['liquid', '💧', 'Hive Liquid'], ['stake', '⚡', 'Hive Power']].map(([val, ico, name]) => (
                 <button key={val} className={`stg-pill${payout === val ? ' active' : ''}`} onClick={() => selectPayout(val)}>
                   <span className="stg-pill-ico">{ico}</span>
                   <span className="stg-pill-name">{name}</span>
@@ -497,13 +499,13 @@ function SearchOverlay({ search, pvpCfg, onCancel, onSendWager, onRetry }) {
         <p className="search-sub">{sub}</p>
         <span className="search-config-tag">{configTag}</span>
         <div className="search-queue">{queueText}</div>
-        <div className="search-dots"><span/><span/><span/></div>
+        <div className="search-dots"><span /><span /><span /></div>
         {payStatus && <div id="pay-status" style={{ display: 'block' }}>{payStatus}</div>}
         {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
         {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
         {paying && (
           <div id="pay-steps" style={{ display: 'flex' }}>
-            {[['pay-step-send','💸','Sending wager via Keychain'],['pay-step-verify','🔍','Verifying on blockchain'],['pay-step-opponent','⏳','Waiting for opponent']].map(([id, ico, label]) => (
+            {[['pay-step-send', '💸', 'Sending wager via Keychain'], ['pay-step-verify', '🔍', 'Verifying on blockchain'], ['pay-step-opponent', '⏳', 'Waiting for opponent']].map(([id, ico, label]) => (
               <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
                 <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
                 <span>{label}</span>
@@ -544,6 +546,7 @@ export default function LobbyPage() {
   const [pvpBetOpen, setPvpBetOpen] = useState(false)
   const [pvpFmtOpen, setPvpFmtOpen] = useState(false)
   const [activeInfoTip, setActiveInfoTip] = useState(null)
+  const [tavernUsers, setTavernUsers] = useState([])         // + IMP tavern
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -621,10 +624,10 @@ export default function LobbyPage() {
 
     fetch('/api/config').then(r => r.json()).then(({ config }) => {
       setPayoutPct({ liquid: config?.percent_payout_liquid, stake: config?.percent_payout_stake })
-    }).catch(() => {})
+    }).catch(() => { })
 
     // socket.io
-    const socket = io({ transports: ['websocket'], auth: { token: session?.token } })
+    const socket = io({ transports: ['websocket', 'polling'], auth: { token: session?.token } })
     socketRef.current = socket
 
     socket.on('queue_update', d => setSearch(s => ({ ...s, queueText: `Players in queue: ${d.queueSize ?? d.count ?? '—'}` })))
@@ -664,6 +667,7 @@ export default function LobbyPage() {
     socket.on('error', d => {
       stopSearchUI()
       setSearch({ open: false })
+      socket.emit('leave_queue')
       showToast(d.message || 'Matchmaking error. Please try again.')
     })
     socket.on('connect', () => {
@@ -677,6 +681,9 @@ export default function LobbyPage() {
     socket.on('disconnect', () => {
       setSearch(s => s.open && !s.found ? { ...s, queueText: 'Connection lost — reconnecting...' } : s)
     })
+
+    // tavern — lista de jogadores online em tempo real        // + BLOCO NOVO
+    socket.on('tavern_update', list => setTavernUsers(list))   // + LINHA NOVA
 
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current) }
   }, []) // eslint-disable-line
@@ -699,7 +706,7 @@ export default function LobbyPage() {
     const order = { tank: 0, dps: 1, support: 2 }
     fetch('/api/characters').then(r => r.json()).then(d => {
       if (d.ok) setHeroData(d.characters.sort((a, b) => (order[roleCategory(a.role)] ?? 3) - (order[roleCategory(b.role)] ?? 3)))
-    }).catch(() => {})
+    }).catch(() => { })
   }, [])
 
   /* ── load formations ─────────────────────────────────── */
@@ -723,7 +730,7 @@ export default function LobbyPage() {
         }))
         setFormationsLoaded(true)
       }
-    }).catch(() => {})
+    }).catch(() => { })
   }, []) // eslint-disable-line
 
   /* ── search helpers ──────────────────────────────────── */
@@ -893,7 +900,7 @@ export default function LobbyPage() {
       if (bal === null) { showToast('⚠️ Não foi possível verificar seu saldo. Tente novamente.'); return }
       if (bal < pvpBet) { showToast(`⚠️ Saldo insuficiente! Você tem ${bal.toFixed(3)} HIVE, mas a aposta é de ${pvpBet} HIVE.`); return }
     }
-    if (window.hive_keychain && pvpBet > 0) window.hive_keychain.requestHandshake(() => {})
+    if (window.hive_keychain && pvpBet > 0) window.hive_keychain.requestHandshake(() => { })
     startSearchUI()
     socketRef.current?.emit('join_queue', { username, wager: pvpBet, format: pvpFmt })
   }
@@ -915,7 +922,7 @@ export default function LobbyPage() {
         <div className="nav-right">
           {session?.mode === 'hive' && balance != null && (
             <div className="hive-bal">
-              <img src="/images/hive-logo.png" width="14" height="12" style={{ display:'inline-block', verticalAlign:'middle', imageRendering:'crisp-edges' }} alt="HIVE" />
+              <img src="/images/hive-logo.png" width="14" height="12" style={{ display: 'inline-block', verticalAlign: 'middle', imageRendering: 'crisp-edges' }} alt="HIVE" />
               <span>{balance}</span>
             </div>
           )}
@@ -929,7 +936,8 @@ export default function LobbyPage() {
         </div>
       </nav>
 
-      <div className="lobby-wrap">
+      <div className="lobby-wrap lobby-with-tavern">
+        <TavernPanel users={tavernUsers} />
         {view === 'home' && (
           <div id="view-home" className="lv active">
             <div className="view-scroll">
@@ -938,20 +946,20 @@ export default function LobbyPage() {
 
                 {/* AI Card */}
                 <section className="banner banner-ai">
-                  <div className="banner-sphere" style={{ width:120, height:120, margin:'0 auto 10px' }}>
-                    <div className="sph-ring r1"/><div className="sph-ring r2"/><div className="sph-ring r3"/>
+                  <div className="banner-sphere" style={{ width: 120, height: 120, margin: '0 auto 10px' }}>
+                    <div className="sph-ring r1" /><div className="sph-ring r2" /><div className="sph-ring r3" />
                     <span className="sph-core">🤖</span>
                   </div>
                   <div className="banner-preview">
                     <div className="banner-title-row">
                       <span className="banner-type-badge">Solo</span>
-                      <div className="hf-select" style={{ position:'relative' }}>
+                      <div className="hf-select" style={{ position: 'relative' }}>
                         <button className="hf-sel-trigger" type="button" onClick={() => setAiFmtOpen(x => !x)}>
                           <span className="hf-sel-value">{FMT_OPTS.find(o => o.val === aiFormat)?.label}</span>
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {aiFmtOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position: 'absolute', bottom: '100%', top: 'auto', left: 0, zIndex: 9999 }}>
                             {FMT_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === aiFormat ? ' active' : ''}`} onClick={() => { setAiFormat(o.val); savePref('ai_fmt', username, o.val); setAiFmtOpen(false) }}>{o.label}</button>
                             ))}
@@ -976,40 +984,40 @@ export default function LobbyPage() {
                     </div>
                   </div>
                   <div className="banner-expand">
-                    <div className="cfg-divider"/>
+                    <div className="cfg-divider" />
                     <button className="btn-action btn-start" onClick={startAiBattle}>▶ START BATTLE</button>
                   </div>
                 </section>
 
                 {/* PvP Card */}
                 <section className="banner banner-pvp">
-                  <div className="banner-sphere" style={{ width:120, height:120, margin:'0 auto 10px' }}>
-                    <div className="sph-ring r1"/><div className="sph-ring r2"/><div className="sph-ring r3"/>
+                  <div className="banner-sphere" style={{ width: 120, height: 120, margin: '0 auto 10px' }}>
+                    <div className="sph-ring r1" /><div className="sph-ring r2" /><div className="sph-ring r3" />
                     <span className="sph-core">⚔️</span>
                   </div>
                   <div className="banner-preview">
                     <div className="banner-title-row">
                       <span className="banner-type-badge">PVP</span>
-                      <div className="hf-select" style={{ position:'relative' }}>
+                      <div className="hf-select" style={{ position: 'relative' }}>
                         <button className="hf-sel-trigger" type="button" onClick={() => setPvpFmtOpen(x => !x)}>
                           <span className="hf-sel-value">{FMT_OPTS.find(o => o.val === pvpFmt)?.label}</span>
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {pvpFmtOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position: 'absolute', bottom: '100%', top: 'auto', left: 0, zIndex: 9999 }}>
                             {FMT_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === pvpFmt ? ' active' : ''}`} onClick={() => { setPvpFmt(o.val); savePref('pvp_fmt', username, o.val); setPvpFmtOpen(false) }}>{o.label}</button>
                             ))}
                           </div>
                         )}
                       </div>
-                      <div className="hf-select" style={{ position:'relative' }}>
+                      <div className="hf-select" style={{ position: 'relative' }}>
                         <button className="hf-sel-trigger" type="button" onClick={() => setPvpBetOpen(x => !x)}>
                           <span className="hf-sel-value">{BET_OPTS.find(o => o.val === pvpBet)?.label}</span>
                           <span className="hf-sel-chevron">▾</span>
                         </button>
                         {pvpBetOpen && (
-                          <div className="hf-float-dd dd-open" style={{ position:'absolute', bottom:'100%', top:'auto', left:0, zIndex:9999 }}>
+                          <div className="hf-float-dd dd-open" style={{ position: 'absolute', bottom: '100%', top: 'auto', left: 0, zIndex: 9999 }}>
                             {BET_OPTS.map(o => (
                               <button key={o.val} className={`hf-sel-opt${o.val === pvpBet ? ' active' : ''}`} onClick={() => { setPvpBet(o.val); savePref('pvp_bet', username, o.val); setPvpBetOpen(false) }}>{o.label}</button>
                             ))}
@@ -1034,7 +1042,7 @@ export default function LobbyPage() {
                     </div>
                   </div>
                   <div className="banner-expand">
-                    <div className="cfg-divider"/>
+                    <div className="cfg-divider" />
                     <button className="btn-action btn-find" onClick={startPvp}>🔍 FIND MATCH</button>
                   </div>
                 </section>
@@ -1054,6 +1062,10 @@ export default function LobbyPage() {
         )}
 
         {view === 'settings' && <SettingsView session={session} payoutPct={payoutPct} />}
+
+        {view === 'tavern' && (
+          <TavernPanel users={tavernUsers} isMobile={true} />
+        )}
 
         <nav className="mobile-bottom-tabs">
           <button type="button" className={navTabClass('grimoire')} onClick={() => setView('grimoire')}>
