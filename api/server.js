@@ -749,13 +749,13 @@ app.post('/api/migrate', async (req, res) => {
     await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p1  INT NOT NULL DEFAULT 0`, 'matches.score_p1');
     await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS score_p2  INT NOT NULL DEFAULT 0`, 'matches.score_p2');
     // Persist active-match state so a server restart doesn't lose paid wagers.
-    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS battle_num   INT  NOT NULL DEFAULT 1`,                   'matches.battle_num');
-    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payments     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.payments');
-    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payout_prefs JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.payout_prefs');
-    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS merges       JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.merges');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS battle_num   INT  NOT NULL DEFAULT 1`, 'matches.battle_num');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payments     JSONB NOT NULL DEFAULT '{}'::jsonb`, 'matches.payments');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS payout_prefs JSONB NOT NULL DEFAULT '{}'::jsonb`, 'matches.payout_prefs');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS merges       JSONB NOT NULL DEFAULT '{}'::jsonb`, 'matches.merges');
     // Tracks which players have been refunded — prevents double-refund if a
     // crash happens mid-cancellation and rehydrate then re-runs the refund loop.
-    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`,         'matches.refunded');
+    await safeMigrate(sql`ALTER TABLE matches ADD COLUMN IF NOT EXISTS refunded     JSONB NOT NULL DEFAULT '{}'::jsonb`, 'matches.refunded');
     // Add lore column to skills 
     await safeMigrate(sql`ALTER TABLE skills ADD COLUMN IF NOT EXISTS lore TEXT`, 'skills.lore');
     await sql`
@@ -978,6 +978,34 @@ const matchQueue = new Map();
 // activeMatches: Map<matchId, { p1, p2, wager, wagerType, teams:{}, status }>
 const activeMatches = new Map();
 
+// ── Taverna — presença em tempo real ─────────────────────────────────────────
+// onlineUsers: Map<username, { status, detail }>
+// status: 'taverna' | 'procurando' | 'batalha'
+// detail: string opcional — ex: 'BO5 · rodada 2' para quem está em batalha
+const onlineUsers = new Map();
+
+function broadcastTavern() {
+  const list = [...onlineUsers.entries()].map(([username, data]) => ({
+    username,
+    status: data.status,
+    detail: data.detail || null,
+  }));
+  io.emit('tavern_update', list);
+}
+
+function setTavernStatus(username, status, detail = null) {
+  if (!username) return;
+  onlineUsers.set(username, { status, detail });
+  broadcastTavern();
+}
+
+function removeTavernUser(username) {
+  if (!username) return;
+  if (!onlineUsers.has(username)) return;
+  onlineUsers.delete(username);
+  broadcastTavern();
+}
+
 function makeMatchId() {
   return `m_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -1075,10 +1103,10 @@ async function rehydrateMatches() {
         winsNeeded,
         battleNum: r.battle_num || 1,
         scores: { [r.player1]: r.score_p1 || 0, [r.player2]: r.score_p2 || 0 },
-        payments:    Object.assign({ [r.player1]: false, [r.player2]: false }, r.payments     || {}),
+        payments: Object.assign({ [r.player1]: false, [r.player2]: false }, r.payments || {}),
         payoutPrefs: Object.assign({ [r.player1]: 'liquid', [r.player2]: 'liquid' }, r.payout_prefs || {}),
-        merges:      Object.assign({ [r.player1]: 0, [r.player2]: 0 }, r.merges || {}),
-        refunded:    r.refunded || {},
+        merges: Object.assign({ [r.player1]: 0, [r.player2]: 0 }, r.merges || {}),
+        refunded: r.refunded || {},
         teams: {},
         status: r.status === 'resolving' ? 'waiting_teams' : r.status, // re-collect teams; old in-flight sim is lost
         createdAt: Number(r.created_ms),
@@ -1185,6 +1213,11 @@ function tryMatch() {
   e1.socket.join(matchId);
   e2.socket.join(matchId);
 
+  // Atualiza status na Taverna para os dois jogadores
+  const matchDetail = `BO${fmt} · round 1`;
+  setTavernStatus(u1, 'battle', matchDetail);
+  setTavernStatus(u2, 'battle', matchDetail);
+
   io.to(matchId).emit('match_found', {
     matchId,
     p1: u1, p2: u2,
@@ -1255,6 +1288,16 @@ function tryMatch() {
             joinedAt: Date.now(),
           });
           sock.emit('requeued', { queueSize: matchQueue.size });
+          setTavernStatus(player, 'searching', `${m.wager > 0 ? m.wager + ' HIVE' : 'Free'} · BO${m.format}`);
+        } else {
+          // Socket offline — volta para taverna (será removido no disconnect)
+          setTavernStatus(player, 'tavern');
+        }
+      }
+      // Paid players que não reconectaram voltam para taverna
+      for (const player of paid) {
+        if (!onlineUsers.has(player) || onlineUsers.get(player)?.status === 'battle') {
+          setTavernStatus(player, 'tavern');
         }
       }
       if (unpaid.length) {
@@ -1416,6 +1459,9 @@ async function resolveBattleRound(matchId) {
 
     clearMatchTimers(m);
     activeMatches.delete(matchId);
+    // Jogadores voltam para a taverna ao terminar a série
+    setTavernStatus(m.p1, 'tavern');
+    setTavernStatus(m.p2, 'tavern');
   } else {
     m.battleNum++;
     m.teams = {};
@@ -1424,6 +1470,10 @@ async function resolveBattleRound(matchId) {
     // after the new battle has already started. The fresh round_result for the
     // new battle will be stored as soon as both teams are resolved.
     m.lastRoundResult = null;
+    // Atualiza detalhe da rodada na Taverna
+    const roundDetail = `BO${m.format} · round ${m.battleNum}`;
+    setTavernStatus(m.p1, 'battle', roundDetail);
+    setTavernStatus(m.p2, 'battle', roundDetail);
     // Snapshot battleNum/scores so a restart resumes mid-series correctly.
     persistMatchState(m);
     // Reset the forfeit timer for the new round
@@ -1473,18 +1523,23 @@ function forfeitBattle(matchId, winner) {
     }
     clearMatchTimers(m);
     activeMatches.delete(matchId);
+    // Jogadores voltam para a taverna após forfeit
+    setTavernStatus(m.p1, 'tavern');
+    setTavernStatus(m.p2, 'tavern');
   } else {
     m.battleNum++;
     m.teams = {};
     m.status = 'waiting_teams';
     m.lastRoundResult = null;
+    // Atualiza rodada na Taverna
+    const roundDetail = `BO${m.format} · round ${m.battleNum}`;
+    setTavernStatus(m.p1, 'battle', roundDetail);
+    setTavernStatus(m.p2, 'battle', roundDetail);
     persistMatchState(m);
     // Reset the forfeit timer for the new round
     armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
 }
-
-// ── Socket.io auth middleware ─────────────────────────────────────────────────
 // Sets socket.data.username from the verified token; guests remain null.
 io.use((socket, next) => {
   socket.data.username = verifyToken(socket.handshake.auth?.token) || null;
@@ -1496,9 +1551,22 @@ io.on('connection', socket => {
   // Identity is fixed at connection time — never trust client-sent usernames.
   let connectedUser = socket.data.username;
 
+  // Registra usuário autenticado na Taverna ao conectar
+  if (connectedUser) {
+    // Se já estava em batalha (reconexão), preserva o status existente
+    if (!onlineUsers.has(connectedUser)) {
+      setTavernStatus(connectedUser, 'tavern');
+    }
+    // Envia a lista atual apenas para este socket recém-conectado
+    socket.emit('tavern_update', [...onlineUsers.entries()].map(([u, d]) => ({
+      username: u, status: d.status, detail: d.detail || null,
+    })));
+    console.log(`🍺 ${connectedUser} entered the tavern (${onlineUsers.size} online)`);
+  }
+
   // Player joins matchmaking queue
   // Valores permitidos — espelham BET_OPTS e FMT_OPTS do cliente
-  const VALID_WAGERS  = [0, 1, 5, 10];
+  const VALID_WAGERS = [0, 1, 5, 10];
   const VALID_FORMATS = [3, 5, 7];
 
   socket.on('join_queue', ({ wager, wagerType, format }) => {
@@ -1560,6 +1628,7 @@ io.on('connection', socket => {
     });
     socket.emit('queued', { queueSize: matchQueue.size });
     console.log(`🔍 ${connectedUser} joined queue | ${wager} ${wagerType} BO${format} | size: ${matchQueue.size}`);
+    setTavernStatus(connectedUser, 'searching', `${wager > 0 ? wager + ' HIVE' : 'Free'} · BO${format || 5}`);
     tryMatch();
     broadcastQueueSize();
   });
@@ -1644,6 +1713,7 @@ io.on('connection', socket => {
     if (connectedUser) {
       matchQueue.delete(connectedUser);
       console.log(`🚪 ${connectedUser} left queue`);
+      setTavernStatus(connectedUser, 'tavern');
       broadcastQueueSize();
     }
   });
@@ -1711,6 +1781,8 @@ io.on('connection', socket => {
     if (connectedUser) {
       matchQueue.delete(connectedUser);
       broadcastQueueSize();
+      removeTavernUser(connectedUser);
+      console.log(`🍺 ${connectedUser} left the tavern (${onlineUsers.size} online)`);
       // Auto-forfeit if disconnected during an active match and the player
       // doesn't reconnect within the grace window. Without this, a ragequit
       // forces the opponent to wait out the full 2-minute round timer.
