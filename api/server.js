@@ -222,6 +222,7 @@ async function sendHivePrize(winner, pot, payoutPref, matchId) {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1); // Railway/Heroku sit behind 1 reverse proxy
 const httpServer = createServer(app);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
