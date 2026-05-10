@@ -86,15 +86,56 @@ export default function GrimoireView() {
               <div className="gr-ch-title">⚔️ Chapter 3 — The Battlefield</div>
               <div className="gr-section-title">🗺️ The 3×3 Arena</div>
               <p className="gr-p">Each side has a grid of <span className="gr-hl">3 rows × 3 columns</span>. Rows are A, B and C (top to bottom). Columns indicate depth: <span className="gr-hl" style={{color:'#66ee88'}}>Front</span>, <span className="gr-hl" style={{color:'#88aaff'}}>Mid</span>, and <span className="gr-hl" style={{color:'#c88cff'}}>Back</span>.</p>
+              <div className="gr-arena-wrap">
+                <div className="gr-arena">
+                  <div>
+                    <p style={{fontSize:'11px',color:'rgba(200,160,60,0.6)',textAlign:'center',marginBottom:'6px',fontFamily:'"Cinzel",serif',letterSpacing:'1px'}}>YOUR ARMY</p>
+                    <div className="gr-arena-side">
+                      <div className="gr-arena-cell back">A-Back</div>
+                      <div className="gr-arena-cell mid">A-Mid</div>
+                      <div className="gr-arena-cell front">A-Front</div>
+                      <div className="gr-arena-cell back">B-Back</div>
+                      <div className="gr-arena-cell mid">B-Mid</div>
+                      <div className="gr-arena-cell front">B-Front</div>
+                      <div className="gr-arena-cell back">C-Back</div>
+                      <div className="gr-arena-cell mid">C-Mid</div>
+                      <div className="gr-arena-cell front">C-Front</div>
+                    </div>
+                  </div>
+                  <div className="gr-arena-vs">VS</div>
+                  <div>
+                    <p style={{fontSize:'11px',color:'rgba(200,160,60,0.6)',textAlign:'center',marginBottom:'6px',fontFamily:'"Cinzel",serif',letterSpacing:'1px'}}>OPPONENT</p>
+                    <div className="gr-arena-side">
+                      <div className="gr-arena-cell front">A-Front</div>
+                      <div className="gr-arena-cell mid">A-Mid</div>
+                      <div className="gr-arena-cell back">A-Back</div>
+                      <div className="gr-arena-cell front">B-Front</div>
+                      <div className="gr-arena-cell mid">B-Mid</div>
+                      <div className="gr-arena-cell back">B-Back</div>
+                      <div className="gr-arena-cell front">C-Front</div>
+                      <div className="gr-arena-cell mid">C-Mid</div>
+                      <div className="gr-arena-cell back">C-Back</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="gr-arena-legend">
+                <span><span className="dot" style={{background:'#66ee88'}}></span>Front — absorbs damage</span>
+                <span><span className="dot" style={{background:'#88aaff'}}></span>Mid — versatile</span>
+                <span><span className="dot" style={{background:'#c88cff'}}></span>Back — protected</span>
+              </div>
               <div className="gr-section-title">⚡ Attack Order (SPD)</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">📋</span><div>Before battle, the game builds an <span className="gr-hl">attack queue</span> sorted by speed — fastest first.</div></div>
-                <div className="gr-tip"><span className="gr-tip-ico">🔁</span><div>This queue runs in a <span className="gr-hl">continuous loop</span>.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">📋</span><div>Before battle, the game builds an <span className="gr-hl">attack queue</span> with all living heroes from both sides, sorted by speed (<span className="gr-hl">SPD</span>) — fastest first.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">🔁</span><div>This queue runs in a <span className="gr-hl">continuous loop</span>: each hero attacks on their turn, and when the list ends it restarts from the top.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">💀</span><div>When a hero dies, the queue is <span className="gr-hl">rebuilt</span> on the next cycle with the survivors — the order can shift as the field empties.</div></div>
               </div>
               <div className="gr-section-title">🎯 Row Targeting</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">➡️</span><div><strong>Row priority:</strong> each hero attacks the frontmost enemy in the <span className="gr-hl">same row</span>.</div></div>
-                <div className="gr-tip"><span className="gr-tip-ico">B</span><div><strong>Row B:</strong> if no enemy in row B, picks <span className="gr-hl">randomly</span> between row A and row C.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">➡️</span><div><strong>Row priority:</strong> each hero attacks the frontmost enemy in the <span className="gr-hl">same row</span> they occupy.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">A</span><div><strong>Row A:</strong> if no enemy in row A, searches row B then row C.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">B</span><div><strong>Row B:</strong> if no enemy in row B, picks <span className="gr-hl">randomly</span> between row A and row C (50/50). If only one has enemies, attacks that one.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">C</span><div><strong>Row C:</strong> if no enemy in row C, searches row B then row A.</div></div>
               </div>
             </div>
           )}
@@ -102,14 +143,22 @@ export default function GrimoireView() {
             <div className="gr-chapter active">
               <div className="gr-ch-title">✨ Chapter 2 — Combos</div>
               <div className="gr-section-title">🤔 What is a Combo?</div>
-              <p className="gr-p">When recruitment generates <span className="gr-hl">2 or 3 identical adjacent heroes</span> in the shop, they are highlighted with glowing borders.</p>
+              <p className="gr-p">When recruitment generates <span className="gr-hl">2 or 3 identical adjacent heroes</span> in the shop, they are highlighted with glowing borders. That's a Combo — a chance to recruit multiple heroes at once for a reduced special cost.</p>
               <div className="gr-section-title">✨ Combo 2</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">2️⃣</span><div>Two identical adjacent heroes. Special cost: <span className="gr-hl">2💰</span> for both at once.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">2️⃣</span><div>Two identical adjacent heroes in the shop. Special cost: <span className="gr-hl">2💰</span> for both at once (instead of 6💰 separately).</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">📦</span><div>Both go to the Barracks and stack — you're already 2/3 of the way to a merge!</div></div>
               </div>
               <div className="gr-section-title">✨✨ Combo 3</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">3️⃣</span><div>Three identical adjacent heroes. Cost: <span className="gr-hl">2💰</span> for all three, merge happens <strong>immediately</strong>.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">3️⃣</span><div>Three identical adjacent heroes in the shop. Special cost: <span className="gr-hl">2💰</span> for all three at once.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">⭐</span><div>All 3 are recruited and the merge happens <strong>immediately</strong> — you walk away with a hero already evolved to <span className="gr-hl">★★</span> at no extra cost!</div></div>
+              </div>
+              <div className="gr-section-title">💡 Why It Matters</div>
+              <div className="gr-tips">
+                <div className="gr-tip"><span className="gr-tip-ico">💰</span><div>Huge gold savings — 3 heroes for 2💰 vs 3×3💰 = 9💰 individually.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">🚀</span><div>Speeds up hero evolution, letting you field stronger units earlier in the duel.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">⚠️</span><div>Combos appear with limited probability each recruitment — always watch for the glowing borders!</div></div>
               </div>
             </div>
           )}
@@ -118,13 +167,14 @@ export default function GrimoireView() {
               <div className="gr-ch-title">⭐ Chapter 3 — Fusion &amp; Evolution</div>
               <div className="gr-section-title">🔄 How Fusion Works</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">📦</span><div>Stack <span className="gr-hl">3 copies</span> of the same hero → automatic merge → <span className="gr-hl">★ → ★★</span>.</div></div>
-                <div className="gr-tip"><span className="gr-tip-ico">🔁</span><div>Repeat up to <span className="gr-hl">★★★★★</span>.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">📦</span><div>Stack <span className="gr-hl">3 copies</span> of the same hero (in Barracks or on the field) → automatic merge → hero levels up: <span className="gr-hl">★ → ★★</span>.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">🔁</span><div>The process repeats: if you have a <span className="gr-hl">★★</span> hero and combine it three more times, it levels up to <span className="gr-hl">★★★</span>. Do this until you reach the maximum level <span className="gr-hl">★★★★★</span>.</div></div>
               </div>
               <div className="gr-section-title">📈 Power Scaling</div>
               <div className="gr-tips">
-                <div className="gr-tip"><span className="gr-tip-ico">❤️</span><div>HP and ATK increase each level. A ★★★★★ hero has more than double the base stats.</div></div>
-                <div className="gr-tip"><span className="gr-tip-ico">🏆</span><div>A single <span className="gr-hl">★★★</span> hero is dramatically stronger than three separate <span className="gr-hl">★</span> heroes.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">❤️</span><div><strong>Hit points (HP) and attack (ATK)</strong> increase with each new level the hero gains. A ★★★★★ hero has more than double the base hit points and attack.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">✨</span><div><strong>Skill Power</strong> also increases with each new level, but on a different scale, thus making the skills increasingly impactful.</div></div>
+                <div className="gr-tip"><span className="gr-tip-ico">🏆</span><div>A single <span className="gr-hl">★★★</span> hero is dramatically stronger than three separate <span className="gr-hl">★</span> heroes — focus on evolving rather than spreading resources.</div></div>
               </div>
             </div>
           )}
@@ -132,11 +182,12 @@ export default function GrimoireView() {
             <div className="gr-chapter active">
               <div className="gr-ch-title">💡 Chapter 4 — Strategy Tips</div>
               <div className="gr-section-title">🤖 Solo Mode (vs Bot)</div>
-              <div className="gr-strategy-tip">👁️ <strong>Analyze the enemy army before placing your heroes.</strong> In Solo mode you can see the opponent's field.</div>
-              <div className="gr-strategy-tip">🛡️ <strong>Pay attention to the positioning.</strong> Always place tank-type heroes at the front.</div>
-              <div className="gr-strategy-tip">💚 <strong>Tank + Heal = classic sustain combo.</strong></div>
-              <div className="gr-strategy-tip">⭐ <strong>A Combo 3 early can decide the match.</strong> Fielding a ★★ hero in round one creates a power lead.</div>
-              <div className="gr-warning">⚠️ <strong>Note — PvP Mode:</strong> in battles against other players you will <strong>not see the opponent's field</strong> before the battle.</div>
+              <div className="gr-strategy-tip">👁️ <strong>Analyze the enemy army before placing your heroes.</strong> In Solo mode you can see the opponent's field — use it to counter their row positioning directly.</div>
+              <div className="gr-strategy-tip">🛡️ <strong>Pay attention to the positioning.</strong> Always remember to place tank-type heroes at the front of the battlefield, so that heroes with less health are protected, increasing their chances of survival.</div>
+              <div className="gr-strategy-tip">💚 <strong>Tank + Heal = classic sustain combo.</strong> A tank hero on the battlefield, accompanied by a healing hero, keeps your team standing much longer.</div>
+              <div className="gr-strategy-tip">⭐ <strong>A Combo 3 early can decide the match.</strong> Fielding a ★★ hero in round one creates a power lead that is very hard to overcome.</div>
+              <div className="gr-strategy-tip">🌟 <strong>Area attacks.</strong> Some heroes have attack modifiers, meaning their attack hits more than one target. Take advantage of this and try to build an explosive strategy.</div>
+              <div className="gr-warning">⚠️ <strong>Note — PvP Mode:</strong> in battles against other players via blockchain, you will <strong>not see the opponent's field</strong> before the battle. This completely changes the dynamic — building a balanced and adaptable army will matter more than direct countering. Prepare for the challenge!</div>
             </div>
           )}
         </div>
