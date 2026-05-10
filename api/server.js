@@ -222,6 +222,7 @@ async function sendHivePrize(winner, pot, payoutPref, matchId) {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1); // Railway/Heroku sit behind 1 reverse proxy
 const httpServer = createServer(app);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
@@ -1226,13 +1227,13 @@ function tryMatch() {
     format: fmt,
     needsPayment,
     gameAccount: HIVE_GAME_ACCOUNT,
-    timeLimitMs: needsPayment ? 30_000 : 3 * 60 * 1000,
+    timeLimitMs: needsPayment ? 60_000 : 3 * 60 * 1000,
   });
 
   console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${e1.wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
 
   if (needsPayment) {
-    // Payment timeout: 30s window. On expiry:
+    // Payment timeout: 60s window. On expiry:
     // 1. Block new wager_sent (set status to 'cancelling')
     // 2. Wait 6s grace period for any in-progress blockchain verifications
     // 3. Final chain scan for unpaid players (3 attempts)
@@ -1315,7 +1316,7 @@ function tryMatch() {
         }
       }
       console.log(`⏰ Match ${matchId} cancelled | paid: [${paid.join(', ')}] refunded | unpaid: [${unpaid.join(', ')}] requeued`);
-    }, 30_000);
+    }, 60_000);
   } else {
     // No payment needed — arm team submission forfeit timer immediately
     armForfeitTimer(matchId, u1, u2, ROUND_TIME_MS);

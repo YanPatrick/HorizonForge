@@ -532,32 +532,35 @@ function SearchOverlay({ search, pvpCfg, onCancel, onSendWager, onRetry }) {
   return (
     <div className={`search-overlay open${found ? ' found' : ''}${paying ? ' paying' : ''}`}>
       <div className="search-panel">
-        <div className="arcane-rings">
-          <div className="arc-ring a1"></div><div className="arc-ring a2"></div><div className="arc-ring a3"></div>
-          <div className="arc-center">⚔️</div>
-        </div>
-        <h2 className="search-title" dangerouslySetInnerHTML={{ __html: title }} />
-        <div className="search-timer">{timer}</div>
-        <p className="search-sub">{sub}</p>
-        <span className="search-config-tag">{configTag}</span>
-        <div className="search-queue">{queueText}</div>
-        <div className="search-dots"><span /><span /><span /></div>
-        {payStatus && <div id="pay-status" style={{ display: 'block' }}>{payStatus}</div>}
-        {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
-        {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
-        {paying && (
-          <div id="pay-steps" style={{ display: 'flex' }}>
-            {[['pay-step-send', '💸', 'Sending wager via Keychain'], ['pay-step-verify', '🔍', 'Verifying on blockchain'], ['pay-step-opponent', '⏳', 'Waiting for opponent']].map(([id, ico, label]) => (
-              <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
-                <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
-                <span>{label}</span>
-              </div>
-            ))}
+        <div className="search-col-visual">
+          <div className="arcane-rings">
+            <div className="arc-ring a1"></div><div className="arc-ring a2"></div><div className="arc-ring a3"></div>
+            <div className="arc-center">⚔️</div>
           </div>
-        )}
-        {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
-        {showRetry && <button id="btn-retry-pay" onClick={onRetry}>Retry</button>}
-        <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+          <div className="search-timer">{timer}</div>
+        </div>
+        <div className="search-col-info">
+          <h2 className="search-title" dangerouslySetInnerHTML={{ __html: title }} />
+          <p className="search-sub">{sub}</p>
+          <span className="search-config-tag">{configTag}</span>
+          <div className="search-queue">{queueText}</div>
+          <div className="search-dots"><span /><span /><span /></div>
+          {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
+          {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
+          {paying && (
+            <div id="pay-steps" style={{ display: 'flex' }}>
+              {[['pay-step-send', '💸', 'Wager'], ['pay-step-verify', '🔍', 'Verifying'], ['pay-step-opponent', '⏳', 'Opponent']].map(([id, ico, label]) => (
+                <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
+                  <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
+          {showRetry && <button id="btn-retry-pay" onClick={onRetry}>↩ Retry Keychain</button>}
+          <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+        </div>
       </div>
     </div>
   )
@@ -595,6 +598,8 @@ export default function LobbyPage() {
   const phraseTimerRef = useRef(null)
   const matchDataRef = useRef(null)
   const payCountdownRef = useRef(null)
+  const preTimerRef = useRef(null)
+  const preTimeoutRef = useRef(null)
   const toastTimerRef = useRef(null)
 
   /* ── toast ───────────────────────────────────────────── */
@@ -694,6 +699,8 @@ export default function LobbyPage() {
     })
     socket.on('match_cancelled', () => {
       clearInterval(payCountdownRef.current)
+      clearInterval(preTimerRef.current)
+      clearTimeout(preTimeoutRef.current)
       setSearch(s => {
         if (!s.paying) return s
         return { open: false }
@@ -727,7 +734,7 @@ export default function LobbyPage() {
     // tavern — lista de jogadores online em tempo real        // + BLOCO NOVO
     socket.on('tavern_update', list => setTavernUsers(list))   // + LINHA NOVA
 
-    return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current) }
+    return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current); clearInterval(preTimerRef.current); clearTimeout(preTimeoutRef.current) }
   }, []) // eslint-disable-line
 
   /* ── prefetch battle resources while user is in lobby ── */
@@ -814,6 +821,8 @@ export default function LobbyPage() {
   function cancelSearch() {
     stopSearchUI()
     clearInterval(payCountdownRef.current)
+    clearInterval(preTimerRef.current)
+    clearTimeout(preTimeoutRef.current)
     setSearch({ open: false })
     matchDataRef.current = null
     socketRef.current?.emit('leave_queue')
@@ -831,23 +840,43 @@ export default function LobbyPage() {
     }
 
     if (data.needsPayment) {
-      let remaining = 30
+      let remaining = Math.round((data.timeLimitMs ?? 60_000) / 1000)
+
+      // Pre-popup countdown: warn user for 2.5s before Keychain opens automatically.
+      // Without this warning, the 600ms auto-trigger fired while users were mid-click
+      // (e.g. switching tabs), accidentally dismissing the popup.
+      let prePopup = 3
       setSearch(s => ({
         ...s, found: false, paying: true,
         title: '<span class="search-found-title">OPPONENT FOUND!</span>',
-        sub: `vs. ${opponent} — send your wager to enter`,
-        payStatus: `Wager: ${matchDataRef.current.wager} HIVE`,
-        payCountdown: { text: `⏳ Confirm in Keychain — ${remaining}s remaining`, urgent: false },
-        showSendWager: true,
+        sub: `vs. ${opponent} — sending wager automatically`,
+        payStatus: `Wager: ${matchDataRef.current.wager} HIVE — stay on this tab!`,
+        payCountdown: { text: `⚡ Keychain opening in ${prePopup}s — don't click away!`, urgent: false },
+        showSendWager: false,
         paySteps: {},
       }))
+
+      // Count down 3→2→1 before the popup fires, then switch to the payment window countdown.
+      preTimerRef.current = setInterval(() => {
+        prePopup--
+        if (prePopup > 0) {
+          setSearch(s => ({ ...s, payCountdown: { text: `⚡ Keychain opening in ${prePopup}s — don't click away!`, urgent: false } }))
+        } else {
+          clearInterval(preTimerRef.current)
+        }
+      }, 800)
+
       clearInterval(payCountdownRef.current)
-      payCountdownRef.current = setInterval(() => {
-        remaining--
-        setSearch(s => ({ ...s, payCountdown: { text: `⏳ Confirm in Keychain — ${remaining}s remaining`, urgent: remaining <= 10 } }))
-        if (remaining <= 0) clearInterval(payCountdownRef.current)
-      }, 1000)
-      setTimeout(sendKeychainTransfer, 600)
+      preTimeoutRef.current = setTimeout(() => {
+        sendKeychainTransfer()
+        remaining -= Math.round(2500 / 1000)  // subtract the 2.5s pre-delay already elapsed
+        // After popup fires, switch to payment-window countdown.
+        payCountdownRef.current = setInterval(() => {
+          remaining--
+          setSearch(s => ({ ...s, payCountdown: { text: `⏳ Confirm in Keychain — ${remaining}s remaining`, urgent: remaining <= 10 } }))
+          if (remaining <= 0) clearInterval(payCountdownRef.current)
+        }, 1000)
+      }, 2500)
     } else {
       setSearch(s => ({
         ...s, found: true, paying: false,
@@ -882,7 +911,8 @@ export default function LobbyPage() {
       setSearch(s => ({ ...s, payError: 'Hive Keychain not found. Please install it and retry.', showRetry: true, paySteps: { ...s.paySteps, 'pay-step-send': 'error' } }))
       return
     }
-    setSearch(s => ({ ...s, payStatus: 'Opening Keychain...', showSendWager: false, paySteps: { ...s.paySteps, 'pay-step-send': 'active' } }))
+    window.focus()
+    setSearch(s => ({ ...s, payStatus: 'Keychain open — confirm the transfer!', showSendWager: false, paySteps: { ...s.paySteps, 'pay-step-send': 'active' } }))
     window.hive_keychain.requestTransfer(username, md.gameAccount, md.wager.toFixed(3), memo, 'HIVE', (response) => {
       if (response.success) {
         setSearch(s => ({ ...s, payStatus: 'Verifying on blockchain...', paySteps: { ...s.paySteps, 'pay-step-send': 'done', 'pay-step-verify': 'active' } }))

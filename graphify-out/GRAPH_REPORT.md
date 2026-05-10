@@ -1,11 +1,11 @@
-# Graph Report - HorizonForge  (2026-05-08)
+# Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-10)
 
 ## Corpus Check
-- 17 files · ~100,534 words
+- 17 files · ~117,003 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 180 nodes · 347 edges · 7 communities detected
+- 180 nodes · 347 edges · 15 communities detected
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -17,6 +17,14 @@
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
 - [[_COMMUNITY_Community 6|Community 6]]
+- [[_COMMUNITY_Community 7|Community 7]]
+- [[_COMMUNITY_Community 8|Community 8]]
+- [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `log()` - 22 edges
@@ -32,15 +40,15 @@
 
 ## Surprising Connections (you probably didn't know these)
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `initGame()` --calls--> `init()`  [INFERRED]
-  public\js\battle.js → public\js\skill-tooltip.js
+  C:\Fontes_Javascript\HorizonForge\public\js\battle.js → C:\Fontes_Javascript\HorizonForge\public\js\skill-tooltip.js
 - `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 - `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+  C:\Fontes_Javascript\HorizonForge\api\server.js → C:\Fontes_Javascript\HorizonForge\public\js\battle.js
 
 ## Communities
 
@@ -71,6 +79,54 @@ Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _
 ### Community 6 - "Community 6"
 Cohesion: 0.36
 Nodes (8): showHeroInfo(), getC(), getTipEl(), heroInfoHtml(), show(), showSticky(), skillTooltipHtml(), skillTooltipText()
+
+### Community 7 - "Community 7"
+Cohesion: 0.5
+Nodes (0): 
+
+### Community 8 - "Community 8"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 9 - "Community 9"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 10 - "Community 10"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 11 - "Community 11"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 12 - "Community 12"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 13 - "Community 13"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 14 - "Community 14"
+Cohesion: 1.0
+Nodes (0): 
+
+## Knowledge Gaps
+- **Thin community `Community 8`** (2 nodes): `GrimoireView.jsx`, `GrimoireView()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 9`** (2 nodes): `LoginPage.jsx`, `LoginPage()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 10`** (2 nodes): `TavernPanel.jsx`, `TavernPanel()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 11`** (1 nodes): `eslint.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 12`** (1 nodes): `vite.config.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 13`** (1 nodes): `main.jsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 14`** (1 nodes): `release.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
