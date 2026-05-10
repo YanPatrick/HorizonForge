@@ -491,32 +491,35 @@ function SearchOverlay({ search, pvpCfg, onCancel, onSendWager, onRetry }) {
   return (
     <div className={`search-overlay open${found ? ' found' : ''}${paying ? ' paying' : ''}`}>
       <div className="search-panel">
-        <div className="arcane-rings">
-          <div className="arc-ring a1"></div><div className="arc-ring a2"></div><div className="arc-ring a3"></div>
-          <div className="arc-center">⚔️</div>
-        </div>
-        <h2 className="search-title" dangerouslySetInnerHTML={{ __html: title }} />
-        <div className="search-timer">{timer}</div>
-        <p className="search-sub">{sub}</p>
-        <span className="search-config-tag">{configTag}</span>
-        <div className="search-queue">{queueText}</div>
-        <div className="search-dots"><span /><span /><span /></div>
-        {payStatus && <div id="pay-status" style={{ display: 'block' }}>{payStatus}</div>}
-        {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
-        {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
-        {paying && (
-          <div id="pay-steps" style={{ display: 'flex' }}>
-            {[['pay-step-send', '💸', 'Sending wager via Keychain'], ['pay-step-verify', '🔍', 'Verifying on blockchain'], ['pay-step-opponent', '⏳', 'Waiting for opponent']].map(([id, ico, label]) => (
-              <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
-                <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
-                <span>{label}</span>
-              </div>
-            ))}
+        <div className="search-col-visual">
+          <div className="arcane-rings">
+            <div className="arc-ring a1"></div><div className="arc-ring a2"></div><div className="arc-ring a3"></div>
+            <div className="arc-center">⚔️</div>
           </div>
-        )}
-        {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
-        {showRetry && <button id="btn-retry-pay" onClick={onRetry}>↩ Retry Keychain</button>}
-        <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+          <div className="search-timer">{timer}</div>
+        </div>
+        <div className="search-col-info">
+          <h2 className="search-title" dangerouslySetInnerHTML={{ __html: title }} />
+          <p className="search-sub">{sub}</p>
+          <span className="search-config-tag">{configTag}</span>
+          <div className="search-queue">{queueText}</div>
+          <div className="search-dots"><span /><span /><span /></div>
+          {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
+          {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
+          {paying && (
+            <div id="pay-steps" style={{ display: 'flex' }}>
+              {[['pay-step-send', '💸', 'Wager'], ['pay-step-verify', '🔍', 'Verifying'], ['pay-step-opponent', '⏳', 'Opponent']].map(([id, ico, label]) => (
+                <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
+                  <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
+          {showRetry && <button id="btn-retry-pay" onClick={onRetry}>↩ Retry Keychain</button>}
+          <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+        </div>
       </div>
     </div>
   )
