@@ -668,7 +668,7 @@ export default function LobbyPage() {
     })
     socket.on('requeued', d => {
       stopSearchUI()
-      showToast('⚠️ Oponente não confirmou o pagamento. Buscando novo adversário...')
+      showToast('⚠️ Opponent did not confirm payment. Searching for a new opponent...')
       startSearchUI()
       if (d.queueSize != null) setSearch(s => ({ ...s, queueText: `Players in queue: ${d.queueSize}` }))
     })
@@ -916,7 +916,7 @@ export default function LobbyPage() {
   /* ── AI battle start ─────────────────────────────────── */
   async function startAiBattle() {
     const formationHeroIds = await ensureActiveDeck()
-    if (!formationHeroIds) { showToast('⚠️ Nenhum deck selecionado. Monte uma formação primeiro!'); return }
+    if (!formationHeroIds) { showToast('⚠️ No deck selected. Build a formation first!'); return }
     sessionStorage.setItem('hf_battle_cfg', JSON.stringify({ mode: 'ai', format: aiFormat, formationHeroIds }))
     navigate('/battle')
   }
@@ -925,11 +925,11 @@ export default function LobbyPage() {
   async function startPvp() {
     if (session?.mode !== 'hive') { showToast('PvP requires a Hive account. Log in with Hive to play! 🏆'); return }
     const heroIds = await ensureActiveDeck()
-    if (!heroIds) { showToast('⚠️ Nenhum deck selecionado. Monte uma formação primeiro!'); return }
+    if (!heroIds) { showToast('⚠️ No deck selected. Build a formation first!'); return }
     if (pvpBet > 0) {
       const bal = await fetchBalance(username)
-      if (bal === null) { showToast('⚠️ Não foi possível verificar seu saldo. Tente novamente.'); return }
-      if (bal < pvpBet) { showToast(`⚠️ Saldo insuficiente! Você tem ${bal.toFixed(3)} HIVE, mas a aposta é de ${pvpBet} HIVE.`); return }
+      if (bal === null) { showToast('⚠️ Could not verify your balance. Please try again.'); return }
+      if (bal < pvpBet) { showToast(`⚠️ Insufficient balance! You have ${bal.toFixed(3)} HIVE but the wager is ${pvpBet} HIVE.`); return }
     }
     if (window.hive_keychain && pvpBet > 0) window.hive_keychain.requestHandshake(() => { })
     startSearchUI()

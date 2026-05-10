@@ -1,7 +1,7 @@
 # Graph Report - C:\Fontes_Javascript\HorizonForge  (2026-05-10)
 
 ## Corpus Check
-- 17 files · ~117,003 words
+- 17 files · ~117,281 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary

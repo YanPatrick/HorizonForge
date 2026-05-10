@@ -2589,7 +2589,7 @@
               ? isCombo
                 ? `⚡ Combo ×${cardCombo.type} for ${cardCombo.cost}💰`
                 : isOwned ? `▶ Stack ${cost}💰` : `▶ Recruit ${cost}💰`
-              : isAtMax ? "Nível Máximo" : "",
+              : isAtMax ? "Max Level" : "",
             targetLeft: _shopSlotLeft(i, cardW, gap, contW),
           });
         });
