@@ -867,7 +867,8 @@ export default function LobbyPage() {
       setSearch(s => ({ ...s, payError: 'Hive Keychain not found. Please install it and retry.', showRetry: true, paySteps: { ...s.paySteps, 'pay-step-send': 'error' } }))
       return
     }
-    setSearch(s => ({ ...s, payStatus: 'Opening Keychain...', showSendWager: false, paySteps: { ...s.paySteps, 'pay-step-send': 'active' } }))
+    window.focus()
+    setSearch(s => ({ ...s, payStatus: 'Keychain open — confirm the transfer!', showSendWager: false, paySteps: { ...s.paySteps, 'pay-step-send': 'active' } }))
     window.hive_keychain.requestTransfer(username, md.gameAccount, md.wager.toFixed(3), memo, 'HIVE', (response) => {
       if (response.success) {
         setSearch(s => ({ ...s, payStatus: 'Verifying on blockchain...', paySteps: { ...s.paySteps, 'pay-step-send': 'done', 'pay-step-verify': 'active' } }))
