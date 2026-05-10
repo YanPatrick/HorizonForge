@@ -28,14 +28,14 @@ function roleCategory(role) {
 }
 
 const RPG_ATTRIBUTES = {
-  knight: { str: 9.0, dex: 10.0, con: 20.0, int: 6.0, wis: 8.0, cha: 12.0 },
-  paladin: { str: 8.6, dex: 6.6, con: 20.0, int: 6.8, wis: 8.0, cha: 15.0 },
-  barbarian: { str: 9.5, dex: 13.3, con: 17.1, int: 5.0, wis: 7.1, cha: 13.0 },
-  assassin: { str: 11.0, dex: 20.0, con: 6.7, int: 10.0, wis: 7.3, cha: 10.0 },
-  mage: { str: 4.0, dex: 3.3, con: 7.9, int: 16.8, wis: 15.0, cha: 18.0 },
-  archer: { str: 11.8, dex: 16.6, con: 8.0, int: 6.0, wis: 12.6, cha: 10.0 },
-  archmage: { str: 2.8, dex: 3.3, con: 8.6, int: 18.6, wis: 18.7, cha: 13.0 },
-  healer: { str: 5.0, dex: 6.6, con: 7.2, int: 13.0, wis: 18.2, cha: 15.0 }
+  knight:    { str: 14, dex: 10, con: 18, int: 8,  wis: 10, cha: 12 }, // +7 pts
+  paladin:   { str: 12, dex: 8,  con: 18, int: 10, wis: 12, cha: 12 }, // +7 pts
+  barbarian: { str: 18, dex: 12, con: 18, int: 6,  wis: 8,  cha: 10 }, // +7 pts
+  assassin:  { str: 12, dex: 20, con: 10, int: 12, wis: 8,  cha: 10 }, // +7 pts
+  archer:    { str: 10, dex: 18, con: 12, int: 10, wis: 10, cha: 12 }, // +7 pts
+  mage:      { str: 6,  dex: 8,  con: 10, int: 20, wis: 14, cha: 14 }, // +7 pts
+  archmage:  { str: 6,  dex: 8,  con: 10, int: 20, wis: 16, cha: 12 }, // +7 pts
+  healer:    { str: 8,  dex: 10, con: 10, int: 14, wis: 18, cha: 12 }  // +7 pts
 };
 function fmtSP(v) {
   return v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
@@ -70,10 +70,34 @@ const EMPTY_FORMATIONS = [
 ]
 
 /* ── HeroDetail modal ───────────────────────────────────── */
+function StatsPanel({ hero, currentGear }) {
+              const stats = {
+                atk: hero.atk + (currentGear?.atkBonus || 0),
+                spd: hero.spd + (currentGear?.spdBonus || 0),
+                armor: (currentGear?.armor || 0),
+                evasion: (hero.dex * 0.5) + (currentGear?.evasionBonus || 0),
+                // Novos atributos prontos para uso:
+                str: hero.str,
+                int: hero.int,
+                wis: hero.wis,
+                cha: hero.cha
+              };
+
+                return (
+              <div className="stats-panel">
+                <div className="stat-row"><span>Attack:</span> <span className="stat-val">{stats.atk}</span></div>
+                <div className="stat-row"><span>Speed:</span> <span className="stat-val">{stats.spd.toFixed(1)}</span></div>
+                <div className="stat-row"><span>Armor:</span> <span className="stat-val">{stats.armor}</span></div>
+                <div className="stat-row"><span>Evasion:</span> <span className="stat-val">{stats.evasion.toFixed(0)}%</span></div>
+                </div>
+                );
+            }
+
 function HeroDetail({ hero, onClose }) {
   const [expanded, setExpanded] = useState(false)
   const [rpgExpanded, setRpgExpanded] = useState(false); // Novo estado
   const [activeTab, setActiveTab] = useState('stats'); // 'stats' ou 'gear'
+  
   if (!hero) return null
   const cat = roleCategory(hero.role)
   const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
@@ -96,7 +120,7 @@ function HeroDetail({ hero, onClose }) {
           </div>
           <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
-        {/* NOVA BARRA DE NAVEGAÇÃO ENTRE ABAS */}
+
         <div className="hf-detail-tabs">
           <button 
             className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} 
@@ -111,8 +135,11 @@ function HeroDetail({ hero, onClose }) {
             GEAR
           </button>
         </div>
+
         <div className="detail-slider-viewport">
         <div className={`detail-slider-track view-${activeTab}`}>
+       
+       
         <div className="detail-slide stats-pane hf-detail-scroll">
           <div className="hf-detail-role-wrap">
             <span className={`gr-hero-role role-${cat}`}>{label}</span>
@@ -155,6 +182,7 @@ function HeroDetail({ hero, onClose }) {
               </table>
             </div>
           )}
+
           {/* BOTÃO DA FICHA RPG */}
           <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
             <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
@@ -178,18 +206,31 @@ function HeroDetail({ hero, onClose }) {
             </div>
           )}
           </div>
+
            {/* PAINEL 2: EQUIPAMENTOS (A NOVA ABA) */}
             <div className="detail-slide gear-pane hf-detail-scroll">
               <div className="gear-container">
+                {/* Coluna 1: Amuleto, Arma, Cinto, Anel 1 */}
+                <div className="gear-slot amulet" data-label="AMULETO">📿</div>
+                <div className="gear-slot arma" data-label="ARMA">⚔️</div>
+                <div className="gear-slot cinto" data-label="CINTO">🏷️</div>
+                <div className="gear-slot anel1" data-label="ANEL 1">💍</div>
+
+                {/* Coluna 2: Elmo, Armadura, Calças, Botas */}
                 <div className="gear-slot head" data-label="ELMO">🪖</div>
-                <div className="gear-middle-row">
-                  <div className="gear-slot hand-l" data-label="ARMA">⚔️</div>
-                  <div className="gear-slot chest" data-label="ARMADURA">🛡️</div>
-                  <div className="gear-slot hand-r" data-label="ALT">📜</div>
-                </div>
-                <div className="gear-slot belt" data-label="CINTO">🏷️</div>
+                <div className="gear-slot chest" data-label="ARMADURA">🛡️</div>
+                <div className="gear-slot calcas" data-label="CALÇAS">👖</div>
                 <div className="gear-slot feet" data-label="BOTAS">🥾</div>
+
+                {/* Coluna 3: Item Especial, Off-hand, Luvas, Anel 2 */}
+                <div className="gear-slot item-esp" data-label="ESPECIAL">✨</div>
+                <div className="gear-slot offhand" data-label="OFF-HAND">📜</div>
+                <div className="gear-slot luvas" data-label="LUVAS">🧤</div>
+                <div className="gear-slot anel2" data-label="ANEL 2">💍</div>
               </div>
+
+              <StatsPanel hero={{...hero, ...attrs}} currentGear={{}} /> 
+
 
               <div className="inventory-preview">
                 <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
