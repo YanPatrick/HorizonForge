@@ -515,7 +515,7 @@ function SearchOverlay({ search, pvpCfg, onCancel, onSendWager, onRetry }) {
           </div>
         )}
         {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
-        {showRetry && <button id="btn-retry-pay" onClick={onRetry}>Retry</button>}
+        {showRetry && <button id="btn-retry-pay" onClick={onRetry}>↩ Retry Keychain</button>}
         <button className="btn-cancel" onClick={onCancel}>Cancel</button>
       </div>
     </div>
