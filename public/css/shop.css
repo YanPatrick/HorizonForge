@@ -1,0 +1,325 @@
+/* ============================================================
+   Shop — estilos do catálogo de cosméticos
+   Importado por ShopView.jsx via @styles/shop.css
+   ============================================================ */
+
+/* ── Área de conteúdo ────────────────────────────────────── */
+.shop-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* ── PC: grid de cards (2 colunas) ──────────────────────── */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 18px;
+}
+
+.shop-card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.shop-card:hover {
+  border-color: #3a3a6a;
+}
+
+.shop-card-owned {
+  border-color: rgba(76, 175, 80, 0.35);
+}
+
+.shop-card-preview {
+  width: 100%;
+  height: 90px;
+  background: #111128;
+}
+
+.shop-card-body {
+  padding: 10px 12px;
+}
+
+.shop-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 4px;
+}
+
+.shop-card-price {
+  font-size: 12px;
+  color: #c8a84b;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.shop-card-owned-badge {
+  font-size: 11px;
+  color: #4caf50;
+  margin-bottom: 6px;
+}
+
+.shop-card-btn {
+  display: block;
+  width: 100%;
+  padding: 5px 0;
+  border-radius: 5px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.shop-card-btn.buy {
+  background: #c8a84b;
+  color: #0a0a14;
+}
+
+.shop-card-btn.free {
+  background: #2a5a2a;
+  color: #7fff7f;
+  border: 1px solid #4caf5066;
+}
+
+.shop-card-btn.owned {
+  background: transparent;
+  color: #4caf50;
+  border: 1px solid #4caf5033;
+  cursor: default;
+}
+
+.shop-card-btn:disabled:not(.owned) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Mensagem sem itens ──────────────────────────────────── */
+.shop-empty {
+  grid-column: 1 / -1;
+  padding: 32px;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+}
+
+/* ── Mobile: pills de categoria ──────────────────────────── */
+.shop-mobile-filters {
+  display: none;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid #1e1e3a;
+  background: #111128;
+}
+
+.shop-pill {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid #2a2a4a;
+  background: transparent;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shop-pill.active {
+  background: rgba(200, 168, 75, 0.15);
+  border-color: #c8a84b;
+  color: #c8a84b;
+}
+
+/* ── Mobile: lista vertical ──────────────────────────────── */
+.shop-list {
+  display: none;
+  flex-direction: column;
+}
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a1a2e;
+  transition: background 0.1s;
+}
+
+.shop-row:active {
+  background: #1a1a2e;
+}
+
+.shop-row-owned {
+  background: rgba(76, 175, 80, 0.04);
+}
+
+.shop-row-preview {
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+  background: #111128;
+  flex-shrink: 0;
+}
+
+.shop-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-row-type {
+  font-size: 10px;
+  color: #555;
+  margin-top: 1px;
+}
+
+.shop-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.shop-row-price {
+  font-size: 11px;
+  color: #c8a84b;
+  font-weight: 600;
+}
+
+.shop-owned-text {
+  font-size: 11px;
+  color: #4caf50;
+}
+
+.shop-row-btn {
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: none;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-row-btn.buy   { background: #c8a84b; color: #0a0a14; }
+.shop-row-btn.free  { background: #2a5a2a; color: #7fff7f; }
+.shop-row-btn.owned { background: transparent; color: #4caf50; border: 1px solid #4caf5033; cursor: default; }
+.shop-row-btn:disabled:not(.owned) { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Modal de compra ─────────────────────────────────────── */
+.shop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.shop-modal {
+  background: #111128;
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  width: 320px;
+  max-width: 92vw;
+  overflow: hidden;
+}
+
+.shop-modal-preview {
+  width: 100%;
+  height: 120px;
+  background: #0d0d1a;
+}
+
+.shop-modal-body {
+  padding: 16px;
+}
+
+.shop-modal-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #eee;
+  margin-bottom: 4px;
+}
+
+.shop-modal-price {
+  font-size: 14px;
+  color: #c8a84b;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.shop-modal-tos {
+  font-size: 10px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  border-top: 1px solid #1e1e3a;
+  padding-top: 10px;
+}
+
+.shop-modal-error {
+  font-size: 11px;
+  color: #ff6666;
+  margin-bottom: 8px;
+  background: rgba(255, 100, 100, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.2);
+  border-radius: 5px;
+  padding: 6px 8px;
+}
+
+.shop-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-btn-cancel {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #2a2a4a;
+  background: transparent;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.shop-btn-cancel:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.shop-btn-confirm {
+  flex: 2;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: none;
+  background: #c8a84b;
+  color: #0a0a14;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Responsivo: mobile ──────────────────────────────────── */
+@media (max-width: 700px) {
+  .shop-grid { display: none; }
+  .shop-list { display: flex; }
+  .shop-mobile-filters { display: flex; }
+}
