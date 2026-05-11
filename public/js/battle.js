@@ -2716,6 +2716,7 @@
         clearFieldPlacementHints();
         render();
       };
+      window.retBench = retBench;
       window.benchInfoShow = function (cid, anchorEl) {
         const u = G.bench.find((x) => x && x.cid === cid);
         if (u && anchorEl) showHeroInfo(anchorEl, u);
