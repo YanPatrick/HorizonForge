@@ -319,6 +319,7 @@
 
 /* ── Responsivo: mobile ──────────────────────────────────── */
 @media (max-width: 700px) {
+  #view-shop .wiki-sidebar { display: none; }
   .shop-grid { display: none; }
   .shop-list { display: flex; }
   .shop-mobile-filters { display: flex; }
