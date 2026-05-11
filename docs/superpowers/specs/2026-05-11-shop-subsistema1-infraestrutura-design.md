@@ -36,7 +36,7 @@ CREATE TABLE cosmetics (
   id          TEXT PRIMARY KEY,
   type        TEXT NOT NULL CHECK (type IN ('background', 'skin')),
   name        TEXT NOT NULL,
-  preview     TEXT NOT NULL,     -- CSS gradient string ou URL de imagem
+  preview     TEXT NOT NULL,     -- URL relativa da imagem (ex: '/images/arena-desert.jpg')
   price_hive  NUMERIC NOT NULL,
   hero_cid    TEXT,              -- NULL para backgrounds; cid do herói para skins
   sort_order  INT DEFAULT 0
@@ -45,8 +45,9 @@ CREATE TABLE cosmetics (
 
 **Regras:**
 - `hero_cid` é `NULL` para backgrounds, obrigatório para skins
-- `preview` para backgrounds: string CSS gradient (ex: `"linear-gradient(135deg, #1a3a6a, #0a1a3a)"`)
-- `preview` para skins: URL da imagem da skin
+- `preview` é sempre uma URL relativa de imagem (ex: `"/images/arena-desert.jpg"`)
+- Backgrounds iniciais: os 3 arquivos existentes em `public/images/` (`arena-desert.jpg`, `arena-forest.jpg`, `arena-snow.jpg`)
+- Novos backgrounds são adicionados inserindo a imagem em `public/images/` e rodando um INSERT SQL
 - Catálogo gerenciado via INSERT SQL direto (sem admin panel)
 
 ### Tabela `user_cosmetics` — posse
@@ -67,14 +68,13 @@ CREATE TABLE user_cosmetics (
 
 ### Seed inicial de cosméticos
 
+Apenas os 3 backgrounds existentes em `public/images/`. Novos backgrounds serão inseridos manualmente via SQL conforme novas arenas forem criadas.
+
 ```sql
 INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
-  ('bg_oceano',     'background', 'Oceano Profundo',  'linear-gradient(135deg, #0a1a3a, #1a3a6a)', 5, NULL, 10),
-  ('bg_inferno',    'background', 'Inferno',           'linear-gradient(135deg, #3a1a0a, #6a3a1a)', 5, NULL, 20),
-  ('bg_floresta',   'background', 'Floresta Antiga',   'linear-gradient(135deg, #0a2a0a, #1a3a1a)', 3, NULL, 30),
-  ('bg_tempestade', 'background', 'Tempestade',        'linear-gradient(135deg, #1a0a3a, #2a1a4a)', 7, NULL, 40),
-  ('bg_artico',     'background', 'Ártico',            'linear-gradient(135deg, #0a1a2a, #1a2a3a)', 5, NULL, 50),
-  ('bg_deserto',    'background', 'Deserto',           'linear-gradient(135deg, #2a2a0a, #3a3a0a)', 4, NULL, 60)
+  ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 5, NULL, 10),
+  ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 5, NULL, 20),
+  ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   5, NULL, 30)
 ON CONFLICT DO NOTHING;
 ```
 
