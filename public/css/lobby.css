@@ -7288,7 +7288,7 @@
   display: grid;
   grid-template-columns: repeat(3, 75px); /* 3 colunas fixas */
   grid-template-rows: repeat(4, 75px);    /* 4 linhas fixas */
-  gap: 12px;
+  gap: 15px;
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
@@ -7305,8 +7305,9 @@
   justify-content: center;
   font-size: 24px;
   position: relative;
-  opacity: 0.6;
-  filter: grayscale(0.6);
+  opacity: 0.5;
+  filter: grayscale(0.8);
+  transition: all 0.2s ease;
 }
 
 /* Legendas dos slots (ex: ELMO, ARMA) */
@@ -7325,7 +7326,6 @@
   width: 70px;
   height: 70px;
   border-color: rgba(140, 100, 255, 0.4);
-  opacity: 0.8;
 }
 
 /* MAPEAMENTO DOS SLOTS (Conforme seu desenho) */
@@ -7349,13 +7349,13 @@
    PAINEL DE STATS E INVENTÁRIO
 ══════════════════════════════ */
 .stats-panel {
-  width: 100%;
+  width: 90%;
   max-width: 260px;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(140, 100, 255, 0.2);
   border-radius: 8px;
   padding: 12px;
-  margin-bottom: 20px;
+  margin: 10px 0;
 }
 
 .stat-row {
@@ -7371,6 +7371,7 @@
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 15px;
+  margin-top: 10px;
 }
 
 .inv-grid {
@@ -7386,4 +7387,51 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px dashed rgba(255, 255, 255, 0.1);
   border-radius: 6px;
+}
+
+/* ══════════════════════════════
+   TOOLTIP DE ITENS (INSTANTÂNEO)
+══════════════════════════════ */
+.gear-item-tooltip {
+  width: 90%;
+  max-width: 280px;
+  min-height: 45px;
+  margin: 10px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(15, 10, 30, 0.95));
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 11px;
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(5px);
+  transition: all 0.15s ease-in-out;
+  pointer-events: none;
+}
+
+/* Mostra o balão quando hoverItem não for null */
+.gear-item-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Deixa os ícones dos slots mais vivos ao interagir */
+.gear-slot:hover {
+  opacity: 1 !important;
+  filter: grayscale(0) !important;
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+/* Ajuste fino para telas pequenas (Mobile) */
+@media (max-width: 640px) {
+  .gear-item-tooltip {
+    font-size: 10px;
+    min-height: 40px;
+    margin: 10px auto;
+  }
 }
