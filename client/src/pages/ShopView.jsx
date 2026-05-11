@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import '@styles/shop.css'
 
 const FILTERS = [
-  { key: 'all',        label: 'Todos' },
+  { key: 'all',        label: 'All' },
   { key: 'background', label: '🌄 Backgrounds' },
   { key: 'skin',       label: '✨ Skins' },
-  { key: 'owned',      label: '✓ Possuídos' },
+  { key: 'owned',      label: '✓ Owned' },
 ]
 
 export default function ShopView({ session, toast }) {
@@ -52,12 +52,12 @@ export default function ShopView({ session, toast }) {
       }).then(r => r.json())
       if (res.ok) {
         setOwned(prev => new Set([...prev, item.id]))
-        toast?.(`${item.name} adquirido!`)
+        toast?.(`${item.name} acquired!`)
       } else {
-        toast?.('Erro ao obter item.')
+        toast?.('Failed to claim item.')
       }
     } catch {
-      toast?.('Erro de rede.')
+      toast?.('Network error.')
     } finally {
       setClaiming(null)
     }
@@ -71,7 +71,7 @@ export default function ShopView({ session, toast }) {
   async function confirmBuy() {
     if (!modal || claiming) return
     if (!window.hive_keychain) {
-      setModalError('Hive Keychain não encontrado.')
+      setModalError('Hive Keychain not found.')
       return
     }
     setModalError('')
@@ -85,7 +85,7 @@ export default function ShopView({ session, toast }) {
       async (response) => {
         if (!response.success) {
           setClaiming(null)
-          setModalError(response.error || 'Transferência cancelada.')
+          setModalError(response.error || 'Transfer cancelled.')
           return
         }
         try {
@@ -96,13 +96,13 @@ export default function ShopView({ session, toast }) {
           }).then(r => r.json())
           if (res.ok) {
             setOwned(prev => new Set([...prev, modal.id]))
-            toast?.(`${modal.name} adquirido!`)
+            toast?.(`${modal.name} acquired!`)
             setModal(null)
           } else {
-            setModalError('Pagamento não confirmado. Tente novamente.')
+            setModalError('Payment not confirmed. Please try again.')
           }
         } catch {
-          setModalError('Erro de rede ao verificar pagamento.')
+          setModalError('Network error while verifying payment.')
         } finally {
           setClaiming(null)
         }
@@ -115,7 +115,7 @@ export default function ShopView({ session, toast }) {
       <div className="wiki-layout">
         {/* PC sidebar */}
         <aside className="wiki-sidebar">
-          <div className="wiki-category">Categoria</div>
+          <div className="wiki-category">Category</div>
           {FILTERS.map(f => (
             <button
               key={f.key}
@@ -128,7 +128,7 @@ export default function ShopView({ session, toast }) {
         </aside>
 
         <div className="wiki-content shop-content">
-          {/* Mobile pills (visíveis apenas em mobile via CSS) */}
+          {/* Mobile pills (visible on mobile only via CSS) */}
           <div className="shop-mobile-filters">
             {FILTERS.map(f => (
               <button
@@ -141,7 +141,7 @@ export default function ShopView({ session, toast }) {
             ))}
           </div>
 
-          {/* PC: grid de cards */}
+          {/* PC: card grid */}
           <div className="shop-grid">
             {filtered.map(item => (
               <ShopItemCard
@@ -153,10 +153,10 @@ export default function ShopView({ session, toast }) {
                 onBuy={() => item.price_hive === 0 ? claimFree(item) : openModal(item)}
               />
             ))}
-            {filtered.length === 0 && <div className="shop-empty">Nenhum item encontrado.</div>}
+            {filtered.length === 0 && <div className="shop-empty">No items found.</div>}
           </div>
 
-          {/* Mobile: lista vertical */}
+          {/* Mobile: vertical list */}
           <div className="shop-list">
             {filtered.map(item => (
               <ShopListRow
@@ -168,12 +168,12 @@ export default function ShopView({ session, toast }) {
                 onBuy={() => item.price_hive === 0 ? claimFree(item) : openModal(item)}
               />
             ))}
-            {filtered.length === 0 && <div className="shop-empty">Nenhum item encontrado.</div>}
+            {filtered.length === 0 && <div className="shop-empty">No items found.</div>}
           </div>
         </div>
       </div>
 
-      {/* Modal de compra paga */}
+      {/* Purchase modal */}
       {modal && (
         <div className="shop-modal-overlay" onClick={() => !claiming && setModal(null)}>
           <div className="shop-modal" onClick={e => e.stopPropagation()}>
@@ -185,7 +185,7 @@ export default function ShopView({ session, toast }) {
               <div className="shop-modal-name">{modal.name}</div>
               <div className="shop-modal-price">{modal.price_hive.toFixed(3)} HIVE</div>
               <div className="shop-modal-tos">
-                Este é um cosmético digital não transferível e sem valor de revenda. Compras são definitivas.
+                This is a non-transferable digital cosmetic with no resale value. Purchases are final.
               </div>
               {modalError && <div className="shop-modal-error">{modalError}</div>}
               <div className="shop-modal-actions">
@@ -194,14 +194,14 @@ export default function ShopView({ session, toast }) {
                   onClick={() => setModal(null)}
                   disabled={!!claiming}
                 >
-                  Cancelar
+                  Cancel
                 </button>
                 <button
                   className="shop-btn-confirm"
                   onClick={confirmBuy}
                   disabled={!!claiming}
                 >
-                  {claiming ? '⌛ Verificando...' : 'Confirmar'}
+                  {claiming ? '⌛ Verifying...' : 'Confirm'}
                 </button>
               </div>
             </div>
@@ -224,16 +224,16 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy }) {
       <div className="shop-card-body">
         <div className="shop-card-name">{item.name}</div>
         {isOwned
-          ? <div className="shop-card-owned-badge">✓ Possuído</div>
-          : <div className="shop-card-price">{isFree ? 'Grátis' : `${item.price_hive} HIVE`}</div>
+          ? <div className="shop-card-owned-badge">✓ Owned</div>
+          : <div className="shop-card-price">{isFree ? 'Free' : `${item.price_hive} HIVE`}</div>
         }
         <button
           className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
           disabled={disabled}
           onClick={onBuy}
-          title={!isHive ? 'Faça login com Hive Keychain para obter cosméticos.' : undefined}
+          title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
         >
-          {isClaiming ? '⌛' : isOwned ? 'Possuído' : isFree ? 'Obter Grátis' : 'Comprar'}
+          {isClaiming ? '⌛' : isOwned ? 'Owned' : isFree ? 'Get Free' : 'Buy'}
         </button>
       </div>
     </div>
@@ -255,16 +255,16 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy }) {
       </div>
       <div className="shop-row-right">
         {isOwned
-          ? <div className="shop-owned-text">✓ Possuído</div>
-          : <div className="shop-row-price">{isFree ? 'Grátis' : `${item.price_hive} HIVE`}</div>
+          ? <div className="shop-owned-text">✓ Owned</div>
+          : <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive} HIVE`}</div>
         }
         <button
           className={`shop-row-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
           disabled={disabled}
           onClick={onBuy}
-          title={!isHive ? 'Faça login com Hive Keychain para obter cosméticos.' : undefined}
+          title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
         >
-          {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Obter Grátis' : 'Comprar'}
+          {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Get Free' : 'Buy'}
         </button>
       </div>
     </div>

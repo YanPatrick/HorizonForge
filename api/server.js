@@ -958,8 +958,8 @@ app.put('/api/formations', async (req, res) => {
 
 /**
  * GET /api/shop
- * Retorna catálogo de cosméticos. Público (sem auth).
- * Inclui gameAccount para o frontend usar no requestTransfer.
+ * Returns cosmetics catalog. Public (no auth required).
+ * Includes gameAccount for the frontend to use in requestTransfer.
  */
 app.get('/api/shop', async (_req, res) => {
   try {
@@ -979,7 +979,7 @@ app.get('/api/shop', async (_req, res) => {
 
 /**
  * GET /api/shop/owned
- * Retorna array de item_ids possuídos pelo jogador autenticado.
+ * Returns array of item_ids owned by the authenticated player.
  */
 app.get('/api/shop/owned', async (req, res) => {
   const username = authFromRequest(req);
@@ -998,9 +998,9 @@ app.get('/api/shop/owned', async (req, res) => {
 /**
  * POST /api/shop/verify-purchase
  * Body: { item_id }
- * - price_hive = 0: concede imediatamente (sem verificação blockchain)
- * - price_hive > 0: verifica transferência Hive, depois concede
- * Idempotente: se jogador já possui o item, retorna { ok: true } sem erro.
+ * - price_hive = 0: grant immediately (no blockchain verification)
+ * - price_hive > 0: verify Hive transfer, then grant
+ * Idempotent: if player already owns the item, returns { ok: true } without error.
  */
 app.post('/api/shop/verify-purchase', async (req, res) => {
   const username = authFromRequest(req);

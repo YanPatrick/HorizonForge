@@ -1,9 +1,9 @@
 /* ============================================================
-   Shop — estilos do catálogo de cosméticos
-   Importado por ShopView.jsx via @styles/shop.css
+   Shop — cosmetics catalog styles
+   Imported by ShopView.jsx via @styles/shop.css
    ============================================================ */
 
-/* ── Área de conteúdo ────────────────────────────────────── */
+/* ── Content area ────────────────────────────────────────── */
 .shop-content {
   display: flex;
   flex-direction: column;
@@ -12,7 +12,7 @@
   overflow-y: auto;
 }
 
-/* ── PC: grid de cards (2 colunas) ──────────────────────── */
+/* ── PC: item grid (2 columns) ──────────────────────────── */
 .shop-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -101,7 +101,7 @@
   cursor: not-allowed;
 }
 
-/* ── Mensagem sem itens ──────────────────────────────────── */
+/* ── Empty state message ─────────────────────────────────── */
 .shop-empty {
   grid-column: 1 / -1;
   padding: 32px;
@@ -110,7 +110,7 @@
   font-size: 13px;
 }
 
-/* ── Mobile: pills de categoria ──────────────────────────── */
+/* ── Mobile: category pills ──────────────────────────────── */
 .shop-mobile-filters {
   display: none;
   gap: 6px;
@@ -138,7 +138,7 @@
   color: #c8a84b;
 }
 
-/* ── Mobile: lista vertical ──────────────────────────────── */
+/* ── Mobile: vertical list ───────────────────────────────── */
 .shop-list {
   display: none;
   flex-direction: column;
@@ -222,7 +222,7 @@
 .shop-row-btn.owned { background: transparent; color: #4caf50; border: 1px solid #4caf5033; cursor: default; }
 .shop-row-btn:disabled:not(.owned) { opacity: 0.45; cursor: not-allowed; }
 
-/* ── Modal de compra ─────────────────────────────────────── */
+/* ── Purchase modal ──────────────────────────────────────── */
 .shop-modal-overlay {
   position: fixed;
   inset: 0;
@@ -317,7 +317,7 @@
 
 .shop-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* ── Responsivo: mobile ──────────────────────────────────── */
+/* ── Responsive: mobile ──────────────────────────────────── */
 @media (max-width: 700px) {
   #view-shop .wiki-sidebar { display: none; }
   .shop-grid { display: none; }
