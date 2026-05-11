@@ -843,7 +843,7 @@ app.post('/api/migrate', async (req, res) => {
     await sql`
       CREATE TABLE IF NOT EXISTS user_cosmetics (
         player        TEXT NOT NULL,
-        item_id       TEXT NOT NULL REFERENCES cosmetics(id),
+        item_id       TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
         purchased_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
         PRIMARY KEY (player, item_id)
       )
