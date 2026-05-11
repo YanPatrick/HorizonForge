@@ -752,6 +752,30 @@
         render();
       }
 
+      function swapFieldBench(fieldSlot, benchCid) {
+        if (G.phase !== "shop") return;
+        const fieldUnit = G.board[fieldSlot];
+        if (!fieldUnit) return;
+        const bidx = G.bench.findIndex((b) => b.cid === benchCid);
+        if (bidx < 0) return;
+        const benchUnit = G.bench[bidx];
+        G.board[fieldSlot] = { ...benchUnit };
+        // Splice before findIndex: if fieldUnit.cid === benchCid, the removed card
+        // won't be found, so fieldUnit is pushed as a new entry (stack counts swap).
+        G.bench.splice(bidx, 1);
+        // No capacity guard needed: splice removes one, push adds one — bench size stays constant.
+        const existingIdx = G.bench.findIndex((b) => b.cid === fieldUnit.cid);
+        if (existingIdx >= 0) {
+          G.bench[existingIdx].stack += fieldUnit.stack;
+          applyMerge(G.bench[existingIdx]);
+        } else {
+          G.bench.push({ ...fieldUnit });
+        }
+        G.fieldSel = null;
+        G.bsel = null;
+        render();
+      }
+
       function restoreFieldHp() {
         G.board.forEach((u) => {
           if (!u) return;
@@ -2350,6 +2374,10 @@
             G.board[slot] = tmp;
             G.fieldSel = null;
           } else {
+            if (G.bsel !== null) {
+              swapFieldBench(slot, G.bsel);
+              return;
+            }
             G.fieldSel = slot;
             G.bsel = null;
           }
@@ -2656,6 +2684,10 @@
       // ── Bench card event handlers (called from BattlePage's JSX) ─────────
       window.benchCardClick = function (cid) {
         if (G.phase !== "shop") return;
+        if (G.fieldSel !== null) {
+          swapFieldBench(G.fieldSel, cid);
+          return;
+        }
         G.bsel = G.bsel === cid ? null : cid;
         render();
       };
@@ -2684,6 +2716,7 @@
         clearFieldPlacementHints();
         render();
       };
+      window.retBench = retBench;
       window.benchInfoShow = function (cid, anchorEl) {
         const u = G.bench.find((x) => x && x.cid === cid);
         if (u && anchorEl) showHeroInfo(anchorEl, u);

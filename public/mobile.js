@@ -137,4 +137,66 @@
     applyHighlight();
   }, false);
 
+// Touch drag: field → barracks
+// Detects a drag gesture starting from a field unit. On touchmove, highlights
+// #benchwrap when the finger is over it. On touchend over benchwrap, calls
+// window.retBench to return the hero to barracks.
+(function () {
+  var _touchDragSlot = null;
+  var bw = null;
+
+  function getBenchWrap() {
+    return bw || (bw = document.getElementById('benchwrap'));
+  }
+
+  function isTouchOverBenchwrap(touch) {
+    var el = document.elementFromPoint(touch.clientX, touch.clientY);
+    var bench = getBenchWrap();
+    return bench && el && (el === bench || bench.contains(el));
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    var unit = e.target.closest('#pfield .cell.occ .unit');
+    if (!unit) return;
+    var cell = unit.closest('.cell');
+    if (!cell) return;
+    _touchDragSlot = parseInt(cell.getAttribute('data-i'), 10);
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function (e) {
+    if (_touchDragSlot === null) return;
+    // Note: _fieldLpTimer is a local var inside battle.js's _bootBattle scope.
+    // React's onTouchMove on the .unit element already calls window.fieldTouchMove()
+    // which clears it — no action needed here.
+    var touch = e.touches[0];
+    if (!touch) return;
+    var bench = getBenchWrap();
+    if (!bench) return;
+    if (isTouchOverBenchwrap(touch)) {
+      bench.classList.add('bench-touch-over');
+    } else {
+      bench.classList.remove('bench-touch-over');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function (e) {
+    if (_touchDragSlot === null) return;
+    var slot = _touchDragSlot;
+    _touchDragSlot = null;
+    var bench = getBenchWrap();
+    if (bench) bench.classList.remove('bench-touch-over');
+    var touch = e.changedTouches[0];
+    if (!touch) return;
+    if (isTouchOverBenchwrap(touch)) {
+      window.retBench?.(slot);
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchcancel', function () {
+    _touchDragSlot = null;
+    var bench = getBenchWrap();
+    if (bench) bench.classList.remove('bench-touch-over');
+  }, { passive: true });
+})();
+
 })();

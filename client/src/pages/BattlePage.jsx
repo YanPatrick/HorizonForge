@@ -264,6 +264,7 @@ export default function BattlePage() {
         'fieldTouchStart', 'fieldTouchEnd', 'fieldTouchMove',
         'shopCardClick', 'shopInfoShow', 'shopInfoHide',
         'benchCardClick', 'benchCardDragStart', 'benchCardDragEnd',
+        'retBench',
         'benchInfoShow', 'benchInfoHide',
         'setMobileStep', 'togglePanel',
         'toggleMobileMenu', 'openMobileMenu', 'closeMobileMenu',
