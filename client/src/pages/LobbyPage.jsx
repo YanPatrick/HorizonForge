@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import '@styles/lobby.css'
 import GrimoireView from './GrimoireView'
+import ShopView from './ShopView'
 import { getSession } from '../lib/session'
 import TavernPanel from './TavernPanel'          // IMP tavern
 import '@styles/tavern.css'                       // Imp tavern
@@ -1162,6 +1163,8 @@ export default function LobbyPage() {
 
         {view === 'grimoire' && <GrimoireView />}
 
+        {view === 'shop' && <ShopView session={session} toast={showToast} />}
+
         {view === 'formation' && (
           <FormationView
             session={session} formations={formations} setFormations={setFormations}
@@ -1185,6 +1188,9 @@ export default function LobbyPage() {
           </button>
           <button type="button" className={navTabClass('home')} onClick={() => setView('home')}>
             <span className="mbt-ico">⚔️</span><span className="mbt-lbl">Duel</span>
+          </button>
+          <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
+            <span className="mbt-ico">🛒</span><span className="mbt-lbl">Shop</span>
           </button>
           <button type="button" className={navTabClass('settings')} onClick={() => setView('settings')}>
             <span className="mbt-ico">⚙️</span><span className="mbt-lbl">Config</span>
