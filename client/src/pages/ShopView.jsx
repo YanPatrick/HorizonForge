@@ -223,17 +223,13 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy }) {
       />
       <div className="shop-card-body">
         <div className="shop-card-name">{item.name}</div>
-        {isOwned
-          ? <div className="shop-card-owned-badge">✓ Owned</div>
-          : <div className="shop-card-price">{isFree ? 'Free' : `${item.price_hive} HIVE`}</div>
-        }
         <button
           className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
           disabled={disabled}
           onClick={onBuy}
           title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
         >
-          {isClaiming ? '⌛' : isOwned ? 'Owned' : isFree ? 'Get Free' : 'Buy'}
+          {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
         </button>
       </div>
     </div>
