@@ -7247,82 +7247,91 @@
         background: rgba(255, 215, 0, 0.05);
       }
 
-      /* Viewport do Slider */
-      .detail-slider-viewport {
+/* ══════════════════════════════
+   SISTEMA DE SLIDER (ABAS)
+══════════════════════════════ */
+.detail-slider-viewport {
   flex: 1;
-  width: 100%; /* Garante a largura total da aba */
+  width: 100%;
   overflow: hidden;
   position: relative;
 }
 
 .detail-slider-track {
   display: flex;
-  width: 200%; /* Duas telas exatas */
+  width: 200%; /* Duas telas */
   height: 100%;
   transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-      .detail-slider-track.view-stats { transform: translateX(0); }
+.detail-slider-track.view-stats { transform: translateX(0); }
 .detail-slider-track.view-gear { transform: translateX(-50%); }
 
 .detail-slide {
   width: 50%;
-  flex: 0 0 50% !important; /* O SEGREDO ESTÁ AQUI: Proíbe o CSS de encolher as telas */
+  flex: 0 0 50% !important; /* ISSO impede que as telas fiquem divididas ao meio */
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
-/* Layout de Gear (Agora em Grid de 3 colunas) */
+/* ══════════════════════════════
+   LAYOUT GEAR (GRID 3x4)
+══════════════════════════════ */
 .gear-pane {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 20px 10px;
 }
 
 .gear-container {
   display: grid;
-  grid-template-columns: repeat(3, 70px); /* 3 colunas fixas */
-  grid-template-rows: repeat(4, 70px);    /* 4 linhas fixas */
+  grid-template-columns: repeat(3, 75px); /* 3 colunas fixas */
+  grid-template-rows: repeat(4, 75px);    /* 4 linhas fixas */
   gap: 12px;
-  justify-items: center;
+  justify-content: center;
   align-items: center;
   margin-bottom: 20px;
 }
 
-/* Opcional: remover o middle-row se você não estiver usando ele no HTML */
 .gear-slot {
   width: 60px;
   height: 60px;
-  background: rgba(15, 10, 30, 0.8);
-  border: 1.5px solid rgba(140, 100, 255, 0.3);
+  background: rgba(20, 15, 40, 0.6);
+  border: 1.5px solid rgba(140, 100, 255, 0.2);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  cursor: pointer;
-  transition: all 0.2s;
-  opacity: 0.5;
-  filter: grayscale(0.8);
+  font-size: 24px;
+  position: relative;
+  opacity: 0.6;
+  filter: grayscale(0.6);
 }
 
-.gear-slot:hover {
-  opacity: 1;
-  border-color: #c8aaff;
+/* Legendas dos slots (ex: ELMO, ARMA) */
+.gear-slot::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -16px;
+  font-size: 7px;
+  color: rgba(200, 180, 255, 0.5);
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
-/* Tamanho especial para o slot central (Armadura) */
+/* Slot da Armadura (Maior e mais brilhante no centro) */
 .gear-slot.chest {
   width: 70px;
   height: 70px;
+  border-color: rgba(140, 100, 255, 0.4);
+  opacity: 0.8;
 }
 
-/* Posicionamento dos slots na Cruz */
-.amulet  { grid-column: 1; grid-row: 1; }
-.head    { grid-column: 2; grid-row: 1; }
-.item-esp{ grid-column: 3; grid-row: 1; }
+/* MAPEAMENTO DOS SLOTS (Conforme seu desenho) */
+.amulet { grid-column: 1; grid-row: 1; }
+.head   { grid-column: 2; grid-row: 1; }
+.item-esp { grid-column: 3; grid-row: 1; }
 
 .arma    { grid-column: 1; grid-row: 2; }
 .chest   { grid-column: 2; grid-row: 2; }
@@ -7333,35 +7342,20 @@
 .luvas   { grid-column: 3; grid-row: 3; }
 
 .anel1   { grid-column: 1; grid-row: 4; }
-.botas   { grid-column: 2; grid-row: 4; }
+.feet    { grid-column: 2; grid-row: 4; }
 .anel2   { grid-column: 3; grid-row: 4; }
 
-/* Inventário */
-.inv-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 40px);
-  gap: 8px;
-  justify-content: center;
-  width: 100%;
-}
-
-.inv-slot {
-  aspect-ratio: 1;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed rgba(140, 100, 255, 0.2);
-  border-radius: 6px;
-}
-
-/* Stats Panel */
+/* ══════════════════════════════
+   PAINEL DE STATS E INVENTÁRIO
+══════════════════════════════ */
 .stats-panel {
   width: 100%;
-  max-width: 250px; /* Para não ficar gigante */
-  padding: 12px;
-  background: rgba(10, 8, 20, 0.6);
+  max-width: 260px;
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(140, 100, 255, 0.2);
   border-radius: 8px;
+  padding: 12px;
   margin-bottom: 20px;
-  font-family: 'Inter', sans-serif;
 }
 
 .stat-row {
@@ -7369,63 +7363,27 @@
   justify-content: space-between;
   padding: 3px 0;
   font-size: 11px;
-  color: rgba(200, 190, 255, 0.6);
 }
 
-.stat-val {
-  color: #fff;
-  font-weight: 700;
-  font-family: monospace;
+.stat-val { color: #ffd700; font-weight: bold; }
+
+.inventory-preview {
+  width: 100%;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 15px;
 }
-      /* ── search modal column layout ── */
-      .search-col-visual {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-      }
-      .search-col-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        width: 100%;
-        text-align: center;
-      }
 
-      /* desktop: split horizontal */
-      @media (min-width: 768px) {
-        .search-panel {
-          flex-direction: row;
-          align-items: center;
-          width: 480px;
-          gap: 24px;
-        }
-        .search-col-visual {
-          flex-shrink: 0;
-        }
-        .search-col-info {
-          flex: 1;
-          align-items: center;
-          text-align: center;
-        }
-        #pay-steps {
-          flex-direction: column;
-          flex-wrap: nowrap;
-          align-items: center;
-          justify-content: center;
-          gap: 5px;
-        }
-        .btn-cancel {
-          align-self: auto;
-          width: auto;
-          padding: 8px 32px;
-        }
-      }
+.inv-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 45px); /* Inventário menor */
+  gap: 8px;
+  justify-content: center;
+}
 
-      .inv-slot {
-        aspect-ratio: 1;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px dashed rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-      }
+.inv-slot {
+  width: 45px;
+  height: 45px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
