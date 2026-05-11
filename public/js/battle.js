@@ -2680,6 +2680,10 @@
       // ── Bench card event handlers (called from BattlePage's JSX) ─────────
       window.benchCardClick = function (cid) {
         if (G.phase !== "shop") return;
+        if (G.fieldSel !== null) {
+          swapFieldBench(G.fieldSel, cid);
+          return;
+        }
         G.bsel = G.bsel === cid ? null : cid;
         render();
       };
