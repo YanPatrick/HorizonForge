@@ -262,7 +262,7 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy }) {
           onClick={onBuy}
           title={!isHive ? 'Faça login com Hive Keychain para obter cosméticos.' : undefined}
         >
-          {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Obter' : 'Comprar'}
+          {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Obter Grátis' : 'Comprar'}
         </button>
       </div>
     </div>
