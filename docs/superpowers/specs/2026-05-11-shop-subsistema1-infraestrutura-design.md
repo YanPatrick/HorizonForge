@@ -72,11 +72,13 @@ Apenas os 3 backgrounds existentes em `public/images/`. Novos backgrounds serão
 
 ```sql
 INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
-  ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 5, NULL, 10),
-  ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 5, NULL, 20),
-  ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   5, NULL, 30)
+  ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL, 10),
+  ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL, 20),
+  ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL, 30)
 ON CONFLICT DO NOTHING;
 ```
+
+Os 3 backgrounds iniciais são gratuitos (`price_hive = 0`) — arenas padrão liberadas para todos os jogadores.
 
 ---
 
@@ -145,27 +147,29 @@ Response 409 (já possui):
 1. Valida token e extrai `username`
 2. Busca item em `cosmetics` — se não existe, 400
 3. Se `user_cosmetics` já tem `(username, item_id)`, retorna `{ ok: true }` imediatamente
-4. Faz poll na Hive blockchain (mesmo padrão de `verifyHivePayment`):
+4. Se `price_hive = 0`: insere em `user_cosmetics` diretamente, retorna `{ ok: true }` — sem verificação blockchain
+5. Se `price_hive > 0`: faz poll na Hive blockchain (mesmo padrão de `verifyHivePayment`):
    - Remetente: `username`
    - Destinatário: `HIVE_GAME_ACCOUNT`
    - Valor: `price_hive` (tolerância ±0.001)
    - Memo: `shop_{item_id}`
    - Janela: últimos 60s
    - Timeout total: 60s com retry a cada 3s
-5. Se encontrado: `INSERT INTO user_cosmetics ON CONFLICT DO NOTHING`, retorna `{ ok: true }`
-6. Se timeout: retorna 402
+   - Se encontrado: `INSERT INTO user_cosmetics ON CONFLICT DO NOTHING`, retorna `{ ok: true }`
+   - Se timeout: retorna 402
 
 ---
 
 ## Fluxo de Compra (UX)
 
+### Item pago (`price_hive > 0`)
+
 ```
-Jogador clica "Comprar"
+Botão "Comprar"
         │
         ▼
 Modal de confirmação:
-  - Nome do item
-  - Preview (gradient/imagem)
+  - Nome do item + preview
   - Preço em HIVE
   - Aviso: "Este é um cosmético digital não transferível e
     sem valor de revenda. Compras são definitivas."
@@ -173,11 +177,8 @@ Modal de confirmação:
         │
         ▼ Confirmar
 window.hive_keychain.requestTransfer(
-  username,
-  HIVE_GAME_ACCOUNT,
-  price_hive.toFixed(3),
-  "shop_{item_id}",
-  "HIVE"
+  username, HIVE_GAME_ACCOUNT,
+  price_hive.toFixed(3), "shop_{item_id}", "HIVE"
 )
         │
         ▼ Keychain aprovado
@@ -187,12 +188,31 @@ POST /api/shop/verify-purchase { item_id }
    ┌────┴────┐
    ▼         ▼
 Sucesso    Falha (402/timeout)
-Modal       Modal mostra erro
-fecha       "Tentar novamente"
-Toast OK
+Toast OK   Modal mostra erro + "Tentar novamente"
 ```
 
-**Guest mode:** botão "Comprar" desabilitado com tooltip: *"Faça login com Hive Keychain para comprar cosméticos."*
+### Item gratuito (`price_hive = 0`)
+
+Botão exibe **"Obter Grátis"**. Sem modal de confirmação, sem Keychain.
+
+```
+Botão "Obter Grátis"
+        │
+        ▼
+Loading state (spinner)
+POST /api/shop/verify-purchase { item_id }
+  → backend detecta price_hive = 0,
+    pula verificação blockchain,
+    insere em user_cosmetics diretamente
+        │
+        ▼
+Toast: "[Nome do item] adquirido!"
+Botão muda para "Possuído"
+```
+
+### Guest mode
+
+Botão "Comprar" e "Obter Grátis" desabilitados com tooltip: *"Faça login com Hive Keychain para obter cosméticos."*
 
 ---
 
