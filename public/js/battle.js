@@ -2380,6 +2380,10 @@
             G.board[slot] = tmp;
             G.fieldSel = null;
           } else {
+            if (G.bsel !== null) {
+              swapFieldBench(slot, G.bsel);
+              return;
+            }
             G.fieldSel = slot;
             G.bsel = null;
           }
