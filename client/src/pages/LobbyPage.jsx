@@ -125,6 +125,8 @@ function HeroDetail({ hero, onClose }) {
     <>
       <div className="hf-detail-backdrop hf-open" onClick={onClose} />
       <div className={`hf-hero-drawer hf-open`} role="dialog" aria-modal="true">
+        
+        {/* CABEÇALHO */}
         <div className="hf-detail-close-row">
           <div className="hf-detail-hero-header">
             <span className="hf-detail-ico">{hero.icon}</span>
@@ -133,6 +135,7 @@ function HeroDetail({ hero, onClose }) {
           <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
 
+        {/* ABAS NAVEGAÇÃO */}
         <div className="hf-detail-tabs">
           <button 
             className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} 
@@ -149,96 +152,108 @@ function HeroDetail({ hero, onClose }) {
         </div>
 
         <div className="detail-slider-viewport">
-        <div className={`detail-slider-track view-${activeTab}`}>
-       
-       
-        <div className="detail-slide stats-pane hf-detail-scroll">
-          <div className="hf-detail-role-wrap">
-            <span className={`gr-hero-role role-${cat}`}>{label}</span>
-          </div>
-          <div className="hf-detail-section-label">Skill</div>
-          <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
-          <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
-          {hero.skill?.lore && (
-            <div className="hf-detail-skill-lore" style={{ 
-               fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em', 
-               marginTop: '15px', marginBottom: '20px', color: '#fff',
-               lineHeight: '1.6', paddingTop: '12px',
-               borderTop: '1px solid rgba(255,255,255,0.12)',
-               textAlign: 'center', width: '100%', display: 'block'
-            }}>
-              “{hero.skill.lore}”
-            </div>
-          )}
-          <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
-          <div className="hf-detail-stats">
-            <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
-            <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
-            <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
-            <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
-          </div>
-          <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
-            <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
-            <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
-          </button>
-          {expanded && (
-            <div className="hf-detail-l2 expanded">
-              <table className="hf-detail-l2-table">
-                <thead><tr><th>Level</th><th>HP</th><th>ATK</th><th>Skill Power</th></tr></thead>
-                <tbody>
-                  {levelKeys.map(lv => {
-                    const s = hero.levels[lv] || {}
-                    return <tr key={lv}><td>{lv}</td><td>{s.max_hp}</td><td>{s.atk}</td><td>{s.skill_power != null ? fmtSP(s.skill_power) : '—'}</td></tr>
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className={`detail-slider-track view-${activeTab}`}>
+            
+            {/* PAINEL 1: INFO */}
+            <div className="detail-slide stats-pane hf-detail-scroll">
+              <div className="hf-detail-role-wrap">
+                <span className={`gr-hero-role role-${cat}`}>{label}</span>
+              </div>
+              <div className="hf-detail-section-label">Skill</div>
+              <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
+              <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
+              
+              {hero.skill?.lore && (
+                <div className="hf-detail-skill-lore" style={{ 
+                  fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em', 
+                  marginTop: '15px', marginBottom: '20px', color: '#fff',
+                  lineHeight: '1.6', paddingTop: '12px',
+                  borderTop: '1px solid rgba(255,255,255,0.12)',
+                  textAlign: 'center', width: '100%', display: 'block'
+                }}>
+                  “{hero.skill.lore}”
+                </div>
+              )}
 
-          {/* BOTÃO DA FICHA RPG */}
-          <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
-            <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
-            <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
-          </button>
+              <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
+              <div className="hf-detail-stats">
+                <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
+              </div>
 
-          {rpgExpanded && (
-            <div className="rpg-sheet-container animate-fade-in">
-              <div className="rpg-grid">
-                {Object.entries(attrs).map(([key, val]) => (
-                  <div key={key} className="rpg-stat-box">
-                    <span className="rpg-stat-name">{key.toUpperCase()}</span>
-                    {/* Aqui usamos Math.round para mostrar 9 em vez de 8.6 */}
-                    <span className="rpg-stat-value">{Math.round(val)}</span>
-                    {/* O modificador também deve ser calculado sobre o valor arredondado */}
-                    <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
+              <button type="button" className="hf-detail-l2-btn" style={{marginTop:'15px'}} onClick={() => setExpanded(!expanded)}>
+                <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
+                <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
+              </button>
+              
+              {expanded && (
+                <div className="hf-detail-l2 expanded">
+                  <table className="hf-detail-l2-table">
+                    <thead><tr><th>Level</th><th>HP</th><th>ATK</th><th>SP</th></tr></thead>
+                    <tbody>
+                      {levelKeys.map(lv => {
+                        const s = hero.levels[lv] || {}
+                        return <tr key={lv}><td>{lv}</td><td>{s.max_hp}</td><td>{s.atk}</td><td>{s.skill_power != null ? fmtSP(s.skill_power) : '—'}</td></tr>
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
+                <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
+                <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
+              </button>
+
+              {rpgExpanded && (
+                <div className="rpg-sheet-container animate-fade-in">
+                  <div className="rpg-grid">
+                    {Object.entries(attrs).map(([key, val]) => (
+                      <div key={key} className="rpg-stat-box">
+                        <span className="rpg-stat-name">{key.toUpperCase()}</span>
+                        <span className="rpg-stat-value">{Math.round(val)}</span>
+                        <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* PAINEL 2: GEAR (EQUIPAMENTOS) */}
+            <div className="detail-slide gear-pane hf-detail-scroll">
+              <div className="gear-container">
+                {[
+                  { cls: "amulet", label: "AMULETO", ico: "📿", info: "Espaço para Amuleto (Vazio)" },
+                  { cls: "head",   label: "ELMO",    ico: "🪖", info: "Espaço para Elmo (Vazio)" },
+                  { cls: "item-esp", label: "ESPECIAL", ico: "✨", info: "Relíquia Vazia" },
+                  { cls: "arma",   label: "ARMA",    ico: "⚔️", info: STARTER_GEAR[hero.cid]?.weapon },
+                  { cls: "chest",  label: "PEITORAL", ico: "🛡️", info: STARTER_GEAR[hero.cid]?.armor },
+                  { cls: "offhand", label: "OFF-HAND", ico: "📜", info: "Mão Secundária (Vazio)" },
+                  { cls: "cinto",  label: "CINTO",   ico: "🏷️", info: "Cinto de Couro (+0)" },
+                  { cls: "calcas", label: "CALÇAS",  ico: "👖", info: "Calças de Tecido (+0)" },
+                  { cls: "luvas",  label: "LUVAS",   ico: "🧤", info: "Luvas de Trabalho (+0)" },
+                  { cls: "anel1",  label: "ANEL 1",  ico: "💍", info: "Dedo Vazio" },
+                  { cls: "feet",   label: "BOTAS",   ico: "🥾", info: "Botas de Caminhada (+0)" },
+                  { cls: "anel2",  label: "ANEL 2",  ico: "💍", info: "Dedo Vazio" },
+                ].map((slot, i) => (
+                  <div 
+                    key={i} 
+                    className={`gear-slot ${slot.cls}`} 
+                    data-label={slot.label}
+                    onMouseEnter={() => setHoveredInfo(slot.info)}
+                    onMouseLeave={() => setHoveredInfo(null)}
+                    onClick={() => setHoveredInfo(slot.info)}
+                  >
+                    {slot.ico}
                   </div>
                 ))}
               </div>
-              <p className="rpg-note">Attributes used for item requirements and penalties.</p>
-            </div>
-          )}
-          </div>
 
-           {/* PAINEL 2: EQUIPAMENTOS (A NOVA ABA) */}
-            <div className="detail-slide gear-pane hf-detail-scroll">
-              <div className="gear-container">
-                {/* Coluna 1 */}
-                <div className="gear-slot amulet" data-label="AMULETO" title="Espaço para Amuleto (Vazio)">📿</div>
-                <div className="gear-slot arma" data-label="ARMA" title={STARTER_GEAR[hero.cid]?.weapon}>⚔️</div>
-                <div className="gear-slot cinto" data-label="CINTO" title="Espaço para Cinto (Vazio)">🏷️</div>
-                <div className="gear-slot anel1" data-label="ANEL 1" title="Espaço para Anel (Vazio)">💍</div>
-
-                {/* Coluna 2 */}
-                <div className="gear-slot head" data-label="ELMO" title="Espaço para Elmo (Vazio)">🪖</div>
-                <div className="gear-slot chest" data-label="PEITORAL" title={STARTER_GEAR[hero.cid]?.armor}>🛡️</div>
-                <div className="gear-slot calcas" data-label="CALÇAS" title="Espaço para Calças (Vazio)">👖</div>
-                <div className="gear-slot feet" data-label="BOTAS" title="Espaço para Botas (Vazio)">🥾</div>
-
-                {/* Coluna 3 */}
-                <div className="gear-slot item-esp" data-label="ESPECIAL" title="Espaço para Item Especial (Vazio)">✨</div>
-                <div className="gear-slot offhand" data-label="OFF-HAND" title="Mão Secundária (Vazio)">📜</div>
-                <div className="gear-slot luvas" data-label="LUVAS" title="Espaço para Luvas (Vazio)">🧤</div>
-                <div className="gear-slot anel2" data-label="ANEL 2" title="Espaço para Anel (Vazio)">💍</div>
+              <div className={`gear-item-tooltip ${hoveredItem ? 'show' : ''}`}>
+                {hoveredItem || "Passe o mouse nos itens"}
               </div>
 
               <StatsPanel 
@@ -247,17 +262,18 @@ function HeroDetail({ hero, onClose }) {
               />
 
               <div className="inventory-preview">
-                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
+                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px', textAlign: 'center'}}>INVENTORY (COMING SOON)</p>
                 <div className="inv-grid">
                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
                 </div>
               </div>
-            </div>
-        </div>
-        </div>
-      </div>
-   </>
-  )
+            </div> {/* Fim do slide GEAR */}
+
+          </div> {/* Fim do slider-track */}
+        </div> {/* Fim do slider-viewport */}
+      </div> {/* Fim do drawer */}
+    </>
+  );
 }
 
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
