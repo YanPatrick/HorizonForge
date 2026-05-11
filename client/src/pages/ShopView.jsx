@@ -42,6 +42,7 @@ export default function ShopView({ session, toast }) {
   })
 
   async function claimFree(item) {
+    if (!isHive || !token) return
     setClaiming(item.id)
     try {
       const res = await fetch('/api/shop/verify-purchase', {
@@ -68,12 +69,13 @@ export default function ShopView({ session, toast }) {
   }
 
   async function confirmBuy() {
-    if (!modal) return
+    if (!modal || claiming) return
     if (!window.hive_keychain) {
       setModalError('Hive Keychain não encontrado.')
       return
     }
     setModalError('')
+    setClaiming(modal.id)
     window.hive_keychain.requestTransfer(
       username,
       gameAccount,
@@ -82,10 +84,10 @@ export default function ShopView({ session, toast }) {
       'HIVE',
       async (response) => {
         if (!response.success) {
+          setClaiming(null)
           setModalError(response.error || 'Transferência cancelada.')
           return
         }
-        setClaiming(modal.id)
         try {
           const res = await fetch('/api/shop/verify-purchase', {
             method: 'POST',
