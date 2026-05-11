@@ -168,7 +168,7 @@
     // Note: _fieldLpTimer is a local var inside battle.js's _bootBattle scope.
     // React's onTouchMove on the .unit element already calls window.fieldTouchMove()
     // which clears it — no action needed here.
-    var touch = e.changedTouches[0];
+    var touch = e.touches[0];
     if (!touch) return;
     var bench = getBenchWrap();
     if (!bench) return;
