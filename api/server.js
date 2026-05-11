@@ -144,6 +144,40 @@ async function verifyHivePayment(_txId, from, wager, matchId, maxAttempts = 15) 
 }
 
 /**
+ * Verify an on-chain transfer for a shop purchase.
+ * Memo must be exactly `shop_{itemId}`.
+ * Retries for up to 60s.
+ */
+async function verifyShopPayment(from, price, itemId, maxAttempts = 20) {
+  const expectedMemo = `shop_${itemId}`;
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const history = await hiveRpc('condenser_api.get_account_history', [from, -1, 50]);
+      if (!Array.isArray(history)) throw new Error('tx_not_found');
+      for (let i = history.length - 1; i >= 0; i--) {
+        const [, entry] = history[i];
+        const [opType, op] = entry.op;
+        if (opType !== 'transfer') continue;
+        if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+        if (op.from.toLowerCase() !== from.toLowerCase()) continue;
+        const sent = parseFloat(op.amount);
+        if (Math.abs(sent - price) > 0.001) continue;
+        if (op.memo !== expectedMemo) continue;
+        console.log(`✅ Shop payment verified: ${from} → ${HIVE_GAME_ACCOUNT} | ${op.amount} | ${op.memo}`);
+        return true;
+      }
+      throw new Error('tx_not_found');
+    } catch (err) {
+      lastErr = err;
+      if (err.message === 'tx_not_found') { await sleep(3000); continue; }
+      throw err;
+    }
+  }
+  throw new Error(`Shop payment timed out: ${lastErr?.message}`);
+}
+
+/**
  * Refund a wager back to a player (called on payment timeout or match cancellation).
  */
 async function refundHiveWager(to, amount, matchId) {
@@ -917,6 +951,96 @@ app.put('/api/formations', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[/api/formations PUT]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/shop
+ * Retorna catálogo de cosméticos. Público (sem auth).
+ * Inclui gameAccount para o frontend usar no requestTransfer.
+ */
+app.get('/api/shop', async (_req, res) => {
+  try {
+    const items = await sql`
+      SELECT id, type, name, preview,
+             price_hive::float AS price_hive,
+             hero_cid
+      FROM cosmetics
+      ORDER BY sort_order ASC
+    `;
+    res.json({ ok: true, items, gameAccount: HIVE_GAME_ACCOUNT });
+  } catch (err) {
+    console.error('[/api/shop GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/shop/owned
+ * Retorna array de item_ids possuídos pelo jogador autenticado.
+ */
+app.get('/api/shop/owned', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const rows = await sql`
+      SELECT item_id FROM user_cosmetics WHERE player = ${username}
+    `;
+    res.json({ ok: true, owned: rows.map(r => r.item_id) });
+  } catch (err) {
+    console.error('[/api/shop/owned GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/shop/verify-purchase
+ * Body: { item_id }
+ * - price_hive = 0: concede imediatamente (sem verificação blockchain)
+ * - price_hive > 0: verifica transferência Hive, depois concede
+ * Idempotente: se jogador já possui o item, retorna { ok: true } sem erro.
+ */
+app.post('/api/shop/verify-purchase', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+  const { item_id } = req.body;
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+
+  try {
+    const [item] = await sql`SELECT id, price_hive FROM cosmetics WHERE id = ${item_id}`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [existing] = await sql`
+      SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}
+    `;
+    if (existing) return res.json({ ok: true });
+
+    const price = parseFloat(item.price_hive);
+
+    if (price === 0) {
+      await sql`
+        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+        ON CONFLICT DO NOTHING
+      `;
+      console.log(`🎁 Free cosmetic granted: ${username} → ${item_id}`);
+      return res.json({ ok: true });
+    }
+
+    try {
+      await verifyShopPayment(username, price, item_id);
+      await sql`
+        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+        ON CONFLICT DO NOTHING
+      `;
+      console.log(`💰 Shop purchase recorded: ${username} → ${item_id} (${price} HIVE)`);
+      return res.json({ ok: true });
+    } catch {
+      return res.status(402).json({ ok: false, error: 'Payment not found or timed out' });
+    }
+  } catch (err) {
+    console.error('[/api/shop/verify-purchase]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
