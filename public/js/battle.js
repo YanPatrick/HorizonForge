@@ -752,6 +752,27 @@
         render();
       }
 
+      function swapFieldBench(fieldSlot, benchCid) {
+        if (G.phase !== "shop") return;
+        const fieldUnit = G.board[fieldSlot];
+        if (!fieldUnit) return;
+        const bidx = G.bench.findIndex((b) => b.cid === benchCid);
+        if (bidx < 0) return;
+        const benchUnit = G.bench[bidx];
+        G.board[fieldSlot] = { ...benchUnit };
+        G.bench.splice(bidx, 1);
+        const existingIdx = G.bench.findIndex((b) => b.cid === fieldUnit.cid);
+        if (existingIdx >= 0) {
+          G.bench[existingIdx].stack += fieldUnit.stack;
+          applyMerge(G.bench[existingIdx]);
+        } else {
+          G.bench.push({ ...fieldUnit });
+        }
+        G.fieldSel = null;
+        G.bsel = null;
+        render();
+      }
+
       function restoreFieldHp() {
         G.board.forEach((u) => {
           if (!u) return;
