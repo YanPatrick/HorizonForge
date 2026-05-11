@@ -161,6 +161,7 @@ async function verifyShopPayment(from, price, itemId, maxAttempts = 20) {
         if (opType !== 'transfer') continue;
         if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
         if (op.from.toLowerCase() !== from.toLowerCase()) continue;
+        if (!op.amount.endsWith(' HIVE')) continue;
         const sent = parseFloat(op.amount);
         if (Math.abs(sent - price) > 0.001) continue;
         if (op.memo !== expectedMemo) continue;
@@ -1030,15 +1031,15 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
 
     try {
       await verifyShopPayment(username, price, item_id);
-      await sql`
-        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
-        ON CONFLICT DO NOTHING
-      `;
-      console.log(`💰 Shop purchase recorded: ${username} → ${item_id} (${price} HIVE)`);
-      return res.json({ ok: true });
     } catch {
       return res.status(402).json({ ok: false, error: 'Payment not found or timed out' });
     }
+    await sql`
+      INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+      ON CONFLICT DO NOTHING
+    `;
+    console.log(`💰 Shop purchase recorded: ${username} → ${item_id} (${price} HIVE)`);
+    return res.json({ ok: true });
   } catch (err) {
     console.error('[/api/shop/verify-purchase]', err.message);
     res.status(500).json({ ok: false, error: err.message });
