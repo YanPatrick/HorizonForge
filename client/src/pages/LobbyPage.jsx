@@ -37,6 +37,18 @@ const RPG_ATTRIBUTES = {
   archmage:  { str: 6,  dex: 8,  con: 10, int: 20, wis: 16, cha: 12 }, // +7 pts
   healer:    { str: 8,  dex: 10, con: 10, int: 14, wis: 18, cha: 12 }  // +7 pts
 };
+
+const STARTER_GEAR = {
+  knight:    { weapon: "Espada de Patrulha (+22 ATK)", armor: "Escudo de Carvalho (+130 HP)" },
+  paladin:   { weapon: "Maça Cerimonial (+28 ATK)",   armor: "Capa de Malha (+117 HP)" },
+  barbarian: { weapon: "Machado Lascado (+7 ATK)",    armor: "Pintura de Guerra (+130 HP)" },
+  assassin:  { weapon: "Adaga Envenenada (+52 ATK)",  armor: "Traje de Sombras (+13 HP)" },
+  mage:      { weapon: "Graveto Incendiário (+60 ATK)",armor: "Túnica de Aprendiz (+20 HP)" },
+  archer:    { weapon: "Arco Curto Recurvo (+35 ATK)", armor: "Gibão de Couro (+20 HP)" },
+  archmage:  { weapon: "Cajado de Cristal (+68 ATK)",  armor: "Manto das Eras (+28 HP)" },
+  healer:    { weapon: "Cetro de Rezas (+27 ATK)",     armor: "Batas de Seda (+39 HP)" }
+};
+
 function fmtSP(v) {
   return v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
 }
@@ -210,27 +222,29 @@ function HeroDetail({ hero, onClose }) {
            {/* PAINEL 2: EQUIPAMENTOS (A NOVA ABA) */}
             <div className="detail-slide gear-pane hf-detail-scroll">
               <div className="gear-container">
-                {/* Coluna 1: Amuleto, Arma, Cinto, Anel 1 */}
-                <div className="gear-slot amulet" data-label="AMULETO">📿</div>
-                <div className="gear-slot arma" data-label="ARMA">⚔️</div>
-                <div className="gear-slot cinto" data-label="CINTO">🏷️</div>
-                <div className="gear-slot anel1" data-label="ANEL 1">💍</div>
+                {/* Coluna 1 */}
+                <div className="gear-slot amulet" data-label="AMULETO" title="Espaço para Amuleto (Vazio)">📿</div>
+                <div className="gear-slot arma" data-label="ARMA" title={STARTER_GEAR[hero.cid]?.weapon}>⚔️</div>
+                <div className="gear-slot cinto" data-label="CINTO" title="Espaço para Cinto (Vazio)">🏷️</div>
+                <div className="gear-slot anel1" data-label="ANEL 1" title="Espaço para Anel (Vazio)">💍</div>
 
-                {/* Coluna 2: Elmo, Armadura, Calças, Botas */}
-                <div className="gear-slot head" data-label="ELMO">🪖</div>
-                <div className="gear-slot chest" data-label="ARMADURA">🛡️</div>
-                <div className="gear-slot calcas" data-label="CALÇAS">👖</div>
-                <div className="gear-slot feet" data-label="BOTAS">🥾</div>
+                {/* Coluna 2 */}
+                <div className="gear-slot head" data-label="ELMO" title="Espaço para Elmo (Vazio)">🪖</div>
+                <div className="gear-slot chest" data-label="PEITORAL" title={STARTER_GEAR[hero.cid]?.armor}>🛡️</div>
+                <div className="gear-slot calcas" data-label="CALÇAS" title="Espaço para Calças (Vazio)">👖</div>
+                <div className="gear-slot feet" data-label="BOTAS" title="Espaço para Botas (Vazio)">🥾</div>
 
-                {/* Coluna 3: Item Especial, Off-hand, Luvas, Anel 2 */}
-                <div className="gear-slot item-esp" data-label="ESPECIAL">✨</div>
-                <div className="gear-slot offhand" data-label="OFF-HAND">📜</div>
-                <div className="gear-slot luvas" data-label="LUVAS">🧤</div>
-                <div className="gear-slot anel2" data-label="ANEL 2">💍</div>
+                {/* Coluna 3 */}
+                <div className="gear-slot item-esp" data-label="ESPECIAL" title="Espaço para Item Especial (Vazio)">✨</div>
+                <div className="gear-slot offhand" data-label="OFF-HAND" title="Mão Secundária (Vazio)">📜</div>
+                <div className="gear-slot luvas" data-label="LUVAS" title="Espaço para Luvas (Vazio)">🧤</div>
+                <div className="gear-slot anel2" data-label="ANEL 2" title="Espaço para Anel (Vazio)">💍</div>
               </div>
 
-              <StatsPanel hero={{...hero, ...attrs}} currentGear={{}} /> 
-
+              <StatsPanel 
+                hero={{...hero, ...attrs, atk: lv1.atk, spd: lv1.atk_speed}} 
+                currentGear={{}} 
+              />
 
               <div className="inventory-preview">
                 <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
