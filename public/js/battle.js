@@ -769,6 +769,12 @@
           G.bench[existingIdx].stack += fieldUnit.stack;
           applyMerge(G.bench[existingIdx]);
         } else {
+          if (distinctHeroes() >= BENCH_SLOTS()) {
+            log("❌ Barracks full!", "lk");
+            G.fieldSel = null;
+            G.bsel = null;
+            return;
+          }
           G.bench.push({ ...fieldUnit });
         }
         G.fieldSel = null;
