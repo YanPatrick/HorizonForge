@@ -760,7 +760,10 @@
         if (bidx < 0) return;
         const benchUnit = G.bench[bidx];
         G.board[fieldSlot] = { ...benchUnit };
+        // Splice before findIndex: if fieldUnit.cid === benchCid, the removed card
+        // won't be found, so fieldUnit is pushed as a new entry (stack counts swap).
         G.bench.splice(bidx, 1);
+        // No capacity guard needed: splice removes one, push adds one — bench size stays constant.
         const existingIdx = G.bench.findIndex((b) => b.cid === fieldUnit.cid);
         if (existingIdx >= 0) {
           G.bench[existingIdx].stack += fieldUnit.stack;
