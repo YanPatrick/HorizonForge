@@ -106,16 +106,21 @@ function StatsPanel({ hero, currentGear }) {
             }
 
 function HeroDetail({ hero, onClose }) {
-  const [expanded, setExpanded] = useState(false)
-  const [rpgExpanded, setRpgExpanded] = useState(false); // Novo estado
-  const [activeTab, setActiveTab] = useState('stats'); // 'stats' ou 'gear'
-  
-  if (!hero) return null
-  const cat = roleCategory(hero.role)
-  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
-  const lv1 = hero.levels?.[1] || {}
-  const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
+  // --- ESTADOS (O que faz a tela funcionar) ---
+  const [expanded, setExpanded] = useState(false);
+  const [rpgExpanded, setRpgExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState('stats');
+  const [hoveredItem, setHoveredInfo] = useState(null); // <--- ESTA LINHA ERA A QUE FALTAVA!
+
+  if (!hero) return null;
+
+  // --- VARIÁVEIS DE APOIO ---
+  const cat = roleCategory(hero.role);
+  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS';
+  const lv1 = hero.levels?.[1] || {};
+  const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b);
   const attrs = RPG_ATTRIBUTES[hero.cid] || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+
   const getMod = (val) => {
     const mod = Math.floor((val - 10) / 2);
     return mod >= 0 ? `+${mod}` : mod;
@@ -135,7 +140,7 @@ function HeroDetail({ hero, onClose }) {
           <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
 
-        {/* ABAS NAVEGAÇÃO */}
+        {/* NAVEGAÇÃO DE ABAS */}
         <div className="hf-detail-tabs">
           <button 
             className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} 
@@ -222,7 +227,7 @@ function HeroDetail({ hero, onClose }) {
               )}
             </div>
 
-            {/* PAINEL 2: GEAR (EQUIPAMENTOS) */}
+            {/* PAINEL 2: GEAR */}
             <div className="detail-slide gear-pane hf-detail-scroll">
               <div className="gear-container">
                 {[
@@ -252,26 +257,28 @@ function HeroDetail({ hero, onClose }) {
                 ))}
               </div>
 
+              {/* TOOLTIP DINÂMICO */}
               <div className={`gear-item-tooltip ${hoveredItem ? 'show' : ''}`}>
                 {hoveredItem || "Passe o mouse nos itens"}
               </div>
 
+              {/* PAINEL DE STATS */}
               <StatsPanel 
                 hero={{...hero, ...attrs, atk: lv1.atk, spd: lv1.atk_speed}} 
                 currentGear={{}} 
               />
 
               <div className="inventory-preview">
-                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px', textAlign: 'center'}}>INVENTORY (COMING SOON)</p>
+                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
                 <div className="inv-grid">
                    {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
                 </div>
               </div>
-            </div> {/* Fim do slide GEAR */}
+            </div>
 
-          </div> {/* Fim do slider-track */}
-        </div> {/* Fim do slider-viewport */}
-      </div> {/* Fim do drawer */}
+          </div>
+        </div>
+      </div>
     </>
   );
 }
