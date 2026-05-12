@@ -274,6 +274,8 @@ export default function BattlePage() {
         'render',
       ]
       for (const name of reactSide) delete window[name]
+      delete window.HF_equipped_backgrounds
+      delete window.HF_equipped_skins
       for (const name of battleSide) delete window[name]
     }
   }, [closeQuit, confirmQuit])
@@ -533,6 +535,27 @@ export default function BattlePage() {
       )
     })
   }
+
+  useEffect(() => {
+    if (!scriptsReady) return
+    const sess = getSession()
+    if (sess?.mode !== 'hive' || !sess?.token) {
+      window.HF_equipped_backgrounds = []
+      window.HF_equipped_skins = {}
+      return
+    }
+    const headers = { Authorization: `Bearer ${sess.token}` }
+    Promise.all([
+      fetch('/api/cosmetics/backgrounds/equipped', { headers }).then(r => r.json()),
+      fetch('/api/cosmetics/skins/equipped', { headers }).then(r => r.json()),
+    ]).then(([bgs, skins]) => {
+      window.HF_equipped_backgrounds = bgs.equipped || []
+      window.HF_equipped_skins = skins.equipped || {}
+    }).catch(() => {
+      window.HF_equipped_backgrounds = []
+      window.HF_equipped_skins = {}
+    })
+  }, [scriptsReady])
 
   const ready = cssReady && scriptsReady
   return (
