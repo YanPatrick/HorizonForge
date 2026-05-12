@@ -1149,10 +1149,7 @@ app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
     const user = username.toLowerCase();
     await sql`
       INSERT INTO user_cosmetics (player, item_id)
-      VALUES
-        (${user}, 'bg_desert'),
-        (${user}, 'bg_forest'),
-        (${user}, 'bg_snow')
+      SELECT ${user}, id FROM cosmetics WHERE price_hive = 0
       ON CONFLICT DO NOTHING
     `;
     res.json({ ok: true, token: makeToken(user) });
