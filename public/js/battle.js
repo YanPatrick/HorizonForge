@@ -214,6 +214,13 @@
           }
           CK = Object.keys(C);
 
+          // Apply equipped skin portrait overrides (client-side, current player only).
+          // Skins with empty preview (default skins) leave portrait unchanged.
+          const _skinMap = window.HF_equipped_skins || {};
+          for (const [cid, data] of Object.entries(_skinMap)) {
+            if (C[cid] && data.preview) C[cid].portrait = data.preview;
+          }
+
           // Inject deps into the bot module now that C/CK/HF are populated.
           // HFBot.* methods will throw if called before this point.
           if (window.HFBot && typeof window.HFBot.init === "function") {
@@ -1896,6 +1903,15 @@
       }
 
       function startGame(fmt, pvpMode = false) {
+        // Apply random background from player's equipped pool (client-side only).
+        (function applyArenaBackground() {
+          const pool = window.HF_equipped_backgrounds || [];
+          const list = pool.length > 0 ? pool : [{ preview: '/images/arena-desert.jpg' }];
+          const pick = list[Math.floor(Math.random() * list.length)];
+          const el = document.getElementById('arena-wrap');
+          if (el && pick.preview) el.style.backgroundImage = `url('${pick.preview}')`;
+        })();
+
         // Reset completo do estado para garantir partida limpa
         G.format = fmt;
         G.winsNeeded = Math.ceil(fmt / 2);
