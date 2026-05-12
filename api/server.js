@@ -1107,10 +1107,18 @@ app.post('/api/cosmetics/backgrounds/equip', async (req, res) => {
     const [owned] = await sql`SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}`;
     if (!owned) return res.status(403).json({ ok: false, error: 'Item not owned' });
 
-    const [count] = await sql`SELECT COUNT(*)::int AS n FROM user_equipped_backgrounds WHERE player = ${username}`;
-    if (count.n >= 4) return res.status(409).json({ ok: false, error: 'Max 4 backgrounds equipped' });
-
-    await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${item_id}) ON CONFLICT DO NOTHING`;
+    const rows = await sql`
+      INSERT INTO user_equipped_backgrounds (player, item_id)
+      SELECT ${username}, ${item_id}
+      WHERE (SELECT COUNT(*) FROM user_equipped_backgrounds WHERE player = ${username}) < 4
+      ON CONFLICT DO NOTHING
+      RETURNING item_id
+    `;
+    if (rows.length === 0) {
+      // Could be: already equipped (idempotent OK) or cap reached (409)
+      const [already] = await sql`SELECT 1 FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ${item_id}`;
+      if (!already) return res.status(409).json({ ok: false, error: 'Max 4 backgrounds equipped' });
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error('[/api/cosmetics/backgrounds/equip POST]', err.message);
