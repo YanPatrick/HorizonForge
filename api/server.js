@@ -871,9 +871,11 @@ app.post('/api/migrate', async (req, res) => {
         preview     TEXT NOT NULL,
         price_hive  NUMERIC(10,3) NOT NULL DEFAULT 0,
         hero_cid    TEXT,
-        sort_order  INT NOT NULL DEFAULT 0
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `;
+    await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
+    await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
 
     await sql`
       CREATE TABLE IF NOT EXISTS user_cosmetics (
@@ -885,23 +887,23 @@ app.post('/api/migrate', async (req, res) => {
     `;
 
     await sql`
-      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
-        ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL, 10),
-        ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL, 20),
-        ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL, 30)
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
+        ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL),
+        ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL),
+        ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL)
       ON CONFLICT (id) DO NOTHING
     `;
 
     await sql`
-      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
-        ('skin_knight',    'skin', 'Knight',    '', 0, 'knight',    100),
-        ('skin_mage',      'skin', 'Mage',      '', 0, 'mage',      110),
-        ('skin_archer',    'skin', 'Archer',    '', 0, 'archer',    120),
-        ('skin_healer',    'skin', 'Healer',    '', 0, 'healer',    130),
-        ('skin_assassin',  'skin', 'Assassin',  '', 0, 'assassin',  140),
-        ('skin_paladin',   'skin', 'Paladin',   '', 0, 'paladin',   150),
-        ('skin_archmage',  'skin', 'Archmage',  '', 0, 'archmage',  160),
-        ('skin_barbarian', 'skin', 'Barbarian', '', 0, 'barbarian', 170)
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
+        ('skin_knight',    'skin', 'Knight',    '', 0, 'knight'),
+        ('skin_mage',      'skin', 'Mage',      '', 0, 'mage'),
+        ('skin_archer',    'skin', 'Archer',    '', 0, 'archer'),
+        ('skin_healer',    'skin', 'Healer',    '', 0, 'healer'),
+        ('skin_assassin',  'skin', 'Assassin',  '', 0, 'assassin'),
+        ('skin_paladin',   'skin', 'Paladin',   '', 0, 'paladin'),
+        ('skin_archmage',  'skin', 'Archmage',  '', 0, 'archmage'),
+        ('skin_barbarian', 'skin', 'Barbarian', '', 0, 'barbarian')
       ON CONFLICT (id) DO NOTHING
     `;
 
@@ -996,9 +998,10 @@ app.get('/api/shop', async (_req, res) => {
     const items = await sql`
       SELECT id, type, name, preview,
              price_hive::float AS price_hive,
-             hero_cid
+             hero_cid,
+             EXTRACT(EPOCH FROM created_at) * 1000 AS created_ms
       FROM cosmetics
-      ORDER BY sort_order ASC
+      ORDER BY created_at ASC
     `;
     res.json({ ok: true, items, gameAccount: HIVE_GAME_ACCOUNT });
   } catch (err) {
@@ -1007,14 +1010,67 @@ app.get('/api/shop', async (_req, res) => {
   }
 });
 
+const DEFAULT_BG_IDS = ['bg_desert', 'bg_florest', 'bg_snow'];
+const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin_barbarian', 'skin_healer', 'skin_knight', 'skin_mage', 'skin_paladin'];
+
+async function ensureDefaultCosmetics(username) {
+  const allDefaults = [...DEFAULT_BG_IDS, ...DEFAULT_SKIN_IDS];
+
+  // Check ownership, equipped backgrounds, and equipped skins independently
+  const [ownedRows, equippedBgRows, equippedSkinRows] = await Promise.all([
+    sql`SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${allDefaults})`,
+    sql`SELECT item_id FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ANY(${DEFAULT_BG_IDS})`,
+    sql`SELECT skin_id FROM user_equipped_skins WHERE player = ${username} AND skin_id = ANY(${DEFAULT_SKIN_IDS})`,
+  ]);
+
+  const ownedSet = new Set(ownedRows.map(r => r.item_id));
+  const equippedBgSet = new Set(equippedBgRows.map(r => r.item_id));
+  const equippedSkSet = new Set(equippedSkinRows.map(r => r.skin_id));
+
+  const missingOwnership = allDefaults.filter(id => !ownedSet.has(id));
+  const missingBgEquip = DEFAULT_BG_IDS.filter(id => !equippedBgSet.has(id));
+  const missingSkinEquip = DEFAULT_SKIN_IDS.filter(id => !equippedSkSet.has(id));
+
+  if (!missingOwnership.length && !missingBgEquip.length && !missingSkinEquip.length) return;
+
+  // Grant missing ownership
+  for (const id of missingOwnership) {
+    await sql`INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+  }
+
+  // Equip missing backgrounds
+  for (const id of missingBgEquip) {
+    await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+  }
+
+  // Equip missing skins (need hero_cid from cosmetics table)
+  if (missingSkinEquip.length > 0) {
+    const skinRows = await sql`
+      SELECT id, hero_cid FROM cosmetics
+      WHERE id = ANY(${missingSkinEquip}) AND type = 'skin' AND hero_cid IS NOT NULL
+    `;
+    for (const skin of skinRows) {
+      await sql`
+        INSERT INTO user_equipped_skins (player, hero_cid, skin_id)
+        VALUES (${username}, ${skin.hero_cid}, ${skin.id})
+        ON CONFLICT (player, hero_cid) DO NOTHING
+      `;
+    }
+  }
+
+  console.log(`🎮 Default cosmetics initialized for: ${username}`);
+}
+
 /**
  * GET /api/shop/owned
  * Returns array of item_ids owned by the authenticated player.
+ * Grants and equips default cosmetics on first call if not yet initialized.
  */
 app.get('/api/shop/owned', async (req, res) => {
   const username = authFromRequest(req);
   if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   try {
+    await ensureDefaultCosmetics(username);
     const rows = await sql`
       SELECT item_id FROM user_cosmetics WHERE player = ${username}
     `;

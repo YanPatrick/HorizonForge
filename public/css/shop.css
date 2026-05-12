@@ -101,6 +101,38 @@
   cursor: not-allowed;
 }
 
+/* ── Skins grid: portrait, 6 per row ────────────────────── */
+.shop-grid-skins {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  padding: 10px 18px 18px;
+}
+
+.shop-grid-skins .shop-card-preview {
+  aspect-ratio: 2 / 3;
+  height: auto;
+  background-position: top center;
+}
+
+.shop-grid-skins .shop-card-body {
+  padding: 7px 8px 8px;
+}
+
+.shop-grid-skins .shop-card-name {
+  font-size: 11px;
+  margin-bottom: 1px;
+}
+
+.shop-grid-skins .shop-card-hero {
+  font-size: 0.68rem;
+  margin-bottom: 5px;
+}
+
+.shop-grid-skins .shop-card-btn {
+  font-size: 10px;
+  padding: 4px 0;
+}
+
 /* ── Empty state message ─────────────────────────────────── */
 .shop-empty {
   grid-column: 1 / -1;
@@ -338,11 +370,16 @@
 .shop-card-equipped { border-color: #c8a84b88; box-shadow: 0 0 8px #c8a84b33; }
 .shop-row-equipped  { border-left: 2px solid #c8a84b; }
 
-/* ── Search bar ──────────────────────────────────────────── */
-.shop-search-wrap { padding: 8px 0 4px; }
+/* ── Search bar + sort row ───────────────────────────────── */
+.shop-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px 4px;
+}
 .shop-search {
-  width: 100%;
-  padding: 6px 10px;
+  flex: 1;
+  padding: 7px 12px;
   border-radius: 6px;
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.06);
@@ -350,16 +387,66 @@
   font-size: 0.85rem;
   outline: none;
   box-sizing: border-box;
+  min-width: 0;
 }
 .shop-search::placeholder { color: rgba(255,255,255,0.3); }
 .shop-search:focus { border-color: rgba(200,168,75,0.4); }
+
+.shop-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.shop-sort-label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+.shop-sort {
+  padding: 6px 28px 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.shop-sort:focus { border-color: rgba(200,168,75,0.4); }
+.shop-sort option { background: #1a1a2e; color: #e8e0d0; }
+
+/* ── Show owned toggle ───────────────────────────────────── */
+.shop-owned-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  cursor: pointer;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.5);
+  user-select: none;
+  white-space: nowrap;
+}
+.shop-owned-toggle input[type="checkbox"] {
+  accent-color: #c8a84b;
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+.shop-owned-toggle:hover { color: rgba(255,255,255,0.75); }
 
 /* ── Hero filter pills ───────────────────────────────────── */
 .shop-hero-pills {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
-  padding: 6px 0 10px;
+  padding: 6px 18px 10px;
 }
 .shop-hero-pill {
   padding: 3px 10px;
@@ -376,18 +463,51 @@
   color: #c8a84b;
 }
 
-/* ── Slot counter ────────────────────────────────────────── */
+/* ── Slot counter (sidebar) ──────────────────────────────── */
 .shop-slot-counter {
-  margin-top: 12px;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.45);
+  margin-top: 14px;
+  padding: 10px 8px 6px;
   border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
-.shop-slot-counter-mobile {
+.shop-slot-counter > span {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+
+/* ── Slot counter bar (content area) ────────────────────── */
+.shop-slot-counter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px 12px;
+}
+.shop-slot-label {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.45);
-  padding: 4px 0 8px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 500;
+}
+
+/* ── Slot dots (shared) ──────────────────────────────────── */
+.shop-slot-dots {
+  display: flex;
+  gap: 5px;
+}
+.shop-slot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200,168,75,0.35);
+  background: transparent;
+  transition: all 0.2s;
+}
+.shop-slot-dot.filled {
+  background: #c8a84b;
+  border-color: #c8a84b;
+  box-shadow: 0 0 6px rgba(200,168,75,0.5);
 }
 
 /* ── Skin preview icon overlay ───────────────────────────── */
@@ -408,16 +528,7 @@
   margin-bottom: 4px;
 }
 
-/* ── Equipped badges ─────────────────────────────────────── */
-.shop-card-equipped-badge {
-  display: block;
-  text-align: center;
-  color: #c8a84b;
-  font-size: 0.78rem;
-  font-weight: 600;
-  margin-top: 4px;
-  letter-spacing: 0.02em;
-}
+/* ── Equipped badge (row/mobile only) ───────────────────── */
 .shop-row-equipped-badge {
   color: #c8a84b;
   font-size: 0.8rem;

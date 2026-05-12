@@ -2,11 +2,34 @@ import { useState, useEffect } from 'react'
 import '@styles/shop.css'
 
 const FILTERS = [
-  { key: 'all',        label: 'All' },
   { key: 'background', label: '🌄 Backgrounds' },
   { key: 'skin',       label: '✨ Skins' },
-  { key: 'owned',      label: '✓ Owned' },
 ]
+
+const SEARCH_PLACEHOLDER = {
+  background: 'Search backgrounds...',
+  skin:       'Search skins...',
+}
+
+const SORT_OPTIONS = [
+  { value: 'new',       label: 'New' },
+  { value: 'old',       label: 'Old' },
+  { value: 'name',      label: 'Name' },
+  { value: 'owned',     label: 'Owned' },
+  { value: 'not_owned', label: 'Not Owned' },
+]
+
+function sortItems(items, sortBy, owned) {
+  const copy = [...items]
+  switch (sortBy) {
+    case 'name':      return copy.sort((a, b) => a.name.localeCompare(b.name))
+    case 'new':       return copy.sort((a, b) => ((b.created_ms || 0) - (a.created_ms || 0)) || a.name.localeCompare(b.name))
+    case 'old':       return copy.sort((a, b) => ((a.created_ms || 0) - (b.created_ms || 0)) || a.name.localeCompare(b.name))
+    case 'owned':     return copy.sort((a, b) => (owned.has(b.id) ? 1 : 0) - (owned.has(a.id) ? 1 : 0))
+    case 'not_owned': return copy.sort((a, b) => (owned.has(a.id) ? 1 : 0) - (owned.has(b.id) ? 1 : 0))
+    default:          return copy
+  }
+}
 
 export default function ShopView({ session, toast, heroData }) {
   const [catalog, setCatalog]           = useState([])
@@ -14,9 +37,10 @@ export default function ShopView({ session, toast, heroData }) {
   const [equippedBgs, setEquippedBgs]   = useState([])
   const [equippedSkins, setEquippedSkins] = useState({})
   const [gameAccount, setGameAccount]   = useState('')
-  const [filter, setFilter]             = useState('all')
-  const [heroFilter, setHeroFilter]     = useState('all')
+  const [filter, setFilter]             = useState('background')
   const [search, setSearch]             = useState('')
+  const [showOwned, setShowOwned]        = useState(true)
+  const [sortBy, setSortBy]              = useState('new')
   const [modal, setModal]               = useState(null)
   const [claiming, setClaiming]         = useState(null)
   const [equipping, setEquipping]       = useState(null)
@@ -45,12 +69,11 @@ export default function ShopView({ session, toast, heroData }) {
     }
   }, [isHive, token])
 
-  const skinHeroes = [...new Set(catalog.filter(i => i.type === 'skin' && i.hero_cid).map(i => i.hero_cid))]
+  useEffect(() => { setShowOwned(true) }, [filter])
 
   const filtered = catalog.filter(item => {
-    if (filter === 'owned' && !owned.has(item.id)) return false
-    if (filter !== 'all' && filter !== 'owned' && item.type !== filter) return false
-    if (filter === 'skin' && heroFilter !== 'all' && item.hero_cid !== heroFilter) return false
+    if (filter !== 'all' && item.type !== filter) return false
+    if (!showOwned && owned.has(item.id)) return false
     if (search) {
       const q = search.toLowerCase()
       if (!item.name.toLowerCase().includes(q) && !(item.hero_cid || '').toLowerCase().includes(q)) return false
@@ -98,6 +121,10 @@ export default function ShopView({ session, toast, heroData }) {
 
   async function unequipBackground(item_id) {
     if (!isHive || !token) return
+    if (equippedBgs.length <= 1) {
+      toast?.('At least 1 background must be equipped.')
+      return
+    }
     setEquipping(item_id)
     try {
       const res = await fetch('/api/cosmetics/backgrounds/unequip', {
@@ -139,6 +166,11 @@ export default function ShopView({ session, toast, heroData }) {
     if (!isHive || !token) return
     const hero_cid = Object.keys(equippedSkins).find(k => equippedSkins[k].skin_id === skin_id)
     if (!hero_cid) return
+    const ownedForHero = catalog.filter(i => i.type === 'skin' && i.hero_cid === hero_cid && owned.has(i.id))
+    if (ownedForHero.length <= 1) {
+      toast?.(`At least 1 skin must remain equipped for ${hero_cid.charAt(0).toUpperCase() + hero_cid.slice(1)}.`)
+      return
+    }
     setEquipping(skin_id)
     try {
       const res = await fetch('/api/cosmetics/skins/unequip', {
@@ -193,6 +225,7 @@ export default function ShopView({ session, toast, heroData }) {
     )
   }
 
+  const sorted = sortItems(filtered, sortBy, owned)
   const sharedCardProps = { isHive, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }
 
   return (
@@ -205,9 +238,6 @@ export default function ShopView({ session, toast, heroData }) {
               {f.label}
             </button>
           ))}
-          {filter === 'background' && (
-            <div className="shop-slot-counter">{equippedBgs.length}/4 slots</div>
-          )}
         </aside>
 
         <div className="wiki-content shop-content">
@@ -223,29 +253,44 @@ export default function ShopView({ session, toast, heroData }) {
             <input
               className="shop-search"
               type="text"
-              placeholder="Search by name or hero..."
+              placeholder={SEARCH_PLACEHOLDER[filter] || 'Search...'}
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
+            <div className="shop-sort-wrap">
+              <span className="shop-sort-label">Sort by</span>
+              <select className="shop-sort" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+                {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
           </div>
 
-          {filter === 'skin' && skinHeroes.length > 0 && (
-            <div className="shop-hero-pills">
-              <button className={`shop-hero-pill${heroFilter === 'all' ? ' active' : ''}`} onClick={() => setHeroFilter('all')}>All</button>
-              {skinHeroes.map(cid => (
-                <button key={cid} className={`shop-hero-pill${heroFilter === cid ? ' active' : ''}`} onClick={() => setHeroFilter(cid)}>
-                  {cid.charAt(0).toUpperCase() + cid.slice(1)}
-                </button>
-              ))}
+          {filter === 'skin' && (
+            <div className="shop-slot-counter-bar">
+              <label className="shop-owned-toggle">
+                <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
+                Show owned
+              </label>
             </div>
           )}
 
           {filter === 'background' && (
-            <div className="shop-slot-counter-mobile">{equippedBgs.length}/4 slots equipped</div>
+            <div className="shop-slot-counter-bar">
+              <div className="shop-slot-dots">
+                {[0,1,2,3].map(i => (
+                  <span key={i} className={`shop-slot-dot${i < equippedBgs.length ? ' filled' : ''}`} />
+                ))}
+              </div>
+              <span className="shop-slot-label">{equippedBgs.length}/4 backgrounds equipped</span>
+              <label className="shop-owned-toggle">
+                <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
+                Show owned
+              </label>
+            </div>
           )}
 
-          <div className="shop-grid">
-            {filtered.map(item => (
+          <div className={`shop-grid${filter === 'skin' ? ' shop-grid-skins' : ''}`}>
+            {sorted.map(item => (
               <ShopItemCard
                 key={item.id}
                 item={item}
@@ -257,11 +302,11 @@ export default function ShopView({ session, toast, heroData }) {
                 {...sharedCardProps}
               />
             ))}
-            {filtered.length === 0 && <div className="shop-empty">No items found.</div>}
+            {sorted.length === 0 && <div className="shop-empty">No items found.</div>}
           </div>
 
           <div className="shop-list">
-            {filtered.map(item => (
+            {sorted.map(item => (
               <ShopListRow
                 key={item.id}
                 item={item}
@@ -273,7 +318,7 @@ export default function ShopView({ session, toast, heroData }) {
                 {...sharedCardProps}
               />
             ))}
-            {filtered.length === 0 && <div className="shop-empty">No items found.</div>}
+            {sorted.length === 0 && <div className="shop-empty">No items found.</div>}
           </div>
         </div>
       </div>
@@ -345,26 +390,14 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
           {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
         </button>
         {isOwned && (
-          isEquipped
-            ? <>
-                <span className="shop-card-equipped-badge">✓ Equipped</span>
-                <button
-                  className="shop-card-btn unequip"
-                  disabled={isEquipping || !isHive}
-                  onClick={onUnequip}
-                  title={!isHive ? 'Login to equip cosmetics.' : undefined}
-                >
-                  {isEquipping ? '⌛' : item.type === 'background' ? 'Remove' : 'Unequip'}
-                </button>
-              </>
-            : <button
-                className="shop-card-btn equip"
-                disabled={isEquipping || !canEquip || !isHive}
-                onClick={onEquip}
-                title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 background slots used' : undefined}
-              >
-                {isEquipping ? '⌛' : 'Equip'}
-              </button>
+          <button
+            className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
+            disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
+            onClick={isEquipped ? onUnequip : onEquip}
+            title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
+          >
+            {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
+          </button>
         )}
       </div>
     </div>
