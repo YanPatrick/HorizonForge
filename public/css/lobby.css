@@ -7435,3 +7435,84 @@
     margin: 10px auto;
   }
 }
+
+/* ══════════════════════════════
+   TOP NAV CHEST TEASER
+══════════════════════════════ */
+.nav-chest-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: rgba(40, 20, 70, 0.6); /* Roxo profundo */
+  border: 1.5px solid rgba(255, 215, 0, 0.3); /* Borda dourada sutil */
+  border-radius: 999px;
+  height: 36px;
+  cursor: help;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.nav-chest-pill:hover {
+  border-color: rgba(255, 215, 0, 0.8);
+  background: rgba(60, 30, 100, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+}
+
+.nav-chest-ico {
+  font-size: 18px;
+  z-index: 2;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
+  animation: chest-wiggle 4s ease-in-out infinite;
+}
+
+.nav-chest-status {
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffd700;
+  z-index: 2;
+  font-family: monospace;
+}
+
+/* Brilho interno que percorre a pílula */
+.nav-chest-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 215, 0, 0.2),
+    transparent
+  );
+  transition: 0.5s;
+  animation: chest-shine 3s infinite;
+  z-index: 1;
+}
+
+/* Animações */
+@keyframes chest-wiggle {
+  0%, 90%, 100% { transform: rotate(0); }
+  92% { transform: rotate(10deg); }
+  94% { transform: rotate(-10deg); }
+  96% { transform: rotate(10deg); }
+  98% { transform: rotate(-10deg); }
+}
+
+@keyframes chest-shine {
+  0% { left: -100%; }
+  20% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* Ajuste para telas muito pequenas */
+@media (max-width: 400px) {
+  .nav-chest-pill {
+    padding: 0 8px;
+  }
+  .nav-chest-status { display: none; } /* Esconde o "?" no mobile muito pequeno */
+}
