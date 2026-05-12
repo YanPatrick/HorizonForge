@@ -1017,10 +1017,11 @@ async function ensureDefaultCosmetics(username) {
   const allDefaults = [...DEFAULT_BG_IDS, ...DEFAULT_SKIN_IDS];
 
   // Check ownership, equipped backgrounds, and equipped skins independently
-  const [ownedRows, equippedBgRows, equippedSkinRows] = await Promise.all([
+  const [ownedRows, equippedBgRows, equippedSkinRows, totalEquippedBg] = await Promise.all([
     sql`SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${allDefaults})`,
     sql`SELECT item_id FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ANY(${DEFAULT_BG_IDS})`,
     sql`SELECT skin_id FROM user_equipped_skins WHERE player = ${username} AND skin_id = ANY(${DEFAULT_SKIN_IDS})`,
+    sql`SELECT COUNT(*)::int as count FROM user_equipped_backgrounds WHERE player = ${username}`,
   ]);
 
   const ownedSet = new Set(ownedRows.map(r => r.item_id));
@@ -1038,9 +1039,13 @@ async function ensureDefaultCosmetics(username) {
     await sql`INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
   }
 
-  // Equip missing backgrounds
-  for (const id of missingBgEquip) {
-    await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+  // Auto-equip default backgrounds only if the user has no equipped backgrounds at all (fresh account).
+  // If they already have any equipped, respect their intentional selection.
+  const userHasAnyEquippedBg = (totalEquippedBg[0]?.count ?? 0) > 0;
+  if (!userHasAnyEquippedBg) {
+    for (const id of missingBgEquip) {
+      await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+    }
   }
 
   // Equip missing skins (need hero_cid from cosmetics table)

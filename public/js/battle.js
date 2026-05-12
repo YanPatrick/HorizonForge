@@ -363,15 +363,6 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
-      const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
-      //const ARENAS = ["arena-forest", "arena-desert"];
-      const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
-      document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
-
-      // ❌ Antes — estica e distorce a imagem
-      //document.body.style.backgroundSize = "100% 100%";
-
-      // ✅ Depois — mantém proporção e preenche a tela
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundPosition = "center center";
 
@@ -1906,10 +1897,17 @@
         // Apply random background from player's equipped pool (client-side only).
         (function applyArenaBackground() {
           const pool = window.HF_equipped_backgrounds || [];
-          const list = pool.length > 0 ? pool : [{ preview: '/images/arena-desert.jpg' }];
+          const guestArenas = [
+            { preview: '/images/arena-desert.jpg' },
+            { preview: '/images/arena-forest.jpg' },
+            { preview: '/images/arena-snow.jpg' },
+          ];
+          const list = pool.length > 0 ? pool : guestArenas;
           const pick = list[Math.floor(Math.random() * list.length)];
           const el = document.getElementById('arena-wrap');
-          if (el && pick.preview) el.style.backgroundImage = `url('${pick.preview}')`;
+          if (pick.preview) {
+            document.body.style.backgroundImage = `url('${pick.preview}')`;
+          }
         })();
 
         // Reset completo do estado para garantir partida limpa
