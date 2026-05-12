@@ -892,6 +892,36 @@ app.post('/api/migrate', async (req, res) => {
       ON CONFLICT (id) DO NOTHING
     `;
 
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
+        ('skin_knight',    'skin', 'Knight',    '', 0, 'knight',    100),
+        ('skin_mage',      'skin', 'Mage',      '', 0, 'mage',      110),
+        ('skin_archer',    'skin', 'Archer',    '', 0, 'archer',    120),
+        ('skin_healer',    'skin', 'Healer',    '', 0, 'healer',    130),
+        ('skin_assassin',  'skin', 'Assassin',  '', 0, 'assassin',  140),
+        ('skin_paladin',   'skin', 'Paladin',   '', 0, 'paladin',   150),
+        ('skin_archmage',  'skin', 'Archmage',  '', 0, 'archmage',  160),
+        ('skin_barbarian', 'skin', 'Barbarian', '', 0, 'barbarian', 170)
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_equipped_backgrounds (
+        player   TEXT NOT NULL,
+        item_id  TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+        PRIMARY KEY (player, item_id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_equipped_skins (
+        player    TEXT NOT NULL,
+        hero_cid  TEXT NOT NULL,
+        skin_id   TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+        PRIMARY KEY (player, hero_cid)
+      )
+    `;
+
     // Refresh cached config that's seeded by this migration (e.g. max-units cap).
     await refreshMaxUnitsCap();
 
@@ -1116,7 +1146,16 @@ app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Signature verification failed.' });
     }
 
-    res.json({ ok: true, token: makeToken(username.toLowerCase()) });
+    const user = username.toLowerCase();
+    await sql`
+      INSERT INTO user_cosmetics (player, item_id)
+      VALUES
+        (${user}, 'bg_desert'),
+        (${user}, 'bg_forest'),
+        (${user}, 'bg_snow')
+      ON CONFLICT DO NOTHING
+    `;
+    res.json({ ok: true, token: makeToken(user) });
   } catch (err) {
     console.error('[auth/verify]', err.message);
     res.status(500).json({ error: 'Verification failed. Try again.' });
