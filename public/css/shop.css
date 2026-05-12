@@ -324,3 +324,86 @@
   .shop-list { display: flex; }
   .shop-mobile-filters { display: flex; }
 }
+
+/* ── Equip / Unequip buttons ─────────────────────────────── */
+.shop-card-btn.equip  { background: #1a4a2a; color: #7fff7f; border: 1px solid #2a7a4a; margin-top: 4px; }
+.shop-card-btn.unequip { background: transparent; color: #c8a84b; border: 1px solid #c8a84b55; margin-top: 4px; cursor: pointer; }
+.shop-card-btn.equip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.shop-row-btn.equip  { background: #1a4a2a; color: #7fff7f; border: 1px solid #2a7a4a; margin-left: 4px; }
+.shop-row-btn.unequip { background: transparent; color: #c8a84b; border: 1px solid #c8a84b55; margin-left: 4px; }
+.shop-row-btn.equip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Highlight equipped cards */
+.shop-card-equipped { border-color: #c8a84b88; box-shadow: 0 0 8px #c8a84b33; }
+.shop-row-equipped  { border-left: 2px solid #c8a84b; }
+
+/* ── Search bar ──────────────────────────────────────────── */
+.shop-search-wrap { padding: 8px 0 4px; }
+.shop-search {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  font-size: 0.85rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.shop-search::placeholder { color: rgba(255,255,255,0.3); }
+.shop-search:focus { border-color: rgba(200,168,75,0.4); }
+
+/* ── Hero filter pills ───────────────────────────────────── */
+.shop-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 10px;
+}
+.shop-hero-pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.shop-hero-pill.active {
+  background: rgba(200,168,75,0.15);
+  border-color: #c8a84b;
+  color: #c8a84b;
+}
+
+/* ── Slot counter ────────────────────────────────────────── */
+.shop-slot-counter {
+  margin-top: 12px;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.shop-slot-counter-mobile {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  padding: 4px 0 8px;
+}
+
+/* ── Skin preview icon overlay ───────────────────────────── */
+.shop-preview-ico {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.shop-card-preview, .shop-row-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Hero label on skin cards ────────────────────────────── */
+.shop-card-hero {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 4px;
+}
