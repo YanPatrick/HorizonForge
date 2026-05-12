@@ -407,3 +407,20 @@
   color: rgba(255,255,255,0.4);
   margin-bottom: 4px;
 }
+
+/* ── Equipped badges ─────────────────────────────────────── */
+.shop-card-equipped-badge {
+  display: block;
+  text-align: center;
+  color: #c8a84b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.shop-row-equipped-badge {
+  color: #c8a84b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 4px;
+}

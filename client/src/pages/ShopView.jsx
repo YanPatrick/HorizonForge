@@ -334,16 +334,24 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
         >
           {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
         </button>
-        {isOwned && isHive && (
+        {isOwned && (
           isEquipped
-            ? <button className="shop-card-btn unequip" disabled={isEquipping} onClick={onUnequip}>
-                {isEquipping ? '⌛' : '✓ Equipped'}
-              </button>
+            ? <>
+                <span className="shop-card-equipped-badge">✓ Equipped</span>
+                <button
+                  className="shop-card-btn unequip"
+                  disabled={isEquipping || !isHive}
+                  onClick={onUnequip}
+                  title={!isHive ? 'Login to equip cosmetics.' : undefined}
+                >
+                  {isEquipping ? '⌛' : item.type === 'background' ? 'Remove' : 'Unequip'}
+                </button>
+              </>
             : <button
                 className="shop-card-btn equip"
-                disabled={isEquipping || !canEquip}
+                disabled={isEquipping || !canEquip || !isHive}
                 onClick={onEquip}
-                title={!canEquip ? '4/4 background slots used' : undefined}
+                title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 background slots used' : undefined}
               >
                 {isEquipping ? '⌛' : 'Equip'}
               </button>
@@ -383,16 +391,24 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
         >
           {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Get Free' : 'Buy'}
         </button>
-        {isOwned && isHive && (
+        {isOwned && (
           isEquipped
-            ? <button className="shop-row-btn unequip" disabled={isEquipping} onClick={onUnequip}>
-                {isEquipping ? '⌛' : 'Remove'}
-              </button>
+            ? <>
+                <span className="shop-row-equipped-badge">✓</span>
+                <button
+                  className="shop-row-btn unequip"
+                  disabled={isEquipping || !isHive}
+                  onClick={onUnequip}
+                  title={!isHive ? 'Login to equip cosmetics.' : undefined}
+                >
+                  {isEquipping ? '⌛' : 'Remove'}
+                </button>
+              </>
             : <button
                 className="shop-row-btn equip"
-                disabled={isEquipping || !canEquip}
+                disabled={isEquipping || !canEquip || !isHive}
                 onClick={onEquip}
-                title={!canEquip ? '4/4 slots used' : undefined}
+                title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
               >
                 {isEquipping ? '⌛' : 'Equip'}
               </button>
