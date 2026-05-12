@@ -1076,6 +1076,123 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
   }
 });
 
+// ── GET /api/cosmetics/backgrounds/equipped ───────────────────────────────────
+app.get('/api/cosmetics/backgrounds/equipped', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const rows = await sql`
+      SELECT ub.item_id AS id, c.preview
+      FROM user_equipped_backgrounds ub
+      JOIN cosmetics c ON c.id = ub.item_id
+      WHERE ub.player = ${username}
+    `;
+    res.json({ ok: true, equipped: rows.map(r => ({ id: r.id, preview: r.preview })) });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/equipped GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/cosmetics/backgrounds/equip ────────────────────────────────────
+app.post('/api/cosmetics/backgrounds/equip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { item_id } = req.body || {};
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+  try {
+    const [item] = await sql`SELECT id FROM cosmetics WHERE id = ${item_id} AND type = 'background'`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [owned] = await sql`SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}`;
+    if (!owned) return res.status(403).json({ ok: false, error: 'Item not owned' });
+
+    const [count] = await sql`SELECT COUNT(*)::int AS n FROM user_equipped_backgrounds WHERE player = ${username}`;
+    if (count.n >= 4) return res.status(409).json({ ok: false, error: 'Max 4 backgrounds equipped' });
+
+    await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${item_id}) ON CONFLICT DO NOTHING`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/equip POST]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── DELETE /api/cosmetics/backgrounds/unequip ────────────────────────────────
+app.delete('/api/cosmetics/backgrounds/unequip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { item_id } = req.body || {};
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+  try {
+    await sql`DELETE FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ${item_id}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/unequip DELETE]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── GET /api/cosmetics/skins/equipped ────────────────────────────────────────
+app.get('/api/cosmetics/skins/equipped', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const rows = await sql`
+      SELECT us.hero_cid, us.skin_id, c.preview
+      FROM user_equipped_skins us
+      JOIN cosmetics c ON c.id = us.skin_id
+      WHERE us.player = ${username}
+    `;
+    const equipped = {};
+    for (const r of rows) equipped[r.hero_cid] = { skin_id: r.skin_id, preview: r.preview };
+    res.json({ ok: true, equipped });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/equipped GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/cosmetics/skins/equip ──────────────────────────────────────────
+app.post('/api/cosmetics/skins/equip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { skin_id } = req.body || {};
+  if (!skin_id) return res.status(400).json({ ok: false, error: 'skin_id required' });
+  try {
+    const [item] = await sql`SELECT id, hero_cid FROM cosmetics WHERE id = ${skin_id} AND type = 'skin'`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [owned] = await sql`SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${skin_id}`;
+    if (!owned) return res.status(403).json({ ok: false, error: 'Item not owned' });
+
+    await sql`
+      INSERT INTO user_equipped_skins (player, hero_cid, skin_id)
+      VALUES (${username}, ${item.hero_cid}, ${skin_id})
+      ON CONFLICT (player, hero_cid) DO UPDATE SET skin_id = EXCLUDED.skin_id
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/equip POST]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── DELETE /api/cosmetics/skins/unequip ──────────────────────────────────────
+app.delete('/api/cosmetics/skins/unequip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { hero_cid } = req.body || {};
+  if (!hero_cid) return res.status(400).json({ ok: false, error: 'hero_cid required' });
+  try {
+    await sql`DELETE FROM user_equipped_skins WHERE player = ${username} AND hero_cid = ${hero_cid}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/unequip DELETE]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ── POST /api/auth/verify ─────────────────────────────────────────────────────
 // ── Auth nonce store ──────────────────────────────────────────────────────────
 // One-shot nonces issued by /api/auth/challenge and consumed by /api/auth/verify.
