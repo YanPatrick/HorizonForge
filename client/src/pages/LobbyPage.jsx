@@ -27,28 +27,40 @@ function roleCategory(role) {
   return 'dps'
 }
 
+/* 
+   =============================================================================
+   INSTRUÇÕES PARA O BACKEND (CLAUDE / LLMS):
+   
+   1. REGRA DE OURO: Soma de atributos = 72. Máximo = 20 no Lv 1. Piso DEX = 10.
+   2. SISTEMA DE ACERTO: d20 + Modificador de DEX.
+   3. REGRA DE CONCENTRAÇÃO: Erros consecutivos somam +2 no próximo teste de acerto.
+   4. DANO DE RASPÃO (GLANCING BLOW): Erros causam 25% do dano base.
+   5. EVASÃO FÍSICA: Baseada em DEX. 
+   6. ABSORÇÃO MÁGICA: Baseada em WIS. Magia não erra, mas o dano é mitigado.
+   =============================================================================
+*/
+
 const RPG_ATTRIBUTES = {
-  // Atributos: Força(str), Agilidade(dex), Constituição(con), Inteligência(int), Sabedoria(wis), Carisma(cha)
-  // Regra: Soma = 72. Máximo = 20. Mínimo DEX = 10.
   knight:    { str: 15, dex: 10, con: 20, int: 7,  wis: 10, cha: 10, primary: 'str', skill: 'con' },
   paladin:   { str: 13, dex: 10, con: 19, int: 10, wis: 10, cha: 10, primary: 'str', skill: 'cha' },
   barbarian: { str: 20, dex: 12, con: 15, int: 5,  wis: 8,  cha: 12, primary: 'str', skill: 'str' },
-  assassin:  { str: 14, dex: 20, con: 10, int: 10, wis: 10, cha: 8,  primary: 'dex', skill: 'dex' },
+  assassin:  { str: 14, dex: 18, con: 10, int: 10, wis: 10, cha: 10, primary: 'dex', skill: 'dex' },
   archer:    { str: 12, dex: 20, con: 10, int: 10, wis: 10, cha: 10, primary: 'dex', skill: 'dex' },
   mage:      { str: 8,  dex: 10, con: 10, int: 20, wis: 14, cha: 10, primary: 'int', skill: 'int' },
   archmage:  { str: 7,  dex: 10, con: 10, int: 20, wis: 15, cha: 10, primary: 'int', skill: 'int' },
-  healer:    { str: 10, dex: 10, con: 10, int: 12, wis: 20, cha: 10, primary: 'str', skill: 'wis' }
+  healer:    { str: 8,  dex: 10, con: 8,  int: 18, wis: 10, cha: 18, primary: 'wis', skill: 'wis' }
 };
 
 const STARTER_GEAR = {
   knight:    { weapon: "Espada de Patrulha (+17 ATK)", weaponAtk: 17, armor: "Escudo de Carvalho (+142 HP)", armorHp: 142, spdOffset: 0 },
   paladin:   { weapon: "Maça Cerimonial (+23 ATK)",   weaponAtk: 23, armor: "Capa de Malha (+137 HP)",     armorHp: 137, spdOffset: 0 },
-  barbarian: { weapon: "Machado Lascado (+0 ATK)",     weaponAtk: 0,  armor: "Pintura de Guerra (+130 HP)", armorHp: 130, spdOffset: 0 },
-  assassin:  { weapon: "Adaga Envenenada (+12 ATK)",   weaponAtk: 12, armor: "Traje de Sombras (+13 HP)",   armorHp: 13,  spdOffset: 0 },
+  barbarian: { weapon: "Mãos Pesadas (+0 ATK)",       weaponAtk: 0,  armor: "Pintura de Guerra (+130 HP)", armorHp: 130, spdOffset: 0 },
+  assassin:  { weapon: "Adaga Envenenada (+42 ATK)",  weaponAtk: 42, armor: "Traje de Sombras (+13 HP)",   armorHp: 13,  spdOffset: 0 },
   mage:      { weapon: "Graveto Incendiário (+70 ATK)",weaponAtk: 70, armor: "Túnica Pesada (+30 HP)",     armorHp: 30,  spdOffset: -2.1 },
   archer:    { weapon: "Arco Curto Recurvo (+20 ATK)", weaponAtk: 20, armor: "Gibão de Couro (+60 HP)",    armorHp: 60,  spdOffset: -1.0 },
   archmage:  { weapon: "Cajado de Cristal (+88 ATK)",  weaponAtk: 88, armor: "Manto das Eras (+58 HP)",    armorHp: 58,  spdOffset: -2.1 },
-  healer:    { weapon: "Cetro de Rezas (+2 ATK)",      weaponAtk: 2,  armor: "Batas de Seda (+39 HP)",      armorHp: 39,  spdOffset: -1.0 }
+  // HEALER: Orbe de Ataque (+2) e Orbe de Cura (Garante o multiplicador de x1.30)
+  healer:    { weapon: "Cetro de Duas Orbes (+2 ATK / +1.25 SP)", weaponAtk: 2, armor: "Veste do Devoto (+39 HP)", armorHp: 39, spdOffset: -1.0 }
 };
 
 function fmtSP(v) {
@@ -215,18 +227,22 @@ function HeroDetail({ hero, onClose }) {
               </button>
 
               {rpgExpanded && (
-                <div className="rpg-sheet-container animate-fade-in">
-                  <div className="rpg-grid">
-                    {Object.entries(attrs).map(([key, val]) => (
+              <div className="rpg-sheet-container animate-fade-in">
+                <div className="rpg-grid">
+                  {Object.entries(attrs)
+                    // FILTRO: Só deixa passar o que NÃO for 'primary' nem 'skill'
+                    .filter(([key]) => key !== 'primary' && key !== 'skill')
+                    .map(([key, val]) => (
                       <div key={key} className="rpg-stat-box">
                         <span className="rpg-stat-name">{key.toUpperCase()}</span>
                         <span className="rpg-stat-value">{Math.round(val)}</span>
                         <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
                       </div>
                     ))}
-                  </div>
                 </div>
-              )}
+                <p className="rpg-note">Attributes used for item requirements and penalties.</p>
+              </div>
+            )}
             </div>
 
             {/* PAINEL 2: GEAR */}
