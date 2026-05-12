@@ -28,25 +28,27 @@ function roleCategory(role) {
 }
 
 const RPG_ATTRIBUTES = {
-  knight:    { str: 14, dex: 10, con: 18, int: 8,  wis: 10, cha: 12 }, // +7 pts
-  paladin:   { str: 12, dex: 8,  con: 18, int: 10, wis: 12, cha: 12 }, // +7 pts
-  barbarian: { str: 18, dex: 12, con: 18, int: 6,  wis: 8,  cha: 10 }, // +7 pts
-  assassin:  { str: 12, dex: 20, con: 10, int: 12, wis: 8,  cha: 10 }, // +7 pts
-  archer:    { str: 10, dex: 18, con: 12, int: 10, wis: 10, cha: 12 }, // +7 pts
-  mage:      { str: 6,  dex: 8,  con: 10, int: 20, wis: 14, cha: 14 }, // +7 pts
-  archmage:  { str: 6,  dex: 8,  con: 10, int: 20, wis: 16, cha: 12 }, // +7 pts
-  healer:    { str: 8,  dex: 10, con: 10, int: 14, wis: 18, cha: 12 }  // +7 pts
+  // Atributos: Força(str), Agilidade(dex), Constituição(con), Inteligência(int), Sabedoria(wis), Carisma(cha)
+  // Regra: Soma = 72. Máximo = 20. Mínimo DEX = 10.
+  knight:    { str: 15, dex: 10, con: 20, int: 7,  wis: 10, cha: 10, primary: 'str', skill: 'con' },
+  paladin:   { str: 13, dex: 10, con: 19, int: 10, wis: 10, cha: 10, primary: 'str', skill: 'cha' },
+  barbarian: { str: 20, dex: 12, con: 15, int: 5,  wis: 8,  cha: 12, primary: 'str', skill: 'str' },
+  assassin:  { str: 14, dex: 20, con: 10, int: 10, wis: 10, cha: 8,  primary: 'dex', skill: 'dex' },
+  archer:    { str: 12, dex: 20, con: 10, int: 10, wis: 10, cha: 10, primary: 'dex', skill: 'dex' },
+  mage:      { str: 8,  dex: 10, con: 10, int: 20, wis: 14, cha: 10, primary: 'int', skill: 'int' },
+  archmage:  { str: 7,  dex: 10, con: 10, int: 20, wis: 15, cha: 10, primary: 'int', skill: 'int' },
+  healer:    { str: 10, dex: 10, con: 10, int: 12, wis: 20, cha: 10, primary: 'str', skill: 'wis' }
 };
 
 const STARTER_GEAR = {
-  knight:    { weapon: "Espada de Patrulha (+22 ATK)", armor: "Escudo de Carvalho (+130 HP)" },
-  paladin:   { weapon: "Maça Cerimonial (+28 ATK)",   armor: "Capa de Malha (+117 HP)" },
-  barbarian: { weapon: "Machado Lascado (+7 ATK)",    armor: "Pintura de Guerra (+130 HP)" },
-  assassin:  { weapon: "Adaga Envenenada (+52 ATK)",  armor: "Traje de Sombras (+13 HP)" },
-  mage:      { weapon: "Graveto Incendiário (+60 ATK)",armor: "Túnica de Aprendiz (+20 HP)" },
-  archer:    { weapon: "Arco Curto Recurvo (+35 ATK)", armor: "Gibão de Couro (+20 HP)" },
-  archmage:  { weapon: "Cajado de Cristal (+68 ATK)",  armor: "Manto das Eras (+28 HP)" },
-  healer:    { weapon: "Cetro de Rezas (+27 ATK)",     armor: "Batas de Seda (+39 HP)" }
+  knight:    { weapon: "Espada de Patrulha (+17 ATK)", weaponAtk: 17, armor: "Escudo de Carvalho (+142 HP)", armorHp: 142, spdOffset: 0 },
+  paladin:   { weapon: "Maça Cerimonial (+23 ATK)",   weaponAtk: 23, armor: "Capa de Malha (+137 HP)",     armorHp: 137, spdOffset: 0 },
+  barbarian: { weapon: "Machado Lascado (+0 ATK)",     weaponAtk: 0,  armor: "Pintura de Guerra (+130 HP)", armorHp: 130, spdOffset: 0 },
+  assassin:  { weapon: "Adaga Envenenada (+12 ATK)",   weaponAtk: 12, armor: "Traje de Sombras (+13 HP)",   armorHp: 13,  spdOffset: 0 },
+  mage:      { weapon: "Graveto Incendiário (+70 ATK)",weaponAtk: 70, armor: "Túnica Pesada (+30 HP)",     armorHp: 30,  spdOffset: -2.1 },
+  archer:    { weapon: "Arco Curto Recurvo (+20 ATK)", weaponAtk: 20, armor: "Gibão de Couro (+60 HP)",    armorHp: 60,  spdOffset: -1.0 },
+  archmage:  { weapon: "Cajado de Cristal (+88 ATK)",  weaponAtk: 88, armor: "Manto das Eras (+58 HP)",    armorHp: 58,  spdOffset: -2.1 },
+  healer:    { weapon: "Cetro de Rezas (+2 ATK)",      weaponAtk: 2,  armor: "Batas de Seda (+39 HP)",      armorHp: 39,  spdOffset: -1.0 }
 };
 
 function fmtSP(v) {
@@ -1029,6 +1031,13 @@ export default function LobbyPage() {
     <>
       <nav className="topnav">
         <div className="nav-right">
+           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
+          <div className="nav-chest-pill" title="Fight for a chance to open a new chest!">
+            <span className="nav-chest-ico">🎁</span>
+            <span className="nav-chest-status">0 %</span>
+            <div className="nav-chest-glow"></div>
+          </div>
+
           {session?.mode === 'hive' && balance != null && (
             <div className="hive-bal">
               <img src="/images/hive-logo.png" width="14" height="12" style={{ display: 'inline-block', verticalAlign: 'middle', imageRendering: 'crisp-edges' }} alt="HIVE" />
