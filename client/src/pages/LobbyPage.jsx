@@ -1163,7 +1163,7 @@ export default function LobbyPage() {
 
         {view === 'grimoire' && <GrimoireView />}
 
-        {view === 'shop' && <ShopView session={session} toast={showToast} />}
+        {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
 
         {view === 'formation' && (
           <FormationView
