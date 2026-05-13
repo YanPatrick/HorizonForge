@@ -214,6 +214,13 @@
           }
           CK = Object.keys(C);
 
+          // Apply equipped skin portrait overrides (client-side, current player only).
+          // Skins with empty preview (default skins) leave portrait unchanged.
+          const _skinMap = window.HF_equipped_skins || {};
+          for (const [cid, data] of Object.entries(_skinMap)) {
+            if (C[cid] && data.preview) C[cid].portrait = data.preview;
+          }
+
           // Inject deps into the bot module now that C/CK/HF are populated.
           // HFBot.* methods will throw if called before this point.
           if (window.HFBot && typeof window.HFBot.init === "function") {
@@ -356,15 +363,6 @@
       // ═══════════════════════════════════════════════════
       //  GAME STATE
       // ═══════════════════════════════════════════════════
-      const ARENAS = ["arena-forest", "arena-desert", "arena-snow"];
-      //const ARENAS = ["arena-forest", "arena-desert"];
-      const _arena = ARENAS[Math.floor(Math.random() * ARENAS.length)];
-      document.body.style.backgroundImage = `url('/images/${_arena}.jpg')`;
-
-      // ❌ Antes — estica e distorce a imagem
-      //document.body.style.backgroundSize = "100% 100%";
-
-      // ✅ Depois — mantém proporção e preenche a tela
       document.body.style.backgroundSize = "cover";
       document.body.style.backgroundPosition = "center center";
 
@@ -1896,6 +1894,22 @@
       }
 
       function startGame(fmt, pvpMode = false) {
+        // Apply random background from player's equipped pool (client-side only).
+        (function applyArenaBackground() {
+          const pool = window.HF_equipped_backgrounds || [];
+          const guestArenas = [
+            { preview: '/images/arena-desert.jpg' },
+            { preview: '/images/arena-forest.jpg' },
+            { preview: '/images/arena-snow.jpg' },
+          ];
+          const list = pool.length > 0 ? pool : guestArenas;
+          const pick = list[Math.floor(Math.random() * list.length)];
+          const el = document.getElementById('arena-wrap');
+          if (pick.preview) {
+            document.body.style.backgroundImage = `url('${pick.preview}')`;
+          }
+        })();
+
         // Reset completo do estado para garantir partida limpa
         G.format = fmt;
         G.winsNeeded = Math.ceil(fmt / 2);

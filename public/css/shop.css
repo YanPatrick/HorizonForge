@@ -1,0 +1,574 @@
+/* ============================================================
+   Shop — cosmetics catalog styles
+   Imported by ShopView.jsx via @styles/shop.css
+   ============================================================ */
+
+/* ── Content area ────────────────────────────────────────── */
+.shop-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* ── PC: item grid (2 columns) ──────────────────────────── */
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 18px;
+}
+
+.shop-card {
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.shop-card:hover {
+  border-color: #3a3a6a;
+}
+
+.shop-card-owned {
+  border-color: rgba(76, 175, 80, 0.35);
+}
+
+.shop-card-preview {
+  width: 100%;
+  height: 90px;
+  background: #111128;
+}
+
+.shop-card-body {
+  padding: 10px 12px;
+}
+
+.shop-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 4px;
+}
+
+.shop-card-price {
+  font-size: 12px;
+  color: #c8a84b;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.shop-card-owned-badge {
+  font-size: 11px;
+  color: #4caf50;
+  margin-bottom: 6px;
+}
+
+.shop-card-btn {
+  display: block;
+  width: 100%;
+  padding: 5px 0;
+  border-radius: 5px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.shop-card-btn.buy {
+  background: #c8a84b;
+  color: #0a0a14;
+}
+
+.shop-card-btn.free {
+  background: #2a5a2a;
+  color: #7fff7f;
+  border: 1px solid #4caf5066;
+}
+
+.shop-card-btn.owned {
+  background: transparent;
+  color: #4caf50;
+  border: 1px solid #4caf5033;
+  cursor: default;
+}
+
+.shop-card-btn:disabled:not(.owned) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Skins grid: portrait, 5 per row ────────────────────── */
+.shop-grid-skins {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 10px 18px 18px;
+}
+
+.shop-grid-skins .shop-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.shop-grid-skins .shop-card-preview {
+  aspect-ratio: 2 / 3;
+  height: auto;
+  background-position: top center;
+  flex-shrink: 0;
+}
+
+.shop-grid-skins .shop-card-body {
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.shop-grid-skins .shop-card-name {
+  font-size: 12px;
+  margin-bottom: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.35;
+  min-height: 2.7em;
+}
+
+.shop-grid-skins .shop-card-hero {
+  font-size: 0.7rem;
+  margin-bottom: 4px;
+}
+
+.shop-grid-skins .shop-card-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 6px;
+  min-height: 2.8em;
+}
+
+.shop-grid-skins .shop-card-actions {
+  margin-top: auto;
+}
+
+.shop-grid-skins .shop-card-btn {
+  font-size: 11px;
+  padding: 5px 0;
+}
+
+/* ── Empty state message ─────────────────────────────────── */
+.shop-empty {
+  grid-column: 1 / -1;
+  padding: 32px;
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+}
+
+/* ── Mobile: category pills ──────────────────────────────── */
+.shop-mobile-filters {
+  display: none;
+  gap: 6px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-bottom: 1px solid #1e1e3a;
+  background: #111128;
+}
+
+.shop-pill {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: 12px;
+  border: 1px solid #2a2a4a;
+  background: transparent;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.shop-pill.active {
+  background: rgba(200, 168, 75, 0.15);
+  border-color: #c8a84b;
+  color: #c8a84b;
+}
+
+/* ── Mobile: vertical list ───────────────────────────────── */
+.shop-list {
+  display: none;
+  flex-direction: column;
+}
+
+.shop-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a1a2e;
+  transition: background 0.1s;
+}
+
+.shop-row:active {
+  background: #1a1a2e;
+}
+
+.shop-row-owned {
+  background: rgba(76, 175, 80, 0.04);
+}
+
+.shop-row-preview {
+  width: 42px;
+  height: 42px;
+  border-radius: 7px;
+  background: #111128;
+  flex-shrink: 0;
+}
+
+.shop-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop-row-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shop-row-type {
+  font-size: 10px;
+  color: #555;
+  margin-top: 1px;
+}
+
+.shop-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.shop-row-price {
+  font-size: 11px;
+  color: #c8a84b;
+  font-weight: 600;
+}
+
+.shop-row-state {
+  font-size: 10px;
+  font-weight: 700;
+  color: #4caf50;
+  letter-spacing: 0.02em;
+}
+
+.shop-row-state.equipped {
+  color: #c8a84b;
+}
+
+.shop-row-btn {
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: none;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.shop-row-btn.buy   { background: #c8a84b; color: #0a0a14; }
+.shop-row-btn.free  { background: #2a5a2a; color: #7fff7f; border: 1px solid #4caf5044; }
+.shop-row-btn:disabled:not(.equip):not(.unequip) { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Purchase modal ──────────────────────────────────────── */
+.shop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.shop-modal {
+  background: #111128;
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  width: 320px;
+  max-width: 92vw;
+  overflow: hidden;
+}
+
+.shop-modal-preview {
+  width: 100%;
+  height: 280px;
+  background: #0d0d1a;
+}
+
+.shop-modal-body {
+  padding: 16px;
+}
+
+.shop-modal-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #eee;
+  margin-bottom: 4px;
+}
+
+.shop-modal-price {
+  font-size: 14px;
+  color: #c8a84b;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.shop-modal-tos {
+  font-size: 10px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  border-top: 1px solid #1e1e3a;
+  padding-top: 10px;
+}
+
+.shop-modal-error {
+  font-size: 11px;
+  color: #ff6666;
+  margin-bottom: 8px;
+  background: rgba(255, 100, 100, 0.08);
+  border: 1px solid rgba(255, 100, 100, 0.2);
+  border-radius: 5px;
+  padding: 6px 8px;
+}
+
+.shop-modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.shop-btn-cancel {
+  flex: 1;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: 1px solid #2a2a4a;
+  background: transparent;
+  color: #888;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.shop-btn-cancel:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.shop-btn-confirm {
+  flex: 2;
+  padding: 8px 0;
+  border-radius: 6px;
+  border: none;
+  background: #c8a84b;
+  color: #0a0a14;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop-btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Responsive: mobile ──────────────────────────────────── */
+@media (max-width: 700px) {
+  #view-shop .wiki-sidebar { display: none; }
+  .shop-grid { display: none; }
+  .shop-list { display: flex; }
+  .shop-mobile-filters { display: flex; }
+}
+
+/* ── Equip / Unequip buttons ─────────────────────────────── */
+.shop-card-btn.equip  { background: #1a4a2a; color: #7fff7f; border: 1px solid #2a7a4a; margin-top: 4px; }
+.shop-card-btn.unequip { background: transparent; color: #c8a84b; border: 1px solid #c8a84b55; margin-top: 4px; cursor: pointer; }
+.shop-card-btn.equip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.shop-row-btn.equip   { background: #1a4a2a; color: #7fff7f; border: 1px solid #2a7a4a; }
+.shop-row-btn.unequip { background: transparent; color: #c8a84b; border: 1px solid #c8a84b55; }
+.shop-row-btn.equip:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Highlight equipped cards */
+.shop-card-equipped { border-color: #c8a84b88; box-shadow: 0 0 8px #c8a84b33; }
+.shop-row-equipped  { border-left: 2px solid #c8a84b; }
+
+/* ── Search bar + sort row ───────────────────────────────── */
+.shop-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px 4px;
+}
+.shop-search {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  font-size: 0.85rem;
+  outline: none;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.shop-search::placeholder { color: rgba(255,255,255,0.3); }
+.shop-search:focus { border-color: rgba(200,168,75,0.4); }
+
+.shop-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.shop-sort-label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+}
+.shop-sort {
+  padding: 6px 28px 6px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #e8e0d0;
+  font-size: 0.82rem;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.shop-sort:focus { border-color: rgba(200,168,75,0.4); }
+.shop-sort option { background: #1a1a2e; color: #e8e0d0; }
+
+/* ── Show owned toggle ───────────────────────────────────── */
+.shop-owned-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  cursor: pointer;
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.5);
+  user-select: none;
+  white-space: nowrap;
+}
+.shop-owned-toggle input[type="checkbox"] {
+  accent-color: #c8a84b;
+  cursor: pointer;
+  width: 13px;
+  height: 13px;
+}
+.shop-owned-toggle:hover { color: rgba(255,255,255,0.75); }
+
+/* ── Hero filter pills ───────────────────────────────────── */
+.shop-hero-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px 10px;
+}
+.shop-hero-pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.shop-hero-pill.active {
+  background: rgba(200,168,75,0.15);
+  border-color: #c8a84b;
+  color: #c8a84b;
+}
+
+/* ── Slot counter (sidebar) ──────────────────────────────── */
+.shop-slot-counter {
+  margin-top: 14px;
+  padding: 10px 8px 6px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.shop-slot-counter > span {
+  font-size: 0.73rem;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+
+/* ── Slot counter bar (content area) ────────────────────── */
+.shop-slot-counter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px 12px;
+}
+.shop-slot-label {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.65);
+  font-weight: 500;
+}
+
+/* ── Slot dots (shared) ──────────────────────────────────── */
+.shop-slot-dots {
+  display: flex;
+  gap: 5px;
+}
+.shop-slot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(200,168,75,0.35);
+  background: transparent;
+  transition: all 0.2s;
+}
+.shop-slot-dot.filled {
+  background: #c8a84b;
+  border-color: #c8a84b;
+  box-shadow: 0 0 6px rgba(200,168,75,0.5);
+}
+
+/* ── Skin preview icon overlay ───────────────────────────── */
+.shop-preview-ico {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.shop-card-preview, .shop-row-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Hero label on skin cards ────────────────────────────── */
+.shop-card-hero {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 4px;
+}
+
+/* ── Equipped badge (row/mobile only) ───────────────────── */
+.shop-row-equipped-badge {
+  color: #c8a84b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 4px;
+}

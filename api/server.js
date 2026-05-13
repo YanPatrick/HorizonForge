@@ -144,6 +144,41 @@ async function verifyHivePayment(_txId, from, wager, matchId, maxAttempts = 15) 
 }
 
 /**
+ * Verify an on-chain transfer for a shop purchase.
+ * Memo must be exactly `shop_{itemId}`.
+ * Retries for up to 60s.
+ */
+async function verifyShopPayment(from, price, itemId, maxAttempts = 20) {
+  const expectedMemo = `shop_${itemId}`;
+  let lastErr;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const history = await hiveRpc('condenser_api.get_account_history', [from, -1, 50]);
+      if (!Array.isArray(history)) throw new Error('tx_not_found');
+      for (let i = history.length - 1; i >= 0; i--) {
+        const [, entry] = history[i];
+        const [opType, op] = entry.op;
+        if (opType !== 'transfer') continue;
+        if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+        if (op.from.toLowerCase() !== from.toLowerCase()) continue;
+        if (!op.amount.endsWith(' HIVE')) continue;
+        const sent = parseFloat(op.amount);
+        if (Math.abs(sent - price) > 0.001) continue;
+        if (op.memo !== expectedMemo) continue;
+        console.log(`✅ Shop payment verified: ${from} → ${HIVE_GAME_ACCOUNT} | ${op.amount} | ${op.memo}`);
+        return true;
+      }
+      throw new Error('tx_not_found');
+    } catch (err) {
+      lastErr = err;
+      if (err.message === 'tx_not_found') { await sleep(3000); continue; }
+      throw err;
+    }
+  }
+  throw new Error(`Shop payment timed out: ${lastErr?.message}`);
+}
+
+/**
  * Refund a wager back to a player (called on payment timeout or match cancellation).
  */
 async function refundHiveWager(to, amount, matchId) {
@@ -828,6 +863,67 @@ app.post('/api/migrate', async (req, res) => {
       )
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS cosmetics (
+        id          TEXT PRIMARY KEY,
+        type        TEXT NOT NULL CHECK (type IN ('background', 'skin')),
+        name        TEXT NOT NULL,
+        preview     TEXT NOT NULL,
+        price_hive  NUMERIC(10,3) NOT NULL DEFAULT 0,
+        hero_cid    TEXT,
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `;
+    await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
+    await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_cosmetics (
+        player        TEXT NOT NULL,
+        item_id       TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+        purchased_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (player, item_id)
+      )
+    `;
+
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
+        ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL),
+        ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL),
+        ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL)
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
+        ('skin_knight',    'skin', 'Knight',    '', 0, 'knight'),
+        ('skin_mage',      'skin', 'Mage',      '', 0, 'mage'),
+        ('skin_archer',    'skin', 'Archer',    '', 0, 'archer'),
+        ('skin_healer',    'skin', 'Healer',    '', 0, 'healer'),
+        ('skin_assassin',  'skin', 'Assassin',  '', 0, 'assassin'),
+        ('skin_paladin',   'skin', 'Paladin',   '', 0, 'paladin'),
+        ('skin_archmage',  'skin', 'Archmage',  '', 0, 'archmage'),
+        ('skin_barbarian', 'skin', 'Barbarian', '', 0, 'barbarian')
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_equipped_backgrounds (
+        player   TEXT NOT NULL,
+        item_id  TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+        PRIMARY KEY (player, item_id)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS user_equipped_skins (
+        player    TEXT NOT NULL,
+        hero_cid  TEXT NOT NULL,
+        skin_id   TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+        PRIMARY KEY (player, hero_cid)
+      )
+    `;
+
     // Refresh cached config that's seeded by this migration (e.g. max-units cap).
     await refreshMaxUnitsCap();
 
@@ -888,6 +984,280 @@ app.put('/api/formations', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('[/api/formations PUT]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/shop
+ * Returns cosmetics catalog. Public (no auth required).
+ * Includes gameAccount for the frontend to use in requestTransfer.
+ */
+app.get('/api/shop', async (_req, res) => {
+  try {
+    const items = await sql`
+      SELECT id, type, name, preview,
+             price_hive::float AS price_hive,
+             hero_cid,
+             EXTRACT(EPOCH FROM created_at) * 1000 AS created_ms
+      FROM cosmetics
+      ORDER BY created_at ASC
+    `;
+    res.json({ ok: true, items, gameAccount: HIVE_GAME_ACCOUNT });
+  } catch (err) {
+    console.error('[/api/shop GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+const DEFAULT_BG_IDS = ['bg_desert', 'bg_florest', 'bg_snow'];
+const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin_barbarian', 'skin_healer', 'skin_knight', 'skin_mage', 'skin_paladin'];
+
+async function ensureDefaultCosmetics(username) {
+  const allDefaults = [...DEFAULT_BG_IDS, ...DEFAULT_SKIN_IDS];
+
+  // Check ownership, equipped backgrounds, and equipped skins independently
+  const [ownedRows, equippedBgRows, equippedSkinRows, totalEquippedBg] = await Promise.all([
+    sql`SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${allDefaults})`,
+    sql`SELECT item_id FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ANY(${DEFAULT_BG_IDS})`,
+    sql`SELECT skin_id FROM user_equipped_skins WHERE player = ${username} AND skin_id = ANY(${DEFAULT_SKIN_IDS})`,
+    sql`SELECT COUNT(*)::int as count FROM user_equipped_backgrounds WHERE player = ${username}`,
+  ]);
+
+  const ownedSet = new Set(ownedRows.map(r => r.item_id));
+  const equippedBgSet = new Set(equippedBgRows.map(r => r.item_id));
+  const equippedSkSet = new Set(equippedSkinRows.map(r => r.skin_id));
+
+  const missingOwnership = allDefaults.filter(id => !ownedSet.has(id));
+  const missingBgEquip = DEFAULT_BG_IDS.filter(id => !equippedBgSet.has(id));
+  const missingSkinEquip = DEFAULT_SKIN_IDS.filter(id => !equippedSkSet.has(id));
+
+  if (!missingOwnership.length && !missingBgEquip.length && !missingSkinEquip.length) return;
+
+  // Grant missing ownership
+  for (const id of missingOwnership) {
+    await sql`INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+  }
+
+  // Auto-equip default backgrounds only if the user has no equipped backgrounds at all (fresh account).
+  // If they already have any equipped, respect their intentional selection.
+  const userHasAnyEquippedBg = (totalEquippedBg[0]?.count ?? 0) > 0;
+  if (!userHasAnyEquippedBg) {
+    for (const id of missingBgEquip) {
+      await sql`INSERT INTO user_equipped_backgrounds (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
+    }
+  }
+
+  // Equip missing skins (need hero_cid from cosmetics table)
+  if (missingSkinEquip.length > 0) {
+    const skinRows = await sql`
+      SELECT id, hero_cid FROM cosmetics
+      WHERE id = ANY(${missingSkinEquip}) AND type = 'skin' AND hero_cid IS NOT NULL
+    `;
+    for (const skin of skinRows) {
+      await sql`
+        INSERT INTO user_equipped_skins (player, hero_cid, skin_id)
+        VALUES (${username}, ${skin.hero_cid}, ${skin.id})
+        ON CONFLICT (player, hero_cid) DO NOTHING
+      `;
+    }
+  }
+
+  console.log(`🎮 Default cosmetics initialized for: ${username}`);
+}
+
+/**
+ * GET /api/shop/owned
+ * Returns array of item_ids owned by the authenticated player.
+ * Grants and equips default cosmetics on first call if not yet initialized.
+ */
+app.get('/api/shop/owned', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    await ensureDefaultCosmetics(username);
+    const rows = await sql`
+      SELECT item_id FROM user_cosmetics WHERE player = ${username}
+    `;
+    res.json({ ok: true, owned: rows.map(r => r.item_id) });
+  } catch (err) {
+    console.error('[/api/shop/owned GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/shop/verify-purchase
+ * Body: { item_id }
+ * - price_hive = 0: grant immediately (no blockchain verification)
+ * - price_hive > 0: verify Hive transfer, then grant
+ * Idempotent: if player already owns the item, returns { ok: true } without error.
+ */
+app.post('/api/shop/verify-purchase', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+  const { item_id } = req.body;
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+
+  try {
+    const [item] = await sql`SELECT id, price_hive FROM cosmetics WHERE id = ${item_id}`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [existing] = await sql`
+      SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}
+    `;
+    if (existing) return res.json({ ok: true });
+
+    const price = parseFloat(item.price_hive);
+
+    if (price === 0) {
+      await sql`
+        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+        ON CONFLICT DO NOTHING
+      `;
+      console.log(`🎁 Free cosmetic granted: ${username} → ${item_id}`);
+      return res.json({ ok: true });
+    }
+
+    try {
+      await verifyShopPayment(username, price, item_id);
+    } catch {
+      return res.status(402).json({ ok: false, error: 'Payment not found or timed out' });
+    }
+    await sql`
+      INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+      ON CONFLICT DO NOTHING
+    `;
+    console.log(`💰 Shop purchase recorded: ${username} → ${item_id} (${price} HIVE)`);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/shop/verify-purchase]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── GET /api/cosmetics/backgrounds/equipped ───────────────────────────────────
+app.get('/api/cosmetics/backgrounds/equipped', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const rows = await sql`
+      SELECT ub.item_id AS id, c.preview
+      FROM user_equipped_backgrounds ub
+      JOIN cosmetics c ON c.id = ub.item_id
+      WHERE ub.player = ${username}
+    `;
+    res.json({ ok: true, equipped: rows.map(r => ({ id: r.id, preview: r.preview })) });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/equipped GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/cosmetics/backgrounds/equip ────────────────────────────────────
+app.post('/api/cosmetics/backgrounds/equip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { item_id } = req.body || {};
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+  try {
+    const [item] = await sql`SELECT id FROM cosmetics WHERE id = ${item_id} AND type = 'background'`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [owned] = await sql`SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}`;
+    if (!owned) return res.status(403).json({ ok: false, error: 'Item not owned' });
+
+    const rows = await sql`
+      INSERT INTO user_equipped_backgrounds (player, item_id)
+      SELECT ${username}, ${item_id}
+      WHERE (SELECT COUNT(*) FROM user_equipped_backgrounds WHERE player = ${username}) < 4
+      ON CONFLICT DO NOTHING
+      RETURNING item_id
+    `;
+    if (rows.length === 0) {
+      // Could be: already equipped (idempotent OK) or cap reached (409)
+      const [already] = await sql`SELECT 1 FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ${item_id}`;
+      if (!already) return res.status(409).json({ ok: false, error: 'Max 4 backgrounds equipped' });
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/equip POST]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── DELETE /api/cosmetics/backgrounds/unequip ────────────────────────────────
+app.delete('/api/cosmetics/backgrounds/unequip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { item_id } = req.body || {};
+  if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
+  try {
+    await sql`DELETE FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ${item_id}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/backgrounds/unequip DELETE]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── GET /api/cosmetics/skins/equipped ────────────────────────────────────────
+app.get('/api/cosmetics/skins/equipped', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const rows = await sql`
+      SELECT us.hero_cid, us.skin_id, c.preview
+      FROM user_equipped_skins us
+      JOIN cosmetics c ON c.id = us.skin_id
+      WHERE us.player = ${username}
+    `;
+    const equipped = {};
+    for (const r of rows) equipped[r.hero_cid] = { skin_id: r.skin_id, preview: r.preview };
+    res.json({ ok: true, equipped });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/equipped GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/cosmetics/skins/equip ──────────────────────────────────────────
+app.post('/api/cosmetics/skins/equip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { skin_id } = req.body || {};
+  if (!skin_id) return res.status(400).json({ ok: false, error: 'skin_id required' });
+  try {
+    const [item] = await sql`SELECT id, hero_cid FROM cosmetics WHERE id = ${skin_id} AND type = 'skin'`;
+    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+
+    const [owned] = await sql`SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${skin_id}`;
+    if (!owned) return res.status(403).json({ ok: false, error: 'Item not owned' });
+
+    await sql`
+      INSERT INTO user_equipped_skins (player, hero_cid, skin_id)
+      VALUES (${username}, ${item.hero_cid}, ${skin_id})
+      ON CONFLICT (player, hero_cid) DO UPDATE SET skin_id = EXCLUDED.skin_id
+    `;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/equip POST]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── DELETE /api/cosmetics/skins/unequip ──────────────────────────────────────
+app.delete('/api/cosmetics/skins/unequip', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const { hero_cid } = req.body || {};
+  if (!hero_cid) return res.status(400).json({ ok: false, error: 'hero_cid required' });
+  try {
+    await sql`DELETE FROM user_equipped_skins WHERE player = ${username} AND hero_cid = ${hero_cid}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/cosmetics/skins/unequip DELETE]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -962,7 +1332,13 @@ app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
       return res.status(401).json({ error: 'Signature verification failed.' });
     }
 
-    res.json({ ok: true, token: makeToken(username.toLowerCase()) });
+    const user = username.toLowerCase();
+    await sql`
+      INSERT INTO user_cosmetics (player, item_id)
+      SELECT ${user}, id FROM cosmetics WHERE price_hive = 0
+      ON CONFLICT DO NOTHING
+    `;
+    res.json({ ok: true, token: makeToken(user) });
   } catch (err) {
     console.error('[auth/verify]', err.message);
     res.status(500).json({ error: 'Verification failed. Try again.' });

@@ -274,6 +274,8 @@ export default function BattlePage() {
         'render',
       ]
       for (const name of reactSide) delete window[name]
+      delete window.HF_equipped_backgrounds
+      delete window.HF_equipped_skins
       for (const name of battleSide) delete window[name]
     }
   }, [closeQuit, confirmQuit])
@@ -443,6 +445,26 @@ export default function BattlePage() {
         addScript('/js/bot-ai.js'),
         addScript('/js/skill-tooltip.js'),
       ]))
+      .then(async () => {
+        const sess = getSession()
+        if (sess?.mode === 'hive' && sess?.token) {
+          const headers = { Authorization: `Bearer ${sess.token}` }
+          try {
+            const [bgs, skins] = await Promise.all([
+              fetch('/api/cosmetics/backgrounds/equipped', { headers }).then(r => r.json()),
+              fetch('/api/cosmetics/skins/equipped', { headers }).then(r => r.json()),
+            ])
+            window.HF_equipped_backgrounds = bgs.equipped || []
+            window.HF_equipped_skins = skins.equipped || {}
+          } catch {
+            window.HF_equipped_backgrounds = []
+            window.HF_equipped_skins = {}
+          }
+        } else {
+          window.HF_equipped_backgrounds = []
+          window.HF_equipped_skins = {}
+        }
+      })
       .then(() => Promise.all([
         addScript('/socket.io/socket.io.js'),
         addScript('/js/battle.js'),

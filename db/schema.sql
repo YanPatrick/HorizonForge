@@ -227,3 +227,29 @@ CREATE TABLE IF NOT EXISTS formations (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (player, slot)
 );
+
+-- ============================================================
+-- Shop — cosmetics catalog + per-player ownership
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cosmetics (
+  id          TEXT PRIMARY KEY,
+  type        TEXT NOT NULL CHECK (type IN ('background', 'skin')),
+  name        TEXT NOT NULL,
+  preview     TEXT NOT NULL,
+  price_hive  NUMERIC(10,3) NOT NULL DEFAULT 0,
+  hero_cid    TEXT,
+  sort_order  INT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_cosmetics (
+  player        TEXT NOT NULL,
+  item_id       TEXT NOT NULL REFERENCES cosmetics(id) ON DELETE CASCADE,
+  purchased_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (player, item_id)
+);
+
+INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
+  ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL, 10),
+  ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL, 20),
+  ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL, 30)
+ON CONFLICT (id) DO NOTHING;
