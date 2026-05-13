@@ -285,7 +285,7 @@ function HeroDetail({ hero, onClose }) {
 }
 
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
-function MobileHeroPage({ hero, onClose }) {
+function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
   const [expanded, setExpanded] = useState(false)
   useEffect(() => { setExpanded(false) }, [hero])
 
@@ -304,9 +304,9 @@ function MobileHeroPage({ hero, onClose }) {
         <div className="hf-mhp-body">
           <div
             className="hf-mhp-portrait"
-            style={hero.url_portrait ? { '--portrait-url': `url('${hero.url_portrait}')` } : {}}
+            style={(equippedSkins[hero.cid]?.preview || hero.url_portrait) ? { '--portrait-url': `url('${equippedSkins[hero.cid]?.preview || hero.url_portrait}')` } : {}}
           >
-            {!hero.url_portrait && <div className="hf-mhp-ico">{hero.icon}</div>}
+            {!(equippedSkins[hero.cid]?.preview || hero.url_portrait) && <div className="hf-mhp-ico">{hero.icon}</div>}
           </div>
           <div className="hf-mhp-content">
             <div className="hf-detail-role-wrap">
@@ -348,7 +348,7 @@ function MobileHeroPage({ hero, onClose }) {
 }
 
 /* ── FormationView ──────────────────────────────────────── */
-function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast }) {
+function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {} }) {
   const [editingSlot, setEditingSlot] = useState(null)
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -357,6 +357,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
 
   const isGuest = session?.mode === 'guest'
   const activeForm = editingSlot !== null ? formations[editingSlot] : null
+  const skinUrl = (h) => (h && equippedSkins[h.cid]?.preview) || h?.url_portrait || null
   const isFull = activeForm?.hero_ids.length >= 8
 
   function openSlot(idx) {
@@ -422,7 +423,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
   return (
     <div id="view-formation" className="lv active">
       {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} />}
-      <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} />
+      <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} equippedSkins={equippedSkins} />
       <div className="fv-wrap">
         <div className="fv-hero-frame">
           <div className="fv-filter-bar">
@@ -444,8 +445,8 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
                     onClick={() => { if (editingSlot !== null && !isDisabled) toggleHero(h.cid); else if (editingSlot === null) setDetailHero(h) }}
                   >
                     <button className="fhc-info-btn" aria-label="Hero info" onClick={e => { e.stopPropagation(); setDetailHero(h) }}>i</button>
-                    <div className={`form-hc-portrait${h.url_portrait ? ' has-portrait' : ''}`} style={h.url_portrait ? { '--portrait-url': `url('${h.url_portrait}')` } : {}}>
-                      {!h.url_portrait && <div className="form-hc-ico">{h.icon}</div>}
+                    <div className={`form-hc-portrait${skinUrl(h) ? ' has-portrait' : ''}`} style={skinUrl(h) ? { '--portrait-url': `url('${skinUrl(h)}')` } : {}}>
+                      {!skinUrl(h) && <div className="form-hc-ico">{h.icon}</div>}
                     </div>
                     <div className="form-hc-name">{h.name}</div>
                   </div>
@@ -493,12 +494,12 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
                   const cid = formations[editingSlot].hero_ids[i]
                   const hero = heroData?.find(h => h.cid === cid)
                   return (
-                    <div key={i} className={`fv-slot-cell${cid ? ' filled' : ''}${hero?.url_portrait ? ' has-portrait' : ''}`}
-                      style={hero?.url_portrait ? { '--portrait-url': `url('${hero.url_portrait}')` } : {}}
+                    <div key={i} className={`fv-slot-cell${cid ? ' filled' : ''}${skinUrl(hero) ? ' has-portrait' : ''}`}
+                      style={skinUrl(hero) ? { '--portrait-url': `url('${skinUrl(hero)}')` } : {}}
                       title={cid ? `${hero?.name || cid} — click to remove` : ''}
                       onClick={() => cid && removeFromSlot(cid)}
                     >
-                      {cid && !hero?.url_portrait && (hero?.icon || '?')}
+                      {cid && !skinUrl(hero) && (hero?.icon || '?')}
                       {!cid && <span className="fv-slot-empty-hint">+</span>}
                     </div>
                   )
@@ -619,6 +620,7 @@ export default function LobbyPage() {
   const [pvpBet, setPvpBet] = useState(() => Number(loadPref('pvp_bet', username, 0)))
   const [pvpFmt, setPvpFmt] = useState(() => Number(loadPref('pvp_fmt', username, 5)))
   const [heroData, setHeroData] = useState(null)
+  const [equippedSkins, setEquippedSkins] = useState({})
   const [formations, setFormations] = useState(EMPTY_FORMATIONS)
   const [formationsLoaded, setFormationsLoaded] = useState(false)
   const [defaultSlot, setDefaultSlot] = useState(() => Number(loadPref('default_form_slot', username, 0)))
@@ -795,6 +797,15 @@ export default function LobbyPage() {
       if (d.ok) setHeroData(d.characters.sort((a, b) => (order[roleCategory(a.role)] ?? 3) - (order[roleCategory(b.role)] ?? 3)))
     }).catch(() => { })
   }, [])
+
+  /* ── load equipped skins ─────────────────────────────── */
+  useEffect(() => {
+    if (!session?.token) return
+    fetch('/api/cosmetics/skins/equipped', { headers: { Authorization: `Bearer ${session.token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setEquippedSkins(d.equipped || {}) })
+      .catch(() => {})
+  }, []) // eslint-disable-line
 
   /* ── load formations ─────────────────────────────────── */
   useEffect(() => {
@@ -1169,7 +1180,7 @@ export default function LobbyPage() {
           <FormationView
             session={session} formations={formations} setFormations={setFormations}
             defaultSlot={defaultSlot} setDefaultSlot={setDefaultSlot}
-            heroData={heroData} toast={showToast}
+            heroData={heroData} toast={showToast} equippedSkins={equippedSkins}
           />
         )}
 

@@ -334,7 +334,7 @@ export default function ShopView({ session, toast, heroData }) {
       {modal && (
         <div className="shop-modal-overlay" onClick={() => !claiming && setModal(null)}>
           <div className="shop-modal" onClick={e => e.stopPropagation()}>
-            <div className="shop-modal-preview" style={{ backgroundImage: `url(${modal.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+            <div className="shop-modal-preview" style={{ backgroundImage: `url(${modal.preview})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }} />
             <div className="shop-modal-body">
               <div className="shop-modal-name">{modal.name}</div>
               <div className="shop-modal-price">{modal.price_hive.toFixed(3)} HIVE</div>
@@ -389,24 +389,29 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
         {item.type === 'skin' && item.hero_cid && (
           <div className="shop-card-hero">{item.hero_cid.charAt(0).toUpperCase() + item.hero_cid.slice(1)}</div>
         )}
-        <button
-          className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
-          disabled={buyDisabled}
-          onClick={onBuy}
-          title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-        >
-          {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
-        </button>
-        {isOwned && (
-          <button
-            className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
-            disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
-            onClick={isEquipped ? onUnequip : onEquip}
-            title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
-          >
-            {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
-          </button>
+        {item.type === 'skin' && item.description && (
+          <div className="shop-card-desc">{item.description}</div>
         )}
+        <div className="shop-card-actions">
+          <button
+            className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
+            disabled={buyDisabled}
+            onClick={onBuy}
+            title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
+          >
+            {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
+          </button>
+          {isOwned && (
+            <button
+              className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
+              disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
+              onClick={isEquipped ? onUnequip : onEquip}
+              title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
+            >
+              {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -431,22 +436,14 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
       </div>
       <div className="shop-row-right">
         {isOwned
-          ? <div className="shop-owned-text">✓ Owned</div>
+          ? <div className={`shop-row-state${isEquipped ? ' equipped' : ''}`}>
+              {isEquipped ? '✦ Equipped' : '✓ Owned'}
+            </div>
           : <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive.toFixed(3)} HIVE`}</div>
         }
-        <button
-          className={`shop-row-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
-          disabled={buyDisabled}
-          onClick={onBuy}
-          title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-        >
-          {isClaiming ? '⌛' : isOwned ? '✓' : isFree ? 'Get Free' : 'Buy'}
-        </button>
-        {isOwned && (
-          isEquipped
-            ? <>
-              <span className="shop-row-equipped-badge">✓</span>
-              <button
+        {isOwned
+          ? isEquipped
+            ? <button
                 className="shop-row-btn unequip"
                 disabled={isEquipping || !isHive}
                 onClick={onUnequip}
@@ -454,16 +451,23 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
               >
                 {isEquipping ? '⌛' : 'Remove'}
               </button>
-            </>
             : <button
-              className="shop-row-btn equip"
-              disabled={isEquipping || !canEquip || !isHive}
-              onClick={onEquip}
-              title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
+                className="shop-row-btn equip"
+                disabled={isEquipping || !canEquip || !isHive}
+                onClick={onEquip}
+                title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
+              >
+                {isEquipping ? '⌛' : 'Equip'}
+              </button>
+          : <button
+              className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
+              disabled={buyDisabled}
+              onClick={onBuy}
+              title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
             >
-              {isEquipping ? '⌛' : 'Equip'}
+              {isClaiming ? '⌛' : isFree ? 'Get Free' : 'Buy'}
             </button>
-        )}
+        }
       </div>
     </div>
   )
