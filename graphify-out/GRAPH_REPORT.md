@@ -1,12 +1,12 @@
-# Graph Report - HorizonForge  (2026-05-11)
+# Graph Report - HorizonForge  (2026-05-13)
 
 ## Corpus Check
-- 17 files · ~103,285 words
+- 18 files · ~158,028 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 181 nodes · 348 edges · 11 communities detected
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.8)
+- 193 nodes · 369 edges · 15 communities detected
+- Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 21 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -21,10 +21,14 @@
 - [[_COMMUNITY_Community 8|Community 8]]
 - [[_COMMUNITY_Community 9|Community 9]]
 - [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `log()` - 22 edges
-2. `render()` - 20 edges
+1. `log()` - 24 edges
+2. `render()` - 21 edges
 3. `resolveBattleRound()` - 10 edges
 4. `startBattle()` - 10 edges
 5. `startGame()` - 10 edges
@@ -35,77 +39,99 @@
 10. `endBattle()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `ensureDefaultCosmetics()` --calls--> `log()`  [INFERRED]
+  api\server.js → public\js\battle.js
+- `resolveBattleRound()` --calls--> `simulate()`  [INFERRED]
+  api\server.js → shared\simulate.js
 - `runDailyCleanup()` --calls--> `log()`  [INFERRED]
   api\server.js → public\js\battle.js
-- `initGame()` --calls--> `init()`  [INFERRED]
-  public\js\battle.js → public\js\skill-tooltip.js
-- `verifyHivePayment()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
-- `refundHiveWager()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
-- `sendHivePrize()` --calls--> `log()`  [INFERRED]
-  api\server.js → public\js\battle.js
+- `BENCH_SLOTS()` --calls--> `botBuyPhase()`  [INFERRED]
+  public\js\battle.js → public\js\bot-ai.js
+- `START_GOLD()` --calls--> `botInitDuel()`  [INFERRED]
+  public\js\battle.js → public\js\bot-ai.js
 
 ## Communities
 
 ### Community 0 - "Community 0"
-Cohesion: 0.1
+Cohesion: 0.11
 Nodes (32): log(), showToastBattle(), armForfeitTimer(), authFromRequest(), broadcastQueueSize(), broadcastTavern(), clearMatchTimers(), computeSkillPowerLevels() (+24 more)
 
 ### Community 1 - "Community 1"
+Cohesion: 0.12
+Nodes (10): closeMobileMenu(), openMobileMenu(), randCid(), rnd(), setMobileStep(), _setMobileView(), shuffle(), _syncLogToMobile() (+2 more)
+
+### Community 2 - "Community 2"
 Cohesion: 0.13
 Nodes (11): RequireAuth(), BattlePage(), fmtSP(), HeroDetail(), loadPref(), LobbyPage(), MobileHeroPage(), prefKey() (+3 more)
 
-### Community 2 - "Community 2"
-Cohesion: 0.16
-Nodes (14): applyMerge(), BENCH_SLOTS(), distinctHeroes(), retBench(), START_GOLD(), upgradeUnit(), botApplyMerge(), botBuyPhase() (+6 more)
-
 ### Community 3 - "Community 3"
-Cohesion: 0.16
-Nodes (19): adjacentSlots(), betweenIncome(), _cleanupBattleDOM(), clearAttackArrows(), endBattle(), FIELD_MAX(), hideTurnPanel(), maxUnits() (+11 more)
+Cohesion: 0.26
+Nodes (8): botApplyMerge(), botBuyPhase(), botGenShop(), botInitDuel(), botPosition(), botRunTurn(), deps(), makeInitialBOT()
 
 ### Community 4 - "Community 4"
-Cohesion: 0.14
-Nodes (3): randCid(), rnd(), shuffle()
+Cohesion: 0.18
+Nodes (12): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), startPhaseTimer() (+4 more)
 
 ### Community 5 - "Community 5"
 Cohesion: 0.24
 Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+4 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.22
-Nodes (10): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), updateFieldLabels() (+2 more)
+Cohesion: 0.24
+Nodes (11): betweenIncome(), _cleanupBattleDOM(), endBattle(), hideTurnPanel(), nextBattle(), nextDuel(), renderDuelBar(), restoreFieldHp() (+3 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.36
 Nodes (8): showHeroInfo(), getC(), getTipEl(), heroInfoHtml(), show(), showSticky(), skillTooltipHtml(), skillTooltipText()
 
 ### Community 8 - "Community 8"
-Cohesion: 0.25
-Nodes (8): clearFieldPlacementHints(), _dispatchBanner(), playback(), renderTurnPanel(), simulate(), startBattle(), startPhaseTimer(), stopPhaseTimer()
+Cohesion: 0.28
+Nodes (9): adjacentSlots(), clearAttackArrows(), FIELD_MAX(), maxUnits(), placeUnit(), render(), renderBench(), renderField() (+1 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.29
-Nodes (7): closeMobileMenu(), openMobileMenu(), setMobileStep(), _setMobileView(), _syncLogToMobile(), toggleMobileMenu(), togglePanel()
+Cohesion: 0.43
+Nodes (5): getItemEquipState(), ShopItemCard(), ShopListRow(), ShopView(), sortItems()
 
 ### Community 10 - "Community 10"
 Cohesion: 0.4
+Nodes (2): getBenchWrap(), isTouchOverBenchwrap()
+
+### Community 11 - "Community 11"
+Cohesion: 0.33
+Nodes (6): clearFieldPlacementHints(), _dispatchBanner(), playback(), renderTurnPanel(), simulate(), startBattle()
+
+### Community 12 - "Community 12"
+Cohesion: 0.33
+Nodes (6): applyMerge(), BENCH_SLOTS(), distinctHeroes(), retBench(), swapFieldBench(), upgradeUnit()
+
+### Community 13 - "Community 13"
+Cohesion: 0.4
 Nodes (5): applyBattleSpeed(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), toggleBattleSpeed()
+
+### Community 14 - "Community 14"
+Cohesion: 1.0
+Nodes (2): adjacentSlots(), simulate()
+
+## Knowledge Gaps
+- **Thin community `Community 10`** (6 nodes): `applyHighlight()`, `getBenchWrap()`, `injectLogBtn()`, `isTouchOverBenchwrap()`, `setupLog()`, `mobile.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 14`** (3 nodes): `simulate.js`, `adjacentSlots()`, `simulate()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 0` to `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 8`?**
-  _High betweenness centrality (0.258) - this node is a cross-community bridge._
-- **Why does `showHeroInfo()` connect `Community 7` to `Community 4`?**
+- **Why does `log()` connect `Community 0` to `Community 1`, `Community 4`, `Community 5`, `Community 6`, `Community 8`, `Community 11`, `Community 12`?**
+  _High betweenness centrality (0.242) - this node is a cross-community bridge._
+- **Why does `resolveBattleRound()` connect `Community 0` to `Community 14`?**
   _High betweenness centrality (0.056) - this node is a cross-community bridge._
-- **Are the 8 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `refundHiveWager()`) actually correct?**
-  _`log()` has 8 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `showHeroInfo()` connect `Community 7` to `Community 1`?**
+  _High betweenness centrality (0.050) - this node is a cross-community bridge._
+- **Are the 10 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `verifyShopPayment()`) actually correct?**
+  _`log()` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 2 inferred relationships involving `resolveBattleRound()` (e.g. with `simulate()` and `log()`) actually correct?**
   _`resolveBattleRound()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
-- **Should `Community 4` be split into smaller, more focused modules?**
-  _Cohesion score 0.14 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._

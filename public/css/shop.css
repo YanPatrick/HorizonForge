@@ -176,11 +176,14 @@
 /* ── Mobile: category pills ──────────────────────────────── */
 .shop-mobile-filters {
   display: none;
+  align-items: center;
   gap: 6px;
   padding: 10px 12px;
-  overflow-x: auto;
   border-bottom: 1px solid #1e1e3a;
   background: #111128;
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
 }
 
 .shop-pill {
@@ -192,6 +195,7 @@
   color: #888;
   font-size: 11px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s;
 }
 
@@ -391,7 +395,10 @@
   #view-shop .wiki-sidebar { display: none; }
   .shop-grid { display: none; }
   .shop-list { display: flex; }
-  .shop-mobile-filters { display: flex; }
+  .shop-mobile-filters {
+    display: flex;
+  }
+  .shop-sort-label { display: none; }
 }
 
 /* ── Equip / Unequip buttons ─────────────────────────────── */
