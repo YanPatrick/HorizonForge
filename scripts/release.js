@@ -1,59 +1,53 @@
 #!/usr/bin/env node
+// Uso: npm run release -- <versão>
+// Exemplo: npm run release -- 1.5.2
 import { readFileSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 
-const LOBBY_HTML = 'public/lobby.html';
-const PKG_JSON   = 'package.json';
-const CLIENT_JSX = 'client/src/pages/LobbyPage.jsx';
+const newVersion = process.argv[2];
 
-// Read current version from lobby.html
-const html = readFileSync(LOBBY_HTML, 'utf8');
-const match = html.match(/class="stg-version">v(\d+)\.(\d+)<\/span>/);
-
-if (!match) {
-  console.error('ERROR: version pattern not found in lobby.html');
+if (!newVersion) {
+  console.error('❌ Informe a versão.');
+  console.error('   Uso:     npm run release -- <versão>');
+  console.error('   Exemplo: npm run release -- 1.5.2');
   process.exit(1);
 }
 
-const major = parseInt(match[1]);
-const minor = parseInt(match[2]);
-const newVersion = `${major}.${minor + 1}`;   // display: "1.2"
-const semver     = `${major}.${minor + 1}.0`; // npm semver: "1.2.0"
+if (!/^\d+\.\d+\.\d+$/.test(newVersion)) {
+  console.error(`❌ Versão inválida: "${newVersion}". Use o formato X.Y.Z (ex: 1.5.2)`);
+  process.exit(1);
+}
+
 const tag = `v${newVersion}`;
 
-// Update lobby.html
-writeFileSync(
-  LOBBY_HTML,
-  html.replace(
-    /class="stg-version">v\d+\.\d+<\/span>/,
-    `class="stg-version">${tag}</span>`
-  )
-);
+// ── 1. package.json ───────────────────────────────────────────────────────────
+// Fonte da verdade: API lê daqui via require(), Vite injeta __APP_VERSION__ daqui.
+const pkgPath = 'package.json';
+const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+const oldVersion = pkg.version;
+pkg.version = newVersion;
+writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+console.log(`✅ package.json       ${oldVersion} → ${newVersion}`);
 
-// Update LobbyPage.jsx (React client — same version badge)
-const jsx = readFileSync(CLIENT_JSX, 'utf8');
-writeFileSync(
-  CLIENT_JSX,
-  jsx.replace(
-    /className="stg-version">v[\d.]+( Beta)?</,
-    `className="stg-version">${tag}<`
-  )
-);
+// ── 2. package-lock.json ──────────────────────────────────────────────────────
+// Atualiza os dois campos de versão do topo (version + packages[""].version).
+const lockPath = 'package-lock.json';
+const lock = JSON.parse(readFileSync(lockPath, 'utf8'));
+lock.version = newVersion;
+if (lock.packages?.['']) lock.packages[''].version = newVersion;
+writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
+console.log(`✅ package-lock.json  atualizado`);
 
-// Update package.json
-const pkg = JSON.parse(readFileSync(PKG_JSON, 'utf8'));
-pkg.version = semver;
-writeFileSync(PKG_JSON, JSON.stringify(pkg, null, 2) + '\n');
-
-console.log(`Bumped ${match[0].match(/v\d+\.\d+/)[0]} → ${tag}`);
-
-// Build React client so public/dist/ is always in sync
-console.log('Building React client...');
+// ── 3. Build ──────────────────────────────────────────────────────────────────
+// Vite lê package.json e injeta __APP_VERSION__ no bundle automaticamente.
+console.log('\nBuilding...');
 execSync('npm run build', { stdio: 'inherit' });
 
-// Stage everything: HTML, JSX, package.json and the fresh dist
-execSync(`git add ${LOBBY_HTML} ${CLIENT_JSX} ${PKG_JSON} public/dist/`);
-execSync(`git commit -m "chore: bump to ${tag}"`, { stdio: 'inherit' });
+// ── 4. Git: commit + tag + push ───────────────────────────────────────────────
+execSync('git add package.json package-lock.json public/dist/');
+execSync(`git commit -m "release: ${tag}"`, { stdio: 'inherit' });
+execSync(`git tag ${tag}`);
 execSync('git push', { stdio: 'inherit' });
+execSync(`git push origin ${tag}`, { stdio: 'inherit' });
 
-console.log(`\nReleased ${tag}`);
+console.log(`\n🚀 ${tag} released!`);

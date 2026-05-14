@@ -924,6 +924,13 @@ app.post('/api/migrate', async (req, res) => {
       )
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS player_init (
+        player         TEXT        PRIMARY KEY,
+        initialized_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `;
+
     // Refresh cached config that's seeded by this migration (e.g. max-units cap).
     await refreshMaxUnitsCap();
 
@@ -1014,9 +1021,13 @@ const DEFAULT_BG_IDS = ['bg_desert', 'bg_florest', 'bg_snow'];
 const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin_barbarian', 'skin_healer', 'skin_knight', 'skin_mage', 'skin_paladin'];
 
 async function ensureDefaultCosmetics(username) {
+  // Fast-path: se o jogador já foi inicializado, não faz nada.
+  // Isso garante que a inicialização rode apenas uma vez por jogador.
+  const [initRow] = await sql`SELECT 1 FROM player_init WHERE player = ${username}`;
+  if (initRow) return;
+
   const allDefaults = [...DEFAULT_BG_IDS, ...DEFAULT_SKIN_IDS];
 
-  // Check ownership, equipped backgrounds, and equipped skins independently
   const [ownedRows, equippedBgRows, equippedSkinRows, totalEquippedBg] = await Promise.all([
     sql`SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${allDefaults})`,
     sql`SELECT item_id FROM user_equipped_backgrounds WHERE player = ${username} AND item_id = ANY(${DEFAULT_BG_IDS})`,
@@ -1032,15 +1043,13 @@ async function ensureDefaultCosmetics(username) {
   const missingBgEquip = DEFAULT_BG_IDS.filter(id => !equippedBgSet.has(id));
   const missingSkinEquip = DEFAULT_SKIN_IDS.filter(id => !equippedSkSet.has(id));
 
-  if (!missingOwnership.length && !missingBgEquip.length && !missingSkinEquip.length) return;
-
   // Grant missing ownership
   for (const id of missingOwnership) {
     await sql`INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${id}) ON CONFLICT DO NOTHING`;
   }
 
-  // Auto-equip default backgrounds only if the user has no equipped backgrounds at all (fresh account).
-  // If they already have any equipped, respect their intentional selection.
+  // Equipa arenas padrão somente se o jogador ainda não tem nenhuma equipada.
+  // Respeita seleção já feita pelo jogador.
   const userHasAnyEquippedBg = (totalEquippedBg[0]?.count ?? 0) > 0;
   if (!userHasAnyEquippedBg) {
     for (const id of missingBgEquip) {
@@ -1048,7 +1057,7 @@ async function ensureDefaultCosmetics(username) {
     }
   }
 
-  // Equip missing skins (need hero_cid from cosmetics table)
+  // Equipa skins padrão para cada herói que ainda não tem skin equipada
   if (missingSkinEquip.length > 0) {
     const skinRows = await sql`
       SELECT id, hero_cid FROM cosmetics
@@ -1063,6 +1072,8 @@ async function ensureDefaultCosmetics(username) {
     }
   }
 
+  // Marca o jogador como inicializado — essa função não roda mais para ele.
+  await sql`INSERT INTO player_init (player) VALUES (${username}) ON CONFLICT DO NOTHING`;
   console.log(`🎮 Default cosmetics initialized for: ${username}`);
 }
 
@@ -1338,6 +1349,9 @@ app.post('/api/auth/verify', authVerifyLimiter, async (req, res) => {
       SELECT ${user}, id FROM cosmetics WHERE price_hive = 0
       ON CONFLICT DO NOTHING
     `;
+    // Garante arenas e skins equipadas na primeira entrada (ou na primeira após v1.5.0).
+    // Idempotente: player_init impede que rode mais de uma vez por jogador.
+    await ensureDefaultCosmetics(user);
     res.json({ ok: true, token: makeToken(user) });
   } catch (err) {
     console.error('[auth/verify]', err.message);
@@ -2242,6 +2256,14 @@ async function runDailyCleanup() {
     console.error('[cleanup]', err.message);
   }
 }
+// Garante que a tabela player_init existe antes de qualquer login acontecer
+sql`
+  CREATE TABLE IF NOT EXISTS player_init (
+    player         TEXT        PRIMARY KEY,
+    initialized_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  )
+`.catch(err => console.error('[startup] player_init table:', err.message));
+
 // Run once at startup then every 24 hours
 runDailyCleanup();
 setInterval(runDailyCleanup, 24 * 60 * 60 * 1000);
