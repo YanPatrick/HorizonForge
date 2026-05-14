@@ -1606,7 +1606,7 @@
 
       .uprog {
         position: absolute;
-        top: calc(20px * var(--s));
+        top: calc(15px * var(--s) + 5px);
         right: calc(4px * var(--s));
         bottom: auto;
         left: auto;
@@ -2322,7 +2322,7 @@
 
       .bprog {
         position: absolute;
-        top: calc(20px * var(--s));
+        top: calc(15px * var(--s) + 5px);
         right: calc(4px * var(--s));
         bottom: auto;
         left: auto;
@@ -4332,6 +4332,12 @@
           width: 62px !important;
           min-width: 0 !important;
           max-width: 62px !important;
+        }
+
+        /* no card de 62px o gap entre sprice e scnt fica colado — empurra scnt para baixo */
+        #shoprow .scard .scnt,
+        #benchrow .bcard .scnt {
+          top: 24px;
         }
 
         /* portraits mobile: mesma altura e enquadramento nos dois painéis */

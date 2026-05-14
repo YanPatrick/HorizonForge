@@ -38,13 +38,32 @@ if (lock.packages?.['']) lock.packages[''].version = newVersion;
 writeFileSync(lockPath, JSON.stringify(lock, null, 2) + '\n');
 console.log(`✅ package-lock.json  atualizado`);
 
-// ── 3. Build ──────────────────────────────────────────────────────────────────
+// ── 3. Arquivos HTML legados ──────────────────────────────────────────────────
+// lobby.html e battle.html têm a versão hardcoded em dois lugares:
+//   - <meta name="app-version"> — usado para detectar cache stale no browser
+//   - <span class="stg-version"> — badge visual (só no lobby)
+const htmlFiles = ['public/lobby.html', 'public/battle.html'];
+for (const filePath of htmlFiles) {
+  let content = readFileSync(filePath, 'utf8');
+  content = content.replace(
+    /(<meta name="app-version" content=")[\d.]+(")/,
+    `$1${newVersion}$2`
+  );
+  content = content.replace(
+    /(<span class="stg-version">v)[\d.]+(<\/span>)/,
+    `$1${newVersion}$2`
+  );
+  writeFileSync(filePath, content);
+  console.log(`✅ ${filePath}    atualizado`);
+}
+
+// ── 4. Build ──────────────────────────────────────────────────────────────────
 // Vite lê package.json e injeta __APP_VERSION__ no bundle automaticamente.
 console.log('\nBuilding...');
 execSync('npm run build', { stdio: 'inherit' });
 
-// ── 4. Git: commit + tag + push ───────────────────────────────────────────────
-execSync('git add package.json package-lock.json public/dist/');
+// ── 5. Git: commit + tag + push ───────────────────────────────────────────────
+execSync('git add .');
 execSync(`git commit -m "release: ${tag}"`, { stdio: 'inherit' });
 execSync(`git tag ${tag}`);
 execSync('git push', { stdio: 'inherit' });

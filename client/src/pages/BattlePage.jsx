@@ -154,13 +154,13 @@ export default function BattlePage() {
     // function definitions in battle.js (openQuitModal, closeQuitModal,
     // confirmQuit, openHowTo, closeHowTo) means these shims are now the
     // single source of truth for modal state.
-    window.openQuitModal  = () => setQuitOpen(true)
+    window.openQuitModal = () => setQuitOpen(true)
     window.closeQuitModal = closeQuit
-    window.confirmQuit    = confirmQuit
-    window.openHowTo      = () => setHowToOpen(true)
-    window.closeHowTo     = () => setHowToOpen(false)
+    window.confirmQuit = confirmQuit
+    window.openHowTo = () => setHowToOpen(true)
+    window.closeHowTo = () => setHowToOpen(false)
     // Round timer — battle.js calls these from its tick() functions.
-    window.setRoundTimer  = (text, urgent) => {
+    window.setRoundTimer = (text, urgent) => {
       setTimerText(text || '')
       setTimerUrgent(!!urgent)
     }
@@ -169,14 +169,14 @@ export default function BattlePage() {
       setTimerUrgent(false)
     }
     // Header / HUD dispatchers — see state declarations above.
-    window.setBanner             = (text, cls) => { setBannerText(text || ''); setBannerClass(cls || '') }
-    window.setBattleFmt          = (label) => setFormatLabel(label || '')
-    window.setBattleOpp          = (name) => setOppName(name || 'Enemy')
-    window.setBattleArmyCount    = (text) => setArmyCount(text || '')
-    window.setBattleScoreDots    = ({ p, e }) => setScoreDots({ p: p || [], e: e || [] })
-    window.setBattleSpeed        = ({ label, fast }) => setSpeed({ label: label || '2x', fast: !!fast })
+    window.setBanner = (text, cls) => { setBannerText(text || ''); setBannerClass(cls || '') }
+    window.setBattleFmt = (label) => setFormatLabel(label || '')
+    window.setBattleOpp = (name) => setOppName(name || 'Enemy')
+    window.setBattleArmyCount = (text) => setArmyCount(text || '')
+    window.setBattleScoreDots = ({ p, e }) => setScoreDots({ p: p || [], e: e || [] })
+    window.setBattleSpeed = ({ label, fast }) => setSpeed({ label: label || '2x', fast: !!fast })
     // Barracks — full render shape. battle.js builds it; React renders.
-    window.setBenchState         = (state) => setBench({
+    window.setBenchState = (state) => setBench({
       active: !!state?.active,
       count: state?.count ?? 0,
       max: state?.max ?? 5,
@@ -186,31 +186,31 @@ export default function BattlePage() {
     // Recruitment — render shape including gold + reroll state. Accepts
     // partial updates (e.g. updateHdr() in battle.js dispatches just `{ gold }`
     // to refresh the header without rebuilding the full card list).
-    window.setShopState          = (state) => setShop((prev) => ({
-      active:         state?.active         ?? prev.active,
-      gold:           state?.gold           ?? prev.gold,
+    window.setShopState = (state) => setShop((prev) => ({
+      active: state?.active ?? prev.active,
+      gold: state?.gold ?? prev.gold,
       rerollDisabled: state?.rerollDisabled ?? prev.rerollDisabled,
-      cards:          state?.cards          ?? prev.cards,
+      cards: state?.cards ?? prev.cards,
     }))
     // Field — accepts partial updates. battle.js's renderField sends both
     // sides + interaction flags; isolated mutations (e.g. selection
     // changes) can dispatch only the slice they need.
-    window.setFieldState         = (state) => setField((prev) => ({
-      p:           state?.p           ?? prev.p,
-      e:           state?.e           ?? prev.e,
+    window.setFieldState = (state) => setField((prev) => ({
+      p: state?.p ?? prev.p,
+      e: state?.e ?? prev.e,
       interactive: state?.interactive ?? prev.interactive,
-      fieldSel:    state?.fieldSel === undefined ? prev.fieldSel : state.fieldSel,
-      dropMode:    state?.dropMode    ?? prev.dropMode,
+      fieldSel: state?.fieldSel === undefined ? prev.fieldSel : state.fieldSel,
+      dropMode: state?.dropMode ?? prev.dropMode,
     }))
     // Mobile view — single mutually-exclusive value. battle.js's
     // setMobileStep / togglePanel / toggleMobileMenu wrappers compute
     // the next view (toggle behavior, etc.) and dispatch the result.
-    window.setMobileView         = (view) => setMobileView(view ?? null)
-    window.setFullscreenBtnText  = (txt) => setFsBtnText(txt || 'Enter Fullscreen')
+    window.setMobileView = (view) => setMobileView(view ?? null)
+    window.setFullscreenBtnText = (txt) => setFsBtnText(txt || 'Enter Fullscreen')
     // Duel-result overlay — full render shape from battle.js's
     // showDuelResult(). closeDuelResult flips just `open` so the
     // ✕ View Field button doesn't disturb the rest of the data.
-    window.showDuelResult        = (data) => setDuelResult({
+    window.showDuelResult = (data) => setDuelResult({
       open: true,
       pw: !!data?.pw,
       scoreP: data?.scoreP ?? 0,
@@ -229,15 +229,15 @@ export default function BattlePage() {
       nextLabel: data?.isPvP ? '🏠 Back to Lobby' : '🌟 Next Duel',
       submitting: data?.isPvP
         ? {
-            state: 'pending',
-            text: 'Submitting results...',
-            sub: data.wager > 0
-              ? `${data.wager} HIVE will be transferred to the winner`
-              : 'Friendly match — no wager to process',
-          }
+          state: 'pending',
+          text: 'Submitting results...',
+          sub: data.wager > 0
+            ? `${data.wager} HIVE will be transferred to the winner`
+            : 'Friendly match — no wager to process',
+        }
         : null,
     })
-    window.closeDuelResult       = () => setDuelResult((prev) => ({ ...prev, open: false }))
+    window.closeDuelResult = () => setDuelResult((prev) => ({ ...prev, open: false }))
     return () => {
       // React-side dispatchers (this useEffect registered them above).
       // Critical to remove — they hold setState closures that would warn
@@ -324,7 +324,7 @@ export default function BattlePage() {
         : docEl.webkitRequestFullscreen
           ? docEl.webkitRequestFullscreen()
           : null
-      if (p) p.catch(() => {})
+      if (p) p.catch(() => { })
     }
     function exitFS() {
       if (document.exitFullscreen) document.exitFullscreen()
@@ -337,12 +337,12 @@ export default function BattlePage() {
       window.closeMobileMenu?.()
     }
     window.acceptFullscreen = () => {
-      try { localStorage.setItem(FS_KEY, '1') } catch {}
+      try { localStorage.setItem(FS_KEY, '1') } catch { }
       setFsBannerOpen(false)
       enterFS()
     }
     window.declineFullscreen = () => {
-      try { localStorage.setItem(FS_KEY, '0') } catch {}
+      try { localStorage.setItem(FS_KEY, '0') } catch { }
       setFsBannerOpen(false)
     }
 
@@ -350,7 +350,7 @@ export default function BattlePage() {
     let firstTouchOff = null
     if (isTouch && hasFS) {
       let pref = null
-      try { pref = localStorage.getItem(FS_KEY) } catch {}
+      try { pref = localStorage.getItem(FS_KEY) } catch { }
       if (pref === '1') {
         // Auto-enter on the next user gesture (FS APIs require one).
         const onFirstTouch = () => {
@@ -561,7 +561,7 @@ export default function BattlePage() {
     <div style={ready ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" className={quitOpen ? 'open' : ''}
-           onClick={e => e.target === e.currentTarget && closeQuit()}>
+        onClick={e => e.target === e.currentTarget && closeQuit()}>
         <div id="quit-modal">
           <div className="qm-icon">⚠️</div>
           <div className="qm-title">Quit Match?</div>
@@ -769,9 +769,8 @@ export default function BattlePage() {
             <div id="shoprow">
               {shop.cards.map((c) => {
                 const isLifted = !!c.comboKey && hoveredCombo === c.comboKey
-                const cls = `scard${c.isCombo ? ' combo-card' : ''}${
-                  c.isAtMax ? ' maxed' : c.canBuy ? ' buyable' : ' broke'
-                }${isLifted ? ' combo-lift' : ''}`
+                const cls = `scard${c.isCombo ? ' combo-card' : ''}${c.isAtMax ? ' maxed' : c.canBuy ? ' buyable' : ' broke'
+                  }${isLifted ? ' combo-lift' : ''}`
                 return (
                   <div
                     key={c.uid}
@@ -793,13 +792,13 @@ export default function BattlePage() {
                     onMouseLeave={
                       c.comboKey
                         ? (e) => {
-                            // Don't clear if moving into another card of the same combo
-                            const relUid = e.relatedTarget?.closest?.('[data-uid]')?.dataset?.uid
-                            const stayingInCombo = relUid && shop.cards.some(
-                              (x) => x.uid === relUid && x.comboKey === c.comboKey,
-                            )
-                            if (!stayingInCombo) setHoveredCombo(null)
-                          }
+                          // Don't clear if moving into another card of the same combo
+                          const relUid = e.relatedTarget?.closest?.('[data-uid]')?.dataset?.uid
+                          const stayingInCombo = relUid && shop.cards.some(
+                            (x) => x.uid === relUid && x.comboKey === c.comboKey,
+                          )
+                          if (!stayingInCombo) setHoveredCombo(null)
+                        }
                         : undefined
                     }
                   >
@@ -874,26 +873,26 @@ export default function BattlePage() {
       {/* ══ MOBILE ACTION BAR ══ */}
       <div className="mobile-actions">
         <button type="button" data-step="recruit"
-                className={mobileView === 'recruit' ? 'ms-active' : ''}
-                onClick={() => window.setMobileStep?.('recruit')}>
+          className={mobileView === 'recruit' ? 'ms-active' : ''}
+          onClick={() => window.setMobileStep?.('recruit')}>
           🛍️<span>Recruit</span>
         </button>
         <button type="button" data-step="barracks"
-                className={mobileView === 'barracks' ? 'ms-active' : ''}
-                onClick={() => window.setMobileStep?.('barracks')}>
+          className={mobileView === 'barracks' ? 'ms-active' : ''}
+          onClick={() => window.setMobileStep?.('barracks')}>
           🏕️<span>Barracks</span>
         </button>
         <div className="mab-center">
           <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>⚔️</button>
         </div>
         <button type="button" data-step="log"
-                className={mobileView === 'log' ? 'ms-active' : ''}
-                onClick={() => window.togglePanel?.('log')}>
+          className={mobileView === 'log' ? 'ms-active' : ''}
+          onClick={() => window.togglePanel?.('log')}>
           📜<span>Log</span>
         </button>
         <button type="button" data-step="menu"
-                className={mobileView === 'menu' ? 'ms-active' : ''}
-                onClick={() => window.toggleMobileMenu?.()}>
+          className={mobileView === 'menu' ? 'ms-active' : ''}
+          onClick={() => window.toggleMobileMenu?.()}>
           ⚙️<span>Menu</span>
         </button>
       </div>
@@ -944,12 +943,12 @@ export default function BattlePage() {
                 {duelResult.teamP.length === 0
                   ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)' }}>—</span>
                   : duelResult.teamP.map((u, i) => (
-                      <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
-                        <span>{u.ico}</span>
-                        <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
-                        <span className="dr-unit-lbl">{u.shortName}</span>
-                      </div>
-                    ))}
+                    <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
+                      <span>{u.ico}</span>
+                      <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
+                      <span className="dr-unit-lbl">{u.shortName}</span>
+                    </div>
+                  ))}
               </div>
             </div>
             <div className="dr-team">
@@ -960,12 +959,12 @@ export default function BattlePage() {
                 {duelResult.teamE.length === 0
                   ? <span style={{ fontSize: 11, color: 'rgba(255,255,255,.25)' }}>—</span>
                   : duelResult.teamE.map((u, i) => (
-                      <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
-                        <span>{u.ico}</span>
-                        <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
-                        <span className="dr-unit-lbl">{u.shortName}</span>
-                      </div>
-                    ))}
+                    <div key={i} className={`dr-unit ${u.alive ? 'alive' : 'dead'}`}>
+                      <span>{u.ico}</span>
+                      <span style={{ fontSize: 7, color: u.alive ? '#88ff88' : '#ff8888' }}>{u.levelLabel}</span>
+                      <span className="dr-unit-lbl">{u.shortName}</span>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -1009,16 +1008,13 @@ export default function BattlePage() {
 
       {/* ══ HOW TO PLAY ══ */}
       <div id="howto" className={howToOpen ? 'open' : ''}
-           onClick={e => e.target === e.currentTarget && setHowToOpen(false)}>
+        onClick={e => e.target === e.currentTarget && setHowToOpen(false)}>
         <div id="htp-box">
           <button id="htp-close" onClick={() => setHowToOpen(false)}>✕ Close</button>
-          <div className="htp-h1">📖 How To Play — Horizon Forge</div>
+          <div className="htp-h1">📖 How To Play</div>
           <div className="htp-h2">🎯 Objective</div>
           <p className="htp-p">
-            Win most battles in a duel to advance. In{' '}
-            <span className="htp-hl">Best of 3</span>, win 2 battles. In{' '}
-            <span className="htp-hl">Best of 5</span>, win 3. The opponent keeps the
-            same army for the whole duel — analyze it before building yours.
+            Win the most rounds in a duel to emerge victorious. The number of rounds will depend on which game mode you selected. Recruit, combine, level up and win.
           </p>
           <div className="htp-h2">💰 Gold</div>
           <div className="htp-tips">
@@ -1028,7 +1024,7 @@ export default function BattlePage() {
             </div>
             <div className="htp-tip">
               <span className="htp-tip-ico">⚔️</span>
-              <div>Between battles you receive gold automatically — both players receive the same amount each round.</div>
+              <div>Both players receive the same amount each round.</div>
             </div>
             <div className="htp-tip">
               <span className="htp-tip-ico">🔄</span>
