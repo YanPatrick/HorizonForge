@@ -39,7 +39,12 @@ export default function ShopView({ session, toast, heroData }) {
   const [gameAccount, setGameAccount] = useState('')
   const [filter, setFilter] = useState('background')
   const [search, setSearch] = useState('')
-  const [showOwned, setShowOwned] = useState(true)
+  const showOwnedKey = session?.username ? `hf_shop_show_owned_${session.username}` : 'hf_shop_show_owned'
+  const getShowOwnedPref = () => {
+    const v = localStorage.getItem(showOwnedKey)
+    return v !== null ? v === 'true' : true
+  }
+  const [showOwned, setShowOwned] = useState(getShowOwnedPref)
   const [sortBy, setSortBy] = useState('new')
   const [modal, setModal] = useState(null)
   const [claiming, setClaiming] = useState(null)
@@ -77,7 +82,7 @@ export default function ShopView({ session, toast, heroData }) {
     }
   }, [isHive, token])
 
-  useEffect(() => { setShowOwned(true) }, [filter])
+  useEffect(() => { setShowOwned(getShowOwnedPref()) }, [filter])
 
   const filtered = catalog.filter(item => {
     if (filter !== 'all' && item.type !== filter) return false
