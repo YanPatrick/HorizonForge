@@ -533,16 +533,36 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
 
 /* ── SettingsView ───────────────────────────────────────── */
 function SettingsView({ session, payoutPct }) {
-  const payoutKey = session?.username ? `hf_payout_${session.username}` : 'hf_payout'
-  const [payout, setPayout] = useState(() => localStorage.getItem(payoutKey) || 'liquid')
+  const username = session?.username
+  const payoutKey = username ? `hf_payout_${username}` : 'hf_payout'
+  const showOwnedKey = username ? `hf_shop_show_owned_${username}` : 'hf_shop_show_owned'
+
+  const [stakeMode, setStakeMode] = useState(() => (localStorage.getItem(payoutKey) || 'liquid') === 'stake')
+  const [showOwnedDefault, setShowOwnedDefault] = useState(() => {
+    const v = localStorage.getItem(showOwnedKey)
+    return v !== null ? v === 'true' : true
+  })
   const [saved, setSaved] = useState(false)
 
-  function selectPayout(val) {
-    localStorage.setItem(payoutKey, val)
-    setPayout(val)
+  function flash() {
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
+
+  function togglePayout(e) {
+    localStorage.setItem(payoutKey, e.target.checked ? 'stake' : 'liquid')
+    setStakeMode(e.target.checked)
+    flash()
+  }
+
+  function toggleShowOwned(e) {
+    localStorage.setItem(showOwnedKey, String(e.target.checked))
+    setShowOwnedDefault(e.target.checked)
+    flash()
+  }
+
+  const liquidPct = payoutPct.liquid != null ? `${payoutPct.liquid}%` : '...'
+  const stakePct = payoutPct.stake != null ? `${payoutPct.stake}%` : '...'
 
   return (
     <div id="view-settings" className="lv active">
@@ -551,20 +571,30 @@ function SettingsView({ session, payoutPct }) {
         <div className="stg-content" style={{ padding: 0, overflow: 'visible' }}>
           <div className="stg-section">
             <div className="stg-section-title">Payout Preference</div>
-            <div className="stg-section-desc">How you receive HIVE when you win a PvP match.</div>
-            <div className="stg-payout-pills">
-              {[['liquid', '💧', 'Hive Liquid'], ['stake', '⚡', 'Hive Power']].map(([val, ico, name]) => (
-                <button key={val} className={`stg-pill${payout === val ? ' active' : ''}`} onClick={() => selectPayout(val)}>
-                  <span className="stg-pill-ico">{ico}</span>
-                  <span className="stg-pill-name">{name}</span>
-                  <span className="stg-pill-pct">{payoutPct[val] != null ? `${payoutPct[val]}% payout` : '...% payout'}</span>
-                </button>
-              ))}
-            </div>
-            <div className="stg-save-row">
-              <span className={`stg-saved-badge${saved ? ' show' : ''}`}>✓ Saved</span>
+            <div className="stg-toggle-row">
+              <div className="stg-toggle-info">
+                <span className="stg-toggle-title">Receive payouts in Hive Power (stake)</span>
+                <span className="stg-toggle-sub">Liquid: {liquidPct} · Stake: {stakePct} payout</span>
+              </div>
+              <label className="stg-toggle-switch">
+                <input type="checkbox" checked={stakeMode} onChange={togglePayout} />
+                <span className="stg-toggle-slider" />
+              </label>
             </div>
             <div className="stg-note">The remaining % goes to the game treasury.</div>
+          </div>
+          <div className="stg-section">
+            <div className="stg-section-title">Shop</div>
+            <div className="stg-toggle-row">
+              <div className="stg-toggle-info">
+                <span className="stg-toggle-title">Show owned items by default</span>
+                <span className="stg-toggle-sub">Owned items are visible when you open the shop</span>
+              </div>
+              <label className="stg-toggle-switch">
+                <input type="checkbox" checked={showOwnedDefault} onChange={toggleShowOwned} />
+                <span className="stg-toggle-slider" />
+              </label>
+            </div>
           </div>
           <div className="stg-section">
             <div className="stg-section-title">About</div>
@@ -573,6 +603,9 @@ function SettingsView({ session, payoutPct }) {
               <div className="stg-about-row"><span>Developer</span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a></div>
               <div className="stg-about-row"><span>Discord</span><a href="https://discord.gg/w6QFKapJ3Q" target="_blank" rel="noreferrer">Join Server</a></div>
             </div>
+          </div>
+          <div className="stg-save-row">
+            <span className={`stg-saved-badge${saved ? ' show' : ''}`}>✓ Saved</span>
           </div>
         </div>
       </div>
