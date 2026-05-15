@@ -309,3 +309,34 @@
 }
 .tv-status-opt-dot-available { background: #22c55e; }
 .tv-status-opt-dot-absent    { background: #eab308; }
+
+/* ── Tab bar ─────────────────────────────────────────── */
+.tv-tabs          { display: flex; gap: 4px; margin-bottom: 8px; }
+.tv-tab           { flex: 1; padding: 5px 8px; border: none; border-radius: 6px;
+                    background: transparent; color: #888; font-size: 11px; cursor: pointer;
+                    display: flex; align-items: center; justify-content: center; gap: 5px;
+                    white-space: nowrap; min-width: 0; }
+.tv-tab:hover     { background: rgba(255,255,255,0.05); color: #ccc; }
+.tv-tab-active    { background: rgba(255,255,255,0.08); color: #fff; }
+.tv-tab-dot       { width: 6px; height: 6px; border-radius: 50%; background: #ef4444;
+                    flex-shrink: 0; }
+
+/* ── Chat area ───────────────────────────────────────── */
+.tv-chat-wrap     { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 6px; }
+.tv-chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+                    gap: 3px; min-height: 0; }
+.tv-chat-msg      { font-size: 11px; line-height: 1.4; word-break: break-word; }
+.tv-chat-msg-time { color: #555; margin-right: 4px; font-size: 10px; }
+.tv-chat-msg-text { color: #ccc; }
+
+/* ── Chat input ──────────────────────────────────────── */
+.tv-chat-input-wrap { display: flex; gap: 4px; }
+.tv-chat-input    { flex: 1; background: #2a2a3a; border: 1px solid rgba(255,255,255,0.08);
+                    border-radius: 6px; padding: 5px 8px; color: #ddd; font-size: 11px;
+                    outline: none; }
+.tv-chat-input:focus { border-color: rgba(167,139,250,0.4); }
+.tv-chat-input:disabled { opacity: 0.4; cursor: not-allowed; }
+.tv-chat-send     { background: rgba(167,139,250,0.15); border: none; border-radius: 6px;
+                    color: #a78bfa; padding: 5px 8px; cursor: pointer; font-size: 13px; }
+.tv-chat-send:hover:not(:disabled) { background: rgba(167,139,250,0.25); }
+.tv-chat-send:disabled { opacity: 0.3; cursor: not-allowed; }

@@ -683,6 +683,8 @@ export default function LobbyPage() {
   const [pvpFmtOpen, setPvpFmtOpen] = useState(false)
   const [activeInfoTip, setActiveInfoTip] = useState(null)
   const [tavernUsers, setTavernUsers] = useState([])         // + IMP tavern
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatUnread, setChatUnread] = useState(false)
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -694,6 +696,7 @@ export default function LobbyPage() {
   const toastTimerRef = useRef(null)
   const isManualAfkRef = useRef(false)
   const afkTimerRef = useRef(null)
+  const isChatTabOpenRef = useRef(false)
 
   const myStatus = tavernUsers.find(u => u.username === username)?.status ?? 'tavern'
 
@@ -705,6 +708,19 @@ export default function LobbyPage() {
   function handleSetAbsent() {
     isManualAfkRef.current = true
     socketRef.current?.emit('set_status', { status: 'afk' })
+  }
+
+  function handleSendMessage(text) {
+    socketRef.current?.emit('chat_message', { text })
+  }
+
+  function handleChatOpen() {
+    isChatTabOpenRef.current = true
+    setChatUnread(false)
+  }
+
+  function handleChatClose() {
+    isChatTabOpenRef.current = false
   }
 
   /* ── toast ───────────────────────────────────────────── */
@@ -838,6 +854,15 @@ export default function LobbyPage() {
 
     // tavern — real-time online players list
     socket.on('tavern_update', list => setTavernUsers(list))
+
+    // global chat — ephemeral, cleared on page reload
+    socket.on('chat_message', (msg) => {
+      setChatMessages(prev => {
+        const next = [...prev, { ...msg, _id: (prev[prev.length - 1]?._id ?? -1) + 1 }]
+        return next.length > 100 ? next.slice(-100) : next
+      })
+      if (!isChatTabOpenRef.current) setChatUnread(true)
+    })
 
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current); clearInterval(preTimerRef.current); clearTimeout(preTimeoutRef.current) }
   }, []) // eslint-disable-line
@@ -1168,6 +1193,11 @@ export default function LobbyPage() {
           myUsername={username}
           onSetAvailable={handleSetAvailable}
           onSetAbsent={handleSetAbsent}
+          chatMessages={chatMessages}
+          chatUnread={chatUnread}
+          onSendMessage={handleSendMessage}
+          onChatOpen={handleChatOpen}
+          onChatClose={handleChatClose}
         />
         {view === 'home' && (
           <div id="view-home" className="lv active">
@@ -1303,6 +1333,11 @@ export default function LobbyPage() {
             myUsername={username}
             onSetAvailable={handleSetAvailable}
             onSetAbsent={handleSetAbsent}
+            chatMessages={chatMessages}
+            chatUnread={chatUnread}
+            onSendMessage={handleSendMessage}
+            onChatOpen={handleChatOpen}
+            onChatClose={handleChatClose}
           />
         )}
 

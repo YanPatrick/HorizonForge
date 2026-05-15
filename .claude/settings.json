@@ -22,7 +22,10 @@
       "Read(//tmp/**)",
       "Bash(git checkout *)",
       "Bash(git restore *)",
-      "Bash(awk '/\\\\.mobile-actions|#fs-banner|#mobile-menu-overlay/{found=1} found{print NR\": \"$0; if\\(/}/\\)found=0}' public/css/battle-dev.css)"
+      "Bash(awk '/\\\\.mobile-actions|#fs-banner|#mobile-menu-overlay/{found=1} found{print NR\": \"$0; if\\(/}/\\)found=0}' public/css/battle-dev.css)",
+      "Bash(cd * && sed -n *)",
+      "PowerShell(Get-ChildItem -Path *)",
+      "Bash(npm run build*)"
     ]
   },
   "hooks": {

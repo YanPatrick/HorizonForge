@@ -1374,6 +1374,7 @@ const activeMatches = new Map();
 // status: 'taverna' | 'procurando' | 'batalha'
 // detail: string opcional — ex: 'BO5 · rodada 2' para quem está em batalha
 const onlineUsers = new Map();
+const chatRateLimit = new Map(); // username -> timestamp of last sent message
 
 function broadcastTavern() {
   const list = [...onlineUsers.entries()].map(([username, data]) => ({
@@ -2140,6 +2141,20 @@ io.on('connection', socket => {
     setTavernStatus(connectedUser, status);
   });
 
+  socket.on('chat_message', ({ text }) => {
+    if (!connectedUser) return;
+    const status = onlineUsers.get(connectedUser)?.status;
+    if (status !== 'tavern' && status !== 'afk') return;
+    if (!text || typeof text !== 'string') return;
+    const trimmed = text.trim().slice(0, 200);
+    if (!trimmed) return;
+    const now = Date.now();
+    if (now - (chatRateLimit.get(connectedUser) ?? 0) < 1000) return;
+    chatRateLimit.set(connectedUser, now);
+    const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    io.emit('chat_message', { username: connectedUser, text: trimmed, time });
+  });
+
   // ── Player confirms HIVE wager was sent ────────────────────────────────────
   // Emitted after Keychain broadcasts the transfer on the client.
   // Server verifies the transaction on-chain, records the payout preference,
@@ -2202,6 +2217,7 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     if (connectedUser) {
       matchQueue.delete(connectedUser);
+      chatRateLimit.delete(connectedUser);
       broadcastQueueSize();
       removeTavernUser(connectedUser);
       console.log(`🍺 ${connectedUser} left the tavern (${onlineUsers.size} online)`);
