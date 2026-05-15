@@ -2131,6 +2131,15 @@ io.on('connection', socket => {
     }
   });
 
+  // Manual / AFK status change — ignored during searching or battle
+  socket.on('set_status', ({ status }) => {
+    if (!connectedUser) return;
+    const current = onlineUsers.get(connectedUser)?.status;
+    if (current === 'searching' || current === 'battle') return;
+    if (status !== 'tavern' && status !== 'afk') return;
+    setTavernStatus(connectedUser, status);
+  });
+
   // ── Player confirms HIVE wager was sent ────────────────────────────────────
   // Emitted after Keychain broadcasts the transfer on the client.
   // Server verifies the transaction on-chain, records the payout preference,
