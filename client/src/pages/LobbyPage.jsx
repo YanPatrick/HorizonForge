@@ -850,13 +850,13 @@ export default function LobbyPage() {
     function onActivity() {
       if (myStatus === 'afk') {
         if (!isManualAfkRef.current) {
-          socketRef.current?.emit('set_status', { status: 'tavern' })
+          if (socketRef.current?.connected) socketRef.current.emit('set_status', { status: 'tavern' })
         }
         return
       }
       clearTimeout(afkTimerRef.current)
       afkTimerRef.current = setTimeout(() => {
-        socketRef.current?.emit('set_status', { status: 'afk' })
+        if (socketRef.current?.connected) socketRef.current.emit('set_status', { status: 'afk' })
       }, AFK_DELAY)
     }
 
@@ -865,7 +865,7 @@ export default function LobbyPage() {
 
     if (myStatus === 'tavern') {
       afkTimerRef.current = setTimeout(() => {
-        socketRef.current?.emit('set_status', { status: 'afk' })
+        if (socketRef.current?.connected) socketRef.current.emit('set_status', { status: 'afk' })
       }, AFK_DELAY)
     }
 
