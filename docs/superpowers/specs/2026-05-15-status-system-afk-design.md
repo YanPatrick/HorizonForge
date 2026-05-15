@@ -144,3 +144,10 @@ A small popover rendered inline, shown only on the logged-in player's own tavern
 - AFK during `searching` or `battle` — no change to those flows
 - Server-side AFK enforcement — client-driven only
 - Push notifications or warnings before AFK kicks in
+
+## Future: Mobile Tavern
+
+`TavernPanel.jsx` already has an `isMobile` prop and `LobbyPage.jsx` has a mobile tavern tab (lines 1247-1249), but neither has the mini-menu or the new badges. After this spec is implemented, the mobile view needs:
+- All 4 status badges (same CSS classes, already responsive)
+- Mini-menu on own badge tap (touch event instead of click)
+- AFK timer already works — it lives in `LobbyPage.jsx` regardless of viewport
