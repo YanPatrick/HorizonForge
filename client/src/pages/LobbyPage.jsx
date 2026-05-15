@@ -692,6 +692,20 @@ export default function LobbyPage() {
   const preTimerRef = useRef(null)
   const preTimeoutRef = useRef(null)
   const toastTimerRef = useRef(null)
+  const isManualAfkRef = useRef(false)
+  const afkTimerRef = useRef(null)
+
+  const myStatus = tavernUsers.find(u => u.username === username)?.status ?? 'tavern'
+
+  function handleSetAvailable() {
+    isManualAfkRef.current = false
+    socketRef.current?.emit('set_status', { status: 'tavern' })
+  }
+
+  function handleSetAbsent() {
+    isManualAfkRef.current = true
+    socketRef.current?.emit('set_status', { status: 'afk' })
+  }
 
   /* ── toast ───────────────────────────────────────────── */
   const showToast = useCallback((msg) => {
@@ -827,6 +841,39 @@ export default function LobbyPage() {
 
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current); clearInterval(preTimerRef.current); clearTimeout(preTimeoutRef.current) }
   }, []) // eslint-disable-line
+
+  /* ── AFK timer ───────────────────────────────────────── */
+  useEffect(() => {
+    if (myStatus !== 'tavern' && myStatus !== 'afk') return
+    const AFK_DELAY = 2 * 60 * 1000
+
+    function onActivity() {
+      if (myStatus === 'afk') {
+        if (!isManualAfkRef.current) {
+          socketRef.current?.emit('set_status', { status: 'tavern' })
+        }
+        return
+      }
+      clearTimeout(afkTimerRef.current)
+      afkTimerRef.current = setTimeout(() => {
+        socketRef.current?.emit('set_status', { status: 'afk' })
+      }, AFK_DELAY)
+    }
+
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart']
+    events.forEach(e => window.addEventListener(e, onActivity, { passive: true }))
+
+    if (myStatus === 'tavern') {
+      afkTimerRef.current = setTimeout(() => {
+        socketRef.current?.emit('set_status', { status: 'afk' })
+      }, AFK_DELAY)
+    }
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, onActivity))
+      clearTimeout(afkTimerRef.current)
+    }
+  }, [myStatus])
 
   /* ── prefetch battle resources while user is in lobby ── */
   useEffect(() => {
@@ -1116,7 +1163,12 @@ export default function LobbyPage() {
       </nav>
 
       <div className="lobby-wrap lobby-with-tavern">
-        <TavernPanel users={tavernUsers} />
+        <TavernPanel
+          users={tavernUsers}
+          myUsername={username}
+          onSetAvailable={handleSetAvailable}
+          onSetAbsent={handleSetAbsent}
+        />
         {view === 'home' && (
           <div id="view-home" className="lv active">
             <div className="view-scroll">
@@ -1245,7 +1297,13 @@ export default function LobbyPage() {
         {view === 'settings' && <SettingsView session={session} payoutPct={payoutPct} />}
 
         {view === 'tavern' && (
-          <TavernPanel users={tavernUsers} isMobile={true} />
+          <TavernPanel
+            users={tavernUsers}
+            isMobile={true}
+            myUsername={username}
+            onSetAvailable={handleSetAvailable}
+            onSetAbsent={handleSetAbsent}
+          />
         )}
 
         <nav className="mobile-bottom-tabs">
