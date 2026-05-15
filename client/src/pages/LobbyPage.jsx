@@ -696,6 +696,7 @@ export default function LobbyPage() {
   const toastTimerRef = useRef(null)
   const isManualAfkRef = useRef(false)
   const afkTimerRef = useRef(null)
+  const isChatTabOpenRef = useRef(false)
 
   const myStatus = tavernUsers.find(u => u.username === username)?.status ?? 'tavern'
 
@@ -714,7 +715,12 @@ export default function LobbyPage() {
   }
 
   function handleChatOpen() {
+    isChatTabOpenRef.current = true
     setChatUnread(false)
+  }
+
+  function handleChatClose() {
+    isChatTabOpenRef.current = false
   }
 
   /* ── toast ───────────────────────────────────────────── */
@@ -855,7 +861,7 @@ export default function LobbyPage() {
         const next = [...prev, { ...msg, _id: (prev[prev.length - 1]?._id ?? -1) + 1 }]
         return next.length > 100 ? next.slice(-100) : next
       })
-      setChatUnread(true)
+      if (!isChatTabOpenRef.current) setChatUnread(true)
     })
 
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current); clearInterval(preTimerRef.current); clearTimeout(preTimeoutRef.current) }
@@ -1191,6 +1197,7 @@ export default function LobbyPage() {
           chatUnread={chatUnread}
           onSendMessage={handleSendMessage}
           onChatOpen={handleChatOpen}
+          onChatClose={handleChatClose}
         />
         {view === 'home' && (
           <div id="view-home" className="lv active">
@@ -1330,6 +1337,7 @@ export default function LobbyPage() {
             chatUnread={chatUnread}
             onSendMessage={handleSendMessage}
             onChatOpen={handleChatOpen}
+            onChatClose={handleChatClose}
           />
         )}
 

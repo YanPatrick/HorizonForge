@@ -14,6 +14,7 @@ import { useState, useEffect, useRef } from 'react'
  *   chatUnread     — boolean; true when unread messages exist
  *   onSendMessage  — fn(text: string) => void
  *   onChatOpen     — fn() => void — called when Chat tab is opened
+ *   onChatClose    — fn() => void — called when switching away from Chat tab
  */
 export default function TavernPanel({
   users = [],
@@ -25,6 +26,7 @@ export default function TavernPanel({
   chatUnread = false,
   onSendMessage,
   onChatOpen,
+  onChatClose,
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('players')
@@ -145,7 +147,7 @@ export default function TavernPanel({
     <div className="tv-tabs">
       <button
         className={`tv-tab${activeTab === 'players' ? ' tv-tab-active' : ''}`}
-        onClick={() => setActiveTab('players')}
+        onClick={() => { setActiveTab('players'); onChatClose?.() }}
       >
         👥 Players{users.length > 0 ? ` (${users.length})` : ''}
       </button>
