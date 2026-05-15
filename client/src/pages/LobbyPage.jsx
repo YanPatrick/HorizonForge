@@ -852,7 +852,7 @@ export default function LobbyPage() {
     // global chat — ephemeral, cleared on page reload
     socket.on('chat_message', (msg) => {
       setChatMessages(prev => {
-        const next = [...prev, msg]
+        const next = [...prev, { ...msg, _id: (prev[prev.length - 1]?._id ?? -1) + 1 }]
         return next.length > 100 ? next.slice(-100) : next
       })
       setChatUnread(true)

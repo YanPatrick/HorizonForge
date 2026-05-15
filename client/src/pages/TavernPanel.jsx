@@ -161,8 +161,8 @@ export default function TavernPanel({
   const chatView = (
     <div className="tv-chat-wrap">
       <div className="tv-chat-messages">
-        {chatMessages.map((msg, i) => (
-          <div key={i} className="tv-chat-msg">
+        {chatMessages.map((msg) => (
+          <div key={msg._id} className="tv-chat-msg">
             <span className="tv-chat-msg-time">{msg.time}</span>
             <span style={{ color: usernameColor(msg.username), fontWeight: 600 }}>
               {msg.username}
