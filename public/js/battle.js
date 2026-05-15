@@ -1546,7 +1546,10 @@
           if (window._PVP) {
             nb.textContent = "🏠 Back to Lobby";
             nb.onclick = () => {
-              if (window._PVP.socket) window._PVP.socket.disconnect();
+              if (window._PVP.socket) {
+                window._PVP.socket.emit('concede');
+                window._PVP.socket.disconnect();
+              }
               window.location.href = "/lobby";
             };
           } else {
@@ -1624,7 +1627,10 @@
       // Next-duel button click: PvP returns to lobby; AI proceeds to next duel.
       window.duelResultNext = function () {
         if (window._PVP) {
-          if (window._PVP.socket) window._PVP.socket.disconnect();
+          if (window._PVP.socket) {
+            window._PVP.socket.emit('concede');
+            window._PVP.socket.disconnect();
+          }
           window.location.href = "/lobby";
         } else {
           nextDuel();

@@ -2056,6 +2056,28 @@ io.on('connection', socket => {
     console.log(`🔄 ${connectedUser} rejoined match ${matchId}`);
   });
 
+  // Player deliberately concedes (clicks "Concede" / "Back to Lobby" mid-match).
+  // Unlike a socket disconnect (which starts a 45-second grace timer), a concede
+  // ends the series immediately so the opponent isn't held hostage and the
+  // conceeding player can freely search a new match without being reconnected here.
+  socket.on('concede', () => {
+    if (!connectedUser) return;
+    for (const [, m] of activeMatches) {
+      if (m.p1 !== connectedUser && m.p2 !== connectedUser) continue;
+      const winner = m.p1 === connectedUser ? m.p2 : m.p1;
+      if (m.disconnectTimer) {
+        clearTimeout(m.disconnectTimer);
+        m.disconnectTimer = null;
+      }
+      // Bring winner's score to one win away from series end so the next
+      // forfeitBattle call terminates the whole series, not just one round.
+      m.scores[winner] = Math.max(m.scores[winner], m.winsNeeded - 1);
+      forfeitBattle(m.matchId, winner);
+      console.log(`🏳️ ${connectedUser} conceded match ${m.matchId} — series awarded to ${winner}`);
+      break;
+    }
+  });
+
   // Player submits their team for the current round
   socket.on('submit_team', ({ matchId, board, merges }) => {
     const m = activeMatches.get(matchId);

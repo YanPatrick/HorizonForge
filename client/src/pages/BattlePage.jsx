@@ -141,11 +141,13 @@ export default function BattlePage() {
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
-    // Disconnect any live PvP socket so the server marks us as quit, not just
-    // dropped — and hard-redirect rather than navigate(): battle.js attaches
-    // a lot of imperative side effects on this page that we want fully torn
-    // down. A hard reload is the simplest way to clean them up.
-    if (window._PVP?.socket) window._PVP.socket.disconnect()
+    // Emit 'concede' before disconnecting so the server ends the series
+    // immediately instead of waiting 45s grace — this prevents the player
+    // from being reconnected to the same match when they search a new one.
+    if (window._PVP?.socket) {
+      window._PVP.socket.emit('concede')
+      window._PVP.socket.disconnect()
+    }
     window.location.href = '/lobby'
   }, [])
 
@@ -607,8 +609,8 @@ export default function BattlePage() {
             >
               {speed.label}
             </button>
-            <button className="htp-btn hback-btn" onClick={() => window.openQuitModal?.()} title="Back to Lobby">
-              ← Lobby
+            <button className="htp-btn hback-btn" onClick={() => window.openQuitModal?.()} title="Concede">
+              Concede
             </button>
           </div>
         </div>
