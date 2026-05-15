@@ -836,8 +836,8 @@ export default function LobbyPage() {
       setSearch(s => s.open && !s.found ? { ...s, queueText: 'Connection lost — reconnecting...' } : s)
     })
 
-    // tavern — lista de jogadores online em tempo real        // + BLOCO NOVO
-    socket.on('tavern_update', list => setTavernUsers(list))   // + LINHA NOVA
+    // tavern — real-time online players list
+    socket.on('tavern_update', list => setTavernUsers(list))
 
     return () => { socket.disconnect(); clearInterval(searchTimerRef.current); clearInterval(phraseTimerRef.current); clearInterval(payCountdownRef.current); clearInterval(preTimerRef.current); clearTimeout(preTimeoutRef.current) }
   }, []) // eslint-disable-line

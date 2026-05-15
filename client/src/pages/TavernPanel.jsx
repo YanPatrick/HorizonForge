@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 
 /**
- * TavernPanel — lista de jogadores online em tempo real.
+ * TavernPanel — real-time online players list.
  *
  * Props:
- *   users          — array de { username, status, detail }
+ *   users          — array of { username, status, detail }
  *                    status: 'tavern' | 'searching' | 'battle' | 'afk'
- *   isMobile       — boolean; no mobile renderiza versão compacta sem cabeçalho lateral
- *   myUsername     — username do jogador logado (para renderizar badge clicável)
- *   onSetAvailable — callback: jogador clicou em "Disponível"
- *   onSetAbsent    — callback: jogador clicou em "Ausente"
+ *   isMobile       — boolean; on mobile renders compact version without side header
+ *   myUsername     — logged-in player's username (to render clickable badge)
+ *   onSetAvailable — callback: player clicked "Available"
+ *   onSetAbsent    — callback: player clicked "Absent"
  */
 export default function TavernPanel({
   users = [],
@@ -39,7 +39,7 @@ export default function TavernPanel({
     afk:       sorted.filter(u => u.status === 'afk'),
   }
 
-  const BADGE_LABEL = { battle: 'battle', searching: 'searching', tavern: 'tavern', afk: 'ausente' }
+  const BADGE_LABEL = { battle: 'battle', searching: 'searching', tavern: 'tavern', afk: 'absent' }
 
   function initials(name) {
     return (name ?? '?').slice(0, 2).toUpperCase()
@@ -72,14 +72,14 @@ export default function TavernPanel({
                   onClick={() => { onSetAvailable?.(); setMenuOpen(false) }}
                 >
                   <span className="tv-status-opt-dot tv-status-opt-dot-available" />
-                  Disponível
+                  Available
                 </button>
                 <button
                   className="tv-status-opt"
                   onClick={() => { onSetAbsent?.(); setMenuOpen(false) }}
                 >
                   <span className="tv-status-opt-dot tv-status-opt-dot-absent" />
-                  Ausente
+                  Absent
                 </button>
               </div>
             )}
@@ -124,7 +124,7 @@ export default function TavernPanel({
               <Group title="In Battle"   list={groups.battle} />
               <Group title="Searching"   list={groups.searching} />
               <Group title="In Tavern"   list={groups.tavern} />
-              <Group title="Ausente"     list={groups.afk} />
+              <Group title="Absent"      list={groups.afk} />
             </>
           )}
         </div>
@@ -145,7 +145,7 @@ export default function TavernPanel({
               <Group title="In Battle"   list={groups.battle} />
               <Group title="Searching"   list={groups.searching} />
               <Group title="In Tavern"   list={groups.tavern} />
-              <Group title="Ausente"     list={groups.afk} />
+              <Group title="Absent"      list={groups.afk} />
             </>
           )}
         </div>
