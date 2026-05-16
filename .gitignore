@@ -1,6 +1,9 @@
 # Dependências
 node_modules/
 
+# Imagens originais de alta resolução — ficam só na máquina local
+public/heroes/originals/
+
 # Ambiente — NUNCA commitar
 .env
 
