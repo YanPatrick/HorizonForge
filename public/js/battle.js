@@ -1905,7 +1905,7 @@
           const pool = window.HF_equipped_backgrounds || [];
           const guestArenas = [
             { preview: '/images/arenas/arena-desert.jpg' },
-            { preview: '/images/arenas/arena-forest.jpg' },
+            { preview: '/images/arenas/arena-florest.jpg' },
             { preview: '/images/arenas/arena-snow.jpg' },
           ];
           const list = pool.length > 0 ? pool : guestArenas;

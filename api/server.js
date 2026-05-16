@@ -896,7 +896,7 @@ app.post('/api/migrate', async (req, res) => {
     await sql`
       INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
         ('bg_desert', 'background', 'Deserto',  '/images/arenas/arena-desert.jpg', 0, NULL),
-        ('bg_forest', 'background', 'Floresta', '/images/arenas/arena-forest.jpg', 0, NULL),
+        ('bg_forest', 'background', 'Floresta', '/images/arenas/arena-florest.jpg', 0, NULL),
         ('bg_snow',   'background', 'Neve',     '/images/arenas/arena-snow.jpg',   0, NULL)
       ON CONFLICT (id) DO NOTHING
     `;
