@@ -1904,9 +1904,9 @@
         (function applyArenaBackground() {
           const pool = window.HF_equipped_backgrounds || [];
           const guestArenas = [
-            { preview: '/images/arena-desert.jpg' },
-            { preview: '/images/arena-forest.jpg' },
-            { preview: '/images/arena-snow.jpg' },
+            { preview: '/images/arenas/arena-desert.jpg' },
+            { preview: '/images/arenas/arena-forest.jpg' },
+            { preview: '/images/arenas/arena-snow.jpg' },
           ];
           const list = pool.length > 0 ? pool : guestArenas;
           const pick = list[Math.floor(Math.random() * list.length)];

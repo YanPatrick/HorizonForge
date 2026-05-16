@@ -585,7 +585,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L1",
       "id": "c_fontes_javascript_horizonforge_client_src_pages_shopview_jsx",
-      "community": 8,
+      "community": 9,
       "norm_label": "shopview.jsx"
     },
     {
@@ -594,7 +594,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L22",
       "id": "shopview_sortitems",
-      "community": 8,
+      "community": 9,
       "norm_label": "sortitems()"
     },
     {
@@ -603,7 +603,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L34",
       "id": "shopview_shopview",
-      "community": 8,
+      "community": 9,
       "norm_label": "shopview()"
     },
     {
@@ -612,7 +612,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L360",
       "id": "shopview_getitemequipstate",
-      "community": 8,
+      "community": 9,
       "norm_label": "getitemequipstate()"
     },
     {
@@ -621,7 +621,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L366",
       "id": "shopview_skinpreview",
-      "community": 8,
+      "community": 9,
       "norm_label": "skinpreview()"
     },
     {
@@ -630,7 +630,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L378",
       "id": "shopview_shopitemcard",
-      "community": 8,
+      "community": 9,
       "norm_label": "shopitemcard()"
     },
     {
@@ -639,7 +639,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\client\\src\\pages\\ShopView.jsx",
       "source_location": "L425",
       "id": "shopview_shoplistrow",
-      "community": 8,
+      "community": 9,
       "norm_label": "shoplistrow()"
     },
     {
@@ -738,7 +738,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L70",
       "id": "battle_bench_slots",
-      "community": 11,
+      "community": 12,
       "norm_label": "bench_slots()"
     },
     {
@@ -747,7 +747,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L73",
       "id": "battle_field_max",
-      "community": 3,
+      "community": 8,
       "norm_label": "field_max()"
     },
     {
@@ -756,7 +756,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L76",
       "id": "battle_distinctheroes",
-      "community": 11,
+      "community": 12,
       "norm_label": "distinctheroes()"
     },
     {
@@ -765,7 +765,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L79",
       "id": "battle_canaddnewhero",
-      "community": 6,
+      "community": 5,
       "norm_label": "canaddnewhero()"
     },
     {
@@ -774,7 +774,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L98",
       "id": "battle_start_gold",
-      "community": 9,
+      "community": 6,
       "norm_label": "start_gold()"
     },
     {
@@ -783,7 +783,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L103",
       "id": "battle_getbattlespeedmultiplier",
-      "community": 12,
+      "community": 13,
       "norm_label": "getbattlespeedmultiplier()"
     },
     {
@@ -792,7 +792,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L106",
       "id": "battle_getbattleframedelay",
-      "community": 12,
+      "community": 13,
       "norm_label": "getbattleframedelay()"
     },
     {
@@ -801,7 +801,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L109",
       "id": "battle_getbattlefxduration",
-      "community": 12,
+      "community": 13,
       "norm_label": "getbattlefxduration()"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L112",
       "id": "battle_applybattlespeed",
-      "community": 12,
+      "community": 13,
       "norm_label": "applybattlespeed()"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L125",
       "id": "battle_togglebattlespeed",
-      "community": 12,
+      "community": 13,
       "norm_label": "togglebattlespeed()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L141",
       "id": "battle_showloader",
-      "community": 5,
+      "community": 4,
       "norm_label": "showloader()"
     },
     {
@@ -837,7 +837,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L148",
       "id": "battle_hideloader",
-      "community": 5,
+      "community": 4,
       "norm_label": "hideloader()"
     },
     {
@@ -846,7 +846,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L155",
       "id": "battle_validategamestate",
-      "community": 5,
+      "community": 4,
       "norm_label": "validategamestate()"
     },
     {
@@ -855,7 +855,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L172",
       "id": "battle_initgame",
-      "community": 5,
+      "community": 4,
       "norm_label": "initgame()"
     },
     {
@@ -864,7 +864,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L305",
       "id": "battle_skillicon",
-      "community": 5,
+      "community": 4,
       "norm_label": "skillicon()"
     },
     {
@@ -873,7 +873,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L323",
       "id": "battle_mkunit",
-      "community": 6,
+      "community": 5,
       "norm_label": "mkunit()"
     },
     {
@@ -882,7 +882,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L344",
       "id": "battle_upgradeunit",
-      "community": 11,
+      "community": 12,
       "norm_label": "upgradeunit()"
     },
     {
@@ -891,7 +891,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L358",
       "id": "battle_playerrandcid",
-      "community": 6,
+      "community": 5,
       "norm_label": "playerrandcid()"
     },
     {
@@ -927,7 +927,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L418",
       "id": "battle_adjacentslots",
-      "community": 3,
+      "community": 8,
       "norm_label": "adjacentslots()"
     },
     {
@@ -936,7 +936,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L432",
       "id": "battle_cardcost",
-      "community": 6,
+      "community": 5,
       "norm_label": "cardcost()"
     },
     {
@@ -945,7 +945,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L435",
       "id": "battle_totalowned",
-      "community": 6,
+      "community": 5,
       "norm_label": "totalowned()"
     },
     {
@@ -954,7 +954,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L442",
       "id": "battle_applymerge",
-      "community": 11,
+      "community": 12,
       "norm_label": "applymerge()"
     },
     {
@@ -963,7 +963,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L453",
       "id": "battle_detectcombos",
-      "community": 6,
+      "community": 5,
       "norm_label": "_detectcombos()"
     },
     {
@@ -972,7 +972,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L503",
       "id": "battle_genshop",
-      "community": 6,
+      "community": 5,
       "norm_label": "genshop()"
     },
     {
@@ -981,7 +981,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L529",
       "id": "battle_rerollshop",
-      "community": 6,
+      "community": 5,
       "norm_label": "rerollshop()"
     },
     {
@@ -999,7 +999,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L554",
       "id": "battle_addtobench",
-      "community": 6,
+      "community": 5,
       "norm_label": "_addtobench()"
     },
     {
@@ -1008,7 +1008,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L641",
       "id": "battle_slideshop",
-      "community": 6,
+      "community": 5,
       "norm_label": "_slideshop()"
     },
     {
@@ -1017,7 +1017,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L648",
       "id": "battle_buycard",
-      "community": 6,
+      "community": 5,
       "norm_label": "buycard()"
     },
     {
@@ -1026,7 +1026,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L667",
       "id": "battle_buycombo",
-      "community": 6,
+      "community": 5,
       "norm_label": "buycombo()"
     },
     {
@@ -1035,7 +1035,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L704",
       "id": "battle_betweenincome",
-      "community": 9,
+      "community": 6,
       "norm_label": "betweenincome()"
     },
     {
@@ -1044,7 +1044,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L711",
       "id": "battle_maxunits",
-      "community": 3,
+      "community": 8,
       "norm_label": "maxunits()"
     },
     {
@@ -1053,7 +1053,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L715",
       "id": "battle_placeunit",
-      "community": 3,
+      "community": 8,
       "norm_label": "placeunit()"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L734",
       "id": "battle_retbench",
-      "community": 11,
+      "community": 12,
       "norm_label": "retbench()"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L753",
       "id": "battle_swapfieldbench",
-      "community": 11,
+      "community": 12,
       "norm_label": "swapfieldbench()"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L777",
       "id": "battle_restorefieldhp",
-      "community": 9,
+      "community": 6,
       "norm_label": "restorefieldhp()"
     },
     {
@@ -1089,7 +1089,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L800",
       "id": "battle_simulate",
-      "community": 13,
+      "community": 11,
       "norm_label": "simulate()"
     },
     {
@@ -1098,7 +1098,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L827",
       "id": "battle_renderturnpanel",
-      "community": 13,
+      "community": 11,
       "norm_label": "renderturnpanel()"
     },
     {
@@ -1107,7 +1107,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L878",
       "id": "battle_hideturnpanel",
-      "community": 3,
+      "community": 6,
       "norm_label": "hideturnpanel()"
     },
     {
@@ -1116,7 +1116,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L883",
       "id": "battle_clearfieldplacementhints",
-      "community": 13,
+      "community": 11,
       "norm_label": "clearfieldplacementhints()"
     },
     {
@@ -1125,7 +1125,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L895",
       "id": "battle_startphasetimer",
-      "community": 5,
+      "community": 4,
       "norm_label": "startphasetimer()"
     },
     {
@@ -1134,7 +1134,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L921",
       "id": "battle_stopphasetimer",
-      "community": 5,
+      "community": 4,
       "norm_label": "stopphasetimer()"
     },
     {
@@ -1143,7 +1143,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L929",
       "id": "battle_updatefieldlabels",
-      "community": 5,
+      "community": 4,
       "norm_label": "updatefieldlabels()"
     },
     {
@@ -1152,7 +1152,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L950",
       "id": "battle_setshoplocked",
-      "community": 9,
+      "community": 6,
       "norm_label": "setshoplocked()"
     },
     {
@@ -1161,7 +1161,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L959",
       "id": "battle_startbattle",
-      "community": 13,
+      "community": 11,
       "norm_label": "startbattle()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L1030",
       "id": "battle_playback",
-      "community": 13,
+      "community": 11,
       "norm_label": "playback()"
     },
     {
@@ -1179,7 +1179,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L1492",
       "id": "battle_endbattle",
-      "community": 3,
+      "community": 6,
       "norm_label": "endbattle()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L1685",
       "id": "battle_pvpinit",
-      "community": 5,
+      "community": 4,
       "norm_label": "pvpinit()"
     },
     {
@@ -1233,7 +1233,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L1902",
       "id": "battle_startgame",
-      "community": 5,
+      "community": 4,
       "norm_label": "startgame()"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L1999",
       "id": "battle_cleanupbattledom",
-      "community": 9,
+      "community": 6,
       "norm_label": "_cleanupbattledom()"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2007",
       "id": "battle_nextbattle",
-      "community": 9,
+      "community": 6,
       "norm_label": "nextbattle()"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2085",
       "id": "battle_nextduel",
-      "community": 9,
+      "community": 6,
       "norm_label": "nextduel()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2163",
       "id": "battle_dispatchbanner",
-      "community": 3,
+      "community": 11,
       "norm_label": "_dispatchbanner()"
     },
     {
@@ -1314,7 +1314,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2169",
       "id": "battle_renderduelbar",
-      "community": 3,
+      "community": 6,
       "norm_label": "renderduelbar()"
     },
     {
@@ -1332,7 +1332,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2268",
       "id": "battle_clearattackarrows",
-      "community": 3,
+      "community": 8,
       "norm_label": "clearattackarrows()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2321",
       "id": "battle_renderfield",
-      "community": 3,
+      "community": 8,
       "norm_label": "renderfield()"
     },
     {
@@ -1368,7 +1368,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2588",
       "id": "battle_rendershop",
-      "community": 3,
+      "community": 8,
       "norm_label": "rendershop()"
     },
     {
@@ -1377,7 +1377,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2671",
       "id": "battle_renderbench",
-      "community": 3,
+      "community": 8,
       "norm_label": "renderbench()"
     },
     {
@@ -1404,7 +1404,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2774",
       "id": "battle_updatehdr",
-      "community": 3,
+      "community": 6,
       "norm_label": "updatehdr()"
     },
     {
@@ -1413,7 +1413,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2776",
       "id": "battle_render",
-      "community": 3,
+      "community": 8,
       "norm_label": "render()"
     },
     {
@@ -1422,7 +1422,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\battle.js",
       "source_location": "L2810",
       "id": "battle_bootbattle",
-      "community": 5,
+      "community": 4,
       "norm_label": "_bootbattle()"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L1",
       "id": "c_fontes_javascript_horizonforge_public_js_bot_ai_js",
-      "community": 4,
+      "community": 3,
       "norm_label": "bot-ai.js"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L68",
       "id": "bot_ai_makeinitialbot",
-      "community": 4,
+      "community": 3,
       "norm_label": "makeinitialbot()"
     },
     {
@@ -1512,7 +1512,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L82",
       "id": "bot_ai_deps",
-      "community": 4,
+      "community": 3,
       "norm_label": "deps()"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L86",
       "id": "bot_ai_init",
-      "community": 4,
+      "community": 3,
       "norm_label": "init()"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L91",
       "id": "bot_ai_botcardcost",
-      "community": 4,
+      "community": 3,
       "norm_label": "botcardcost()"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L98",
       "id": "bot_ai_botapplymerge",
-      "community": 4,
+      "community": 3,
       "norm_label": "botapplymerge()"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L109",
       "id": "bot_ai_botgenshop",
-      "community": 4,
+      "community": 3,
       "norm_label": "botgenshop()"
     },
     {
@@ -1557,7 +1557,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L114",
       "id": "bot_ai_botscorecard",
-      "community": 4,
+      "community": 3,
       "norm_label": "botscorecard()"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L139",
       "id": "bot_ai_botbuyphase",
-      "community": 4,
+      "community": 3,
       "norm_label": "botbuyphase()"
     },
     {
@@ -1575,7 +1575,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L193",
       "id": "bot_ai_botposition",
-      "community": 4,
+      "community": 3,
       "norm_label": "botposition()"
     },
     {
@@ -1584,7 +1584,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L222",
       "id": "bot_ai_botnextbattle",
-      "community": 4,
+      "community": 3,
       "norm_label": "botnextbattle()"
     },
     {
@@ -1593,7 +1593,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L238",
       "id": "bot_ai_botlearnfrombattle",
-      "community": 4,
+      "community": 3,
       "norm_label": "botlearnfrombattle()"
     },
     {
@@ -1602,7 +1602,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L250",
       "id": "bot_ai_botrunturn",
-      "community": 4,
+      "community": 3,
       "norm_label": "botrunturn()"
     },
     {
@@ -1611,7 +1611,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\bot-ai.js",
       "source_location": "L256",
       "id": "bot_ai_botinitduel",
-      "community": 4,
+      "community": 3,
       "norm_label": "botinitduel()"
     },
     {
@@ -1629,7 +1629,7 @@
       "source_file": "C:\\Fontes_Javascript\\HorizonForge\\public\\js\\skill-tooltip.js",
       "source_location": "L102",
       "id": "skill_tooltip_init",
-      "community": 5,
+      "community": 4,
       "norm_label": "init()"
     },
     {

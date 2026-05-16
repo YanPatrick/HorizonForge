@@ -249,7 +249,7 @@ CREATE TABLE IF NOT EXISTS user_cosmetics (
 );
 
 INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, sort_order) VALUES
-  ('bg_desert', 'background', 'Deserto',  '/images/arena-desert.jpg', 0, NULL, 10),
-  ('bg_forest', 'background', 'Floresta', '/images/arena-forest.jpg', 0, NULL, 20),
-  ('bg_snow',   'background', 'Neve',     '/images/arena-snow.jpg',   0, NULL, 30)
+  ('bg_desert', 'background', 'Deserto',  '/images/arenas/arena-desert.jpg', 0, NULL, 10),
+  ('bg_forest', 'background', 'Floresta', '/images/arenas/arena-forest.jpg', 0, NULL, 20),
+  ('bg_snow',   'background', 'Neve',     '/images/arenas/arena-snow.jpg',   0, NULL, 30)
 ON CONFLICT (id) DO NOTHING;
