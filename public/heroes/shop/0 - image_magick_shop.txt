@@ -1,0 +1,9 @@
+$magick = "C:\Program Files\ImageMagick-7.1.2-Q16-HDRI\magick.exe"
+
+Get-ChildItem "C:\Fontes_Javascript\HorizonForge\public\heroes\originals\*" -Include "*.jpg","*.jpeg","*.png","*.webp" |
+Where-Object { $_.Length -gt 100KB } |
+ForEach-Object {
+    $output = "C:\Fontes_Javascript\HorizonForge\public\heroes\shop\$($_.BaseName).webp"
+    & $magick $_.FullName -resize "400x>" -quality 92 $output
+    Write-Host "OK: $($_.Name) -> $([math]::Round((Get-Item $output).Length/1KB))KB"
+}

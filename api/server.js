@@ -876,6 +876,13 @@ app.post('/api/migrate', async (req, res) => {
     `;
     await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
     await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
+    await sql`
+      UPDATE cosmetics
+      SET preview = REPLACE(preview, '/heroes/', '/heroes/shop/')
+      WHERE type = 'skin'
+        AND preview LIKE '/heroes/%'
+        AND preview NOT LIKE '/heroes/shop/%'
+    `;
 
     await sql`
       CREATE TABLE IF NOT EXISTS user_cosmetics (
@@ -896,15 +903,15 @@ app.post('/api/migrate', async (req, res) => {
 
     await sql`
       INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid) VALUES
-        ('skin_knight',    'skin', 'Knight',    '', 0, 'knight'),
-        ('skin_mage',      'skin', 'Mage',      '', 0, 'mage'),
-        ('skin_archer',    'skin', 'Archer',    '', 0, 'archer'),
-        ('skin_healer',    'skin', 'Healer',    '', 0, 'healer'),
-        ('skin_assassin',  'skin', 'Assassin',  '', 0, 'assassin'),
-        ('skin_paladin',   'skin', 'Paladin',   '', 0, 'paladin'),
-        ('skin_archmage',  'skin', 'Archmage',  '', 0, 'archmage'),
-        ('skin_barbarian', 'skin', 'Barbarian', '', 0, 'barbarian')
-      ON CONFLICT (id) DO NOTHING
+        ('skin_knight',    'skin', 'Knight',    '/heroes/shop/knight.webp',    0, 'knight'),
+        ('skin_mage',      'skin', 'Mage',      '/heroes/shop/mage.webp',      0, 'mage'),
+        ('skin_archer',    'skin', 'Archer',    '/heroes/shop/archer.webp',    0, 'archer'),
+        ('skin_healer',    'skin', 'Healer',    '/heroes/shop/healer.webp',    0, 'healer'),
+        ('skin_assassin',  'skin', 'Assassin',  '/heroes/shop/assassin.webp',  0, 'assassin'),
+        ('skin_paladin',   'skin', 'Paladin',   '/heroes/shop/paladin.webp',   0, 'paladin'),
+        ('skin_archmage',  'skin', 'Archmage',  '/heroes/shop/archmage.webp',  0, 'archmage'),
+        ('skin_barbarian', 'skin', 'Barbarian', '/heroes/shop/barbarian.webp', 0, 'barbarian')
+      ON CONFLICT (id) DO UPDATE SET preview = EXCLUDED.preview
     `;
 
     await sql`
