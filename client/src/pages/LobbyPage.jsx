@@ -1344,43 +1344,43 @@ export default function LobbyPage() {
             <span className="mbt-ico">⚙️</span><span className="mbt-lbl">Config</span>
           </button>
         </nav>
+      </div>
 
-        <button
-          type="button"
-          className="tv-fab"
-          onClick={() => setTavernOpen(true)}
-          aria-label="Open Tavern"
-        >
-          🍺
-          {chatUnread && !tavernOpen && <span className="tv-fab-badge" />}
-        </button>
+      <button
+        type="button"
+        className="tv-fab"
+        onClick={() => setTavernOpen(true)}
+        aria-label="Open Tavern"
+      >
+        🍺
+        {chatUnread && !tavernOpen && <span className="tv-fab-badge" />}
+      </button>
 
+      <div
+        className={`tv-overlay${tavernOpen ? ' tv-overlay-open' : ''}`}
+        onClick={() => { setTavernOpen(false); handleChatClose() }}
+      >
         <div
-          className={`tv-overlay${tavernOpen ? ' tv-overlay-open' : ''}`}
-          onClick={() => { setTavernOpen(false); handleChatClose() }}
+          className={`tv-overlay-panel${tavernOpen ? ' open' : ''}`}
+          onClick={e => e.stopPropagation()}
         >
-          <div
-            className={`tv-overlay-panel${tavernOpen ? ' open' : ''}`}
-            onClick={e => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="tv-overlay-close"
-              onClick={() => { setTavernOpen(false); handleChatClose() }}
-            >✕</button>
-            <TavernPanel
-              users={tavernUsers}
-              isMobile={true}
-              myUsername={username}
-              onSetAvailable={handleSetAvailable}
-              onSetAbsent={handleSetAbsent}
-              chatMessages={chatMessages}
-              chatUnread={chatUnread}
-              onSendMessage={handleSendMessage}
-              onChatOpen={handleChatOpen}
-              onChatClose={handleChatClose}
-            />
-          </div>
+          <button
+            type="button"
+            className="tv-overlay-close"
+            onClick={() => { setTavernOpen(false); handleChatClose() }}
+          >✕</button>
+          <TavernPanel
+            users={tavernUsers}
+            isMobile={true}
+            myUsername={username}
+            onSetAvailable={handleSetAvailable}
+            onSetAbsent={handleSetAbsent}
+            chatMessages={chatMessages}
+            chatUnread={chatUnread}
+            onSendMessage={handleSendMessage}
+            onChatOpen={handleChatOpen}
+            onChatClose={handleChatClose}
+          />
         </div>
       </div>
 
