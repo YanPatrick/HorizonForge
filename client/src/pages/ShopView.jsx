@@ -82,8 +82,6 @@ export default function ShopView({ session, toast, heroData }) {
     }
   }, [isHive, token])
 
-  useEffect(() => { setShowOwned(getShowOwnedPref()) }, [filter])
-
   const filtered = catalog.filter(item => {
     if (filter !== 'all' && item.type !== filter) return false
     if (!showOwned && owned.has(item.id)) return false
