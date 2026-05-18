@@ -345,7 +345,7 @@
 .tv-fab {
   display: none;
   position: fixed;
-  bottom: calc(60px + 16px);
+  bottom: calc(60px + 16px + env(safe-area-inset-bottom, 0px));
   right: 16px;
   z-index: 1050;
   width: 48px;
@@ -371,7 +371,7 @@
   background: #ef4444;
   border: 2px solid #0c0a1a;
 }
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .tv-fab { display: flex; }
 }
 
@@ -415,7 +415,7 @@
   color: #888;
   font-size: 20px;
   cursor: pointer;
-  z-index: 1;
+  z-index: 10;
   line-height: 1;
   padding: 4px;
 }
