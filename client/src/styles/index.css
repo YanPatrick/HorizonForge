@@ -144,43 +144,25 @@ body {
 
 .btn-kc {
   width: 100%;
-  padding: 14px 22px;
+  padding: 13px 22px;
   margin-top: 4px;
-  background: linear-gradient(135deg, #1565e0, #0d4db8);
-  border: 1.5px solid rgba(70,130,255,0.48);
+  background: rgba(255,255,255,0.03);
+  border: 1.5px solid rgba(70,130,255,0.30);
   border-radius: 12px;
-  color: #fff;
+  color: rgba(130,175,255,0.78);
   font-family: Inter, Segoe UI, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
   transition: all 0.18s;
-  position: relative;
-  overflow: hidden;
 }
 .btn-kc:hover {
-  background: linear-gradient(135deg, #2278f0, #1560d4);
-  box-shadow: 0 8px 30px rgba(25,100,240,0.42);
-  transform: translateY(-2px);
+  background: rgba(25,75,200,0.10);
+  border-color: rgba(70,130,255,0.52);
+  color: rgba(170,205,255,0.92);
 }
-.btn-kc:active { transform: translateY(0); box-shadow: none; }
-.btn-kc::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.11), transparent);
-  transform: translateX(-100%);
-  animation: kc-shim 3.2s ease-in-out infinite;
-}
-@keyframes kc-shim {
-  0%       { transform: translateX(-100%); }
-  50%, 100% { transform: translateX(150%); }
-}
+.btn-kc:active { transform: translateY(0); }
 
 .kc-warn {
   display: none;
@@ -218,21 +200,47 @@ body {
 
 .btn-guest {
   width: 100%;
-  padding: 12px 22px;
-  background: rgba(255,255,255,0.03);
-  border: 1.5px solid rgba(140,108,205,0.22);
+  padding: 15px 22px;
+  background: linear-gradient(135deg, #7c35ff, #4b15cc);
+  border: 1.5px solid rgba(160,100,255,0.55);
   border-radius: 12px;
-  color: rgba(188,168,232,0.64);
+  color: #fff;
   font-family: Inter, Segoe UI, Arial, sans-serif;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.18s;
+  position: relative;
+  overflow: hidden;
 }
 .btn-guest:hover {
-  background: rgba(170,128,255,0.1);
-  border-color: rgba(170,128,255,0.38);
-  color: rgba(215,195,255,0.88);
+  background: linear-gradient(135deg, #9048ff, #6020e0);
+  box-shadow: 0 8px 30px rgba(120,40,255,0.45);
+  transform: translateY(-2px);
+}
+.btn-guest:active { transform: translateY(0); box-shadow: none; }
+.btn-guest::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.11), transparent);
+  transform: translateX(-100%);
+  animation: btn-shim 3.2s ease-in-out infinite;
+}
+@keyframes btn-shim {
+  0%       { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(150%); }
+}
+.guest-hint {
+  text-align: center;
+  font-size: 10.5px;
+  color: rgba(170,148,225,0.45);
+  margin-top: 7px;
+  letter-spacing: 0.4px;
 }
 
 .card-foot {

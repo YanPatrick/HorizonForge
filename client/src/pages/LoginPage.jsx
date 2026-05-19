@@ -3,6 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import '../styles/index.css'
 import { getSession } from '../lib/session'
 
+const GUEST_PREFIXES = ['Iron', 'Shadow', 'Storm', 'Void', 'Flame', 'Frost', 'Dark', 'Swift', 'Brave', 'Wild']
+const GUEST_CLASSES  = ['Knight', 'Mage', 'Archer', 'Paladin', 'Hunter', 'Rogue', 'Sage', 'Blade']
+function randomGuestName() {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)]
+  return `${pick(GUEST_PREFIXES)}_${pick(GUEST_CLASSES)}_${Math.floor(Math.random() * 900) + 100}`
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
   const inputRef = useRef(null)
@@ -63,7 +70,7 @@ export default function LoginPage() {
   }
 
   function doGuest() {
-    sessionStorage.setItem('hf_session', JSON.stringify({ username: 'guest', mode: 'guest', ts: Date.now() }))
+    localStorage.setItem('hf_session', JSON.stringify({ username: randomGuestName(), mode: 'guest', ts: Date.now() }))
     navigate('/lobby')
   }
 
@@ -75,6 +82,11 @@ export default function LoginPage() {
           <h1 className="logo-name">HORIZON FORGE</h1>
           <p className="logo-tag">A Fantasy Auto-Battler on the Hive Blockchain</p>
         </div>
+
+        <button className="btn-guest" onClick={doGuest}>Play as Guest</button>
+        <p className="guest-hint">No account required</p>
+
+        <div className="or-div"><span>or</span></div>
 
         <label className="field-lbl" htmlFor="hive-user">Hive Username</label>
         <div className="input-row">
@@ -106,10 +118,6 @@ export default function LoginPage() {
             </a>
           </div>
         )}
-
-        <div className="or-div"><span>or</span></div>
-
-        <button className="btn-guest" onClick={doGuest}>Play as Guest</button>
 
         <div className="card-foot">
           <a href="https://hive-keychain.com" target="_blank" rel="noreferrer">

@@ -1705,7 +1705,9 @@
             : "";
         pvp.socket = io(base, {
           transports: ["websocket"],
-          auth: { token: window._HF_SESSION?.token },
+          auth: window._HF_SESSION?.mode === 'guest'
+            ? { guestName: window._HF_SESSION.username }
+            : { token: window._HF_SESSION?.token },
         });
 
         pvp.socket.on("connect", () => {

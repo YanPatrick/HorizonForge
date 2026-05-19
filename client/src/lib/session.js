@@ -14,7 +14,19 @@
 
 export function getSession() {
   try {
-    const raw = sessionStorage.getItem('hf_session');
+    // Hive sessions live in sessionStorage (intentional — token must not survive tab close).
+    // Guest sessions live in localStorage so progress persists across browser restarts.
+    let raw = sessionStorage.getItem('hf_session');
+    if (!raw) {
+      raw = localStorage.getItem('hf_session');
+      // Restore to sessionStorage so legacy battle.js (which reads only sessionStorage) finds it.
+      if (raw) {
+        try {
+          const s = JSON.parse(raw);
+          if (s?.mode === 'guest') sessionStorage.setItem('hf_session', raw);
+        } catch { /* ok */ }
+      }
+    }
     if (!raw) return null;
     const s = JSON.parse(raw);
     if (!s) return null;
