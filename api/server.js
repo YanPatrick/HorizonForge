@@ -1939,9 +1939,14 @@ function forfeitBattle(matchId, winner) {
     armForfeitTimer(matchId, m.p1, m.p2, ROUND_TIME_MS);
   }
 }
-// Sets socket.data.username from the verified token; guests remain null.
+// Sets socket.data.username from the verified token.
+// Guest sockets can identify via guestName for free (no-wager) matches.
 io.use((socket, next) => {
   socket.data.username = verifyToken(socket.handshake.auth?.token) || null;
+  if (!socket.data.username && socket.handshake.auth?.guestName) {
+    socket.data.username = String(socket.handshake.auth.guestName).trim().slice(0, 40) || null;
+    socket.data.isGuest = true;
+  }
   next();
 });
 
@@ -1950,8 +1955,8 @@ io.on('connection', socket => {
   // Identity is fixed at connection time — never trust client-sent usernames.
   let connectedUser = socket.data.username;
 
-  // Registra usuário autenticado na Taverna ao conectar
-  if (connectedUser) {
+  // Registra usuário autenticado na Taverna ao conectar (guests não aparecem na taverna)
+  if (connectedUser && !socket.data.isGuest) {
     // Se já estava em batalha (reconexão), preserva o status existente
     if (!onlineUsers.has(connectedUser)) {
       setTavernStatus(connectedUser, 'tavern');
@@ -1969,7 +1974,7 @@ io.on('connection', socket => {
   const VALID_FORMATS = [3, 5, 7];
 
   socket.on('join_queue', ({ wager, wagerType, format }) => {
-    if (!connectedUser) {
+    if (!connectedUser || socket.data.isGuest) {
       socket.emit('error', { message: 'Authentication required to join queue.' });
       return;
     }
@@ -2030,6 +2035,57 @@ io.on('connection', socket => {
     setTavernStatus(connectedUser, 'searching', `${wager > 0 ? wager + ' HIVE' : 'Free'} · BO${format || 5}`);
     tryMatch();
     broadcastQueueSize();
+  });
+
+  // ── Free (no-wager) guest match — create room ─────────────────────────────
+  socket.on('create_free_match', ({ format } = {}) => {
+    if (!connectedUser) { socket.emit('free_match_error', { message: 'No username. Reconnect and try again.' }); return; }
+    const fmt = VALID_FORMATS.includes(format) ? format : 5;
+    const code = Array.from({ length: 6 }, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 36)]).join('');
+    const matchId = `free_${code}`;
+    const matchData = {
+      matchId, p1: connectedUser, p2: null, s1: socket, s2: null,
+      wager: 0, format: fmt, winsNeeded: Math.ceil(fmt / 2),
+      status: 'waiting_player2',
+      scores: { [connectedUser]: 0 }, merges: { [connectedUser]: 0 },
+      payments: {}, payoutPrefs: {}, teams: {}, refunded: {},
+      createdAt: Date.now(),
+    };
+    activeMatches.set(matchId, matchData);
+    socket.join(matchId);
+    sql`INSERT INTO matches (id, player1, wager_hive, wager_type, format, status, battle_num, payments, payout_prefs, merges)
+        VALUES (${matchId}, ${connectedUser}, 0, 'FREE', ${fmt}, 'waiting_player2', 1, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb)`
+      .catch(err => console.error('[free match insert]', err.message));
+    socket.emit('free_match_created', { code });
+    console.log(`🎮 Free room ${code} created by ${connectedUser}`);
+  });
+
+  // ── Free (no-wager) guest match — join room ───────────────────────────────
+  socket.on('join_free_match', ({ code } = {}) => {
+    if (!connectedUser) { socket.emit('free_match_error', { message: 'No username. Reconnect and try again.' }); return; }
+    if (!code) { socket.emit('free_match_error', { message: 'Room code required.' }); return; }
+    const matchId = `free_${String(code).toUpperCase().trim()}`;
+    const m = activeMatches.get(matchId);
+    if (!m) { socket.emit('free_match_error', { message: 'Room not found. Check the code and try again.' }); return; }
+    if (m.status !== 'waiting_player2') { socket.emit('free_match_error', { message: 'Room is already full or in progress.' }); return; }
+    if (m.p1 === connectedUser) { socket.emit('free_match_error', { message: 'You created this room — share the code with a friend!' }); return; }
+    m.p2 = connectedUser;
+    m.s2 = socket;
+    m.status = 'waiting_teams';
+    m.scores[connectedUser] = 0;
+    m.merges[connectedUser] = 0;
+    socket.join(matchId);
+    sql`UPDATE matches SET player2=${connectedUser}, status='waiting_teams' WHERE id=${matchId}`
+      .catch(err => console.error('[free match join]', err.message));
+    const payload = {
+      matchId, p1: m.p1, p2: connectedUser,
+      opponents: { [m.p1]: connectedUser, [connectedUser]: m.p1 },
+      wager: 0, format: m.format, needsPayment: false,
+      timeLimitMs: 3 * 60 * 1000,
+    };
+    io.to(matchId).emit('match_found', payload);
+    armForfeitTimer(matchId, m.p1, connectedUser, ROUND_TIME_MS);
+    console.log(`⚔️  Free match ${code} | ${m.p1} vs ${connectedUser} | BO${m.format}`);
   });
 
   // Rejoin after page redirect (battle.html connects with saved matchId)
@@ -2222,12 +2278,14 @@ io.on('connection', socket => {
   });
 
   socket.on('disconnect', () => {
-    if (connectedUser) {
+    if (connectedUser && !socket.data.isGuest) {
       matchQueue.delete(connectedUser);
       chatRateLimit.delete(connectedUser);
       broadcastQueueSize();
       removeTavernUser(connectedUser);
       console.log(`🍺 ${connectedUser} left the tavern (${onlineUsers.size} online)`);
+    }
+    if (connectedUser) {
       // Auto-forfeit if disconnected during an active match and the player
       // doesn't reconnect within the grace window. Without this, a ragequit
       // forces the opponent to wait out the full 2-minute round timer.

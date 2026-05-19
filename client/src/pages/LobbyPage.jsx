@@ -3,11 +3,14 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import '@styles/lobby.css'
+import '@styles/components.css'
 import GrimoireView from './GrimoireView'
 import ShopView from './ShopView'
 import { getSession } from '../lib/session'
 import TavernPanel from './TavernPanel'          // IMP tavern
 import '@styles/tavern.css'                       // Imp tavern
+import GuestConversionModal from '../components/GuestConversionModal'
+import TutorialOverlay from '../components/TutorialOverlay'
 
 /* ── helpers ────────────────────────────────────────────── */
 function prefKey(name, username) {
@@ -415,7 +418,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
     const f = formations[editingSlot]
     if (f.hero_ids.length < 8) { toast('⚠️ Select 8 heroes to save the deck.'); return }
     if (isGuest) {
-      sessionStorage.setItem('hf_guest_formation', JSON.stringify({ slot: 1, hero_ids: f.hero_ids, name: f.name }))
+      localStorage.setItem('hf_guest_formation', JSON.stringify({ slot: 1, hero_ids: f.hero_ids, name: f.name }))
       toast('✅ Formation saved!')
       closeSlot()
       return
@@ -478,7 +481,12 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
         <div className="fv-decks-area">
           <div className="fv-decks-frame">
             {formations.map((f, i) => {
-              if (isGuest && i !== 0) return null
+              if (isGuest && i !== 0) return (
+                <div key={i} className="fv-deck-card fdc-locked" onClick={() => setConvCtx('formation')}>
+                  <span className="fdc-locked-icon">🔒</span>
+                  <div className="fv-tab-name" style={{ opacity: 0.5 }}>Formation {i + 1}</div>
+                </div>
+              )
               const isDefault = i === defaultSlot
               return (
                 <div key={i} className={`fv-deck-card${editingSlot === i ? ' fdc-active' : ''}`} onClick={() => openSlot(i)}>
@@ -614,7 +622,7 @@ function SettingsView({ session, payoutPct }) {
 }
 
 /* ── SearchOverlay ──────────────────────────────────────── */
-function SearchOverlay({ search, pvpCfg, onCancel, onSendWager, onRetry }) {
+function SearchOverlay({ search, onCancel, onSendWager, onRetry }) {
   const { open, found, paying, title, timer, sub, configTag, queueText,
     payStatus, payError, showRetry, showSendWager, payCountdown, paySteps } = search
 
@@ -663,6 +671,7 @@ export default function LobbyPage() {
   const navigate = useNavigate()
   const session = getSession()
   const username = session?.username
+  const isGuest = session?.mode === 'guest'
 
   const [view, setView] = useState('home')
   const [balance, setBalance] = useState(null)
@@ -686,6 +695,11 @@ export default function LobbyPage() {
   const [chatMessages, setChatMessages] = useState([])
   const [chatUnread, setChatUnread] = useState(false)
   const [tavernOpen, setTavernOpen] = useState(false)
+  const [convCtx, setConvCtx] = useState(null)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [freeRoom, setFreeRoom] = useState(null)
+  const [joinCode, setJoinCode] = useState('')
+  const [freeMatchErr, setFreeMatchErr] = useState('')
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -787,6 +801,14 @@ export default function LobbyPage() {
     return null
   }
 
+  /* ── tutorial on first guest visit ──────────────────── */
+  useEffect(() => {
+    if (!isGuest) return
+    if (localStorage.getItem('hf_tutorial_done')) return
+    const t = setTimeout(() => setShowTutorial(true), 500)
+    return () => clearTimeout(t)
+  }, [isGuest])
+
   /* ── initial effects ─────────────────────────────────── */
   useEffect(() => {
     if (session?.mode === 'hive') fetchBalance(username)
@@ -796,12 +818,15 @@ export default function LobbyPage() {
     }).catch(() => { })
 
     // socket.io
-    const socket = io({ transports: ['websocket', 'polling'], auth: { token: session?.token } })
+    const auth = isGuest ? { guestName: username } : { token: session?.token }
+    const socket = io({ transports: ['websocket', 'polling'], auth })
     socketRef.current = socket
 
     socket.on('queue_update', d => setSearch(s => ({ ...s, queueText: `Players in queue: ${d.queueSize ?? d.count ?? '—'}` })))
     socket.on('queued', d => setSearch(s => ({ ...s, queueText: `Players in queue: ${d.queueSize ?? '—'}` })))
     socket.on('match_found', handleMatchFound)
+    socket.on('free_match_created', ({ code }) => { setFreeRoom({ code }); setFreeMatchErr('') })
+    socket.on('free_match_error', ({ message }) => { setFreeMatchErr(message); setFreeRoom(null) })
     socket.on('payment_verifying', () => setSearch(s => ({ ...s, payStatus: 'Checking blockchain...', paySteps: { ...s.paySteps, 'pay-step-verify': 'active' } })))
     socket.on('payment_accepted', () => setSearch(s => ({ ...s, payStatus: 'Wager confirmed! Waiting for opponent...', paySteps: { ...s.paySteps, 'pay-step-verify': 'done', 'pay-step-opponent': 'active' } })))
     socket.on('opponent_paid', () => setSearch(s => ({ ...s, payStatus: 'Opponent paid! Starting match...' })))
@@ -935,7 +960,7 @@ export default function LobbyPage() {
   useEffect(() => {
     if (formationsLoaded) return
     if (session?.mode === 'guest') {
-      const raw = sessionStorage.getItem('hf_guest_formation')
+      const raw = localStorage.getItem('hf_guest_formation')
       if (raw) {
         try { const s = JSON.parse(raw); setFormations(prev => prev.map((f, i) => i === 0 ? { ...f, hero_ids: s.hero_ids || [] } : f)) } catch { /* ok */ }
       }
@@ -1137,6 +1162,7 @@ export default function LobbyPage() {
 
   /* ── PvP start ───────────────────────────────────────── */
   async function startPvp() {
+    if (isGuest) { setConvCtx('pvp'); return }
     if (session?.mode !== 'hive') { showToast('PvP requires a Hive account. Log in with Hive to play! 🏆'); return }
     const heroIds = await ensureActiveDeck()
     if (!heroIds) { showToast('⚠️ No deck selected. Build a formation first!'); return }
@@ -1154,6 +1180,8 @@ export default function LobbyPage() {
   function doLogout() {
     sessionStorage.removeItem('hf_session')
     sessionStorage.removeItem('hf_battle_cfg')
+    localStorage.removeItem('hf_session')
+    localStorage.removeItem('hf_guest_formation')
     navigate('/', { replace: true })
   }
 
@@ -1311,6 +1339,56 @@ export default function LobbyPage() {
                   </div>
                   </div>
                 </section>
+
+                {isGuest && (
+                  <div className="free-pvp-card">
+                    <div className="free-pvp-title">🎮 Free PvP · Guest Match</div>
+                    {!freeRoom ? (
+                      <>
+                        <button
+                          className="btn-action btn-start"
+                          style={{ width: '100%', marginBottom: 10 }}
+                          onClick={() => socketRef.current?.emit('create_free_match', { format: 5 })}
+                        >
+                          CREATE ROOM
+                        </button>
+                        <div className="free-pvp-row">
+                          <input
+                            className="free-pvp-input"
+                            type="text"
+                            placeholder="Room code"
+                            value={joinCode}
+                            maxLength={6}
+                            onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                          />
+                          <button
+                            className="btn-free-pvp"
+                            onClick={() => {
+                              if (!joinCode.trim()) return
+                              socketRef.current?.emit('join_free_match', { code: joinCode.trim() })
+                            }}
+                          >
+                            JOIN
+                          </button>
+                        </div>
+                        {freeMatchErr && <div className="free-pvp-err">{freeMatchErr}</div>}
+                      </>
+                    ) : (
+                      <>
+                        <div className="free-pvp-code">{freeRoom.code}</div>
+                        <div className="free-pvp-status">Waiting for opponent…</div>
+                        <button
+                          className="btn-free-pvp"
+                          style={{ width: '100%' }}
+                          onClick={() => setFreeRoom(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 </div>
               </div>
             </div>
@@ -1389,11 +1467,16 @@ export default function LobbyPage() {
       </div>
 
       <SearchOverlay
-        search={search} pvpCfg={{ bet: pvpBet, fmt: pvpFmt }}
+        search={search}
         onCancel={cancelSearch} onSendWager={sendKeychainTransfer} onRetry={handleRetryWager}
       />
 
       {toast && <div className="toast show">{toast}</div>}
+      <TutorialOverlay
+        open={showTutorial}
+        onComplete={() => { localStorage.setItem('hf_tutorial_done', '1'); setShowTutorial(false) }}
+      />
+      <GuestConversionModal open={!!convCtx} context={convCtx} onClose={() => setConvCtx(null)} />
       <div
         id="desc-tooltip"
         className={activeInfoTip ? 'visible' : ''}

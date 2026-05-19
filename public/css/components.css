@@ -1,0 +1,195 @@
+/* ── GuestConversionModal ──────────────────────────── */
+.gcm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: gcm-in 0.18s ease both;
+}
+@keyframes gcm-in { from { opacity: 0; } to { opacity: 1; } }
+
+.gcm-card {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  background: linear-gradient(160deg, rgba(14,9,34,0.97), rgba(22,12,52,0.95));
+  border: 1.5px solid rgba(180,130,255,0.35);
+  border-radius: 20px;
+  padding: 40px 32px 30px;
+  text-align: center;
+  animation: gcm-card-in 0.25s cubic-bezier(0.22,0.68,0,1.15) both;
+}
+@keyframes gcm-card-in {
+  from { transform: scale(0.92) translateY(12px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.gcm-close {
+  position: absolute;
+  top: 14px; right: 16px;
+  background: none; border: none;
+  color: rgba(170,148,225,0.45);
+  font-size: 16px; cursor: pointer; padding: 4px;
+  transition: color 0.15s;
+}
+.gcm-close:hover { color: rgba(220,200,255,0.8); }
+.gcm-icon { display: block; font-size: 44px; margin-bottom: 14px; }
+.gcm-title { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+.gcm-body {
+  font-size: 13px; color: rgba(190,170,230,0.75);
+  line-height: 1.55; margin-bottom: 22px;
+}
+.gcm-cta {
+  display: block;
+  padding: 13px 22px;
+  background: linear-gradient(135deg, #7c35ff, #4b15cc);
+  border-radius: 12px;
+  color: #fff; font-size: 14px; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  transition: all 0.18s; margin-bottom: 10px;
+}
+.gcm-cta:hover {
+  background: linear-gradient(135deg, #9048ff, #6020e0);
+  box-shadow: 0 6px 24px rgba(120,40,255,0.4);
+}
+.gcm-dismiss {
+  background: none; border: none;
+  color: rgba(150,130,195,0.5);
+  font-size: 12px; cursor: pointer; padding: 6px 12px;
+  transition: color 0.15s;
+}
+.gcm-dismiss:hover { color: rgba(190,170,225,0.8); }
+
+/* ── TutorialOverlay ───────────────────────────────── */
+.tut-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.84);
+  backdrop-filter: blur(6px);
+  z-index: 8500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.tut-card {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(160deg, rgba(14,9,34,0.97), rgba(22,12,52,0.95));
+  border: 1.5px solid rgba(180,130,255,0.35);
+  border-radius: 22px;
+  padding: 44px 36px 36px;
+  text-align: center;
+  animation: gcm-card-in 0.3s cubic-bezier(0.22,0.68,0,1.15) both;
+}
+.tut-icon { display: block; font-size: 52px; margin-bottom: 10px; }
+.tut-step-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: rgba(170,148,225,0.45); margin-bottom: 12px;
+}
+.tut-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 12px; }
+.tut-desc {
+  font-size: 14px; color: rgba(190,170,230,0.75);
+  line-height: 1.6; margin-bottom: 28px;
+}
+.tut-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+.tut-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(150,120,220,0.25); transition: background 0.2s;
+}
+.tut-dot.active { background: rgba(170,110,255,0.85); }
+.tut-actions {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.tut-skip {
+  background: none; border: none;
+  color: rgba(150,130,195,0.5); font-size: 12px; cursor: pointer;
+  padding: 6px 12px; transition: color 0.15s;
+}
+.tut-skip:hover { color: rgba(190,170,225,0.8); }
+.tut-next {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #7c35ff, #4b15cc);
+  border: none; border-radius: 12px;
+  color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all 0.18s;
+}
+.tut-next:hover {
+  background: linear-gradient(135deg, #9048ff, #6020e0);
+  box-shadow: 0 6px 24px rgba(120,40,255,0.4);
+}
+
+/* ── Free PvP room UI ──────────────────────────────── */
+.free-pvp-card {
+  background: rgba(20,40,20,0.55);
+  border: 1.5px solid rgba(80,180,80,0.22);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-top: 10px;
+}
+.free-pvp-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: rgba(100,200,100,0.65); font-weight: 700; margin-bottom: 12px;
+}
+.free-pvp-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 6px;
+}
+.free-pvp-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(100,200,100,0.22);
+  border-radius: 8px;
+  color: rgba(200,240,200,0.88);
+  font-family: Inter, sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: 3px;
+  padding: 9px 12px;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color 0.18s;
+}
+.free-pvp-input:focus { border-color: rgba(100,200,100,0.5); }
+.free-pvp-input::placeholder { color: rgba(120,180,120,0.28); letter-spacing: 1px; font-weight: 400; }
+.btn-free-pvp {
+  padding: 9px 16px;
+  background: rgba(40,120,40,0.45);
+  border: 1.5px solid rgba(80,180,80,0.32);
+  border-radius: 8px;
+  color: rgba(150,230,150,0.82);
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.18s; white-space: nowrap;
+}
+.btn-free-pvp:hover {
+  background: rgba(50,150,50,0.62);
+  border-color: rgba(100,200,100,0.52);
+  color: #fff;
+}
+.free-pvp-code {
+  font-size: 30px; font-weight: 900; letter-spacing: 8px;
+  color: rgba(150,230,150,0.92); text-align: center;
+  padding: 14px 0 8px;
+  text-shadow: 0 0 20px rgba(80,200,80,0.35);
+}
+.free-pvp-status {
+  font-size: 11px; color: rgba(120,190,120,0.58);
+  text-align: center; margin-bottom: 10px;
+}
+.free-pvp-err { font-size: 11px; color: #ff7777; margin-top: 4px; }
+
+/* ── Locked formation slot ─────────────────────────── */
+.fdc-locked {
+  opacity: 0.38;
+  cursor: pointer;
+  position: relative;
+  pointer-events: all;
+}
+.fdc-locked:hover { opacity: 0.55; }
+.fdc-locked-icon {
+  font-size: 18px;
+  display: block;
+  text-align: center;
+  margin-top: 4px;
+}

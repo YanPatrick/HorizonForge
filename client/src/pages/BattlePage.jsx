@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/session'
+import GuestConversionModal from '../components/GuestConversionModal'
 
 export default function BattlePage() {
   const navigate = useNavigate()
@@ -38,6 +39,7 @@ export default function BattlePage() {
   const [userBadge] = useState(
     sessionForBadge?.username ? `@${sessionForBadge.username}` : '@you'
   )
+  const [convModal, setConvModal] = useState(false)
   const [formatLabel, setFormatLabel] = useState('BO3')
   const [bannerText, setBannerText] = useState(
     '🛍️ Analyze the enemy, buy cards and build your army!'
@@ -212,7 +214,13 @@ export default function BattlePage() {
     // Duel-result overlay — full render shape from battle.js's
     // showDuelResult(). closeDuelResult flips just `open` so the
     // ✕ View Field button doesn't disturb the rest of the data.
-    window.showDuelResult = (data) => setDuelResult({
+    window.showDuelResult = (data) => {
+      if (data?.pw && !data?.isPvP && sessionForBadge?.mode === 'guest') {
+        if (!localStorage.getItem('hf_conv_victory')) {
+          setTimeout(() => setConvModal(true), 1500)
+        }
+      }
+      setDuelResult({
       open: true,
       pw: !!data?.pw,
       scoreP: data?.scoreP ?? 0,
@@ -238,7 +246,8 @@ export default function BattlePage() {
             : 'Friendly match — no wager to process',
         }
         : null,
-    })
+      })
+    }
     window.closeDuelResult = () => setDuelResult((prev) => ({ ...prev, open: false }))
     return () => {
       // React-side dispatchers (this useEffect registered them above).
@@ -1091,6 +1100,14 @@ export default function BattlePage() {
           </marker>
         </defs>
       </svg>
+      <GuestConversionModal
+        open={convModal}
+        context="victory"
+        onClose={() => {
+          localStorage.setItem('hf_conv_victory', '1')
+          setConvModal(false)
+        }}
+      />
     </div>
   )
 }
