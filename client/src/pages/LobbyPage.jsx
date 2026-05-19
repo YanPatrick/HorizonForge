@@ -1206,12 +1206,13 @@ export default function LobbyPage() {
               <div className="view-col">
                 <p className="duel-title">Battle Mode</p>
 
+                <div className="banners-grid">
                 {/* AI Card */}
                 <section className="banner banner-ai">
-                  <div className="banner-sphere" style={{ width: 120, height: 120, margin: '0 auto 10px' }}>
-                    <div className="sph-ring r1" /><div className="sph-ring r2" /><div className="sph-ring r3" />
-                    <span className="sph-core">🤖</span>
+                  <div className="banner-img">
+                    <img src="/images/image_bot.jpeg" alt="Solo Battle" />
                   </div>
+                  <div className="banner-body">
                   <div className="banner-preview">
                     <div className="banner-title-row">
                       <span className="banner-type-badge">Solo</span>
@@ -1249,14 +1250,15 @@ export default function LobbyPage() {
                     <div className="cfg-divider" />
                     <button className="btn-action btn-start" onClick={startAiBattle}>▶ START BATTLE</button>
                   </div>
+                  </div>
                 </section>
 
                 {/* PvP Card */}
                 <section className="banner banner-pvp">
-                  <div className="banner-sphere" style={{ width: 120, height: 120, margin: '0 auto 10px' }}>
-                    <div className="sph-ring r1" /><div className="sph-ring r2" /><div className="sph-ring r3" />
-                    <span className="sph-core">⚔️</span>
+                  <div className="banner-img">
+                    <img src="/images/image_pvp.jpeg" alt="PvP Match" />
                   </div>
+                  <div className="banner-body">
                   <div className="banner-preview">
                     <div className="banner-title-row">
                       <span className="banner-type-badge">PVP</span>
@@ -1307,7 +1309,9 @@ export default function LobbyPage() {
                     <div className="cfg-divider" />
                     <button className="btn-action btn-find" onClick={startPvp}>🔍 FIND MATCH</button>
                   </div>
+                  </div>
                 </section>
+                </div>
               </div>
             </div>
           </div>
