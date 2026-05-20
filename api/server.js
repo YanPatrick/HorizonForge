@@ -599,6 +599,8 @@ app.get('/api/characters', async (_req, res) => {
         crit_chance: r.crit_chance,
         crit_rate:   r.crit_rate,
         skill_power: st.skill_power,
+        dex:         st.dex_scaled,
+        wis:         st.wis_scaled,
       };
     }
     res.json({ ok: true, characters: Object.values(map) });

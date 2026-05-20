@@ -338,6 +338,8 @@
           critChance: st.crit_chance,
           critRate: st.crit_rate,
           skillPower: st.skill_power,
+          dex: st.dex,
+          wis: st.wis,
           stack: 1,
         };
       }
@@ -350,6 +352,8 @@
         u.critChance = st.crit_chance;
         u.critRate = st.crit_rate;
         u.skillPower = st.skill_power;
+        u.dex = st.dex;
+        u.wis = st.wis;
         u.id = "u" + ++_uid;
         return u;
       }
