@@ -42,10 +42,12 @@ CREATE TABLE IF NOT EXISTS characters (
 );
 
 -- --------------------------------------------------------
--- Characters base — um registro por personagem (valores nível 1)
--- max_hp / atk     → multiplicar por level_scale.multiplier
--- atk_speed / crit → fixos
--- skill_power      → multiplicar por level_scale.skill_power_multiplier
+-- Characters base — um registro por personagem (valores base nível 1)
+-- Stats de combate são calculados via calcStats():
+--   max_hp      = (con * 20) + (str * 10) + armor_bonus   (× level multiplier)
+--   atk         = (primary_attr * 5) + weapon_bonus        (× level multiplier)
+--   atk_speed   = (dex * 0.3) + spd_offset                 (× level multiplier)
+--   skill_power = (skill_attr / 2) + sp_bonus              (× level multiplier)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS characters_base (
   id              SERIAL       PRIMARY KEY,
@@ -55,7 +57,19 @@ CREATE TABLE IF NOT EXISTS characters_base (
   atk_speed       NUMERIC(4,2) NOT NULL,
   crit_chance     NUMERIC(6,4) NOT NULL,
   crit_rate       NUMERIC(4,2) NOT NULL,
-  skill_power     NUMERIC(8,4) NOT NULL
+  skill_power     NUMERIC(8,4) NOT NULL,
+  str             SMALLINT     NOT NULL DEFAULT 10,
+  dex             SMALLINT     NOT NULL DEFAULT 10,
+  con             SMALLINT     NOT NULL DEFAULT 10,
+  int             SMALLINT     NOT NULL DEFAULT 10,
+  wis             SMALLINT     NOT NULL DEFAULT 10,
+  cha             SMALLINT     NOT NULL DEFAULT 10,
+  primary_attr    VARCHAR(8)   NOT NULL DEFAULT 'str',
+  skill_attr      VARCHAR(8)   NOT NULL DEFAULT 'str',
+  weapon_bonus    SMALLINT     NOT NULL DEFAULT 0,
+  armor_bonus     SMALLINT     NOT NULL DEFAULT 0,
+  spd_offset      NUMERIC(5,2) NOT NULL DEFAULT 0,
+  sp_bonus        NUMERIC(6,3) NOT NULL DEFAULT 0
 );
 
 -- --------------------------------------------------------
