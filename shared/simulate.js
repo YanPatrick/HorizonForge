@@ -95,6 +95,7 @@ function simulate(pb, eb) {
     )
     .filter(Boolean);
 
+  const concentration = new Map(); // attackerId → accumulated miss bonus
   const evs = [];
   let tick = 0;
   let queue = [];
@@ -308,21 +309,41 @@ function simulate(pb, eb) {
         });
       }
       const et = pickTarget(unit);
-      if (et && et.alive) dealDmg(unit, et, unit.atk);
+      if (et && et.alive) {
+        const cb = concentration.get(unit.id) || 0;
+        const res = resolvePhysicalAttack(unit, et, unit.atk, cb);
+        concentration.set(unit.id, res.newConcentration);
+        if (res.damage > 0) dealDmg(unit, et, res.damage, res.crit);
+      }
     } else {
       const t = pickTarget(unit);
       if (t && t.alive) {
-        let dmg = unit.atk,
-          isCrit = false;
+        let isCrit = false;
+        let finalDmg = 0;
 
-        // Precise Shot (Archer) — extra crit chance
-        const effCC =
-          unit.critChance + (unit.cid === "archer" ? unit.skillPower : 0);
-        if (Math.random() < effCC) {
-          isCrit = true;
-          dmg = Math.floor(dmg * unit.critRate);
+        if (MAGIC_ATTACKERS.has(unit.cid)) {
+          // Magic attack: no evasion, reduced by defender WIS
+          const res = resolveMagicAttack(t, unit.atk);
+          finalDmg = Math.floor(res.damage);
+        } else {
+          // Physical attack: d20 to-hit vs defender DEX
+          const cb = concentration.get(unit.id) || 0;
+          const res = resolvePhysicalAttack(unit, t, unit.atk, cb);
+          concentration.set(unit.id, res.newConcentration);
+          isCrit = res.crit;
+          finalDmg = res.damage;
+
+          // Precise Shot (Archer) — bonus crit chance on physical hits
+          if (unit.cid === "archer" && res.hit && !res.crit) {
+            const effCC = unit.critChance + unit.skillPower;
+            if (Math.random() < effCC) {
+              isCrit = true;
+              finalDmg = Math.floor(unit.atk * unit.critRate);
+            }
+          }
         }
-        dealDmg(unit, t, dmg, isCrit);
+
+        if (finalDmg > 0) dealDmg(unit, t, finalDmg, isCrit);
 
         if (unit.cid === "archer" && isCrit) {
           evs.push({
@@ -334,16 +355,17 @@ function simulate(pb, eb) {
           });
         }
 
-        // Fireball (Mage) — splash to adjacent tiles (+shape)
+        // Fireball (Mage) — magic splash to adjacent tiles (+shape)
         if (unit.cid === "mage") {
           const adj = adjacentSlots(t.slot);
           const splash = foes(unit.side).filter(
             (f) => f.id !== t.id && f.alive && adj.includes(f.slot),
           );
           if (splash.length) {
-            splash.forEach((f) =>
-              dealDmg(unit, f, Math.floor(unit.atk * unit.skillPower)),
-            );
+            splash.forEach((f) => {
+              const res = resolveMagicAttack(f, Math.floor(unit.atk * unit.skillPower));
+              if (res.damage > 0) dealDmg(unit, f, Math.floor(res.damage), false);
+            });
             evs.push({
               type: "ability",
               uid: unit.id,
@@ -354,7 +376,7 @@ function simulate(pb, eb) {
           }
         }
 
-        // Chain Lightning (Archmage) — hits 2nd and 3rd unit in same row
+        // Chain Lightning (Archmage) — magic hits 2nd and 3rd in same row
         if (unit.cid === "archmage") {
           const targetRow = Math.floor(t.slot / 3);
           const primaryCol = t.slot % 3;
@@ -375,14 +397,14 @@ function simulate(pb, eb) {
                 ? (a.slot % 3) - (b.slot % 3)
                 : (b.slot % 3) - (a.slot % 3),
             );
-          if (chain.length > 0)
-            dealDmg(unit, chain[0], Math.floor(unit.atk * unit.skillPower));
-          if (chain.length > 1)
-            dealDmg(
-              unit,
-              chain[1],
-              Math.floor((unit.atk * unit.skillPower) / 2),
-            );
+          if (chain.length > 0) {
+            const r0 = resolveMagicAttack(chain[0], Math.floor(unit.atk * unit.skillPower));
+            if (r0.damage > 0) dealDmg(unit, chain[0], Math.floor(r0.damage), false);
+          }
+          if (chain.length > 1) {
+            const r1 = resolveMagicAttack(chain[1], Math.floor((unit.atk * unit.skillPower) / 2));
+            if (r1.damage > 0) dealDmg(unit, chain[1], Math.floor(r1.damage), false);
+          }
         }
       }
     }
