@@ -541,6 +541,9 @@ function calcStats(base, multiplier) {
   const attrMap = { str, dex, con, int, wis, cha };
   const primaryVal = attrMap[base.primary_attr];
   const skillVal   = attrMap[base.skill_attr];
+  if (primaryVal === undefined || skillVal === undefined) {
+    throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}" or skill_attr="${base.skill_attr}"`);
+  }
   return {
     max_hp:      Math.floor((con * 20) + (str * 10) + Number(base.armor_bonus)),
     atk:         Math.floor((primaryVal * 5) + Number(base.weapon_bonus)),
