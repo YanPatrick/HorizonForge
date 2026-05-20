@@ -485,6 +485,8 @@ async function materializeBoard(board) {
       critChance: lvStats.crit_chance,
       critRate: lvStats.crit_rate,
       skillPower: lvStats.skill_power,
+      dex: lvStats.dex,
+      wis: lvStats.wis,
     };
   });
 }
