@@ -45,14 +45,14 @@ function roleCategory(role) {
 */
 
 const RPG_ATTRIBUTES = {
-  knight:    { str: 15, dex: 10, con: 20, int: 7,  wis: 10, cha: 10, primary: 'str', skill: 'con' },
+  knight:    { str: 15, dex: 10, con: 20, int:  7, wis: 10, cha: 10, primary: 'str', skill: 'con' },
   paladin:   { str: 13, dex: 10, con: 19, int: 10, wis: 10, cha: 10, primary: 'str', skill: 'cha' },
-  barbarian: { str: 20, dex: 12, con: 15, int: 5,  wis: 8,  cha: 12, primary: 'str', skill: 'str' },
+  barbarian: { str: 20, dex: 12, con: 15, int:  5, wis:  8, cha: 12, primary: 'str', skill: 'str' },
   assassin:  { str: 14, dex: 18, con: 10, int: 10, wis: 10, cha: 10, primary: 'dex', skill: 'dex' },
-  archer:    { str: 12, dex: 20, con: 10, int: 10, wis: 10, cha: 10, primary: 'dex', skill: 'dex' },
-  mage:      { str: 8,  dex: 10, con: 10, int: 20, wis: 14, cha: 10, primary: 'int', skill: 'int' },
-  archmage:  { str: 7,  dex: 10, con: 10, int: 20, wis: 15, cha: 10, primary: 'int', skill: 'int' },
-  healer:    { str: 8,  dex: 10, con: 8,  int: 18, wis: 10, cha: 18, primary: 'wis', skill: 'wis' }
+  archer:    { str: 12, dex: 17, con: 10, int: 10, wis: 11, cha: 12, primary: 'dex', skill: 'dex' },
+  mage:      { str:  8, dex: 10, con: 10, int: 20, wis: 14, cha: 10, primary: 'int', skill: 'int' },
+  archmage:  { str:  7, dex: 10, con: 10, int: 20, wis: 15, cha: 10, primary: 'int', skill: 'int' },
+  healer:    { str:  8, dex: 10, con:  8, int: 18, wis: 10, cha: 18, primary: 'wis', skill: 'wis' },
 };
 
 const STARTER_GEAR = {
