@@ -369,8 +369,10 @@ async function loadStatsTable() {
       c.target_type,
       ls.level,
       ls.multiplier::float,
+      ls.skill_power_multiplier::float,
       cb.crit_chance::float,
       cb.crit_rate::float,
+      cb.skill_power::float,
       cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
       cb.primary_attr,
       cb.skill_attr,
@@ -534,15 +536,14 @@ function calcStats(base, multiplier) {
   const cha = Number(base.cha) * m;
   const attrMap = { str, dex, con, int, wis, cha };
   const primaryVal = attrMap[base.primary_attr];
-  const skillVal   = attrMap[base.skill_attr];
-  if (primaryVal === undefined || skillVal === undefined) {
-    throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}" or skill_attr="${base.skill_attr}"`);
+  if (primaryVal === undefined) {
+    throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
   }
   return {
     max_hp:      Math.floor((con * 20) + (str * 10) + Number(base.armor_bonus)),
     atk:         Math.floor((primaryVal * 5) + Number(base.weapon_bonus)),
     atk_speed:   (dex * 0.3) + Number(base.spd_offset),
-    skill_power: trunc4((skillVal / 2) + Number(base.sp_bonus)),
+    skill_power: trunc4(Number(base.skill_power) * Number(base.skill_power_multiplier)),
     dex_scaled:  dex,
     wis_scaled:  wis,
   };
@@ -557,7 +558,9 @@ app.get('/api/characters', async (_req, res) => {
         sk.skill_key, sk.name AS skill_name,
         sk.description AS skill_desc, sk.lore, sk.skill_type,
         ls.level, ls.multiplier::float,
+        ls.skill_power_multiplier::float,
         cb.crit_chance::float, cb.crit_rate::float,
+        cb.skill_power::float,
         cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
         cb.primary_attr, cb.skill_attr,
         cb.weapon_bonus, cb.armor_bonus,
