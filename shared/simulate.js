@@ -18,6 +18,49 @@
 
 "use strict";
 
+// ── d20 combat system ─────────────────────────────────────────────────────────
+// Physical attack: d20 + DEX modifier vs defender's d20 + DEX modifier.
+// High DEX lowers crit threshold and grants fumble immunity (roll+mod can't reach 1).
+// Magic attack: no evasion roll; reduced by defender WIS × 0.5.
+
+function roll(sides) { return Math.floor(Math.random() * sides) + 1; }
+function getModifier(attrValue) { return Math.floor((attrValue - 10) / 2); }
+
+// concentrationBonus: miss-streak bonus (+2 per miss, resets on hit).
+// Returns { hit, crit, damage, newConcentration }.
+function resolvePhysicalAttack(attacker, defender, baseAtk, concentrationBonus = 0) {
+  const rawRoll     = roll(20);
+  const rollPlusDex = rawRoll + getModifier(attacker.dex);
+  const attackRoll  = rollPlusDex + concentrationBonus;
+  const defenseRoll = roll(20) + getModifier(defender.dex);
+
+  // Natural 20 equivalent: rollPlusDex hits 20+ (high DEX heroes crit more often)
+  if (rollPlusDex >= 20) {
+    return { hit: true, crit: true, damage: baseAtk * 2, newConcentration: 0 };
+  }
+  // Fumble: rollPlusDex <= 1 (only possible when DEX mod <= 0)
+  if (rollPlusDex <= 1) {
+    return { hit: false, crit: false, damage: 0, newConcentration: concentrationBonus + 2 };
+  }
+  // Hit
+  if (attackRoll > defenseRoll) {
+    return { hit: true, crit: false, damage: baseAtk, newConcentration: 0 };
+  }
+  // Evasion — Glancing Blow (25% damage, miss streak continues)
+  return {
+    hit: false, crit: false,
+    damage: Math.floor(baseAtk * 0.25),
+    newConcentration: concentrationBonus + 2,
+  };
+}
+
+function resolveMagicAttack(defender, baseDamage) {
+  const absorbed = defender.wis * 0.5;
+  return { damage: Math.max(0, baseDamage - absorbed) };
+}
+
+const MAGIC_ATTACKERS = new Set(['mage', 'archmage']);
+
 // ── Grid helper ────────────────────────────────────────────────────────────────
 function adjacentSlots(slot) {
   const col = slot % 3,
@@ -37,7 +80,7 @@ function adjacentSlots(slot) {
  * @returns {{ evs, winner, umap, stats }}
  *
  * Each unit must have: { id, cid, name, side?, lv, atk, spd, critChance,
- *   critRate, skillPower, maxHp, hp, tp (nearest|ranged|lowhp) }
+ *   critRate, skillPower, maxHp, hp, tp (nearest|ranged|lowhp), dex, wis }
  */
 function simulate(pb, eb) {
   // Deep-clone boards and attach metadata
