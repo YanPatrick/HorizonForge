@@ -530,6 +530,27 @@ function trunc4(v) {
   return Math.trunc(v * 10000) / 10000;
 }
 
+function calcStats(base, multiplier) {
+  const m = Number(multiplier);
+  const str = Number(base.str) * m;
+  const dex = Number(base.dex) * m;
+  const con = Number(base.con) * m;
+  const int = Number(base.int) * m;
+  const wis = Number(base.wis) * m;
+  const cha = Number(base.cha) * m;
+  const attrMap = { str, dex, con, int, wis, cha };
+  const primaryVal = attrMap[base.primary_attr];
+  const skillVal   = attrMap[base.skill_attr];
+  return {
+    max_hp:      Math.floor((con * 20) + (str * 10) + Number(base.armor_bonus)),
+    atk:         Math.floor((primaryVal * 5) + Number(base.weapon_bonus)),
+    atk_speed:   (dex * 0.3) + Number(base.spd_offset),
+    skill_power: trunc4((skillVal / 2) + Number(base.sp_bonus)),
+    dex_scaled:  dex,
+    wis_scaled:  wis,
+  };
+}
+
 function computeSkillPowerLevels(baseSkillPower, spmByLevel) {
   const incMin = Math.max(0.01, baseSkillPower * 0.15);
   const result = {};
