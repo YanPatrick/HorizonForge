@@ -368,19 +368,21 @@ async function loadStatsTable() {
       c.icon,
       c.target_type,
       ls.level,
-      FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
-      FLOOR(cb.atk * ls.multiplier)::int      AS atk,
-      cb.atk_speed::float                     AS atk_speed,
-      cb.crit_chance::float                   AS crit_chance,
-      cb.crit_rate::float                     AS crit_rate,
-      cb.skill_power::float                   AS base_skill_power,
-      ls.skill_power_multiplier::float        AS spm
+      ls.multiplier::float,
+      cb.crit_chance::float,
+      cb.crit_rate::float,
+      cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
+      cb.primary_attr,
+      cb.skill_attr,
+      cb.weapon_bonus,
+      cb.armor_bonus,
+      cb.spd_offset::float,
+      cb.sp_bonus::float
     FROM characters c
     JOIN characters_base cb ON cb.character_id = c.id
     CROSS JOIN level_scale ls
     ORDER BY c.cid, ls.level
   `;
-  // First pass: bucket by cid
   const map = new Map();
   for (const r of rows) {
     if (!map.has(r.cid)) {
@@ -389,30 +391,20 @@ async function loadStatsTable() {
         name: r.name,
         icon: r.icon,
         target_type: r.target_type,
-        _baseSkillPower: r.base_skill_power,
-        _spmByLevel: {},
         levels: {},
       });
     }
-    const ch = map.get(r.cid);
-    ch._spmByLevel[r.level] = r.spm;
-    ch.levels[r.level] = {
-      max_hp: r.max_hp,
-      atk: r.atk,
-      atk_speed: r.atk_speed,
+    const st = calcStats(r, r.multiplier);
+    map.get(r.cid).levels[r.level] = {
+      max_hp:      st.max_hp,
+      atk:         st.atk,
+      atk_speed:   st.atk_speed,
       crit_chance: r.crit_chance,
-      crit_rate: r.crit_rate,
-      skill_power: null, // filled below
+      crit_rate:   r.crit_rate,
+      skill_power: st.skill_power,
+      dex:         st.dex_scaled,
+      wis:         st.wis_scaled,
     };
-  }
-  // Second pass: same iterative skill_power formula used by /api/characters
-  for (const ch of map.values()) {
-    const sp = computeSkillPowerLevels(ch._baseSkillPower, ch._spmByLevel);
-    for (let lv = 1; lv <= 5; lv++) {
-      if (ch.levels[lv]) ch.levels[lv].skill_power = sp[lv];
-    }
-    delete ch._baseSkillPower;
-    delete ch._spmByLevel;
   }
   return map;
 }
