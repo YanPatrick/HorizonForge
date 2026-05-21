@@ -522,12 +522,14 @@ async function materializeBoard(board) {
 //
 // incMin = max(0.01, base × 0.15) — guarantees visible growth each level
 // trunc4 applied at every step — floor to 4 decimal places, never rounds up
+const HEROIC_SCALE = 10_000;
+
 function trunc4(v) {
   return Math.trunc(v * 10000) / 10000;
 }
 
 function calcStats(base, multiplier) {
-  const m = Number(multiplier);
+  const m   = Number(multiplier);
   const str = Number(base.str) * m;
   const dex = Number(base.dex) * m;
   const con = Number(base.con) * m;
@@ -535,17 +537,27 @@ function calcStats(base, multiplier) {
   const wis = Number(base.wis) * m;
   const cha = Number(base.cha) * m;
   const attrMap = { str, dex, con, int, wis, cha };
-  const primaryVal = attrMap[base.primary_attr];
-  if (primaryVal === undefined) {
+  const p = attrMap[base.primary_attr];
+  if (p === undefined)
     throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
-  }
   return {
-    max_hp:      Math.floor((con * 20) + (str * 10) + Number(base.armor_bonus)),
-    atk:         Math.floor((primaryVal * 5) + Number(base.weapon_bonus)),
-    atk_speed:   (dex * 0.3) + Number(base.spd_offset),
-    skill_power: trunc4(Number(base.skill_power) * Number(base.skill_power_multiplier)),
-    dex_scaled:  dex,
-    wis_scaled:  wis,
+    atk: Math.floor(
+      p * (5 + (p - 5) / HEROIC_SCALE) + Number(base.weapon_bonus)
+    ),
+    max_hp: Math.floor(
+      con * (20 + (con - 5) / HEROIC_SCALE) +
+      str * (10 + (str - 5) / HEROIC_SCALE) +
+      Number(base.armor_bonus)
+    ),
+    atk_speed:
+      Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
+    skill_power: trunc4(
+      Number(base.skill_power) *
+      Number(base.skill_power_multiplier) *
+      (1 + Math.log(Number(base.skill_power_multiplier)) / 1_000_000)
+    ),
+    dex_scaled: dex,
+    wis_scaled: wis,
   };
 }
 
