@@ -587,6 +587,9 @@ app.get('/api/characters', async (_req, res) => {
             str: Number(r.str), dex: Number(r.dex), con: Number(r.con),
             int: Number(r.int), wis: Number(r.wis), cha: Number(r.cha),
             primary: r.primary_attr, skill: r.skill_attr,
+            weapon_bonus: Number(r.weapon_bonus),
+            armor_bonus:  Number(r.armor_bonus),
+            spd_offset:   Number(r.spd_offset),
           },
           levels: {},
         };

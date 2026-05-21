@@ -172,14 +172,21 @@
       async function initGame() {
         showLoader();
         try {
-          const [charRes, cfgRes] = await Promise.all([
+          const [charRes, cfgRes, scaleRes] = await Promise.all([
             fetch(`${API_BASE}/api/characters`),
             fetch(`${API_BASE}/api/config`),
+            fetch(`${API_BASE}/api/level-scale`),
           ]);
-          const [charData, cfgData] = await Promise.all([
+          const [charData, cfgData, scaleData] = await Promise.all([
             charRes.json(),
             cfgRes.json(),
+            scaleRes.json(),
           ]);
+          // Build [0, m1, m2, m3, m4, m5] so index == level (level 0 unused)
+          const levelMultipliers = [0];
+          if (scaleData.ok) {
+            for (const row of scaleData.levels) levelMultipliers[row.level] = Number(row.multiplier);
+          }
           if (!charData.ok) throw new Error(charData.error);
 
           if (cfgData.ok && cfgData.config) {
@@ -233,6 +240,7 @@
               START_GOLD,
               BENCH_SLOTS,
               getHF: () => HF,
+              levelMultipliers,
             });
           } else {
             console.warn("[battle] HFBot module not loaded — AI mode unavailable");
