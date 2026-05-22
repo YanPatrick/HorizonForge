@@ -369,10 +369,8 @@ async function loadStatsTable() {
       c.target_type,
       ls.level,
       ls.multiplier::float,
-      ls.skill_power_multiplier::float,
       cb.crit_chance::float,
       cb.crit_rate::float,
-      cb.skill_power::float,
       cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
       cb.primary_attr,
       cb.skill_attr,
@@ -499,29 +497,19 @@ async function materializeBoard(board) {
  * GET /api/characters
  * Stats calculados dinamicamente: characters_base × level_scale
  *
- * Fórmula por nível:
- *   max_hp      = base.max_hp      * ls.multiplier
- *   atk         = base.atk         * ls.multiplier
- *   atk_speed   = base.atk_speed   (fixo)
+ * Fórmula por nível (calcStats):
+ *   max_hp      = (con*20 + str*10 + armor_bonus)  × ls.multiplier
+ *   atk         = (primary_attr*5 + weapon_bonus)  × ls.multiplier
+ *   atk_speed   = (dex*0.3 + spd_offset)           × ls.multiplier
  *   crit_chance = base.crit_chance  (fixo)
  *   crit_rate   = base.crit_rate    (fixo)
- *   skill_power = base.skill_power  * ls.skill_power_multiplier
+ *   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus
  *
  * Retorno (mesmo contrato do frontend):
  * { cid, name, icon, role, color_hex, bg_gradient, target_type,
  *   skill: { key, name, description, type },
  *   levels: { 1: {...}, 2: {...}, 3: {...}, 4: {...}, 5: {...} } }
  */
-// ── Skill-power iterative formula ────────────────────────────────────────────
-// L1 = base_skill_power (raw DB value)
-// Ln = max(prev × stepMult, prev + incMin)
-//
-// stepMult = spm[n] / spm[n-1]  — per-step ratio between consecutive levels
-//   e.g. spm: 1.1 → 1.2 → 1.3 → 1.4 → 1.5
-//        steps:   ×1.09   ×1.08   ×1.08   ×1.07  (gentle, not compounding)
-//
-// incMin = max(0.01, base × 0.15) — guarantees visible growth each level
-// trunc4 applied at every step — floor to 4 decimal places, never rounds up
 const HEROIC_SCALE = 10_000;
 
 function trunc4(v) {
@@ -540,6 +528,9 @@ function calcStats(base, multiplier) {
   const p = attrMap[base.primary_attr];
   if (p === undefined)
     throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
+  const sk = attrMap[base.skill_attr];
+  if (sk === undefined)
+    throw new Error(`calcStats: invalid skill_attr="${base.skill_attr}"`);
   return {
     atk: Math.floor(
       p * (5 + (p - 5) / HEROIC_SCALE) + Number(base.weapon_bonus)
@@ -551,11 +542,7 @@ function calcStats(base, multiplier) {
     ),
     atk_speed:
       Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
-    skill_power: trunc4(
-      Number(base.skill_power) *
-      Number(base.skill_power_multiplier) *
-      (1 + Math.log(Number(base.skill_power_multiplier)) / 1_000_000)
-    ),
+    skill_power: trunc4(sk / 2 / 100 + Number(base.sp_bonus)),
     dex_scaled: dex,
     wis_scaled: wis,
   };
@@ -570,9 +557,7 @@ app.get('/api/characters', async (_req, res) => {
         sk.skill_key, sk.name AS skill_name,
         sk.description AS skill_desc, sk.lore, sk.skill_type,
         ls.level, ls.multiplier::float,
-        ls.skill_power_multiplier::float,
         cb.crit_chance::float, cb.crit_rate::float,
-        cb.skill_power::float,
         cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
         cb.primary_attr, cb.skill_attr,
         cb.weapon_bonus, cb.armor_bonus,

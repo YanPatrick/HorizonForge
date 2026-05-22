@@ -34,12 +34,12 @@ function resolvePhysicalAttack(attacker, defender, baseAtk, concentrationBonus =
   const attackRoll  = rollPlusDex + concentrationBonus;
   const defenseRoll = roll(20) + getModifier(defender.dex);
 
-  // Natural 20 equivalent: rollPlusDex hits 20+ (high DEX heroes crit more often)
-  if (rollPlusDex >= 20) {
+  // Natural 20: rollPlusDex hits exactly 20 (5% chance regardless of DEX mod)
+  if (rollPlusDex === 20) {
     return { hit: true, crit: true, damage: baseAtk * 2, newConcentration: 0 };
   }
-  // Fumble: rollPlusDex <= 1 (only possible when DEX mod <= 0)
-  if (rollPlusDex <= 1) {
+  // Natural 1: rollPlusDex hits exactly 1 (impossible for high-DEX heroes)
+  if (rollPlusDex === 1) {
     return { hit: false, crit: false, damage: 0, newConcentration: concentrationBonus + 2 };
   }
   // Hit
