@@ -29,27 +29,37 @@ function getModifier(attrValue) { return Math.floor((attrValue - 10) / 2); }
 // concentrationBonus: miss-streak bonus (+2 per miss, resets on hit).
 // Returns { hit, crit, damage, newConcentration }.
 function resolvePhysicalAttack(attacker, defender, baseAtk, concentrationBonus = 0) {
-  const rawRoll     = roll(20);
-  const rollPlusDex = rawRoll + getModifier(attacker.dex);
-  const attackRoll  = rollPlusDex + concentrationBonus;
-  const defenseRoll = roll(20) + getModifier(defender.dex);
+  const rawRoll    = roll(20); // O valor puro do dado
+  const attackMod  = getModifier(attacker.dex);
+  const defMod     = getModifier(defender.dex);
 
-  // Natural 20: rollPlusDex hits exactly 20 (5% chance regardless of DEX mod)
-  if (rollPlusDex === 20) {
-    return { hit: true, crit: true, damage: baseAtk * 2, newConcentration: 0 };
+  const attackRoll  = rawRoll + attackMod + concentrationBonus;
+  const defenseRoll = roll(20) + defMod;
+
+  const armadura = defender.armor || 0; // Puxa a armadura do alvo
+
+  // Natural 20 (O dado tirou 20 puro)
+  if (rawRoll === 20) {
+    return { hit: true, crit: true, damage: Math.floor(baseAtk * 1.5), armorAbs: 0, newConcentration: 0 };
   }
-  // Natural 1: rollPlusDex hits exactly 1 (impossible for high-DEX heroes)
-  if (rollPlusDex === 1) {
-    return { hit: false, crit: false, damage: 0, newConcentration: concentrationBonus + 2 };
+
+  // Natural 1 (O dado tirou 1 puro) — fumble, zero damage
+  if (rawRoll === 1) {
+    return { hit: false, crit: false, damage: 0, armorAbs: 0, newConcentration: concentrationBonus + 2 };
   }
-  // Hit
+
+  // Acerto Normal (Subtraindo a armadura!)
   if (attackRoll > defenseRoll) {
-    return { hit: true, crit: false, damage: baseAtk, newConcentration: 0 };
+    const danoFinal = Math.max(baseAtk - armadura, baseAtk * 0.1); // Dano mínimo de 10%
+    const armorAbs = baseAtk - Math.floor(danoFinal); // quanto a armadura absorveu
+    return { hit: true, crit: false, damage: Math.floor(danoFinal), armorAbs, newConcentration: 0 };
   }
-  // Evasion — Glancing Blow (25% damage, miss streak continues)
+
+  // Raspão (Evasão do Defensor) — 25% dano, sem armadura
   return {
-    hit: false, crit: false,
+    hit: false, crit: false, glancing: true,
     damage: Math.floor(baseAtk * 0.25),
+    armorAbs: 0,
     newConcentration: concentrationBonus + 2,
   };
 }
@@ -104,7 +114,9 @@ function simulate(pb, eb) {
   const alliesOf = (s) => (s === "p" ? ps : es).filter((u) => u.alive);
 
   // ── Deal damage ─────────────────────────────────────────────────────────────
-  function dealDmg(atk, tgt, d, isCrit = false) {
+  // extra: { glancing, armorAbs } for physical attacks — forwarded to the event
+  // so the playback layer can show distinct floating texts.
+  function dealDmg(atk, tgt, d, isCrit = false, extra = {}) {
     let dmg = d;
     // Knight Iron Defense: skillPower% damage reduction. Clamp at 0 so a
     // future balance change with skillPower > 1 can't heal Knight on hit.
@@ -118,6 +130,7 @@ function simulate(pb, eb) {
         tid: tgt.id,
         amt: dmg,
         isCrit,
+        ...extra,
         tick,
       });
     } else {
@@ -127,6 +140,7 @@ function simulate(pb, eb) {
         tid: tgt.id,
         amt: dmg,
         isCrit,
+        ...extra,
         tick,
       });
     }
@@ -313,13 +327,17 @@ function simulate(pb, eb) {
         const cb = concentration.get(unit.id) || 0;
         const res = resolvePhysicalAttack(unit, et, unit.atk, cb);
         concentration.set(unit.id, res.newConcentration);
-        if (res.damage > 0) dealDmg(unit, et, res.damage, res.crit);
+        if (!res.hit && res.damage === 0) {
+          evs.push({ type: 'miss', uid: unit.id, tid: et.id, tick });
+        }
+        if (res.damage > 0) dealDmg(unit, et, res.damage, res.crit, { glancing: res.glancing || false, armorAbs: res.armorAbs || 0 });
       }
     } else {
       const t = pickTarget(unit);
       if (t && t.alive) {
         let isCrit = false;
         let finalDmg = 0;
+        let physExtra = {}; // { glancing, armorAbs } — only set for physical attacks
 
         if (MAGIC_ATTACKERS.has(unit.cid)) {
           // Magic attack: no evasion, reduced by defender WIS
@@ -332,18 +350,24 @@ function simulate(pb, eb) {
           concentration.set(unit.id, res.newConcentration);
           isCrit = res.crit;
           finalDmg = res.damage;
+          physExtra = { glancing: res.glancing || false, armorAbs: res.armorAbs || 0 };
+
+          // Fumble (Natural 1): emit miss event so playback shows "MISS"
+          if (!res.hit && res.damage === 0) {
+            evs.push({ type: 'miss', uid: unit.id, tid: t.id, tick });
+          }
 
           // Precise Shot (Archer) — bonus crit chance on physical hits
           if (unit.cid === "archer" && res.hit && !res.crit) {
             const effCC = unit.critChance + unit.skillPower;
             if (Math.random() < effCC) {
               isCrit = true;
-              finalDmg = Math.floor(unit.atk * unit.critRate);
+              finalDmg = Math.floor(finalDmg * unit.critRate);
             }
           }
         }
 
-        if (finalDmg > 0) dealDmg(unit, t, finalDmg, isCrit);
+        if (finalDmg > 0) dealDmg(unit, t, finalDmg, isCrit, physExtra);
 
         if (unit.cid === "archer" && isCrit) {
           evs.push({

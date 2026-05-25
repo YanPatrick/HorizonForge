@@ -402,8 +402,9 @@ async function loadStatsTable() {
       crit_chance: r.crit_chance,
       crit_rate:   r.crit_rate,
       skill_power: st.skill_power,
-      dex:         st.dex_scaled,
-      wis:         st.wis_scaled,
+      dex:         st.dex,
+      wis:         st.wis,
+      armor:       st.armor,
     };
   }
   return map;
@@ -487,6 +488,7 @@ async function materializeBoard(board) {
       skillPower: lvStats.skill_power,
       dex: lvStats.dex,
       wis: lvStats.wis,
+      armor: lvStats.armor,
     };
   });
 }
@@ -537,14 +539,14 @@ function calcStats(base, multiplier) {
     ),
     max_hp: Math.floor(
       con * (20 + (con - 5) / HEROIC_SCALE) +
-      str * (10 + (str - 5) / HEROIC_SCALE) +
-      Number(base.armor_bonus)
+      str * (10 + (str - 5) / HEROIC_SCALE)
     ),
     atk_speed:
       Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
     skill_power: trunc4(sk / 2 / 100 + Number(base.sp_bonus)),
-    dex_scaled: dex,
-    wis_scaled: wis,
+    dex:   dex,
+    wis:   wis,
+    armor: Number(base.armor_bonus),
   };
 }
 
@@ -599,8 +601,9 @@ app.get('/api/characters', async (_req, res) => {
         crit_chance: r.crit_chance,
         crit_rate:   r.crit_rate,
         skill_power: st.skill_power,
-        dex:         st.dex_scaled,
-        wis:         st.wis_scaled,
+        dex:         st.dex,
+        wis:         st.wis,
+        armor:       st.armor,
       };
     }
     res.json({ ok: true, characters: Object.values(map) });

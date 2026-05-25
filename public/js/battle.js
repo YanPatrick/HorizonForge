@@ -348,6 +348,7 @@
           skillPower: st.skill_power,
           dex: st.dex,
           wis: st.wis,
+          armor: st.armor,
           stack: 1,
         };
       }
@@ -362,6 +363,7 @@
         u.skillPower = st.skill_power;
         u.dex = st.dex;
         u.wis = st.wis;
+        u.armor = st.armor;
         u.id = "u" + ++_uid;
         return u;
       }
@@ -1084,13 +1086,13 @@
           }, getBattleFxDuration(340));
         }
 
-        function spawnFloat(el, text, type) {
+        function spawnFloat(el, text, type, yOffset = 0) {
           const r = el.getBoundingClientRect();
           const d = document.createElement("span");
           d.className = "dmg-float " + type;
           d.textContent = text;
           d.style.left = r.left + r.width * 0.5 - 12 + "px";
-          d.style.top = r.top + r.height * 0.2 + "px";
+          d.style.top = r.top + r.height * 0.2 + yOffset + "px";
           document.body.appendChild(d);
           setTimeout(() => d.remove(), getBattleFxDuration(950));
         }
@@ -1343,6 +1345,14 @@
                 "lab",
                 true,
               );
+            } else if (ev.type === "miss" && u && t) {
+              const eMiss = gEl(t);
+              if (eMiss) spawnFloat(eMiss, "MISS", "miss");
+              log(
+                `${uTag(u)} <span class="lmiss">errou</span> ${uTag(t)}`,
+                "latk",
+                true,
+              );
             } else if (ev.type === "atk" && t) {
               const eAtk = gEl(u);
               const e2 = gEl(t);
@@ -1371,9 +1381,15 @@
                   flashDamage(e2);
                   flashUnit(e2, "vfx-crit");
                   spawnFloat(e2, "−" + ev.amt, "crit");
+                } else if (ev.glancing) {
+                  flashDamage(e2);
+                  spawnFloat(e2, "〜" + ev.amt, "glancing");
                 } else {
                   flashDamage(e2);
                   spawnFloat(e2, "−" + ev.amt, "dmg");
+                  if (ev.armorAbs > 0) {
+                    spawnFloat(e2, "🛡 " + ev.armorAbs, "armor", 16);
+                  }
                 }
               }
               const who = uTag(u),
@@ -1381,6 +1397,8 @@
               log(
                 ev.isCrit
                   ? `${who} → ${whom} &nbsp;${dmgTag(ev.amt, true)}`
+                  : ev.glancing
+                  ? `${who} → ${whom} &nbsp;<span class="lglancing">〜${ev.amt} (scratch)</span>`
                   : `${who} → ${whom} &nbsp;<span class="ldmg">−${ev.amt}</span>`,
                 "latk",
                 true,
@@ -1408,9 +1426,15 @@
                   flashDamage(e2);
                   flashUnit(e2, "vfx-crit");
                   spawnFloat(e2, "−" + ev.amt, "crit");
+                } else if (ev.glancing) {
+                  flashDamage(e2);
+                  spawnFloat(e2, "〜" + ev.amt, "glancing");
                 } else {
                   flashDamage(e2);
                   spawnFloat(e2, "−" + ev.amt, "dmg");
+                  if (ev.armorAbs > 0) {
+                    spawnFloat(e2, "🛡 " + ev.armorAbs, "armor", 16);
+                  }
                 }
               }
               setTimeout(() => {
