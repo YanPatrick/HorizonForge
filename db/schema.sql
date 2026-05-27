@@ -44,32 +44,31 @@ CREATE TABLE IF NOT EXISTS characters (
 -- --------------------------------------------------------
 -- Characters base — um registro por personagem (valores base nível 1)
 -- Stats de combate são calculados via calcStats():
---   max_hp      = (con * 20) + (str * 10) + armor_bonus   (× level multiplier)
---   atk         = (primary_attr * 5) + weapon_bonus        (× level multiplier)
---   atk_speed   = (dex * 0.3) + spd_offset                 (× level multiplier)
---   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus  (faixa: 0.05–1.5)
+--   max_hp      = (con × 20) × m          (apenas CON — itens adicionam HP)
+--   atk         = (primary_attr × 5) × m + weapon_bonus
+--   initiative  = spd_offset              (bônus fixo somado ao D20 por round)
+--   skill_power = base.skill_power × m    (valor base definido por herói)
+--   evasion     = max(0, floor((DEX_base − 10) / 2)) %  (máx 5% sem itens)
+--   armor       = 0 por padrão            (vem de item equipado)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS characters_base (
   id              SERIAL       PRIMARY KEY,
   character_id    INT          NOT NULL REFERENCES characters(id) ON DELETE CASCADE UNIQUE,
-  max_hp          INT          NOT NULL,
-  atk             NUMERIC(8,1) NOT NULL,
-  atk_speed       NUMERIC(4,2) NOT NULL,
-  crit_chance     NUMERIC(6,4) NOT NULL,
-  crit_rate       NUMERIC(4,2) NOT NULL,
-  skill_power     NUMERIC(8,4) NOT NULL,
+  max_hp          INT          NOT NULL DEFAULT 0,   -- legado, não usado — calculado via calcStats
+  atk             NUMERIC(8,1) NOT NULL DEFAULT 0,   -- legado, não usado — calculado via calcStats
+  atk_speed       NUMERIC(4,2) NOT NULL DEFAULT 0,   -- legado, não usado — substituído por spd_offset
+  crit_chance     NUMERIC(6,4) NOT NULL DEFAULT 0.005,
+  crit_rate       NUMERIC(4,2) NOT NULL DEFAULT 1.5,
+  skill_power     NUMERIC(8,4) NOT NULL DEFAULT 0,   -- valor base da habilidade (escala com m)
   str             SMALLINT     NOT NULL DEFAULT 10,
   dex             SMALLINT     NOT NULL DEFAULT 10,
   con             SMALLINT     NOT NULL DEFAULT 10,
   int             SMALLINT     NOT NULL DEFAULT 10,
   wis             SMALLINT     NOT NULL DEFAULT 10,
-  cha             SMALLINT     NOT NULL DEFAULT 10,
+  cha             SMALLINT     NOT NULL DEFAULT 10,  -- reservado para uso futuro
   primary_attr    VARCHAR(8)   NOT NULL DEFAULT 'str',
-  skill_attr      VARCHAR(8)   NOT NULL DEFAULT 'str',
   weapon_bonus    SMALLINT     NOT NULL DEFAULT 0,
-  armor_bonus     SMALLINT     NOT NULL DEFAULT 0,
-  spd_offset      NUMERIC(5,2) NOT NULL DEFAULT 0,
-  sp_bonus        NUMERIC(6,3) NOT NULL DEFAULT 0
+  spd_offset      NUMERIC(5,2) NOT NULL DEFAULT 0    -- bônus de iniciativa (D20 + spd_offset)
 );
 
 -- --------------------------------------------------------
@@ -117,30 +116,32 @@ ON CONFLICT (cid) DO UPDATE SET
   bg_gradient = EXCLUDED.bg_gradient,
   target_type = EXCLUDED.target_type;
 
+-- max_hp / atk / atk_speed: colunas legadas — valores não usados, calcStats recalcula tudo
+-- skill_power: valor base da habilidade (× m por nível). Ver comentário em characters_base.
 INSERT INTO characters_base (character_id, max_hp, atk, atk_speed, crit_chance, crit_rate, skill_power)
 SELECT c.id, v.max_hp, v.atk, v.atk_speed, v.crit_chance, v.crit_rate, v.skill_power
 FROM characters c
 JOIN (VALUES
-  ('knight',    620,  80.0, 1.00, 0.0050, 1.5, 0.0600),
-  ('mage',      260, 170.0, 0.70, 0.0050, 1.5, 0.2000),
-  ('archer',    360, 120.0, 1.30, 0.0050, 1.5, 0.3000),
-  ('healer',    310,  52.0, 0.90, 0.0050, 1.5, 1.4000),
-  ('assassin',  280, 160.0, 1.50, 0.0050, 1.5, 1.1000),
-  ('paladin',   560,  85.0, 0.90, 0.0050, 1.5, 0.1100),
-  ('archmage',  230, 180.0, 0.75, 0.0050, 1.5, 0.1000),
-  ('barbarian', 720,  95.0, 1.10, 0.0050, 1.5, 0.1500)
+  --            cid          hp   atk  spd   cc      cr    skill_power (base × m por nível)
+  ('knight',    0,    0.0, 0.00, 0.0050, 1.5, 0.08),  -- Iron Defense: -8% dano recebido/hit
+  ('mage',      0,    0.0, 0.00, 0.0050, 1.5, 0.35),  -- Fireball: splash = ATK × 35%
+  ('archer',    0,    0.0, 0.00, 0.0050, 1.5, 0.10),  -- Precise Shot: +10% crit chance
+  ('healer',    0,    0.0, 0.00, 0.0050, 1.5, 0.60),  -- Healing: cura ATK × 60% (≈ 67 HP L1)
+  ('assassin',  0,    0.0, 0.00, 0.0050, 1.5, 0.70),  -- Sneak Strike: ATK × 70% burst
+  ('paladin',   0,    0.0, 0.00, 0.0050, 1.5, 0.12),  -- Sacred Aura: +12% maxHP adjacentes
+  ('archmage',  0,    0.0, 0.00, 0.0050, 1.5, 0.30),  -- Chain Lightning: 2°=ATK×30%, 3°=15%
+  ('barbarian', 0,    0.0, 0.00, 0.0050, 1.5, 0.20)   -- Fury: +20% ATK ao enraivecer
 ) AS v(cid, max_hp, atk, atk_speed, crit_chance, crit_rate, skill_power) ON c.cid = v.cid
 ON CONFLICT (character_id) DO UPDATE SET
-  max_hp      = EXCLUDED.max_hp,
-  atk         = EXCLUDED.atk,
-  atk_speed   = EXCLUDED.atk_speed,
   crit_chance = EXCLUDED.crit_chance,
   crit_rate   = EXCLUDED.crit_rate,
   skill_power = EXCLUDED.skill_power;
 
--- ── Atributos RPG — spec v1.0 ─────────────────────────────────────────────────
+-- ── Atributos RPG — spec v2.0 ─────────────────────────────────────────────────
 -- Idempotente: safe to re-run; popula/redefine os atributos de todos os heróis.
--- Soma base = 72 pts por herói · teto por atributo = 20 · piso DEX = 10.
+-- max_hp/atk/atk_speed calculados via calcStats() — os campos no banco são legado.
+-- Evasão derivada de DEX: max(0, floor((DEX-10)/2))% — máx 5% sem itens.
+-- Armadura: sempre 0 da ficha (itens equipam armadura). weapon_bonus = arma base.
 UPDATE characters_base cb SET
   str          = v.str,
   dex          = v.dex,
@@ -149,24 +150,20 @@ UPDATE characters_base cb SET
   wis          = v.wis,
   cha          = v.cha,
   primary_attr = v.primary_attr,
-  skill_attr   = v.skill_attr,
   weapon_bonus = v.weapon_bonus,
-  armor_bonus  = v.armor_bonus,
-  spd_offset   = v.spd_offset,
-  sp_bonus     = v.sp_bonus
+  spd_offset   = v.spd_offset
 FROM characters c
 JOIN (VALUES
-  --           cid         str dex con int wis cha  prim   skill  wpn  arm   spd    sp
-  ('knight',    15, 10, 20,  7, 10, 10, 'str', 'con',  17, 142,  0.00, 0.000),
-  ('paladin',   13, 10, 19, 10, 10, 10, 'str', 'cha',  23, 137,  0.00, 0.000),
-  ('barbarian', 20, 12, 15,  5,  8, 12, 'str', 'str',   0, 130,  0.00, 0.000),
-  ('assassin',  14, 18, 10, 10, 10, 10, 'dex', 'dex',  42,  13,  0.00, 0.750),
-  ('archer',    12, 17, 10, 10, 11, 12, 'dex', 'dex',  60,  60, -1.00, 0.000),
-  ('mage',       8, 10, 10, 20, 14, 10, 'int', 'int',  70,  30, -2.10, 0.000),
-  ('archmage',   7, 10, 10, 20, 15, 10, 'int', 'int',  88,  58, -2.10, 0.000),
-  ('healer',     8, 10,  8, 18, 10, 18, 'wis', 'wis',   2,  39, -1.00, 1.250)
-) AS v(cid, str, dex, con, int_val, wis, cha, primary_attr, skill_attr,
-        weapon_bonus, armor_bonus, spd_offset, sp_bonus)
+  --            cid        str dex con int wis cha  prim   wpn  spd_offset
+  ('knight',    16, 10, 16, 10, 10, 10, 'str',  12,  0.00),
+  ('paladin',   14, 10, 14, 10, 14, 10, 'str',  18,  0.00),
+  ('barbarian', 18, 12, 16,  8, 10,  8, 'str',   7,  0.00),
+  ('assassin',   8, 20, 10, 16, 10,  8, 'dex',  70,  0.00),
+  ('archer',    10, 18, 14, 10, 10, 10, 'dex',  30, -1.00),
+  ('mage',       8, 10,  8, 18, 14, 14, 'int',  12, -2.10),
+  ('archmage',   8, 10, 10, 20, 16,  8, 'int',  40, -2.10),
+  ('healer',     8, 10, 10, 14, 20, 10, 'wis',  12, -1.00)
+) AS v(cid, str, dex, con, int_val, wis, cha, primary_attr, weapon_bonus, spd_offset)
   ON c.cid = v.cid
 WHERE cb.character_id = c.id;
 
