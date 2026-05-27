@@ -10,7 +10,7 @@
 -- character_stats foi REMOVIDA — stats são calculados em runtime:
 --   max_hp / atk   = base × level_scale.multiplier
 --   atk_speed / crit_chance / crit_rate = fixos (sem escala)
---   skill_power    = base × level_scale.skill_power_multiplier
+--   skill_power    = (scaled_skill_attr / 2 / 100) + sp_bonus
 --
 -- Running this file on a fresh DB gives you the seed data and the static
 -- tables; you ALSO need to hit POST /api/migrate (with x-admin-secret) to
@@ -42,10 +42,12 @@ CREATE TABLE IF NOT EXISTS characters (
 );
 
 -- --------------------------------------------------------
--- Characters base — um registro por personagem (valores nível 1)
--- max_hp / atk     → multiplicar por level_scale.multiplier
--- atk_speed / crit → fixos
--- skill_power      → multiplicar por level_scale.skill_power_multiplier
+-- Characters base — um registro por personagem (valores base nível 1)
+-- Stats de combate são calculados via calcStats():
+--   max_hp      = (con * 20) + (str * 10) + armor_bonus   (× level multiplier)
+--   atk         = (primary_attr * 5) + weapon_bonus        (× level multiplier)
+--   atk_speed   = (dex * 0.3) + spd_offset                 (× level multiplier)
+--   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus  (faixa: 0.05–1.5)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS characters_base (
   id              SERIAL       PRIMARY KEY,
@@ -55,7 +57,19 @@ CREATE TABLE IF NOT EXISTS characters_base (
   atk_speed       NUMERIC(4,2) NOT NULL,
   crit_chance     NUMERIC(6,4) NOT NULL,
   crit_rate       NUMERIC(4,2) NOT NULL,
-  skill_power     NUMERIC(8,4) NOT NULL
+  skill_power     NUMERIC(8,4) NOT NULL,
+  str             SMALLINT     NOT NULL DEFAULT 10,
+  dex             SMALLINT     NOT NULL DEFAULT 10,
+  con             SMALLINT     NOT NULL DEFAULT 10,
+  int             SMALLINT     NOT NULL DEFAULT 10,
+  wis             SMALLINT     NOT NULL DEFAULT 10,
+  cha             SMALLINT     NOT NULL DEFAULT 10,
+  primary_attr    VARCHAR(8)   NOT NULL DEFAULT 'str',
+  skill_attr      VARCHAR(8)   NOT NULL DEFAULT 'str',
+  weapon_bonus    SMALLINT     NOT NULL DEFAULT 0,
+  armor_bonus     SMALLINT     NOT NULL DEFAULT 0,
+  spd_offset      NUMERIC(5,2) NOT NULL DEFAULT 0,
+  sp_bonus        NUMERIC(6,3) NOT NULL DEFAULT 0
 );
 
 -- --------------------------------------------------------
@@ -123,6 +137,38 @@ ON CONFLICT (character_id) DO UPDATE SET
   crit_chance = EXCLUDED.crit_chance,
   crit_rate   = EXCLUDED.crit_rate,
   skill_power = EXCLUDED.skill_power;
+
+-- ── Atributos RPG — spec v1.0 ─────────────────────────────────────────────────
+-- Idempotente: safe to re-run; popula/redefine os atributos de todos os heróis.
+-- Soma base = 72 pts por herói · teto por atributo = 20 · piso DEX = 10.
+UPDATE characters_base cb SET
+  str          = v.str,
+  dex          = v.dex,
+  con          = v.con,
+  "int"        = v.int_val,
+  wis          = v.wis,
+  cha          = v.cha,
+  primary_attr = v.primary_attr,
+  skill_attr   = v.skill_attr,
+  weapon_bonus = v.weapon_bonus,
+  armor_bonus  = v.armor_bonus,
+  spd_offset   = v.spd_offset,
+  sp_bonus     = v.sp_bonus
+FROM characters c
+JOIN (VALUES
+  --           cid         str dex con int wis cha  prim   skill  wpn  arm   spd    sp
+  ('knight',    15, 10, 20,  7, 10, 10, 'str', 'con',  17, 142,  0.00, 0.000),
+  ('paladin',   13, 10, 19, 10, 10, 10, 'str', 'cha',  23, 137,  0.00, 0.000),
+  ('barbarian', 20, 12, 15,  5,  8, 12, 'str', 'str',   0, 130,  0.00, 0.000),
+  ('assassin',  14, 18, 10, 10, 10, 10, 'dex', 'dex',  42,  13,  0.00, 0.750),
+  ('archer',    12, 17, 10, 10, 11, 12, 'dex', 'dex',  60,  60, -1.00, 0.000),
+  ('mage',       8, 10, 10, 20, 14, 10, 'int', 'int',  70,  30, -2.10, 0.000),
+  ('archmage',   7, 10, 10, 20, 15, 10, 'int', 'int',  88,  58, -2.10, 0.000),
+  ('healer',     8, 10,  8, 18, 10, 18, 'wis', 'wis',   2,  39, -1.00, 1.250)
+) AS v(cid, str, dex, con, int_val, wis, cha, primary_attr, skill_attr,
+        weapon_bonus, armor_bonus, spd_offset, sp_bonus)
+  ON c.cid = v.cid
+WHERE cb.character_id = c.id;
 
 INSERT INTO skills (character_id, skill_key, name, description, lore, skill_type)
 SELECT c.id, v.skill_key, v.name, v.description, v.lore, v.skill_type

@@ -2622,6 +2622,16 @@
         font-weight: 700;
       }
 
+      .lmiss {
+        color: rgba(160, 160, 160, 0.65);
+        font-style: italic;
+      }
+
+      .lglancing {
+        color: rgba(180, 180, 180, 0.6);
+        font-style: italic;
+      }
+
       .lside-p {
         color: #6699ff;
         font-weight: 700;
@@ -3690,6 +3700,42 @@
           opacity: 0;
           transform: translateX(-50%) translateY(-62px) scale(0.88);
         }
+      }
+
+      /* MISS — fumble (Natural 1), aparece no defensor */
+      .dmg-float.miss {
+        font-size: 16px;
+        font-style: italic;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(200, 200, 200, 0.7);
+        -webkit-text-stroke: 1px rgba(0, 0, 0, 0.6);
+        text-shadow:
+          0 2px 0 rgba(0, 0, 0, 0.45),
+          0 0 8px rgba(120, 120, 120, 0.25);
+        animation: dmg-float-up 0.85s cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
+      }
+
+      /* GLANCING — raspão (25% ATK, evasão do defensor) */
+      .dmg-float.glancing {
+        font-size: 17px;
+        font-style: italic;
+        color: rgba(175, 175, 175, 0.6);
+        -webkit-text-stroke: 1px rgba(0, 0, 0, 0.5);
+        text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+        animation: dmg-float-up 0.9s cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
+      }
+
+      /* ARMOR — absorção de armadura, aparece abaixo do dano principal */
+      .dmg-float.armor {
+        font-size: 14px;
+        color: #6ec8ff;
+        -webkit-text-stroke: 1px rgba(0, 0, 0, 0.55);
+        filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.45)) drop-shadow(0 0 8px rgba(80, 160, 255, 0.35));
+        text-shadow:
+          0 2px 0 rgba(0, 0, 0, 0.4),
+          0 0 10px rgba(80, 160, 255, 0.3);
+        animation: dmg-float-up 0.95s cubic-bezier(0.2, 0.82, 0.2, 1) forwards;
       }
 
       /* ── Battlefield unit: enhanced icon presentation ── */

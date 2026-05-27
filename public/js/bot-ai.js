@@ -59,9 +59,6 @@
     knight: 6, paladin: 7, barbarian: 6, healer: 8,
     assassin: 9, archer: 7, mage: 8, archmage: 10,
   };
-  // Per-level HP/ATK multiplier table — mirrors level_scale.multiplier in the DB
-  const LM = [0, 1.0, 1.3, 1.6, 1.9, 2.2];
-
   // ── State ─────────────────────────────────────────────────────────────────
   let BOT = makeInitialBOT();
 
@@ -130,7 +127,7 @@
       // Bonus if we'd actually trigger a merge with this buy
       if (stack === 2) score *= 1 + (BOT_CFG.mergeWeight * 0.5);
       // Tier-up potential — higher current level = more valuable to keep stacking
-      score *= LM[ownsExisting.lv] || 1;
+      score *= (deps().levelMultipliers?.[ownsExisting.lv] || 1);
     }
     if (BOT_CFG.mistakeRate && Math.random() < BOT_CFG.mistakeRate) score *= 0.6;
     return score;

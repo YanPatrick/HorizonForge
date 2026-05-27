@@ -368,19 +368,21 @@ async function loadStatsTable() {
       c.icon,
       c.target_type,
       ls.level,
-      FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
-      FLOOR(cb.atk * ls.multiplier)::int      AS atk,
-      cb.atk_speed::float                     AS atk_speed,
-      cb.crit_chance::float                   AS crit_chance,
-      cb.crit_rate::float                     AS crit_rate,
-      cb.skill_power::float                   AS base_skill_power,
-      ls.skill_power_multiplier::float        AS spm
+      ls.multiplier::float,
+      cb.crit_chance::float,
+      cb.crit_rate::float,
+      cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
+      cb.primary_attr,
+      cb.skill_attr,
+      cb.weapon_bonus,
+      cb.armor_bonus,
+      cb.spd_offset::float,
+      cb.sp_bonus::float
     FROM characters c
     JOIN characters_base cb ON cb.character_id = c.id
     CROSS JOIN level_scale ls
     ORDER BY c.cid, ls.level
   `;
-  // First pass: bucket by cid
   const map = new Map();
   for (const r of rows) {
     if (!map.has(r.cid)) {
@@ -389,30 +391,21 @@ async function loadStatsTable() {
         name: r.name,
         icon: r.icon,
         target_type: r.target_type,
-        _baseSkillPower: r.base_skill_power,
-        _spmByLevel: {},
         levels: {},
       });
     }
-    const ch = map.get(r.cid);
-    ch._spmByLevel[r.level] = r.spm;
-    ch.levels[r.level] = {
-      max_hp: r.max_hp,
-      atk: r.atk,
-      atk_speed: r.atk_speed,
+    const st = calcStats(r, r.multiplier);
+    map.get(r.cid).levels[r.level] = {
+      max_hp:      st.max_hp,
+      atk:         st.atk,
+      atk_speed:   st.atk_speed,
       crit_chance: r.crit_chance,
-      crit_rate: r.crit_rate,
-      skill_power: null, // filled below
+      crit_rate:   r.crit_rate,
+      skill_power: st.skill_power,
+      dex:         st.dex,
+      wis:         st.wis,
+      armor:       st.armor,
     };
-  }
-  // Second pass: same iterative skill_power formula used by /api/characters
-  for (const ch of map.values()) {
-    const sp = computeSkillPowerLevels(ch._baseSkillPower, ch._spmByLevel);
-    for (let lv = 1; lv <= 5; lv++) {
-      if (ch.levels[lv]) ch.levels[lv].skill_power = sp[lv];
-    }
-    delete ch._baseSkillPower;
-    delete ch._spmByLevel;
   }
   return map;
 }
@@ -493,6 +486,9 @@ async function materializeBoard(board) {
       critChance: lvStats.crit_chance,
       critRate: lvStats.crit_rate,
       skillPower: lvStats.skill_power,
+      dex: lvStats.dex,
+      wis: lvStats.wis,
+      armor: lvStats.armor,
     };
   });
 }
@@ -503,130 +499,113 @@ async function materializeBoard(board) {
  * GET /api/characters
  * Stats calculados dinamicamente: characters_base × level_scale
  *
- * Fórmula por nível:
- *   max_hp      = base.max_hp      * ls.multiplier
- *   atk         = base.atk         * ls.multiplier
- *   atk_speed   = base.atk_speed   (fixo)
+ * Fórmula por nível (calcStats):
+ *   max_hp      = (con*20 + str*10 + armor_bonus)  × ls.multiplier
+ *   atk         = (primary_attr*5 + weapon_bonus)  × ls.multiplier
+ *   atk_speed   = (dex*0.3 + spd_offset)           × ls.multiplier
  *   crit_chance = base.crit_chance  (fixo)
  *   crit_rate   = base.crit_rate    (fixo)
- *   skill_power = base.skill_power  * ls.skill_power_multiplier
+ *   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus
  *
  * Retorno (mesmo contrato do frontend):
  * { cid, name, icon, role, color_hex, bg_gradient, target_type,
  *   skill: { key, name, description, type },
  *   levels: { 1: {...}, 2: {...}, 3: {...}, 4: {...}, 5: {...} } }
  */
-// ── Skill-power iterative formula ────────────────────────────────────────────
-// L1 = base_skill_power (raw DB value)
-// Ln = max(prev × stepMult, prev + incMin)
-//
-// stepMult = spm[n] / spm[n-1]  — per-step ratio between consecutive levels
-//   e.g. spm: 1.1 → 1.2 → 1.3 → 1.4 → 1.5
-//        steps:   ×1.09   ×1.08   ×1.08   ×1.07  (gentle, not compounding)
-//
-// incMin = max(0.01, base × 0.15) — guarantees visible growth each level
-// trunc4 applied at every step — floor to 4 decimal places, never rounds up
+const HEROIC_SCALE = 10_000;
+
 function trunc4(v) {
   return Math.trunc(v * 10000) / 10000;
 }
 
-function computeSkillPowerLevels(baseSkillPower, spmByLevel) {
-  const incMin = Math.max(0.01, baseSkillPower * 0.15);
-  const result = {};
-  let prev = baseSkillPower; // L1 = raw base
-  for (let lv = 1; lv <= 5; lv++) {
-    if (lv === 1) {
-      result[lv] = trunc4(prev);
-    } else {
-      // Relative per-step multiplier — avoids exponential compounding
-      const stepMult = spmByLevel[lv] / spmByLevel[lv - 1];
-      const valorReal = prev * stepMult;
-      const novo = Math.max(valorReal, prev + incMin);
-      result[lv] = trunc4(novo);
-      prev = result[lv];
-    }
-  }
-  return result;
+function calcStats(base, multiplier) {
+  const m   = Number(multiplier);
+  const str = Number(base.str) * m;
+  const dex = Number(base.dex) * m;
+  const con = Number(base.con) * m;
+  const int = Number(base.int) * m;
+  const wis = Number(base.wis) * m;
+  const cha = Number(base.cha) * m;
+  const attrMap = { str, dex, con, int, wis, cha };
+  const p = attrMap[base.primary_attr];
+  if (p === undefined)
+    throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
+  const sk = attrMap[base.skill_attr];
+  if (sk === undefined)
+    throw new Error(`calcStats: invalid skill_attr="${base.skill_attr}"`);
+  return {
+    atk: Math.floor(
+      p * (5 + (p - 5) / HEROIC_SCALE) + Number(base.weapon_bonus)
+    ),
+    max_hp: Math.floor(
+      con * (20 + (con - 5) / HEROIC_SCALE) +
+      str * (10 + (str - 5) / HEROIC_SCALE)
+    ),
+    atk_speed:
+      Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
+    skill_power: trunc4(sk / 2 / 100 + Number(base.sp_bonus)),
+    dex:   dex,
+    wis:   wis,
+    armor: Number(base.armor_bonus),
+  };
 }
 
 app.get('/api/characters', async (_req, res) => {
   try {
     const rows = await sql`
       SELECT
-        c.cid,
-        c.name,
-        c.icon,
-        c.url_portrait,
-        c.role,
-        c.color_hex,
-        c.bg_gradient,
-        c.target_type,
-        sk.skill_key,
-        sk.name        AS skill_name,
-        sk.description AS skill_desc,
-        sk.lore,
-        sk.skill_type,
-        ls.level,
-        FLOOR(cb.max_hp * ls.multiplier)::int   AS max_hp,
-        FLOOR(cb.atk * ls.multiplier)::int       AS atk,
-        cb.atk_speed::float,
-        cb.crit_chance::float,
-        cb.crit_rate::float,
-        cb.skill_power::float                    AS base_skill_power,
-        ls.skill_power_multiplier::float
+        c.cid, c.name, c.icon, c.url_portrait, c.role,
+        c.color_hex, c.bg_gradient, c.target_type,
+        sk.skill_key, sk.name AS skill_name,
+        sk.description AS skill_desc, sk.lore, sk.skill_type,
+        ls.level, ls.multiplier::float,
+        cb.crit_chance::float, cb.crit_rate::float,
+        cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
+        cb.primary_attr, cb.skill_attr,
+        cb.weapon_bonus, cb.armor_bonus,
+        cb.spd_offset::float, cb.sp_bonus::float
       FROM characters c
       JOIN characters_base cb ON cb.character_id = c.id
       JOIN skills          sk ON sk.character_id = c.id
       CROSS JOIN level_scale ls
       ORDER BY c.id, ls.level
     `;
-
-    // ── First pass: collect base stats and spm per level ──────────────────
     const map = {};
     for (const r of rows) {
       if (!map[r.cid]) {
         map[r.cid] = {
-          cid: r.cid,
-          name: r.name,
-          icon: r.icon,
+          cid: r.cid, name: r.name, icon: r.icon,
           url_portrait: r.url_portrait || '',
-          role: r.role,
-          color_hex: r.color_hex,
-          bg_gradient: r.bg_gradient,
-          target_type: r.target_type,
+          role: r.role, color_hex: r.color_hex,
+          bg_gradient: r.bg_gradient, target_type: r.target_type,
           skill: {
-            key: r.skill_key,
-            name: r.skill_name,
-            description: r.skill_desc,
-            lore: r.lore,
-            type: r.skill_type,
+            key: r.skill_key, name: r.skill_name,
+            description: r.skill_desc, lore: r.lore, type: r.skill_type,
           },
-          _baseSkillPower: r.base_skill_power,
-          _spmByLevel: {},
+          attrs: {
+            str: Number(r.str), dex: Number(r.dex), con: Number(r.con),
+            int: Number(r.int), wis: Number(r.wis), cha: Number(r.cha),
+            primary: r.primary_attr, skill: r.skill_attr,
+            weapon_bonus: Number(r.weapon_bonus),
+            armor_bonus:  Number(r.armor_bonus),
+            spd_offset:   Number(r.spd_offset),
+          },
           levels: {},
         };
       }
-      map[r.cid]._spmByLevel[r.level] = r.skill_power_multiplier;
+      const st = calcStats(r, r.multiplier);
       map[r.cid].levels[r.level] = {
-        max_hp: r.max_hp,
-        atk: r.atk,
-        atk_speed: r.atk_speed,
+        max_hp:      st.max_hp,
+        atk:         st.atk,
+        atk_speed:   st.atk_speed,
         crit_chance: r.crit_chance,
-        crit_rate: r.crit_rate,
-        skill_power: null, // filled below
+        crit_rate:   r.crit_rate,
+        skill_power: st.skill_power,
+        dex:         st.dex,
+        wis:         st.wis,
+        armor:       st.armor,
       };
     }
-
-    // ── Second pass: compute iterative skill_power per level ──────────────
-    for (const char of Object.values(map)) {
-      const spLevels = computeSkillPowerLevels(char._baseSkillPower, char._spmByLevel);
-      for (let lv = 1; lv <= 5; lv++) {
-        if (char.levels[lv]) char.levels[lv].skill_power = spLevels[lv];
-      }
-      delete char._baseSkillPower;
-      delete char._spmByLevel;
-    }
-
     res.json({ ok: true, characters: Object.values(map) });
   } catch (err) {
     console.error('[/api/characters]', err.message);
