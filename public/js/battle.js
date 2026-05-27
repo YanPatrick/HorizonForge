@@ -882,10 +882,16 @@
 
         if (actedUid) {
           const exitEl = list.querySelector('[data-tpuid="' + actedUid + '"]');
-          if (exitEl) {
+          const rotated = newOrder.includes(actedUid); // ainda vivo, só foi pro fim
+          if (exitEl && !rotated) {
+            // Herói morreu: anima saída (tp-exit) e reconstrói após 130 ms
             exitEl.classList.add("tp-exit");
             setTimeout(build, 130);
-          } else build();
+          } else {
+            // Herói apenas rotacionou para o fim: rebuild imediato em sincronia
+            // com o ataque — tp-enter na posição final cuida da animação de entrada
+            build();
+          }
         } else build();
       }
 

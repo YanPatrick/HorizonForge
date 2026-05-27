@@ -19,53 +19,50 @@
 "use strict";
 
 // ── d20 combat system ─────────────────────────────────────────────────────────
-// Physical attack: d20 + DEX modifier vs defender's d20 + DEX modifier.
-// High DEX lowers crit threshold and grants fumble immunity (roll+mod can't reach 1).
-// Magic attack: no evasion roll; reduced by defender WIS × 0.5.
+// Iniciativa: início de cada round, todos os vivos rolam D20 + initiative (spd_offset).
+//   Ordem de ataque: maior resultado age primeiro. Cada herói age uma vez por round.
+//
+// Ataque físico: D20 puro determina evento especial, depois cheque de evasão flat %.
+//   Natural 20 → crítico (1.5× dano, ignora evasão e armadura)
+//   Natural  1 → fumble (0 dano)
+//   2–19      → cheque de evasão do defensor → acerto normal ou esquiva
+//
+// Ataque mágico (mage, archmage): sempre acerta, reduzido por WIS × 0.5 do defensor.
 
 function roll(sides) { return Math.floor(Math.random() * sides) + 1; }
-function getModifier(attrValue) { return Math.floor((attrValue - 10) / 2); }
 
-// concentrationBonus: miss-streak bonus (+2 per miss, resets on hit).
-// Returns { hit, crit, damage, newConcentration }.
-function resolvePhysicalAttack(attacker, defender, baseAtk, concentrationBonus = 0) {
-  const rawRoll    = roll(20); // O valor puro do dado
-  const attackMod  = getModifier(attacker.dex);
-  const defMod     = getModifier(defender.dex);
+// Ataque físico — usa evasion flat % do defensor.
+// Returns { hit, crit, evaded, damage, armorAbs }.
+function resolvePhysicalAttack(attacker, defender, baseAtk) {
+  const rawRoll = roll(20);
 
-  const attackRoll  = rawRoll + attackMod + concentrationBonus;
-  const defenseRoll = roll(20) + defMod;
-
-  const armadura = defender.armor || 0; // Puxa a armadura do alvo
-
-  // Natural 20 (O dado tirou 20 puro)
+  // Natural 20 — crítico: 1.5× dano, ignora evasão e armadura
   if (rawRoll === 20) {
-    return { hit: true, crit: true, damage: Math.floor(baseAtk * 1.5), armorAbs: 0, newConcentration: 0 };
+    return { hit: true, crit: true, evaded: false,
+             damage: Math.floor(baseAtk * 1.5), armorAbs: 0 };
   }
 
-  // Natural 1 (O dado tirou 1 puro) — fumble, zero damage
+  // Natural 1 — fumble: zero dano
   if (rawRoll === 1) {
-    return { hit: false, crit: false, damage: 0, armorAbs: 0, newConcentration: concentrationBonus + 2 };
+    return { hit: false, crit: false, evaded: false, damage: 0, armorAbs: 0 };
   }
 
-  // Acerto Normal (Subtraindo a armadura!)
-  if (attackRoll > defenseRoll) {
-    const danoFinal = Math.max(baseAtk - armadura, baseAtk * 0.1); // Dano mínimo de 10%
-    const armorAbs = baseAtk - Math.floor(danoFinal); // quanto a armadura absorveu
-    return { hit: true, crit: false, damage: Math.floor(danoFinal), armorAbs, newConcentration: 0 };
+  // Cheque de evasão flat (baseado no DEX base do defensor, máx 5% sem itens)
+  if (Math.random() < (defender.evasion || 0)) {
+    return { hit: false, crit: false, evaded: true, damage: 0, armorAbs: 0 };
   }
 
-  // Raspão (Evasão do Defensor) — 25% dano, sem armadura
-  return {
-    hit: false, crit: false, glancing: true,
-    damage: Math.floor(baseAtk * 0.25),
-    armorAbs: 0,
-    newConcentration: concentrationBonus + 2,
-  };
+  // Acerto normal — armadura reduz dano (mínimo 10% do ATK base)
+  const armor    = defender.armor || 0;
+  const danoFinal = Math.max(baseAtk - armor, baseAtk * 0.1);
+  const armorAbs  = baseAtk - Math.floor(danoFinal);
+  return { hit: true, crit: false, evaded: false,
+           damage: Math.floor(danoFinal), armorAbs };
 }
 
 function resolveMagicAttack(defender, baseDamage) {
-  const absorbed = defender.wis * 0.5;
+  // Magia sempre acerta; WIS do defensor absorve parte do dano
+  const absorbed = (defender.wis || 0) * 0.5;
   return { damage: Math.max(0, baseDamage - absorbed) };
 }
 
@@ -89,8 +86,9 @@ function adjacentSlots(slot) {
  * @param {Array} eb  Enemy board  — 9-slot array (null = empty)
  * @returns {{ evs, winner, umap, stats }}
  *
- * Each unit must have: { id, cid, name, side?, lv, atk, spd, critChance,
- *   critRate, skillPower, maxHp, hp, tp (nearest|ranged|lowhp), dex, wis }
+ * Each unit must have: { id, cid, name, side?, lv, atk, initiative, critChance,
+ *   critRate, skillPower, maxHp, hp, tp (nearest|ranged|lowhp), dex, wis, evasion,
+ *   armor? (0 se não equipado — itens definem este valor) }
  */
 function simulate(pb, eb) {
   // Deep-clone boards and attach metadata
@@ -105,10 +103,8 @@ function simulate(pb, eb) {
     )
     .filter(Boolean);
 
-  const concentration = new Map(); // attackerId → accumulated miss bonus
   const evs = [];
   let tick = 0;
-  let queue = [];
 
   const foes = (s) => (s === "p" ? es : ps).filter((u) => u.alive);
   const alliesOf = (s) => (s === "p" ? ps : es).filter((u) => u.alive);
@@ -251,191 +247,167 @@ function simulate(pb, eb) {
     return tA || tC || null;
   }
 
-  // ── Turn queue ───────────────────────────────────────────────────────────────
-  const isMelee = (u) => u.tp !== "ranged";
-
-  function buildQueue() {
-    // Fisher-Yates shuffle first so ties resolve with uniform probability:
-    // 2 tied → 50/50, 3 tied → 33.3% each, 4 tied → 25% each.
-    // Then a stable sort by speed keeps faster units ahead while preserving
-    // the random order within each speed tier.
+  // ── Iniciativa — fila por round ──────────────────────────────────────────────
+  // Cada round: todos os vivos rolam D20 + initiative (spd_offset).
+  // Maior resultado age primeiro. Após agir, espera o próximo round.
+  // Empates: resolvidos pelo shuffle aleatório anterior ao sort.
+  function buildInitiativeQueue() {
     const units = [...ps, ...es].filter((u) => u.alive);
+    // Fisher-Yates shuffle para resolver empates de forma justa
     for (let i = units.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [units[i], units[j]] = [units[j], units[i]];
     }
-    return units.sort((a, b) => b.spd - a.spd);
+    return units
+      .map((u) => ({ unit: u, rolled: roll(20) + (u.initiative || 0) }))
+      .sort((a, b) => b.rolled - a.rolled)
+      .map((r) => r.unit);
   }
 
-  function emitQueue() {
-    evs.push({
-      type: "queue",
-      order: queue.filter((u) => u.alive).map((u) => u.id),
-      tick,
-    });
-  }
+  // ── Main loop — round-based ───────────────────────────────────────────────────
+  let round = 0;
+  const MAX_ROUNDS = 500;
 
-  // ── Main loop ────────────────────────────────────────────────────────────────
-  let safety = 2000;
-  while (safety-- > 0) {
+  while (round++ < MAX_ROUNDS) {
     const pa = ps.filter((u) => u.alive),
       ea = es.filter((u) => u.alive);
     if (!pa.length || !ea.length) break;
 
-    queue = queue.filter((u) => u.alive);
-    if (!queue.length) {
-      queue = buildQueue();
-      if (!queue.length) break;
-    }
-    emitQueue();
-    const unit = queue.shift();
-    if (!unit.alive) continue;
+    // Rola iniciativa para este round
+    const roundQueue = buildInitiativeQueue();
 
-    // Fury (Barbarian) — permanent ATK bonus when HP < 60%
-    if (
-      unit.cid === "barbarian" &&
-      !unit.enraged &&
-      unit.hp < unit.maxHp * 0.6
-    ) {
-      unit.enraged = true;
-      unit.atk = Math.floor(unit.atk * (1 + unit.skillPower));
-      evs.push({ type: "ability", uid: unit.id, abilName: "Fury", tick });
-    }
+    for (let qi = 0; qi < roundQueue.length; qi++) {
+      const unit = roundQueue[qi];
+      if (!unit.alive) continue;
 
-    if (unit.cid === "healer") {
-      // Healer — heal lowest-HP ally, then attack
-      const al = alliesOf(unit.side).filter(
-        (a) => a.id !== unit.id && a.alive && a.hp < a.maxHp,
-      );
-      if (al.length) {
-        const target = [...al].sort(
-          (a, b) => a.hp / a.maxHp - b.hp / b.maxHp,
-        )[0];
-        const h = Math.floor(unit.atk * unit.skillPower);
-        target.hp = Math.min(target.maxHp, target.hp + h);
-        evs.push({ type: "heal", uid: unit.id, tid: target.id, amt: h, tick });
-        evs.push({
-          type: "ability",
-          uid: unit.id,
-          abilName: "Healing",
-          tick,
-          silent: true,
-        });
+      // Se um lado foi eliminado durante este round, para imediatamente.
+      // Sem este check, os heróis sobreviventes continuariam emitindo "queue"
+      // events (sem atacar ninguém) → painel gira depois da batalha terminar.
+      if (!ps.some((u) => u.alive) || !es.some((u) => u.alive)) break;
+
+      // Fila circular: herói atual no topo, os que ainda não agiram neste round
+      // em seguida, os que já agiram (vivos) atrás — lista sempre completa.
+      // renderTurnPanel detecta _tpPrev[0] !== newOrder[0] → anima saída do
+      // topo anterior e entrada do mesmo herói no final (tp-enter), sem sumir.
+      // A lista só diminui quando um herói morre.
+      const afterCurrent  = roundQueue.slice(qi + 1).filter((u) => u.alive).map((u) => u.id);
+      const beforeCurrent = roundQueue.slice(0, qi).filter((u) => u.alive).map((u) => u.id);
+      evs.push({ type: "queue", order: [unit.id, ...afterCurrent, ...beforeCurrent], tick });
+
+      // Fury (Barbarian) — bônus de ATK permanente quando HP < 60%
+      if (unit.cid === "barbarian" && !unit.enraged && unit.hp < unit.maxHp * 0.6) {
+        unit.enraged = true;
+        unit.atk = Math.floor(unit.atk * (1 + unit.skillPower));
+        evs.push({ type: "ability", uid: unit.id, abilName: "Fury", tick });
       }
-      const et = pickTarget(unit);
-      if (et && et.alive) {
-        const cb = concentration.get(unit.id) || 0;
-        const res = resolvePhysicalAttack(unit, et, unit.atk, cb);
-        concentration.set(unit.id, res.newConcentration);
-        if (!res.hit && res.damage === 0) {
-          evs.push({ type: 'miss', uid: unit.id, tid: et.id, tick });
+
+      if (unit.cid === "healer") {
+        // Healer — cura aliado com menor HP%, depois ataca
+        const al = alliesOf(unit.side).filter(
+          (a) => a.id !== unit.id && a.alive && a.hp < a.maxHp,
+        );
+        if (al.length) {
+          const target = [...al].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
+          const h = Math.floor(unit.atk * unit.skillPower);
+          target.hp = Math.min(target.maxHp, target.hp + h);
+          evs.push({ type: "heal", uid: unit.id, tid: target.id, amt: h, tick });
+          evs.push({ type: "ability", uid: unit.id, abilName: "Healing", tick, silent: true });
         }
-        if (res.damage > 0) dealDmg(unit, et, res.damage, res.crit, { glancing: res.glancing || false, armorAbs: res.armorAbs || 0 });
-      }
-    } else {
-      const t = pickTarget(unit);
-      if (t && t.alive) {
-        let isCrit = false;
-        let finalDmg = 0;
-        let physExtra = {}; // { glancing, armorAbs } — only set for physical attacks
+        const et = pickTarget(unit);
+        if (et && et.alive) {
+          const res = resolvePhysicalAttack(unit, et, unit.atk);
+          if (!res.hit && !res.evaded) evs.push({ type: "miss", uid: unit.id, tid: et.id, tick });
+          if (res.evaded)              evs.push({ type: "evade", uid: unit.id, tid: et.id, tick });
+          if (res.damage > 0) dealDmg(unit, et, res.damage, res.crit, { armorAbs: res.armorAbs || 0 });
+        }
+      } else {
+        const t = pickTarget(unit);
+        if (t && t.alive) {
+          let isCrit = false;
+          let finalDmg = 0;
+          let physExtra = {};
 
-        if (MAGIC_ATTACKERS.has(unit.cid)) {
-          // Magic attack: no evasion, reduced by defender WIS
-          const res = resolveMagicAttack(t, unit.atk);
-          finalDmg = Math.floor(res.damage);
-        } else {
-          // Physical attack: d20 to-hit vs defender DEX
-          const cb = concentration.get(unit.id) || 0;
-          const res = resolvePhysicalAttack(unit, t, unit.atk, cb);
-          concentration.set(unit.id, res.newConcentration);
-          isCrit = res.crit;
-          finalDmg = res.damage;
-          physExtra = { glancing: res.glancing || false, armorAbs: res.armorAbs || 0 };
+          if (MAGIC_ATTACKERS.has(unit.cid)) {
+            // Ataque mágico: sempre acerta, absorvido por WIS do defensor
+            const res = resolveMagicAttack(t, unit.atk);
+            finalDmg = Math.floor(res.damage);
+          } else {
+            // Ataque físico: D20, evasão flat %, armadura
+            const res = resolvePhysicalAttack(unit, t, unit.atk);
+            isCrit    = res.crit;
+            finalDmg  = res.damage;
+            physExtra = { armorAbs: res.armorAbs || 0 };
 
-          // Fumble (Natural 1): emit miss event so playback shows "MISS"
-          if (!res.hit && res.damage === 0) {
-            evs.push({ type: 'miss', uid: unit.id, tid: t.id, tick });
+            if (!res.hit && !res.evaded) evs.push({ type: "miss",  uid: unit.id, tid: t.id, tick });
+            if (res.evaded)              evs.push({ type: "evade", uid: unit.id, tid: t.id, tick });
+
+            // Precise Shot (Archer) — chance de crítico bônus em acertos físicos
+            if (unit.cid === "archer" && res.hit && !res.crit) {
+              const effCC = unit.critChance + unit.skillPower;
+              if (Math.random() < effCC) {
+                isCrit   = true;
+                finalDmg = Math.floor(unit.atk * unit.critRate);
+              }
+            }
           }
 
-          // Precise Shot (Archer) — bonus crit chance on physical hits
-          if (unit.cid === "archer" && res.hit && !res.crit) {
-            const effCC = unit.critChance + unit.skillPower;
-            if (Math.random() < effCC) {
-              isCrit = true;
-              finalDmg = Math.floor(finalDmg * unit.critRate);
+          if (finalDmg > 0) dealDmg(unit, t, finalDmg, isCrit, physExtra);
+
+          if (unit.cid === "archer" && isCrit) {
+            evs.push({ type: "ability", uid: unit.id, abilName: "Precise Shot", tick, silent: true });
+          }
+
+          // Fireball (Mage) — splash mágico em alvos adjacentes (+shape)
+          if (unit.cid === "mage") {
+            const adj = adjacentSlots(t.slot);
+            const splash = foes(unit.side).filter(
+              (f) => f.id !== t.id && f.alive && adj.includes(f.slot),
+            );
+            if (splash.length) {
+              splash.forEach((f) => {
+                const res = resolveMagicAttack(f, Math.floor(unit.atk * unit.skillPower));
+                if (res.damage > 0) dealDmg(unit, f, Math.floor(res.damage), false);
+              });
+              evs.push({ type: "ability", uid: unit.id, abilName: "Fireball", tick, silent: true });
+            }
+          }
+
+          // Chain Lightning (Archmage) — mágico, atinge 2º e 3º da mesma fileira
+          if (unit.cid === "archmage") {
+            const targetRow  = Math.floor(t.slot / 3);
+            const primaryCol = t.slot % 3;
+            const goDeeper   =
+              unit.side === "p"
+                ? (f) => f.slot % 3 > primaryCol
+                : (f) => f.slot % 3 < primaryCol;
+            const chain = foes(unit.side)
+              .filter(
+                (f) =>
+                  f.id !== t.id &&
+                  f.alive &&
+                  Math.floor(f.slot / 3) === targetRow &&
+                  goDeeper(f),
+              )
+              .sort((a, b) =>
+                unit.side === "p"
+                  ? (a.slot % 3) - (b.slot % 3)
+                  : (b.slot % 3) - (a.slot % 3),
+              );
+            if (chain.length > 0) {
+              const r0 = resolveMagicAttack(chain[0], Math.floor(unit.atk * unit.skillPower));
+              if (r0.damage > 0) dealDmg(unit, chain[0], Math.floor(r0.damage), false);
+            }
+            if (chain.length > 1) {
+              const r1 = resolveMagicAttack(chain[1], Math.floor((unit.atk * unit.skillPower) / 2));
+              if (r1.damage > 0) dealDmg(unit, chain[1], Math.floor(r1.damage), false);
             }
           }
         }
-
-        if (finalDmg > 0) dealDmg(unit, t, finalDmg, isCrit, physExtra);
-
-        if (unit.cid === "archer" && isCrit) {
-          evs.push({
-            type: "ability",
-            uid: unit.id,
-            abilName: "Precise Shot",
-            tick,
-            silent: true,
-          });
-        }
-
-        // Fireball (Mage) — magic splash to adjacent tiles (+shape)
-        if (unit.cid === "mage") {
-          const adj = adjacentSlots(t.slot);
-          const splash = foes(unit.side).filter(
-            (f) => f.id !== t.id && f.alive && adj.includes(f.slot),
-          );
-          if (splash.length) {
-            splash.forEach((f) => {
-              const res = resolveMagicAttack(f, Math.floor(unit.atk * unit.skillPower));
-              if (res.damage > 0) dealDmg(unit, f, Math.floor(res.damage), false);
-            });
-            evs.push({
-              type: "ability",
-              uid: unit.id,
-              abilName: "Fireball",
-              tick,
-              silent: true,
-            });
-          }
-        }
-
-        // Chain Lightning (Archmage) — magic hits 2nd and 3rd in same row
-        if (unit.cid === "archmage") {
-          const targetRow = Math.floor(t.slot / 3);
-          const primaryCol = t.slot % 3;
-          const goDeeper =
-            unit.side === "p"
-              ? (f) => f.slot % 3 > primaryCol
-              : (f) => f.slot % 3 < primaryCol;
-          const chain = foes(unit.side)
-            .filter(
-              (f) =>
-                f.id !== t.id &&
-                f.alive &&
-                Math.floor(f.slot / 3) === targetRow &&
-                goDeeper(f),
-            )
-            .sort((a, b) =>
-              unit.side === "p"
-                ? (a.slot % 3) - (b.slot % 3)
-                : (b.slot % 3) - (a.slot % 3),
-            );
-          if (chain.length > 0) {
-            const r0 = resolveMagicAttack(chain[0], Math.floor(unit.atk * unit.skillPower));
-            if (r0.damage > 0) dealDmg(unit, chain[0], Math.floor(r0.damage), false);
-          }
-          if (chain.length > 1) {
-            const r1 = resolveMagicAttack(chain[1], Math.floor((unit.atk * unit.skillPower) / 2));
-            if (r1.damage > 0) dealDmg(unit, chain[1], Math.floor(r1.damage), false);
-          }
-        }
       }
-    }
 
-    if (unit.alive) queue.push(unit);
-    tick++;
-  }
+      tick++;
+    } // fim do for (roundQueue)
+  } // fim do while (rounds)
 
   // ── Result ───────────────────────────────────────────────────────────────────
   const pa = ps.filter((u) => u.alive),

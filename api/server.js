@@ -373,11 +373,9 @@ async function loadStatsTable() {
       cb.crit_rate::float,
       cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
       cb.primary_attr,
-      cb.skill_attr,
       cb.weapon_bonus,
-      cb.armor_bonus,
-      cb.spd_offset::float,
-      cb.sp_bonus::float
+      cb.skill_power::float,
+      cb.spd_offset::float
     FROM characters c
     JOIN characters_base cb ON cb.character_id = c.id
     CROSS JOIN level_scale ls
@@ -398,13 +396,13 @@ async function loadStatsTable() {
     map.get(r.cid).levels[r.level] = {
       max_hp:      st.max_hp,
       atk:         st.atk,
-      atk_speed:   st.atk_speed,
+      initiative:  st.initiative,
       crit_chance: r.crit_chance,
       crit_rate:   r.crit_rate,
       skill_power: st.skill_power,
+      evasion:     st.evasion,
       dex:         st.dex,
       wis:         st.wis,
-      armor:       st.armor,
     };
   }
   return map;
@@ -473,22 +471,22 @@ async function materializeBoard(board) {
     const lvStats = ch.levels[u.lv];
     if (!lvStats) throw new Error(`No stats for ${u.cid} at level ${u.lv}`);
     return {
-      id: u.id,
-      cid: u.cid,
-      lv: u.lv,
-      name: ch.name,
-      ico: ch.icon,
-      tp: ch.target_type,
-      atk: Math.floor(lvStats.atk),
-      maxHp: lvStats.max_hp,
-      hp: lvStats.max_hp,
-      spd: lvStats.atk_speed,
+      id:         u.id,
+      cid:        u.cid,
+      lv:         u.lv,
+      name:       ch.name,
+      ico:        ch.icon,
+      tp:         ch.target_type,
+      atk:        Math.floor(lvStats.atk),
+      maxHp:      lvStats.max_hp,
+      hp:         lvStats.max_hp,
+      initiative: lvStats.initiative,   // bônus D20 de iniciativa por round
       critChance: lvStats.crit_chance,
-      critRate: lvStats.crit_rate,
+      critRate:   lvStats.crit_rate,
       skillPower: lvStats.skill_power,
-      dex: lvStats.dex,
-      wis: lvStats.wis,
-      armor: lvStats.armor,
+      evasion:    lvStats.evasion,      // % flat de evasão (máx 5% base)
+      dex:        lvStats.dex,          // DEX escalado — usado para absorção futura
+      wis:        lvStats.wis,          // WIS escalado — absorve dano mágico
     };
   });
 }
@@ -500,12 +498,12 @@ async function materializeBoard(board) {
  * Stats calculados dinamicamente: characters_base × level_scale
  *
  * Fórmula por nível (calcStats):
- *   max_hp      = (con*20 + str*10 + armor_bonus)  × ls.multiplier
- *   atk         = (primary_attr*5 + weapon_bonus)  × ls.multiplier
- *   atk_speed   = (dex*0.3 + spd_offset)           × ls.multiplier
- *   crit_chance = base.crit_chance  (fixo)
- *   crit_rate   = base.crit_rate    (fixo)
- *   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus
+ *   max_hp      = con × 20 × m                        (apenas CON — itens adicionam HP)
+ *   atk         = primary_attr × 5 × m + weapon_bonus
+ *   initiative  = spd_offset                          (bônus fixo somado ao D20 por round)
+ *   skill_power = base.skill_power × m                (valor base definido por herói)
+ *   evasion     = max(0, floor((DEX_base − 10) / 2)) %  (máx 5% sem itens)
+ *   armor       = 0 por padrão                        (vem de item equipado)
  *
  * Retorno (mesmo contrato do frontend):
  * { cid, name, icon, role, color_hex, bg_gradient, target_type,
@@ -525,28 +523,40 @@ function calcStats(base, multiplier) {
   const con = Number(base.con) * m;
   const int = Number(base.int) * m;
   const wis = Number(base.wis) * m;
-  const cha = Number(base.cha) * m;
-  const attrMap = { str, dex, con, int, wis, cha };
+  // cha: reservado para uso futuro
+  const attrMap = { str, dex, con, int, wis };
   const p = attrMap[base.primary_attr];
   if (p === undefined)
     throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
-  const sk = attrMap[base.skill_attr];
-  if (sk === undefined)
-    throw new Error(`calcStats: invalid skill_attr="${base.skill_attr}"`);
+
+  // Evasion: bônus de DEX base (sem multiplicador de nível) → max 5% sem itens
+  const evasionMod = Math.max(0, Math.floor((Number(base.dex) - 10) / 2));
+
   return {
-    atk: Math.floor(
-      p * (5 + (p - 5) / HEROIC_SCALE) + Number(base.weapon_bonus)
-    ),
-    max_hp: Math.floor(
-      con * (20 + (con - 5) / HEROIC_SCALE) +
-      str * (10 + (str - 5) / HEROIC_SCALE)
-    ),
-    atk_speed:
-      Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
-    skill_power: trunc4(sk / 2 / 100 + Number(base.sp_bonus)),
-    dex:   dex,
-    wis:   wis,
-    armor: Number(base.armor_bonus),
+    // HP: apenas CON × 20 × m  (itens adicionam HP separadamente)
+    max_hp: Math.floor(con * 20),
+
+    // ATK: atributo primário × 5 × m  +  bônus de arma base (weapon_bonus)
+    atk: Math.floor(p * 5 + Number(base.weapon_bonus)),
+
+    // Velocidade de ataque — mantido temporariamente para o simulate.js atual
+    // Será substituído pelo sistema de iniciativa D20 + initiative_bonus
+    atk_speed: dex * 0.3 + Number(base.spd_offset),
+
+    // Bônus de iniciativa — somado ao D20 no início de cada round
+    initiative: Number(base.spd_offset),
+
+    // Skill power: valor base × m  (definido por herói em characters_base.skill_power)
+    skill_power: trunc4(Number(base.skill_power) * m),
+
+    // Evasão: 1% por ponto de modificador de DEX, mínimo 0%
+    evasion: evasionMod / 100,
+
+    // Armadura: sempre 0 da ficha do herói — vem de item equipado
+    armor: 0,
+
+    dex: dex,
+    wis: wis,
   };
 }
 
@@ -561,9 +571,10 @@ app.get('/api/characters', async (_req, res) => {
         ls.level, ls.multiplier::float,
         cb.crit_chance::float, cb.crit_rate::float,
         cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
-        cb.primary_attr, cb.skill_attr,
-        cb.weapon_bonus, cb.armor_bonus,
-        cb.spd_offset::float, cb.sp_bonus::float
+        cb.primary_attr,
+        cb.weapon_bonus,
+        cb.skill_power::float,
+        cb.spd_offset::float
       FROM characters c
       JOIN characters_base cb ON cb.character_id = c.id
       JOIN skills          sk ON sk.character_id = c.id
@@ -585,10 +596,9 @@ app.get('/api/characters', async (_req, res) => {
           attrs: {
             str: Number(r.str), dex: Number(r.dex), con: Number(r.con),
             int: Number(r.int), wis: Number(r.wis), cha: Number(r.cha),
-            primary: r.primary_attr, skill: r.skill_attr,
+            primary:      r.primary_attr,
             weapon_bonus: Number(r.weapon_bonus),
-            armor_bonus:  Number(r.armor_bonus),
-            spd_offset:   Number(r.spd_offset),
+            initiative:   Number(r.spd_offset),
           },
           levels: {},
         };
@@ -597,13 +607,13 @@ app.get('/api/characters', async (_req, res) => {
       map[r.cid].levels[r.level] = {
         max_hp:      st.max_hp,
         atk:         st.atk,
-        atk_speed:   st.atk_speed,
+        initiative:  st.initiative,
         crit_chance: r.crit_chance,
         crit_rate:   r.crit_rate,
         skill_power: st.skill_power,
+        evasion:     st.evasion,
         dex:         st.dex,
         wis:         st.wis,
-        armor:       st.armor,
       };
     }
     res.json({ ok: true, characters: Object.values(map) });
