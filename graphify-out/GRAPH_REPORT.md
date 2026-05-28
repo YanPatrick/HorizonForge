@@ -1,11 +1,11 @@
 # Graph Report - HorizonForge  (2026-05-27)
 
 ## Corpus Check
-- 21 files · ~253,574 words
+- 21 files · ~261,823 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 206 nodes · 388 edges · 16 communities detected
+- 208 nodes · 391 edges · 15 communities detected
 - Extraction: 94% EXTRACTED · 6% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
@@ -25,12 +25,11 @@
 - [[_COMMUNITY_Community 12|Community 12]]
 - [[_COMMUNITY_Community 13|Community 13]]
 - [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 15|Community 15]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `log()` - 26 edges
 2. `render()` - 21 edges
-3. `resolveBattleRound()` - 10 edges
+3. `resolveBattleRound()` - 11 edges
 4. `startBattle()` - 10 edges
 5. `startGame()` - 10 edges
 6. `nextBattle()` - 10 edges
@@ -48,42 +47,42 @@
   api\server.js → public\js\battle.js
 - `BENCH_SLOTS()` --calls--> `botBuyPhase()`  [INFERRED]
   public\js\battle.js → public\js\bot-ai.js
-- `initGame()` --calls--> `init()`  [INFERRED]
-  public\js\battle.js → public\js\skill-tooltip.js
+- `START_GOLD()` --calls--> `botInitDuel()`  [INFERRED]
+  public\js\battle.js → public\js\bot-ai.js
 
 ## Communities
 
 ### Community 0 - "Community 0"
 Cohesion: 0.11
-Nodes (32): log(), showToastBattle(), armForfeitTimer(), authFromRequest(), broadcastQueueSize(), broadcastTavern(), calcStats(), clearMatchTimers() (+24 more)
+Nodes (34): log(), showToastBattle(), armForfeitTimer(), authFromRequest(), broadcastQueueSize(), broadcastTavern(), calcStats(), clearMatchTimers() (+26 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.12
-Nodes (8): applyBattleSpeed(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), randCid(), rnd(), shuffle(), toggleBattleSpeed()
+Cohesion: 0.1
+Nodes (15): applyBattleSpeed(), closeMobileMenu(), getBattleFrameDelay(), getBattleFxDuration(), getBattleSpeedMultiplier(), openMobileMenu(), randCid(), rnd() (+7 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.13
+Cohesion: 0.12
 Nodes (11): RequireAuth(), BattlePage(), fmtSP(), HeroDetail(), loadPref(), LobbyPage(), MobileHeroPage(), prefKey() (+3 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.23
-Nodes (11): START_GOLD(), upgradeUnit(), botApplyMerge(), botBuyPhase(), botGenShop(), botInitDuel(), botPosition(), botRunTurn() (+3 more)
+Cohesion: 0.27
+Nodes (9): botApplyMerge(), botBuyPhase(), botGenShop(), botInitDuel(), botPosition(), botRunTurn(), botScoreCard(), deps() (+1 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.22
-Nodes (10): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), startGame(), updateFieldLabels() (+2 more)
+Cohesion: 0.24
+Nodes (12): _addToBench(), buyCard(), buyCombo(), canAddNewHero(), cardCost(), _detectCombos(), genShop(), mkUnit() (+4 more)
 
 ### Community 5 - "Community 5"
+Cohesion: 0.2
+Nodes (11): _bootBattle(), hideLoader(), initGame(), pvpInit(), showLoader(), skillIcon(), START_GOLD(), startGame() (+3 more)
+
+### Community 6 - "Community 6"
 Cohesion: 0.27
 Nodes (10): betweenIncome(), _cleanupBattleDOM(), endBattle(), hideTurnPanel(), nextBattle(), nextDuel(), renderDuelBar(), restoreFieldHp() (+2 more)
 
-### Community 6 - "Community 6"
+### Community 7 - "Community 7"
 Cohesion: 0.36
 Nodes (8): showHeroInfo(), getC(), getTipEl(), heroInfoHtml(), show(), showSticky(), skillTooltipHtml(), skillTooltipText()
-
-### Community 7 - "Community 7"
-Cohesion: 0.28
-Nodes (9): buyCard(), cardCost(), _detectCombos(), genShop(), mkUnit(), playerRandCid(), rerollShop(), _slideShop() (+1 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.28
@@ -94,41 +93,37 @@ Cohesion: 0.25
 Nodes (8): clearFieldPlacementHints(), _dispatchBanner(), playback(), renderTurnPanel(), simulate(), startBattle(), startPhaseTimer(), stopPhaseTimer()
 
 ### Community 10 - "Community 10"
-Cohesion: 0.32
-Nodes (8): _addToBench(), applyMerge(), BENCH_SLOTS(), buyCombo(), canAddNewHero(), distinctHeroes(), retBench(), swapFieldBench()
-
-### Community 11 - "Community 11"
 Cohesion: 0.43
 Nodes (5): getItemEquipState(), ShopItemCard(), ShopListRow(), ShopView(), sortItems()
 
-### Community 12 - "Community 12"
-Cohesion: 0.29
-Nodes (7): closeMobileMenu(), openMobileMenu(), setMobileStep(), _setMobileView(), _syncLogToMobile(), toggleMobileMenu(), togglePanel()
-
-### Community 13 - "Community 13"
-Cohesion: 0.52
-Nodes (6): adjacentSlots(), getModifier(), resolveMagicAttack(), resolvePhysicalAttack(), roll(), simulate()
-
-### Community 14 - "Community 14"
+### Community 11 - "Community 11"
 Cohesion: 0.4
 Nodes (2): getBenchWrap(), isTouchOverBenchwrap()
 
-### Community 15 - "Community 15"
+### Community 12 - "Community 12"
+Cohesion: 0.33
+Nodes (6): applyMerge(), BENCH_SLOTS(), distinctHeroes(), retBench(), swapFieldBench(), upgradeUnit()
+
+### Community 13 - "Community 13"
+Cohesion: 0.6
+Nodes (5): adjacentSlots(), resolveMagicAttack(), resolvePhysicalAttack(), roll(), simulate()
+
+### Community 14 - "Community 14"
 Cohesion: 0.83
 Nodes (3): calcStatsNew(), calcStatsOld(), trunc4()
 
 ## Knowledge Gaps
-- **Thin community `Community 14`** (6 nodes): `applyHighlight()`, `getBenchWrap()`, `injectLogBtn()`, `isTouchOverBenchwrap()`, `setupLog()`, `mobile.js`
+- **Thin community `Community 11`** (6 nodes): `applyHighlight()`, `getBenchWrap()`, `injectLogBtn()`, `isTouchOverBenchwrap()`, `setupLog()`, `mobile.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `log()` connect `Community 0` to `Community 1`, `Community 4`, `Community 5`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 15`?**
+- **Why does `log()` connect `Community 0` to `Community 1`, `Community 4`, `Community 5`, `Community 6`, `Community 8`, `Community 9`, `Community 12`, `Community 14`?**
   _High betweenness centrality (0.263) - this node is a cross-community bridge._
 - **Why does `resolveBattleRound()` connect `Community 0` to `Community 13`?**
-  _High betweenness centrality (0.077) - this node is a cross-community bridge._
-- **Why does `showHeroInfo()` connect `Community 6` to `Community 1`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Why does `showHeroInfo()` connect `Community 7` to `Community 1`?**
   _High betweenness centrality (0.045) - this node is a cross-community bridge._
 - **Are the 12 inferred relationships involving `log()` (e.g. with `verifyHivePayment()` and `verifyShopPayment()`) actually correct?**
   _`log()` has 12 INFERRED edges - model-reasoned connections that need verification._
@@ -137,4 +132,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.11 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
