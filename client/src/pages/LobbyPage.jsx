@@ -45,17 +45,6 @@ function roleCategory(role) {
 */
 
 
-const STARTER_GEAR = {
-  knight:    { weapon: "Espada de Patrulha (+17 ATK)", weaponAtk: 17, armor: "Escudo de Carvalho (+142 HP)", armorHp: 142, spdOffset: 0 },
-  paladin:   { weapon: "Maça Cerimonial (+23 ATK)",   weaponAtk: 23, armor: "Capa de Malha (+137 HP)",     armorHp: 137, spdOffset: 0 },
-  barbarian: { weapon: "Mãos Pesadas (+0 ATK)",       weaponAtk: 0,  armor: "Pintura de Guerra (+130 HP)", armorHp: 130, spdOffset: 0 },
-  assassin:  { weapon: "Adaga Envenenada (+42 ATK)",  weaponAtk: 42, armor: "Traje de Sombras (+13 HP)",   armorHp: 13,  spdOffset: 0 },
-  mage:      { weapon: "Graveto Incendiário (+70 ATK)",weaponAtk: 70, armor: "Túnica Pesada (+30 HP)",     armorHp: 30,  spdOffset: -2.1 },
-  archer:    { weapon: "Arco Curto Recurvo (+20 ATK)", weaponAtk: 20, armor: "Gibão de Couro (+60 HP)",    armorHp: 60,  spdOffset: -1.0 },
-  archmage:  { weapon: "Cajado de Cristal (+88 ATK)",  weaponAtk: 88, armor: "Manto das Eras (+58 HP)",    armorHp: 58,  spdOffset: -2.1 },
-  // HEALER: Orbe de Ataque (+2) e Orbe de Cura (Garante o multiplicador de x1.30)
-  healer:    { weapon: "Cetro de Duas Orbes (+2 ATK / +1.25 SP)", weaponAtk: 2, armor: "Veste do Devoto (+39 HP)", armorHp: 39, spdOffset: -1.0 }
-};
 
 function fmtSP(v) {
   return v < 1 ? `${Math.floor(v * 100)}%` : `×${(Math.floor(v * 100) / 100).toFixed(2)}`
@@ -90,56 +79,99 @@ const EMPTY_FORMATIONS = [
 ]
 
 /* ── HeroDetail modal ───────────────────────────────────── */
-function StatsPanel({ hero, currentGear }) {
-              const stats = {
-                atk: hero.atk + (currentGear?.atkBonus || 0),
-                spd: hero.spd + (currentGear?.spdBonus || 0),
-                armor: (currentGear?.armor || 0),
-                evasion: (hero.dex * 0.5) + (currentGear?.evasionBonus || 0),
-                // Novos atributos prontos para uso:
-                str: hero.str,
-                int: hero.int,
-                wis: hero.wis,
-                cha: hero.cha
-              };
+function BonusChip({ value }) {
+  if (!value) return null
+  const positive = value > 0
+  return (
+    <span style={{
+      color: positive ? '#4cff91' : '#ff5c5c',
+      fontSize: '0.85em',
+      marginLeft: '5px',
+      fontWeight: 600,
+    }}>
+      ({positive ? '+' : ''}{value})
+    </span>
+  )
+}
 
-                return (
-              <div className="stats-panel">
-                <div className="stat-row"><span>Attack:</span> <span className="stat-val">{stats.atk}</span></div>
-                <div className="stat-row"><span>Speed:</span> <span className="stat-val">{stats.spd.toFixed(1)}</span></div>
-                <div className="stat-row"><span>Armor:</span> <span className="stat-val">{stats.armor}</span></div>
-                <div className="stat-row"><span>Evasion:</span> <span className="stat-val">{stats.evasion.toFixed(0)}%</span></div>
-                </div>
-                );
-            }
+function StatsPanel({ hero, lv1, playerGear }) {
+  const totals  = playerGear?.[hero.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 }
+  const baseAtk = lv1?.atk ?? 0
+  const baseHp  = lv1?.max_hp ?? 0
+  const baseSpd = lv1?.initiative ?? 0
+  const spd     = baseSpd + totals.spd_bonus
+  const attrs   = hero.attrs || {}
+  const evasion = Math.max(0, Math.floor(((attrs.dex ?? 10) - 10) / 2))
 
-function HeroDetail({ hero, onClose }) {
-  // --- ESTADOS (O que faz a tela funcionar) ---
-  const [expanded, setExpanded] = useState(false);
-  const [rpgExpanded, setRpgExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState('stats');
-  const [hoveredItem, setHoveredInfo] = useState(null); // <--- ESTA LINHA ERA A QUE FALTAVA!
+  return (
+    <div className="stats-panel">
+      <div className="stat-row">
+        <span>Attack:</span>
+        <span className="stat-val">{baseAtk}<BonusChip value={totals.atk_bonus} /></span>
+      </div>
+      <div className="stat-row">
+        <span>HP:</span>
+        <span className="stat-val">{baseHp}<BonusChip value={totals.hp_bonus} /></span>
+      </div>
+      <div className="stat-row">
+        <span>Speed:</span>
+        <span className="stat-val">{spd % 1 === 0 ? spd : spd.toFixed(2)}</span>
+      </div>
+      <div className="stat-row"><span>Armor:</span>  <span className="stat-val">0</span></div>
+      <div className="stat-row"><span>Evasion:</span><span className="stat-val">{evasion}%</span></div>
+    </div>
+  )
+}
 
-  if (!hero) return null;
+const SLOT_LABELS = {
+  amulet: 'AMULET', helm: 'HELM', special: 'SPECIAL', weapon: 'WEAPON',
+  chest: 'CHEST', offhand: 'OFF-HAND', belt: 'BELT', legs: 'LEGS',
+  gloves: 'GLOVES', ring1: 'RING 1', boots: 'BOOTS', ring2: 'RING 2',
+}
+const SLOT_ICONS = {
+  amulet: '📿', helm: '🪖', special: '✨', weapon: '⚔️',
+  chest: '🛡️', offhand: '📜', belt: '🏷️', legs: '👖',
+  gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
+}
+const SLOT_ORDER = ['amulet','helm','special','weapon','chest','offhand','belt','legs','gloves','ring1','boots','ring2']
 
-  // --- VARIÁVEIS DE APOIO ---
-  const cat = roleCategory(hero.role);
-  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS';
-  const lv1 = hero.levels?.[1] || {};
-  const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b);
-  const attrs = hero.attrs || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+function HeroDetail({ hero, onClose, playerGear = null }) {
+  const [expanded, setExpanded] = useState(false)
+  const [rpgExpanded, setRpgExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState('stats')
+  const [hoveredItem, setHoveredInfo] = useState(null)
 
-  const getMod = (val) => {
-    const mod = Math.floor((val - 10) / 2);
-    return mod >= 0 ? `+${mod}` : mod;
-  };
+  if (!hero) return null
+
+  const cat = roleCategory(hero.role)
+  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
+  const lv1 = hero.levels?.[1] || {}
+  const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
+  const attrs = hero.attrs || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
+  const heroGear = playerGear?.[hero.cid] ?? { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } }
+
+  function rarityColor(rarity) {
+    if (rarity === 'starter') return '#888'
+    if (rarity === 'common')  return '#aaa'
+    if (rarity === 'rare')    return '#4af'
+    if (rarity === 'epic')    return '#c8f'
+    if (rarity === 'legendary') return '#fa0'
+    return '#aaa'
+  }
+
+  function bonusText(item) {
+    const parts = []
+    if (item.atk_bonus !== 0) parts.push(`${item.atk_bonus > 0 ? '+' : ''}${item.atk_bonus} ATK`)
+    if (item.hp_bonus  !== 0) parts.push(`${item.hp_bonus  > 0 ? '+' : ''}${item.hp_bonus} HP`)
+    if (item.spd_bonus !== 0) parts.push(`${item.spd_bonus > 0 ? '+' : ''}${Number(item.spd_bonus).toFixed(2)} SPD`)
+    return parts.join(' / ') || 'No bonus'
+  }
 
   return (
     <>
       <div className="hf-detail-backdrop hf-open" onClick={onClose} />
-      <div className={`hf-hero-drawer hf-open`} role="dialog" aria-modal="true">
-        
-        {/* CABEÇALHO */}
+      <div className="hf-hero-drawer hf-open" role="dialog" aria-modal="true">
+
         <div className="hf-detail-close-row">
           <div className="hf-detail-hero-header">
             <span className="hf-detail-ico">{hero.icon}</span>
@@ -148,26 +180,15 @@ function HeroDetail({ hero, onClose }) {
           <button type="button" className="hf-detail-close-btn" onClick={onClose}>✕</button>
         </div>
 
-        {/* NAVEGAÇÃO DE ABAS */}
         <div className="hf-detail-tabs">
-          <button 
-            className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('stats')}
-          >
-            INFO
-          </button>
-          <button 
-            className={`hf-tab-item ${activeTab === 'gear' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('gear')}
-          >
-            GEAR
-          </button>
+          <button className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>INFO</button>
+          <button className={`hf-tab-item ${activeTab === 'gear'  ? 'active' : ''}`} onClick={() => setActiveTab('gear')}>GEAR</button>
         </div>
 
         <div className="detail-slider-viewport">
           <div className={`detail-slider-track view-${activeTab}`}>
-            
-            {/* PAINEL 1: INFO */}
+
+            {/* ── INFO PANEL ── */}
             <div className="detail-slide stats-pane hf-detail-scroll">
               <div className="hf-detail-role-wrap">
                 <span className={`gr-hero-role role-${cat}`}>{label}</span>
@@ -175,16 +196,15 @@ function HeroDetail({ hero, onClose }) {
               <div className="hf-detail-section-label">Skill</div>
               <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
               <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
-              
               {hero.skill?.lore && (
-                <div className="hf-detail-skill-lore" style={{ 
-                  fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em', 
+                <div className="hf-detail-skill-lore" style={{
+                  fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em',
                   marginTop: '15px', marginBottom: '20px', color: '#fff',
                   lineHeight: '1.6', paddingTop: '12px',
                   borderTop: '1px solid rgba(255,255,255,0.12)',
                   textAlign: 'center', width: '100%', display: 'block'
                 }}>
-                  “{hero.skill.lore}”
+                  "{hero.skill.lore}"
                 </div>
               )}
 
@@ -192,15 +212,14 @@ function HeroDetail({ hero, onClose }) {
               <div className="hf-detail-stats">
                 <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
                 <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
-                <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.initiative != null ? lv1.initiative.toFixed(2) : '—'}</span></div>
                 <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
               </div>
 
-              <button type="button" className="hf-detail-l2-btn" style={{marginTop:'15px'}} onClick={() => setExpanded(!expanded)}>
+              <button type="button" className="hf-detail-l2-btn" style={{ marginTop: '15px' }} onClick={() => setExpanded(!expanded)}>
                 <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
                 <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
               </button>
-              
               {expanded && (
                 <div className="hf-detail-l2 expanded">
                   <table className="hf-detail-l2-table">
@@ -219,71 +238,71 @@ function HeroDetail({ hero, onClose }) {
                 <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
                 <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
               </button>
-
               {rpgExpanded && (
-              <div className="rpg-sheet-container animate-fade-in">
-                <div className="rpg-grid">
-                  {Object.entries(attrs)
-                    // FILTRO: Só deixa passar o que NÃO for 'primary' nem 'skill'
-                    .filter(([key]) => key !== 'primary' && key !== 'skill')
-                    .map(([key, val]) => (
+                <div className="rpg-sheet-container animate-fade-in">
+                  <div className="rpg-grid">
+                    {['str','dex','con','int','wis','cha'].map(key => (
                       <div key={key} className="rpg-stat-box">
                         <span className="rpg-stat-name">{key.toUpperCase()}</span>
-                        <span className="rpg-stat-value">{Math.round(val)}</span>
-                        <span className="rpg-stat-mod">({getMod(Math.round(val))})</span>
+                        <span className="rpg-stat-value">{Math.round(attrs[key] ?? 0)}</span>
                       </div>
                     ))}
+                  </div>
+                  <p className="rpg-note">Attributes used for item requirements and penalties.</p>
                 </div>
-                <p className="rpg-note">Attributes used for item requirements and penalties.</p>
-              </div>
-            )}
+              )}
             </div>
 
-            {/* PAINEL 2: GEAR */}
+            {/* ── GEAR PANEL ── */}
             <div className="detail-slide gear-pane hf-detail-scroll">
               <div className="gear-container">
-                {[
-                  { cls: "amulet", label: "AMULETO", ico: "📿", info: "Espaço para Amuleto (Vazio)" },
-                  { cls: "head",   label: "ELMO",    ico: "🪖", info: "Espaço para Elmo (Vazio)" },
-                  { cls: "item-esp", label: "ESPECIAL", ico: "✨", info: "Relíquia Vazia" },
-                  { cls: "arma",   label: "ARMA",    ico: "⚔️", info: STARTER_GEAR[hero.cid]?.weapon },
-                  { cls: "chest",  label: "PEITORAL", ico: "🛡️", info: STARTER_GEAR[hero.cid]?.armor },
-                  { cls: "offhand", label: "OFF-HAND", ico: "📜", info: "Mão Secundária (Vazio)" },
-                  { cls: "cinto",  label: "CINTO",   ico: "🏷️", info: "Cinto de Couro (+0)" },
-                  { cls: "calcas", label: "CALÇAS",  ico: "👖", info: "Calças de Tecido (+0)" },
-                  { cls: "luvas",  label: "LUVAS",   ico: "🧤", info: "Luvas de Trabalho (+0)" },
-                  { cls: "anel1",  label: "ANEL 1",  ico: "💍", info: "Dedo Vazio" },
-                  { cls: "feet",   label: "BOTAS",   ico: "🥾", info: "Botas de Caminhada (+0)" },
-                  { cls: "anel2",  label: "ANEL 2",  ico: "💍", info: "Dedo Vazio" },
-                ].map((slot, i) => (
-                  <div 
-                    key={i} 
-                    className={`gear-slot ${slot.cls}`} 
-                    data-label={slot.label}
-                    onMouseEnter={() => setHoveredInfo(slot.info)}
-                    onMouseLeave={() => setHoveredInfo(null)}
-                    onClick={() => setHoveredInfo(slot.info)}
-                  >
-                    {slot.ico}
-                  </div>
-                ))}
+                {SLOT_ORDER.map((slotKey) => {
+                  const item = heroGear.slots[slotKey]
+                  return (
+                    <div
+                      key={slotKey}
+                      className={`gear-slot ${slotKey}`}
+                      data-label={SLOT_LABELS[slotKey]}
+                      onMouseEnter={() => setHoveredInfo(item ? item.name : null)}
+                      onMouseLeave={() => setHoveredInfo(null)}
+                      onClick={() => setHoveredInfo(item ? item.name : null)}
+                    >
+                      {item ? (
+                        <span style={{ fontSize: '1.4em' }}>{SLOT_ICONS[slotKey]}</span>
+                      ) : (
+                        <span style={{ fontSize: '1.4em', opacity: 0.3 }}>{SLOT_ICONS[slotKey]}</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
 
-              {/* TOOLTIP DINÂMICO */}
+              {/* Item tooltip */}
               <div className={`gear-item-tooltip ${hoveredItem ? 'show' : ''}`}>
-                {hoveredItem || "Passe o mouse nos itens"}
+                {(() => {
+                  if (!hoveredItem) return 'Hover over a slot'
+                  const slotKey = SLOT_ORDER.find(s => heroGear.slots[s]?.name === hoveredItem)
+                  const item = slotKey ? heroGear.slots[slotKey] : null
+                  if (!item) return hoveredItem
+                  return (
+                    <>
+                      <div style={{ fontWeight: 700, color: rarityColor(item.rarity) }}>{item.name}</div>
+                      <div style={{ fontSize: '0.85em', opacity: 0.7, marginTop: 2 }}>{bonusText(item)}</div>
+                      {item.rarity === 'starter' && (
+                        <div style={{ fontSize: '0.8em', opacity: 0.5, marginTop: 4 }}>🔒 Starter item — cannot be removed</div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
 
-              {/* PAINEL DE STATS */}
-              <StatsPanel 
-                hero={{...hero, ...attrs, atk: lv1.atk, spd: lv1.atk_speed}} 
-                currentGear={{}} 
-              />
+              {/* Stats with equipment */}
+              <StatsPanel hero={hero} lv1={lv1} playerGear={playerGear} />
 
               <div className="inventory-preview">
-                <p style={{fontSize:'10px', opacity:0.5, marginBottom:'10px'}}>INVENTORY (COMING SOON)</p>
+                <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>INVENTORY (COMING SOON)</p>
                 <div className="inv-grid">
-                   {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
+                  {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
                 </div>
               </div>
             </div>
@@ -292,7 +311,7 @@ function HeroDetail({ hero, onClose }) {
         </div>
       </div>
     </>
-  );
+  )
 }
 
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
@@ -359,7 +378,7 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
 }
 
 /* ── FormationView ──────────────────────────────────────── */
-function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {} }) {
+function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null }) {
   const [editingSlot, setEditingSlot] = useState(null)
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -433,7 +452,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
 
   return (
     <div id="view-formation" className="lv active">
-      {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} />}
+      {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} playerGear={playerGear} />}
       <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} equippedSkins={equippedSkins} />
       <div className="fv-wrap">
         <div className="fv-hero-frame">
@@ -671,6 +690,7 @@ export default function LobbyPage() {
   const [pvpFmt, setPvpFmt] = useState(() => Number(loadPref('pvp_fmt', username, 5)))
   const [heroData, setHeroData] = useState(null)
   const [equippedSkins, setEquippedSkins] = useState({})
+  const [playerGear, setPlayerGear] = useState(null)
   const [formations, setFormations] = useState(EMPTY_FORMATIONS)
   const [formationsLoaded, setFormationsLoaded] = useState(false)
   const [defaultSlot, setDefaultSlot] = useState(() => Number(loadPref('default_form_slot', username, 0)))
@@ -943,6 +963,17 @@ export default function LobbyPage() {
     fetch('/api/cosmetics/skins/equipped', { headers: { Authorization: `Bearer ${session.token}` } })
       .then(r => r.json())
       .then(d => { if (d.ok) setEquippedSkins(d.equipped || {}) })
+      .catch(() => {})
+  }, []) // eslint-disable-line
+
+  /* ── load player gear ────────────────────────────────── */
+  useEffect(() => {
+    if (!session?.token || !session?.username) return
+    fetch(`/api/gear?player=${encodeURIComponent(session.username)}`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setPlayerGear(d.gear) })
       .catch(() => {})
   }, []) // eslint-disable-line
 
@@ -1394,6 +1425,7 @@ export default function LobbyPage() {
             session={session} formations={formations} setFormations={setFormations}
             defaultSlot={defaultSlot} setDefaultSlot={setDefaultSlot}
             heroData={heroData} toast={showToast} equippedSkins={equippedSkins}
+            playerGear={playerGear}
           />
         )}
 

@@ -172,9 +172,11 @@
     const abiIco = cc?.abi?.ico || "✨";
     const abiName = cc?.abi?.name || "Skill";
 
-    const hp = st?.max_hp ?? "—";
-    const atk = st?.atk ?? "—";
-    const spd = st?.atk_speed != null ? Number(st.atk_speed).toFixed(2) : "—";
+    const gear    = window.HF_gear?.[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+    const hp      = (st?.max_hp ?? 0)    + gear.hp_bonus;
+    const atk     = Math.floor(st?.atk ?? 0) + gear.atk_bonus;
+    const spdRaw  = (st?.initiative ?? 0) + gear.spd_bonus;
+    const spd     = Number(spdRaw).toFixed(2);
 
     let skillSection = "";
     if (skillInfo) {

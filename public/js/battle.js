@@ -1042,6 +1042,20 @@
           "bbattle",
         );
         render();
+        // Apply flat equipment bonuses to player units before simulation.
+        // Bot units (G.enemy) do not receive gear — they use base stats.
+        const _gear = window.HF_gear || {};
+        G.board.forEach((u) => {
+          if (!u) return;
+          const eq = _gear[u.cid]?.totals;
+          if (!eq) return;
+          const base = C[u.cid]?.levels?.[u.lv];
+          if (!base) return;
+          u.atk    = Math.floor(base.atk) + (eq.atk_bonus || 0);
+          u.maxHp  = base.max_hp          + (eq.hp_bonus  || 0);
+          u.hp     = u.maxHp;
+          u.initiative = (base.initiative || 0) + (eq.spd_bonus || 0);
+        });
         const res = simulate(G.board, G.enemy);
         window.HFBot?.learnFromBattle(res.evs, res.umap);
         playback(res);
