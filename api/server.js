@@ -491,6 +491,50 @@ async function materializeBoard(board) {
   });
 }
 
+// ── Equipment helpers ──────────────────────────────────────────────────────
+
+// Lazily inserts starter items into hero_equipment for any hero+slot
+// not yet initialized for this player. Idempotent — safe to call multiple times.
+async function ensureStarterGear(player) {
+  await sql`
+    INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
+    SELECT ${player}, csl.character_cid, csl.slot_type, csl.item_id
+    FROM character_starter_loadout csl
+    WHERE NOT EXISTS (
+      SELECT 1 FROM hero_equipment he
+      WHERE he.player     = ${player}
+        AND he.character_cid = csl.character_cid
+        AND he.slot_type     = csl.slot_type
+    )
+    ON CONFLICT DO NOTHING
+  `;
+}
+
+// Returns { [cid]: { atk_bonus, hp_bonus, spd_bonus } } for all heroes
+// that have at least one item equipped for the given player.
+async function getEquipmentBonuses(player) {
+  await ensureStarterGear(player);
+  const rows = await sql`
+    SELECT he.character_cid,
+           SUM(i.atk_bonus)::int          AS atk_bonus,
+           SUM(i.hp_bonus)::int           AS hp_bonus,
+           SUM(i.spd_bonus)::float        AS spd_bonus
+    FROM hero_equipment he
+    JOIN items i ON i.id = he.item_id
+    WHERE he.player = ${player}
+    GROUP BY he.character_cid
+  `;
+  const map = {};
+  for (const r of rows) {
+    map[r.character_cid] = {
+      atk_bonus: Number(r.atk_bonus) || 0,
+      hp_bonus:  Number(r.hp_bonus)  || 0,
+      spd_bonus: Number(r.spd_bonus) || 0,
+    };
+  }
+  return map;
+}
+
 // ── Routes ────────────────────────────────────────────────
 
 /**
@@ -943,6 +987,59 @@ function authFromRequest(req) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   return verifyToken(token);
 }
+
+/**
+ * GET /api/gear?player=X
+ * Returns equipped gear (all slots, all heroes) for the given player.
+ * Lazily initializes starter items on first call.
+ * Response: { ok, gear: { [cid]: { slots: { [slot_type]: itemObj }, totals: { atk_bonus, hp_bonus, spd_bonus } } } }
+ */
+app.get('/api/gear', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await ensureStarterGear(player);
+    const rows = await sql`
+      SELECT he.character_cid, he.slot_type,
+             i.id, i.name, i.description, i.rarity,
+             i.atk_bonus, i.hp_bonus, i.spd_bonus
+      FROM hero_equipment he
+      JOIN items i ON i.id = he.item_id
+      WHERE he.player = ${player}
+      ORDER BY he.character_cid, he.slot_type
+    `;
+    const gear = {};
+    for (const r of rows) {
+      if (!gear[r.character_cid]) {
+        gear[r.character_cid] = {
+          slots: {},
+          totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 },
+        };
+      }
+      gear[r.character_cid].slots[r.slot_type] = {
+        id:          r.id,
+        name:        r.name,
+        description: r.description,
+        rarity:      r.rarity,
+        slot_type:   r.slot_type,
+        atk_bonus:   Number(r.atk_bonus),
+        hp_bonus:    Number(r.hp_bonus),
+        spd_bonus:   Number(r.spd_bonus),
+      };
+      gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
+      gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
+      gear[r.character_cid].totals.spd_bonus += Number(r.spd_bonus);
+    }
+    res.json({ ok: true, gear });
+  } catch (err) {
+    console.error('[GET /api/gear]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 /**
  * GET /api/formations?player=X
