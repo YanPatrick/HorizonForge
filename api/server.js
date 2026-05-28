@@ -1042,6 +1042,97 @@ app.get('/api/gear', async (req, res) => {
 });
 
 /**
+ * PUT /api/gear/equip
+ * Body: { player, character_cid, slot_type, item_id }
+ * Equips an item into a hero's slot (insert or replace).
+ */
+app.put('/api/gear/equip', async (req, res) => {
+  const { player, character_cid, slot_type, item_id } = req.body;
+  if (!player || !character_cid || !slot_type || !item_id) {
+    return res.status(400).json({ ok: false, error: 'player, character_cid, slot_type, item_id required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Verify item exists
+    const [item] = await sql`SELECT id, name, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE id = ${item_id}`;
+    if (!item) return res.status(404).json({ ok: false, error: 'Item not found' });
+
+    await sql`
+      INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
+      VALUES (${player}, ${character_cid}, ${slot_type}, ${item_id})
+      ON CONFLICT (player, character_cid, slot_type)
+      DO UPDATE SET item_id = ${item_id}, equipped_at = now()
+    `;
+    res.json({ ok: true, slot: { ...item, slot_type } });
+  } catch (err) {
+    console.error('[PUT /api/gear/equip]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/gear/unequip
+ * Body: { player, character_cid, slot_type }
+ * - If this slot has a starter item in character_starter_loadout:
+ *     - Current item IS starter → 403 (cannot unequip starter)
+ *     - Current item is NOT starter → revert to starter item
+ * - If slot has no starter → delete the row (slot becomes empty)
+ */
+app.post('/api/gear/unequip', async (req, res) => {
+  const { player, character_cid, slot_type } = req.body;
+  if (!player || !character_cid || !slot_type) {
+    return res.status(400).json({ ok: false, error: 'player, character_cid, slot_type required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Check current equipped item
+    const [current] = await sql`
+      SELECT he.item_id, i.rarity
+      FROM hero_equipment he
+      JOIN items i ON i.id = he.item_id
+      WHERE he.player = ${player} AND he.character_cid = ${character_cid} AND he.slot_type = ${slot_type}
+    `;
+    if (!current) return res.status(404).json({ ok: false, error: 'No item equipped in this slot' });
+
+    // Check if this slot has a starter default
+    const [starter] = await sql`
+      SELECT item_id FROM character_starter_loadout
+      WHERE character_cid = ${character_cid} AND slot_type = ${slot_type}
+    `;
+
+    if (starter) {
+      if (current.item_id === starter.item_id) {
+        return res.status(403).json({ ok: false, error: 'Cannot unequip a starter item' });
+      }
+      // Revert to starter
+      await sql`
+        UPDATE hero_equipment
+        SET item_id = ${starter.item_id}, equipped_at = now()
+        WHERE player = ${player} AND character_cid = ${character_cid} AND slot_type = ${slot_type}
+      `;
+      const [starterItem] = await sql`SELECT id, name, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE id = ${starter.item_id}`;
+      return res.json({ ok: true, slot: starterItem });
+    }
+
+    // No starter for this slot — empty it
+    await sql`
+      DELETE FROM hero_equipment
+      WHERE player = ${player} AND character_cid = ${character_cid} AND slot_type = ${slot_type}
+    `;
+    res.json({ ok: true, slot: null });
+  } catch (err) {
+    console.error('[POST /api/gear/unequip]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/formations?player=X
  * Requer token do próprio jogador.
  */
