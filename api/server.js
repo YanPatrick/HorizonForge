@@ -462,7 +462,9 @@ function stripBoard(board) {
 
 // Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
 // with the authoritative stats from the database.
-async function materializeBoard(board) {
+// Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
+// with authoritative stats from the database, then applying flat equipment bonuses.
+async function materializeBoard(board, gearTotals = {}) {
   const stats = await getStatsTable();
   return board.map((u) => {
     if (!u) return null;
@@ -470,6 +472,8 @@ async function materializeBoard(board) {
     if (!ch) throw new Error(`Unknown character cid: ${u.cid}`);
     const lvStats = ch.levels[u.lv];
     if (!lvStats) throw new Error(`No stats for ${u.cid} at level ${u.lv}`);
+    const eq = gearTotals[u.cid] ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+    const maxHp = lvStats.max_hp + eq.hp_bonus;
     return {
       id:         u.id,
       cid:        u.cid,
@@ -477,10 +481,10 @@ async function materializeBoard(board) {
       name:       ch.name,
       ico:        ch.icon,
       tp:         ch.target_type,
-      atk:        Math.floor(lvStats.atk),
-      maxHp:      lvStats.max_hp,
-      hp:         lvStats.max_hp,
-      initiative: lvStats.initiative,   // bônus D20 de iniciativa por round
+      atk:        Math.floor(lvStats.atk) + eq.atk_bonus,
+      maxHp,
+      hp:         maxHp,
+      initiative: lvStats.initiative + eq.spd_bonus,   // bônus D20 de iniciativa por round
       critChance: lvStats.crit_chance,
       critRate:   lvStats.crit_rate,
       skillPower: lvStats.skill_power,
@@ -1945,8 +1949,12 @@ async function resolveBattleRound(matchId) {
   try {
     // Reconstruct stat-bearing units from the database — never trust stats
     // sent by the client. The client only supplied (cid, lv, id) per slot.
-    p1Board = await materializeBoard(p1Stripped);
-    p2Board = await materializeBoard(p2Stripped);
+    const [p1Gear, p2Gear] = await Promise.all([
+      getEquipmentBonuses(m.p1),
+      getEquipmentBonuses(m.p2),
+    ]);
+    p1Board = await materializeBoard(p1Stripped, p1Gear);
+    p2Board = await materializeBoard(p2Stripped, p2Gear);
     // p1 submits normally (front = col 2, simulation expects player front at col 2 ✓)
     // p2 builds on their own pfield (front = col 2) but simulation expects enemy front at col 0,
     // so we mirror p2's board before simulating.
