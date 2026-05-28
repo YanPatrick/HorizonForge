@@ -784,7 +784,7 @@ export default function BattlePage() {
             </div>
             <div id="shoprow">
               {shop.cards.map((c) => {
-                const isLifted = !!c.comboKey && hoveredCombo === c.comboKey
+                const isLifted = !!c.comboKey && hoveredCombo === c.comboKey && c.canBuy
                 const cls = `scard${c.isCombo ? ' combo-card' : ''}${c.isAtMax ? ' maxed' : c.canBuy ? ' buyable' : ' broke'
                   }${isLifted ? ' combo-lift' : ''}`
                 return (

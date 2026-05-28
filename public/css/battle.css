@@ -2013,10 +2013,17 @@
       }
 
       .scard.broke {
-        opacity: 0.42;
-        filter: grayscale(0.5);
+        opacity: 0.32;
+        filter: grayscale(0.85) brightness(0.55);
         cursor: not-allowed;
         pointer-events: none;
+        /* kill card-deal and any other entry animation so opacity: 0.32 is not overridden */
+        animation: none !important;
+        transition:
+          left 0.38s cubic-bezier(0.22, 0.68, 0, 1.2),
+          opacity 0s,
+          filter 0s,
+          transform 0.18s ease;
       }
 
       .scard.broke .caction {
@@ -2054,14 +2061,19 @@
 
       .scard.combo-card.broke {
         animation: none !important;
-        border-color: rgba(68, 255, 136, 0.18) !important;
+        border-color: rgba(68, 255, 136, 0.15) !important;
         box-shadow: none !important;
-        filter: grayscale(0.55) brightness(0.7);
+        filter: grayscale(0.85) brightness(0.55);
+        transition:
+          left 0.38s cubic-bezier(0.22, 0.68, 0, 1.2),
+          opacity 0s,
+          filter 0s,
+          transform 0.18s ease;
       }
 
       .scard.combo-card.broke.combo-lift {
         transform: translateY(-9px) scale(1.03);
-        filter: grayscale(0.55) brightness(0.85);
+        filter: grayscale(0.85) brightness(0.65);
       }
 
       .scard.combo-card.combo-lift {

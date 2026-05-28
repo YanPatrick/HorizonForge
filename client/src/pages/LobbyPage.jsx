@@ -139,8 +139,6 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
   const [expanded, setExpanded] = useState(false)
   const [rpgExpanded, setRpgExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState('stats')
-  const [hoveredItem, setHoveredInfo] = useState(null)
-
   if (!hero) return null
 
   const cat = roleCategory(hero.role)
@@ -149,23 +147,6 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
   const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
   const attrs = hero.attrs || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
   const heroGear = playerGear?.[hero.cid] ?? { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } }
-
-  function rarityColor(rarity) {
-    if (rarity === 'starter') return '#888'
-    if (rarity === 'common')  return '#aaa'
-    if (rarity === 'rare')    return '#4af'
-    if (rarity === 'epic')    return '#c8f'
-    if (rarity === 'legendary') return '#fa0'
-    return '#aaa'
-  }
-
-  function bonusText(item) {
-    const parts = []
-    if (item.atk_bonus !== 0) parts.push(`${item.atk_bonus > 0 ? '+' : ''}${item.atk_bonus} ATK`)
-    if (item.hp_bonus  !== 0) parts.push(`${item.hp_bonus  > 0 ? '+' : ''}${item.hp_bonus} HP`)
-    if (item.spd_bonus !== 0) parts.push(`${item.spd_bonus > 0 ? '+' : ''}${Number(item.spd_bonus).toFixed(2)} SPD`)
-    return parts.join(' / ') || 'No bonus'
-  }
 
   return (
     <>
@@ -258,42 +239,41 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
               <div className="gear-container">
                 {SLOT_ORDER.map((slotKey) => {
                   const item = heroGear.slots[slotKey]
+                  const rarityClass = item
+                    ? (item.rarity === 'starter' ? 'gear-slot--starter' : 'gear-slot--equipped')
+                    : ''
                   return (
                     <div
                       key={slotKey}
-                      className={`gear-slot ${slotKey}`}
+                      className={`gear-slot ${slotKey} ${rarityClass}`}
                       data-label={SLOT_LABELS[slotKey]}
-                      onMouseEnter={() => setHoveredInfo(item ? item.name : null)}
-                      onMouseLeave={() => setHoveredInfo(null)}
-                      onClick={() => setHoveredInfo(item ? item.name : null)}
                     >
-                      {item ? (
-                        <span style={{ fontSize: '1.4em' }}>{SLOT_ICONS[slotKey]}</span>
-                      ) : (
-                        <span style={{ fontSize: '1.4em', opacity: 0.3 }}>{SLOT_ICONS[slotKey]}</span>
+                      <span style={{ fontSize: '1.4em', opacity: item ? 1 : 0.3 }}>
+                        {SLOT_ICONS[slotKey]}
+                      </span>
+                      {item && (
+                        <div className="gear-slot-tip">
+                          <div className="gst-name">{item.name}</div>
+                          {item.atk_bonus !== 0 && (
+                            <div className={`gst-stat ${item.atk_bonus > 0 ? 'gst-pos' : 'gst-neg'}`}>
+                              {item.atk_bonus > 0 ? '+' : ''}{item.atk_bonus} ATK
+                            </div>
+                          )}
+                          {item.hp_bonus !== 0 && (
+                            <div className={`gst-stat ${item.hp_bonus > 0 ? 'gst-pos' : 'gst-neg'}`}>
+                              {item.hp_bonus > 0 ? '+' : ''}{item.hp_bonus} HP
+                            </div>
+                          )}
+                          {Number(item.spd_bonus) !== 0 && (
+                            <div className={`gst-stat ${Number(item.spd_bonus) > 0 ? 'gst-pos' : 'gst-neg'}`}>
+                              {Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   )
                 })}
-              </div>
-
-              {/* Item tooltip */}
-              <div className={`gear-item-tooltip ${hoveredItem ? 'show' : ''}`}>
-                {(() => {
-                  if (!hoveredItem) return 'Hover over a slot'
-                  const slotKey = SLOT_ORDER.find(s => heroGear.slots[s]?.name === hoveredItem)
-                  const item = slotKey ? heroGear.slots[slotKey] : null
-                  if (!item) return hoveredItem
-                  return (
-                    <>
-                      <div style={{ fontWeight: 700, color: rarityColor(item.rarity) }}>{item.name}</div>
-                      <div style={{ fontSize: '0.85em', opacity: 0.7, marginTop: 2 }}>{bonusText(item)}</div>
-                      {item.rarity === 'starter' && (
-                        <div style={{ fontSize: '0.8em', opacity: 0.5, marginTop: 4 }}>🔒 Starter item — cannot be removed</div>
-                      )}
-                    </>
-                  )
-                })()}
               </div>
 
               {/* Stats with equipment */}
