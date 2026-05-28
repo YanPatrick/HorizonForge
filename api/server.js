@@ -1059,6 +1059,9 @@ app.put('/api/gear/equip', async (req, res) => {
     // Verify item exists
     const [item] = await sql`SELECT id, name, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE id = ${item_id}`;
     if (!item) return res.status(404).json({ ok: false, error: 'Item not found' });
+    if (item.slot_type !== slot_type) {
+      return res.status(400).json({ ok: false, error: `Item does not fit slot '${slot_type}' (item slot: '${item.slot_type}')` });
+    }
 
     await sql`
       INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
@@ -1107,7 +1110,7 @@ app.post('/api/gear/unequip', async (req, res) => {
     `;
 
     if (starter) {
-      if (current.item_id === starter.item_id) {
+      if (Number(current.item_id) === Number(starter.item_id)) {
         return res.status(403).json({ ok: false, error: 'Cannot unequip a starter item' });
       }
       // Revert to starter
