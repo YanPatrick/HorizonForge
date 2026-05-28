@@ -343,6 +343,8 @@
           hp: st.max_hp,
           atk: Math.floor(st.atk),
           spd: st.atk_speed,
+          initiative: st.initiative,
+          evasion: st.evasion,
           critChance: st.crit_chance,
           critRate: st.crit_rate,
           skillPower: st.skill_power,
@@ -358,6 +360,8 @@
         u.hp = st.max_hp;
         u.atk = Math.floor(st.atk);
         u.spd = st.atk_speed;
+        u.initiative = st.initiative;
+        u.evasion = st.evasion;
         u.critChance = st.crit_chance;
         u.critRate = st.crit_rate;
         u.skillPower = st.skill_power;
@@ -1047,14 +1051,13 @@
         const _gear = window.HF_gear || {};
         G.board.forEach((u) => {
           if (!u) return;
-          const eq = _gear[u.cid]?.totals;
-          if (!eq) return;
           const base = C[u.cid]?.levels?.[u.lv];
           if (!base) return;
-          u.atk    = Math.floor(base.atk) + (eq.atk_bonus || 0);
-          u.maxHp  = base.max_hp          + (eq.hp_bonus  || 0);
-          u.hp     = u.maxHp;
-          u.initiative = (base.initiative || 0) + (eq.spd_bonus || 0);
+          const eq = _gear[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+          u.atk        = Math.floor(base.atk) + eq.atk_bonus;
+          u.maxHp      = base.max_hp          + eq.hp_bonus;
+          u.hp         = u.maxHp;
+          u.initiative = (base.initiative || 0) + eq.spd_bonus;
         });
         const res = simulate(G.board, G.enemy);
         window.HFBot?.learnFromBattle(res.evs, res.umap);

@@ -308,7 +308,7 @@ function simulate(pb, eb) {
         );
         if (al.length) {
           const target = [...al].sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-          const h = Math.floor(unit.atk * unit.skillPower);
+          const h = Math.floor(target.maxHp * unit.skillPower);
           target.hp = Math.min(target.maxHp, target.hp + h);
           evs.push({ type: "heal", uid: unit.id, tid: target.id, amt: h, tick });
           evs.push({ type: "ability", uid: unit.id, abilName: "Healing", tick, silent: true });
