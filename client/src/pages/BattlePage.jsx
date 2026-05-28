@@ -287,6 +287,7 @@ export default function BattlePage() {
       for (const name of reactSide) delete window[name]
       delete window.HF_equipped_backgrounds
       delete window.HF_equipped_skins
+      delete window.HF_gear
       for (const name of battleSide) delete window[name]
     }
   }, [closeQuit, confirmQuit])
@@ -461,19 +462,23 @@ export default function BattlePage() {
         if (sess?.mode === 'hive' && sess?.token) {
           const headers = { Authorization: `Bearer ${sess.token}` }
           try {
-            const [bgs, skins] = await Promise.all([
+            const [bgs, skins, gearRes] = await Promise.all([
               fetch('/api/cosmetics/backgrounds/equipped', { headers }).then(r => r.json()),
               fetch('/api/cosmetics/skins/equipped', { headers }).then(r => r.json()),
+              fetch(`/api/gear?player=${encodeURIComponent(sess.username)}`, { headers }).then(r => r.json()),
             ])
             window.HF_equipped_backgrounds = bgs.equipped || []
             window.HF_equipped_skins = skins.equipped || {}
+            window.HF_gear = gearRes.ok ? gearRes.gear : {}
           } catch {
             window.HF_equipped_backgrounds = []
             window.HF_equipped_skins = {}
+            window.HF_gear = {}
           }
         } else {
           window.HF_equipped_backgrounds = []
           window.HF_equipped_skins = {}
+          window.HF_gear = {}
         }
       })
       .then(() => Promise.all([
