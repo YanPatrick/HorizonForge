@@ -1054,7 +1054,7 @@
           u.atk    = Math.floor(base.atk) + (eq.atk_bonus || 0);
           u.maxHp  = base.max_hp          + (eq.hp_bonus  || 0);
           u.hp     = u.maxHp;
-          u.spd    = (base.initiative || 0) + (eq.spd_bonus || 0);
+          u.initiative = (base.initiative || 0) + (eq.spd_bonus || 0);
         });
         const res = simulate(G.board, G.enemy);
         window.HFBot?.learnFromBattle(res.evs, res.umap);
