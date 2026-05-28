@@ -475,6 +475,17 @@ export default function BattlePage() {
             window.HF_equipped_skins = {}
             window.HF_gear = {}
           }
+        } else if (sess?.username) {
+          // Guest users: fetch gear so bot-mode battles apply equipment bonuses.
+          // Cosmetics (backgrounds/skins) require HIVE auth and are skipped.
+          window.HF_equipped_backgrounds = []
+          window.HF_equipped_skins = {}
+          try {
+            const gearRes = await fetch(`/api/gear?player=${encodeURIComponent(sess.username)}`).then(r => r.json())
+            window.HF_gear = gearRes.ok ? gearRes.gear : {}
+          } catch {
+            window.HF_gear = {}
+          }
         } else {
           window.HF_equipped_backgrounds = []
           window.HF_equipped_skins = {}

@@ -114,7 +114,9 @@
     }
     const skillInfo = SKILL_DESCRIPTIONS[skillKey];
     const skillPower = unit.skillPower || 0;
-    const atk = unit.atk || 0;
+    const gear = window.HF_gear?.[unit.cid]?.totals ?? { atk_bonus: 0 };
+    const st = C[unit.cid]?.levels?.[unit.lv];
+    const atk = Math.floor(st?.atk ?? unit.atk ?? 0) + gear.atk_bonus;
     const maxHp = unit.maxHp || 0;
     const level = unit.lv || 1;
     const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
@@ -132,7 +134,9 @@
       return `<div class="stp-header"><span class="stp-icon">${icon}</span><span class="stp-name">${name}</span></div>`;
     }
     const skillPower = unit.skillPower || 0;
-    const atk = unit.atk || 0;
+    const gear = window.HF_gear?.[unit.cid]?.totals ?? { atk_bonus: 0 };
+    const st = cc?.levels?.[unit.lv];
+    const atk = Math.floor(st?.atk ?? unit.atk ?? 0) + gear.atk_bonus;
     const maxHp = unit.maxHp || 0;
     const level = unit.lv || 1;
     const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
@@ -181,7 +185,7 @@
     let skillSection = "";
     if (skillInfo) {
       const sp = u.skillPower ?? 0;
-      const av = u.atk ?? 0;
+      const av = atk;  // gear-inclusive ATK (already computed above: st.atk + gear.atk_bonus)
       const mhp = u.maxHp ?? u.hp ?? 0;
       const lv = u.lv || 1;
       const calc = skillInfo.format(sp, lv, av, mhp);

@@ -401,6 +401,7 @@ async function loadStatsTable() {
       crit_rate:   r.crit_rate,
       skill_power: st.skill_power,
       evasion:     st.evasion,
+      armor:       st.armor,
       dex:         st.dex,
       wis:         st.wis,
     };
@@ -460,10 +461,8 @@ function stripBoard(board) {
   return board.map(u => u ? { cid: u.cid, lv: u.lv, id: u.id } : null);
 }
 
-// Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
-// with the authoritative stats from the database.
-// Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
-// with authoritative stats from the database, then applying flat equipment bonuses.
+// Build a simulator-ready board: joins (cid, lv, id) with DB stats and applies
+// flat equipment bonuses from hero_equipment for the given player.
 async function materializeBoard(board, gearTotals = {}) {
   const stats = await getStatsTable();
   return board.map((u) => {
@@ -489,6 +488,7 @@ async function materializeBoard(board, gearTotals = {}) {
       critRate:   lvStats.crit_rate,
       skillPower: lvStats.skill_power,
       evasion:    lvStats.evasion,      // % flat de evasão (máx 5% base)
+      armor:      lvStats.armor ?? 0,  // armadura base (sempre 0 — vem de item equipado)
       dex:        lvStats.dex,          // DEX escalado — usado para absorção futura
       wis:        lvStats.wis,          // WIS escalado — absorve dano mágico
     };
@@ -558,8 +558,6 @@ async function getEquipmentBonuses(player) {
  *   skill: { key, name, description, type },
  *   levels: { 1: {...}, 2: {...}, 3: {...}, 4: {...}, 5: {...} } }
  */
-const HEROIC_SCALE = 10_000;
-
 function trunc4(v) {
   return Math.trunc(v * 10000) / 10000;
 }
@@ -586,10 +584,6 @@ function calcStats(base, multiplier) {
 
     // ATK: atributo primário × 5 × m  +  bônus de arma base (weapon_bonus)
     atk: Math.floor(p * 5 + Number(base.weapon_bonus)),
-
-    // Velocidade de ataque — mantido temporariamente para o simulate.js atual
-    // Será substituído pelo sistema de iniciativa D20 + initiative_bonus
-    atk_speed: dex * 0.3 + Number(base.spd_offset),
 
     // Bônus de iniciativa — somado ao D20 no início de cada round
     initiative: Number(base.spd_offset),
@@ -660,6 +654,7 @@ app.get('/api/characters', async (_req, res) => {
         crit_rate:   r.crit_rate,
         skill_power: st.skill_power,
         evasion:     st.evasion,
+        armor:       st.armor,
         dex:         st.dex,
         wis:         st.wis,
       };

@@ -342,7 +342,6 @@
           maxHp: st.max_hp,
           hp: st.max_hp,
           atk: Math.floor(st.atk),
-          spd: st.atk_speed,
           initiative: st.initiative,
           evasion: st.evasion,
           critChance: st.crit_chance,
@@ -359,7 +358,6 @@
         u.maxHp = st.max_hp;
         u.hp = st.max_hp;
         u.atk = Math.floor(st.atk);
-        u.spd = st.atk_speed;
         u.initiative = st.initiative;
         u.evasion = st.evasion;
         u.critChance = st.crit_chance;
@@ -1046,19 +1044,28 @@
           "bbattle",
         );
         render();
-        // Apply flat equipment bonuses to player units before simulation.
-        // Bot units (G.enemy) do not receive gear — they use base stats.
+        // Apply flat equipment bonuses to both player and bot units.
+        // Bot units use the player's gear totals for their respective hero classes
+        // so the bot's damage scales with player progression (same gear level).
         const _gear = window.HF_gear || {};
-        G.board.forEach((u) => {
+        if (!window.HF_gear || Object.keys(_gear).length === 0) {
+          console.warn('[startBattle] window.HF_gear is empty — gear bonuses will not be applied. Check gear API fetch timing.');
+        }
+        const _applyGear = (u) => {
           if (!u) return;
           const base = C[u.cid]?.levels?.[u.lv];
-          if (!base) return;
+          if (!base) {
+            console.warn(`[startBattle] Missing level data for cid="${u.cid}" lv=${u.lv} — unit stats not updated.`);
+            return;
+          }
           const eq = _gear[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
           u.atk        = Math.floor(base.atk) + eq.atk_bonus;
           u.maxHp      = base.max_hp          + eq.hp_bonus;
           u.hp         = u.maxHp;
           u.initiative = (base.initiative || 0) + eq.spd_bonus;
-        });
+        };
+        G.board.forEach(_applyGear);
+        G.enemy.forEach(_applyGear);
         const res = simulate(G.board, G.enemy);
         window.HFBot?.learnFromBattle(res.evs, res.umap);
         playback(res);
@@ -1906,26 +1913,10 @@
           stopRoundTimer(); // battle started — hide countdown
           render();
 
-          // Log start-of-battle abilities
           log("⚔️ Battle begins!", "lr");
-          result.evs
-            .filter(
-              (e) =>
-                e.type === "ability" &&
-                e.tick === -1 &&
-                e.abilName !== "Chain Lightning",
-            )
-            .forEach((e) => {
-              const u = result.umap[e.uid];
-              log(
-                (ABILOG[e.abilName] || "✨ {n}: " + e.abilName).replace(
-                  "{n}",
-                  u ? nameTag(u) : "?",
-                ),
-                "lab",
-                true,
-              );
-            });
+          // Abilities at tick=-1 (Sacred Aura, Sneak Strike, etc.) are logged
+          // by playback() → runPrepPhase() below — logging them here too would
+          // produce duplicate log entries in PvP mode.
 
           _dispatchBanner(
             `⚔️ Battle ${data.battleNum}/${G.format} in progress...`,

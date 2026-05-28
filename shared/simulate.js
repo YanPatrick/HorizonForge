@@ -91,6 +91,20 @@ function adjacentSlots(slot) {
  *   armor? (0 se não equipado — itens definem este valor) }
  */
 function simulate(pb, eb) {
+  // Detect duplicate unit IDs in the input boards — a board with the same id in
+  // two slots produces two simulation objects with the same id, which can cause
+  // a unit to appear twice in the initiative queue and act twice per round.
+  // This is a diagnostic guard; the root cause should be fixed upstream.
+  if (typeof console !== "undefined") {
+    const seenBoardIds = new Set();
+    [...pb, ...eb].filter(Boolean).forEach((u) => {
+      if (seenBoardIds.has(u.id)) {
+        console.warn(`[simulate] Duplicate unit id "${u.id}" (cid: ${u.cid}) — unit will act twice; investigate board assembly.`);
+      }
+      seenBoardIds.add(u.id);
+    });
+  }
+
   // Deep-clone boards and attach metadata
   const ps = pb
     .map((u, i) =>
@@ -252,7 +266,16 @@ function simulate(pb, eb) {
   // Maior resultado age primeiro. Após agir, espera o próximo round.
   // Empates: resolvidos pelo shuffle aleatório anterior ao sort.
   function buildInitiativeQueue() {
-    const units = [...ps, ...es].filter((u) => u.alive);
+    // Deduplicate by id before building the queue: if the same unit id appears in
+    // both ps and es (or twice within one side due to an upstream board bug), it
+    // would act twice per round. The diagnostic console.warn at the top of
+    // simulate() will flag the root cause; this guard ensures correct turn order.
+    const seenIds = new Set();
+    const units = [...ps, ...es].filter((u) => {
+      if (!u.alive || seenIds.has(u.id)) return false;
+      seenIds.add(u.id);
+      return true;
+    });
     // Fisher-Yates shuffle para resolver empates de forma justa
     for (let i = units.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
