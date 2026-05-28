@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS characters (
 -- Characters base — um registro por personagem (valores base nível 1)
 -- Stats de combate são calculados via calcStats():
 --   max_hp      = (con × 20) × m          (apenas CON — itens adicionam HP)
---   atk         = (primary_attr × 5) × m + weapon_bonus
+--   atk         = (primary_attr × 5) × m + weapon_bonus  (weapon_bonus always 0; bonus via hero_equipment)
 --   initiative  = spd_offset              (bônus fixo somado ao D20 por round)
 --   skill_power = base.skill_power × m    (valor base definido por herói)
 --   evasion     = max(0, floor((DEX_base − 10) / 2)) %  (máx 5% sem itens)
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS characters_base (
   wis             SMALLINT     NOT NULL DEFAULT 10,
   cha             SMALLINT     NOT NULL DEFAULT 10,  -- reservado para uso futuro
   primary_attr    VARCHAR(8)   NOT NULL DEFAULT 'str',
-  weapon_bonus    SMALLINT     NOT NULL DEFAULT 0,
+  weapon_bonus    SMALLINT     NOT NULL DEFAULT 0,   -- always 0; ATK bonus comes from hero_equipment
   spd_offset      NUMERIC(5,2) NOT NULL DEFAULT 0    -- bônus de iniciativa (D20 + spd_offset)
 );
 
@@ -141,7 +141,7 @@ ON CONFLICT (character_id) DO UPDATE SET
 -- Idempotente: safe to re-run; popula/redefine os atributos de todos os heróis.
 -- max_hp/atk/atk_speed calculados via calcStats() — os campos no banco são legado.
 -- Evasão derivada de DEX: max(0, floor((DEX-10)/2))% — máx 5% sem itens.
--- Armadura: sempre 0 da ficha (itens equipam armadura). weapon_bonus = arma base.
+-- Armadura: sempre 0 da ficha (itens equipam armadura). weapon_bonus: sempre 0 — bônus de ATK vem de hero_equipment.
 UPDATE characters_base cb SET
   str          = v.str,
   dex          = v.dex,
@@ -155,14 +155,15 @@ UPDATE characters_base cb SET
 FROM characters c
 JOIN (VALUES
   --            cid        str dex con int wis cha  prim   wpn  spd_offset
-  ('knight',    16, 10, 16, 10, 10, 10, 'str',  12,  0.00),
-  ('paladin',   14, 10, 14, 10, 14, 10, 'str',  18,  0.00),
-  ('barbarian', 18, 12, 16,  8, 10,  8, 'str',   7,  0.00),
-  ('assassin',   8, 20, 10, 16, 10,  8, 'dex',  70,  0.00),
-  ('archer',    10, 18, 14, 10, 10, 10, 'dex',  30, -1.00),
-  ('mage',       8, 10,  8, 18, 14, 14, 'int',  12, -2.10),
-  ('archmage',   8, 10, 10, 20, 16,  8, 'int',  40, -2.10),
-  ('healer',     8, 10, 10, 14, 20, 10, 'wis',  12, -1.00)
+  -- weapon_bonus is always 0; ATK bonus comes from hero_equipment items
+  ('knight',    16, 10, 16, 10, 10, 10, 'str',   0,  0.00),
+  ('paladin',   14, 10, 14, 10, 14, 10, 'str',   0,  0.00),
+  ('barbarian', 18, 12, 16,  8, 10,  8, 'str',   0,  0.00),
+  ('assassin',   8, 20, 10, 16, 10,  8, 'dex',   0,  0.00),
+  ('archer',    10, 18, 14, 10, 10, 10, 'dex',   0, -1.00),
+  ('mage',       8, 10,  8, 18, 14, 14, 'int',   0, -2.10),
+  ('archmage',   8, 10, 10, 20, 16,  8, 'int',   0, -2.10),
+  ('healer',     8, 10, 10, 14, 20, 10, 'wis',   0, -1.00)
 ) AS v(cid, str, dex, con, int_val, wis, cha, primary_attr, weapon_bonus, spd_offset)
   ON c.cid = v.cid
 WHERE cb.character_id = c.id;
