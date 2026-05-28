@@ -79,18 +79,44 @@ const EMPTY_FORMATIONS = [
 ]
 
 /* ── HeroDetail modal ───────────────────────────────────── */
+function BonusChip({ value }) {
+  if (!value) return null
+  const positive = value > 0
+  return (
+    <span style={{
+      color: positive ? '#4cff91' : '#ff5c5c',
+      fontSize: '0.85em',
+      marginLeft: '5px',
+      fontWeight: 600,
+    }}>
+      ({positive ? '+' : ''}{value})
+    </span>
+  )
+}
+
 function StatsPanel({ hero, lv1, playerGear }) {
-  const totals = playerGear?.[hero.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 }
-  const atk     = (lv1?.atk ?? 0) + totals.atk_bonus
-  const hp      = (lv1?.max_hp ?? 0) + totals.hp_bonus
-  const spd     = (lv1?.initiative ?? 0) + totals.spd_bonus
+  const totals  = playerGear?.[hero.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 }
+  const baseAtk = lv1?.atk ?? 0
+  const baseHp  = lv1?.max_hp ?? 0
+  const baseSpd = lv1?.initiative ?? 0
+  const spd     = baseSpd + totals.spd_bonus
   const attrs   = hero.attrs || {}
   const evasion = Math.max(0, Math.floor(((attrs.dex ?? 10) - 10) / 2))
 
   return (
     <div className="stats-panel">
-      <div className="stat-row"><span>Attack:</span> <span className="stat-val">{atk}</span></div>
-      <div className="stat-row"><span>Speed:</span>  <span className="stat-val">{spd % 1 === 0 ? spd : spd.toFixed(2)}</span></div>
+      <div className="stat-row">
+        <span>Attack:</span>
+        <span className="stat-val">{baseAtk}<BonusChip value={totals.atk_bonus} /></span>
+      </div>
+      <div className="stat-row">
+        <span>HP:</span>
+        <span className="stat-val">{baseHp}<BonusChip value={totals.hp_bonus} /></span>
+      </div>
+      <div className="stat-row">
+        <span>Speed:</span>
+        <span className="stat-val">{spd % 1 === 0 ? spd : spd.toFixed(2)}</span>
+      </div>
       <div className="stat-row"><span>Armor:</span>  <span className="stat-val">0</span></div>
       <div className="stat-row"><span>Evasion:</span><span className="stat-val">{evasion}%</span></div>
     </div>
