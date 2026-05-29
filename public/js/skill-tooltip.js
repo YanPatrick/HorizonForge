@@ -1,4 +1,4 @@
-// public/js/skill-tooltip.js — Horizon Forge skill tooltip module
+// public/js/skill-tooltip.js - Horizon Forge skill tooltip module
 //
 // Self-contained tooltip + skill-description module. Loaded by BattlePage.jsx
 // before /js/battle.js. battle.js calls into window.HFTooltip from bench /
@@ -16,221 +16,222 @@
 (function () {
   "use strict";
 
-  // ── Skill descriptions table (data) ─────────────────────────────────────
+  // -- Skill descriptions table (data) -----------------------------------------
   const SKILL_DESCRIPTIONS = {
     iron_defense: {
       name: "Iron Defense",
       desc: "Reduces damage taken.",
       lore: "The weight of armor is nothing compared to the weight of duty.",
-      format: (skillPower) => {
-        const reduction = Math.floor(skillPower * 100);
-        return `Reduces ${reduction}% of the damage received`;
+      format: function (skillPower) {
+        var reduction = Math.floor(skillPower * 100);
+        return "Reduces " + reduction + "% of the damage received";
       },
     },
     fireball: {
       name: "Fireball",
+      attackType: "splash attack",
       desc: "Full damage to the target tile. Splash damage to tiles in a + shape around it.",
       lore: "Fire obeys no one; it only accepts invitations.",
-      format: (skillPower, _level, atk) => {
-        const splashDmg = Math.floor(atk * skillPower);
-        return `Full damage: ${atk}. Splash damage: ${splashDmg} (${Math.floor(skillPower * 100)}%)`;
+      format: function (skillPower, _level, atk) {
+        var splashDmg = Math.floor(atk * skillPower);
+        return "Full damage: " + atk + ". Splash damage: " + splashDmg + " (" + Math.floor(skillPower * 100) + "%)";
       },
     },
     precise_shot: {
       name: "Precise Shot",
       desc: "Increases the chance of landing a critical hit.",
       lore: "The wind blows, but my arrow chooses its own path.",
-      format: (skillPower) => {
-        const critChanceBonus = Math.floor(skillPower * 100);
-        return `+${critChanceBonus}% critical chance`;
+      format: function (skillPower) {
+        var critChanceBonus = Math.floor(skillPower * 100);
+        return "+" + critChanceBonus + "% critical chance";
       },
     },
     healing: {
       name: "Healing",
       desc: "Heals the ally with lowest HP.",
       lore: "Life is a garden that blooms under the right hands.",
-      format: (skillPower, _level, atk) => {
-        const healAmount = Math.floor(atk * skillPower);
-        return `Heals the most injured ally for ${healAmount} HP (${Math.floor(skillPower * 100)}% of ATK)`;
+      format: function (skillPower, _level, atk) {
+        var healAmount = Math.floor(atk * skillPower);
+        return "Heals the most injured ally for " + healAmount + " HP (" + Math.floor(skillPower * 100) + "% of ATK)";
       },
     },
     sneak_strike: {
       name: "Sneak Strike",
       desc: "At battle start, performs a sneak attack on lowest-HP enemy.",
       lore: "Silence is the last thing my enemies hear.",
-      format: (skillPower, _level, atk) => {
-        const sneakDmg = Math.floor(atk * skillPower);
-        return `Sneak attack damage: ${sneakDmg} (${Math.floor(skillPower * 100)}% of ATK)`;
+      format: function (skillPower, _level, atk) {
+        var sneakDmg = Math.floor(atk * skillPower);
+        return "Sneak attack damage: " + sneakDmg + " (" + Math.floor(skillPower * 100) + "% of ATK)";
       },
     },
     sacred_aura: {
       name: "Sacred Aura",
       desc: "At battle start, grants adjacent allies, max HP bonus. Buff persists even paladin dies.",
       lore: "My aura is the shield the gods lent to mortals.",
-      format: (skillPower) => {
-        return `Adjacent allies gain +${Math.floor(skillPower * 100)}% max HP bonus`;
+      format: function (skillPower) {
+        return "Adjacent allies gain +" + Math.floor(skillPower * 100) + "% max HP bonus";
       },
     },
     chain_lightning: {
       name: "Chain Lightning",
+      attackType: "line attack",
       desc: "Horizontal line attack. Full damage on first target. Subsequent targets receive reduced damage.",
       lore: "Lightning never strikes the same place twice... unless I want it to.",
-      format: (skillPower, _level, atk) => {
-        const dmg1 = atk;
-        const dmg2 = Math.floor(atk * skillPower);
-        const dmg3 = Math.floor((atk * skillPower) / 2);
-        return `1º target: ${dmg1}<br>
-                2º target: ${dmg2} (${Math.floor(skillPower * 100)}%)<br>
-                3º target: ${dmg3} (${Math.floor(skillPower * 50)}%)`;
+      format: function (skillPower, _level, atk) {
+        var dmg1 = atk;
+        var dmg2 = Math.floor(atk * skillPower);
+        var dmg3 = Math.floor((atk * skillPower) / 2);
+        return "1\xBA target: " + dmg1 + "<br>2\xBA target: " + dmg2 + " (" + Math.floor(skillPower * 100) + "%)<br>3\xBA target: " + dmg3 + " (" + Math.floor(skillPower * 50) + "%)";
       },
     },
     fury: {
       name: "Fury",
       desc: "While HP is below 60%, gain bonus attack.",
       lore: "His fury is the echo of a thousand forgotten battles.",
-      format: (skillPower) => {
-        const atkBonus = Math.floor(skillPower * 100);
-        return `When HP below 60%: +${atkBonus}% permanent ATK`;
+      format: function (skillPower) {
+        var atkBonus = Math.floor(skillPower * 100);
+        return "When HP below 60%: +" + atkBonus + "% permanent ATK";
       },
     },
   };
 
-  // ── Dependencies ────────────────────────────────────────────────────────
+  // -- Dependencies ------------------------------------------------------------
   // `getC` returns the live character-data map (battle.js's `C`). Late
   // resolution because C is populated asynchronously by initGame.
-  let _deps = null;
+  var _deps = null;
   function init(injected) { _deps = injected; }
   function getC() {
     if (!_deps) throw new Error("HFTooltip.init() must be called first");
     return _deps.getC();
   }
 
-  // ── HTML builders ───────────────────────────────────────────────────────
+  // -- HTML builders -----------------------------------------------------------
   function skillTooltipText(unit) {
-    const C = getC();
-    const skillKey = C[unit.cid]?.abi?.key;
+    var C = getC();
+    var skillKey = C[unit.cid] && C[unit.cid].abi && C[unit.cid].abi.key;
     if (!skillKey || !SKILL_DESCRIPTIONS[skillKey]) {
-      return `${C[unit.cid]?.abi?.name || "Skill"}: No description`;
+      return (C[unit.cid] && C[unit.cid].abi && C[unit.cid].abi.name || "Skill") + ": No description";
     }
-    const skillInfo = SKILL_DESCRIPTIONS[skillKey];
-    const skillPower = unit.skillPower || 0;
-    const gear = window.HF_gear?.[unit.cid]?.totals ?? { atk_bonus: 0 };
-    const st = C[unit.cid]?.levels?.[unit.lv];
-    const atk = Math.floor(st?.atk ?? unit.atk ?? 0) + gear.atk_bonus;
-    const maxHp = unit.maxHp || 0;
-    const level = unit.lv || 1;
-    const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
-    return `${skillInfo.name}\n${skillInfo.desc}\n\n${calculatedValue}`;
+    var skillInfo = SKILL_DESCRIPTIONS[skillKey];
+    var skillPower = unit.skillPower || 0;
+    var gear = (window.HF_gear && window.HF_gear[unit.cid] && window.HF_gear[unit.cid].totals) || { atk_bonus: 0 };
+    var st = C[unit.cid] && C[unit.cid].levels && C[unit.cid].levels[unit.lv];
+    var atk = Math.floor((st && st.atk != null ? st.atk : (unit.atk || 0))) + gear.atk_bonus;
+    var maxHp = unit.maxHp || 0;
+    var level = unit.lv || 1;
+    var calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
+    return skillInfo.name + "\n" + skillInfo.desc + "\n\n" + calculatedValue;
   }
 
   function skillTooltipHtml(unit) {
-    const C = getC();
-    const cc = C[unit.cid];
-    const skillKey = cc?.abi?.key;
-    const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
-    const icon = cc?.abi?.ico || "✨";
-    const name = cc?.abi?.name || "Skill";
+    var C = getC();
+    var cc = C[unit.cid];
+    var skillKey = cc && cc.abi && cc.abi.key;
+    var skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
+    var icon = (cc && cc.abi && cc.abi.ico) || "✨";
+    var name = (cc && cc.abi && cc.abi.name) || "Skill";
     if (!skillInfo) {
-      return `<div class="stp-header"><span class="stp-icon">${icon}</span><span class="stp-name">${name}</span></div>`;
+      return '<div class="stp-header"><span class="stp-icon">' + icon + '</span><span class="stp-name">' + name + '</span></div>';
     }
-    const skillPower = unit.skillPower || 0;
-    const gear = window.HF_gear?.[unit.cid]?.totals ?? { atk_bonus: 0 };
-    const st = cc?.levels?.[unit.lv];
-    const atk = Math.floor(st?.atk ?? unit.atk ?? 0) + gear.atk_bonus;
-    const maxHp = unit.maxHp || 0;
-    const level = unit.lv || 1;
-    const calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
-    return `
-            <div class="stp-header">
-              <span class="stp-icon">${icon}</span>
-              <span class="stp-name">${skillInfo.name}</span>
-            </div>
-            <div class="stp-divider"></div>
-            <div class="stp-desc">${skillInfo.desc}</div>
-            ${skillInfo.lore ? `
-            <div class="stp-lore" style="
-              font-style: italic; 
-              opacity: 0.55; 
-              font-size: 11px; 
-              margin: 12px 0; 
-              color: #fff; 
-              line-height: 1.4;
-              display: block;
-              border-top: 1px solid rgba(255,255,255,0.1);
-              padding-top: 10px;
-              text-align: center;
-            ">
-              “${skillInfo.lore}”
-            </div>` : ''}            <div class="stp-power">
-              <span class="stp-power-label">Current Effect</span>
-              <span class="stp-power-value">${calculatedValue}</span>
-            </div>`;
+    var skillPower = unit.skillPower || 0;
+    var gear = (window.HF_gear && window.HF_gear[unit.cid] && window.HF_gear[unit.cid].totals) || { atk_bonus: 0 };
+    var st = cc && cc.levels && cc.levels[unit.lv];
+    var atk = Math.floor((st && st.atk != null ? st.atk : (unit.atk || 0))) + gear.atk_bonus;
+    var maxHp = unit.maxHp || 0;
+    var level = unit.lv || 1;
+    var calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
+    var atTag = skillInfo.attackType
+      ? '<span class="stp-atk-tag">' + skillInfo.attackType + '</span>'
+      : '';
+    return (
+      '<div class="stp-header">' +
+        '<span class="stp-icon">' + icon + '</span>' +
+        '<div class="stp-skill-title">' +
+          '<span class="stp-name">' + skillInfo.name + '</span>' +
+          atTag +
+        '</div>' +
+      '</div>' +
+      '<div class="stp-divider"></div>' +
+      '<div class="stp-power">' +
+        '<span class="stp-power-label">Effect</span>' +
+        '<span class="stp-power-value">' + calculatedValue + '</span>' +
+      '</div>'
+    );
   }
 
   function heroInfoHtml(u) {
-    const C = getC();
-    const cc = C[u.cid];
-    const st = cc?.levels?.[u.lv];
-    const skillKey = cc?.abi?.key;
-    const skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
-    const abiIco = cc?.abi?.ico || "✨";
-    const abiName = cc?.abi?.name || "Skill";
+    var C = getC();
+    var cc = C[u.cid];
+    var st = cc && cc.levels && cc.levels[u.lv];
+    var skillKey = cc && cc.abi && cc.abi.key;
+    var skillInfo = skillKey ? SKILL_DESCRIPTIONS[skillKey] : null;
+    var abiIco = (cc && cc.abi && cc.abi.ico) || "✨";
+    var abiName = (cc && cc.abi && cc.abi.name) || "Skill";
 
-    const gear    = window.HF_gear?.[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
-    const hp      = (st?.max_hp ?? 0)    + gear.hp_bonus;
-    const atk     = Math.floor(st?.atk ?? 0) + gear.atk_bonus;
-    const spdRaw  = (st?.initiative ?? 0) + gear.spd_bonus;
-    const spd     = Number(spdRaw).toFixed(2);
+    var gear = (window.HF_gear && window.HF_gear[u.cid] && window.HF_gear[u.cid].totals) || { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+    var hp   = ((st && st.max_hp) || 0) + gear.hp_bonus;
+    var atk  = Math.floor((st && st.atk != null ? st.atk : 0)) + gear.atk_bonus;
+    var spdRaw = ((st && st.initiative) || 0) + gear.spd_bonus;
+    var spd  = Number(spdRaw).toFixed(2);
 
-    let skillSection = "";
+    var skillSection = "";
     if (skillInfo) {
-      const sp = u.skillPower ?? 0;
-      const av = atk;  // gear-inclusive ATK (already computed above: st.atk + gear.atk_bonus)
-      const mhp = u.maxHp ?? u.hp ?? 0;
-      const lv = u.lv || 1;
-      const calc = skillInfo.format(sp, lv, av, mhp);
-      skillSection = `<div class="stp-divider"></div>
-        <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>
-        <div class="stp-desc">${skillInfo.desc}</div>
-        ${skillInfo.lore ? `
-        <div class="stp-lore" style="
-          font-style: italic; 
-          opacity: 0.55; 
-          font-size: 11px; 
-          margin: 12px 0; 
-          color: #fff; 
-          line-height: 1.4;
-          display: block;
-          border-top: 1px solid rgba(255,255,255,0.1);
-          padding-top: 10px;
-          text-align: center;
-        ">
-          “${skillInfo.lore}”
-        </div>` : ''}
-        <div class="stp-power"><span class="stp-power-label">Effect</span><span class="stp-power-value">${calc}</span></div>`;
+      var sp   = u.skillPower != null ? u.skillPower : 0;
+      var av   = atk;
+      var mhp  = u.maxHp != null ? u.maxHp : (u.hp || 0);
+      var lv   = u.lv || 1;
+      var calc = skillInfo.format(sp, lv, av, mhp);
+      var atTag = skillInfo.attackType
+        ? '<span class="stp-atk-tag">' + skillInfo.attackType + '</span>'
+        : '';
+      skillSection = (
+        '<div class="stp-divider"></div>' +
+        '<div class="stp-header">' +
+          '<span class="stp-icon">' + abiIco + '</span>' +
+          '<div class="stp-skill-title">' +
+            '<span class="stp-name">' + abiName + '</span>' +
+            atTag +
+          '</div>' +
+        '</div>' +
+        '<div class="stp-power">' +
+          '<span class="stp-power-label">Effect</span>' +
+          '<span class="stp-power-value">' + calc + '</span>' +
+        '</div>'
+      );
     } else {
-      skillSection = `<div class="stp-divider"></div>
-        <div class="stp-header"><span class="stp-icon">${abiIco}</span><span class="stp-name">${abiName}</span></div>`;
+      skillSection = (
+        '<div class="stp-divider"></div>' +
+        '<div class="stp-header">' +
+          '<span class="stp-icon">' + abiIco + '</span>' +
+          '<span class="stp-name">' + abiName + '</span>' +
+        '</div>'
+      );
     }
 
-    const heroClass = u.cid ? u.cid.charAt(0).toUpperCase() + u.cid.slice(1) : "";
-    const roleLabel = [heroClass, cc?.role || ""].filter(Boolean).join(" · ");
+    var heroClass = u.cid ? u.cid.charAt(0).toUpperCase() + u.cid.slice(1) : "";
+    var roleLabel = [heroClass, (cc && cc.role) || ""].filter(Boolean).join(" \xB7 ");
 
-    return `<div class="stp-hero-header">
-      <span class="stp-hero-ico">${u.ico}</span>
-      <div><div class="stp-hero-name">${cc?.name || ""}</div><div class="stp-hero-role">${roleLabel}</div></div>
-    </div>
-    <div class="stp-divider"></div>
-    <div class="stp-stats">
-      <div class="stp-stat"><span class="stp-stat-v">${hp}</span><span class="stp-stat-l">HP</span></div>
-      <div class="stp-stat"><span class="stp-stat-v">${atk}</span><span class="stp-stat-l">ATK</span></div>
-      <div class="stp-stat"><span class="stp-stat-v">${spd}</span><span class="stp-stat-l">SPD</span></div>
-    </div>${skillSection}`;
+    return (
+      '<div class="stp-hero-header">' +
+        '<span class="stp-hero-ico">' + u.ico + '</span>' +
+        '<div>' +
+          '<div class="stp-hero-name">' + ((cc && cc.name) || "") + '</div>' +
+          '<div class="stp-hero-role">' + roleLabel + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="stp-divider"></div>' +
+      '<div class="stp-stats">' +
+        '<div class="stp-stat"><span class="stp-stat-v">' + hp + '</span><span class="stp-stat-l">HP</span></div>' +
+        '<div class="stp-stat"><span class="stp-stat-v">' + atk + '</span><span class="stp-stat-l">ATK</span></div>' +
+        '<div class="stp-stat"><span class="stp-stat-v">' + spd + '</span><span class="stp-stat-l">SPD</span></div>' +
+      '</div>' +
+      skillSection
+    );
   }
 
-  // ── Tooltip element + lifecycle ─────────────────────────────────────────
-  let _tipEl = null;
-  let _hideTimer = null;
+  // -- Tooltip element + lifecycle ---------------------------------------------
+  var _tipEl = null;
+  var _hideTimer = null;
 
   function getTipEl() {
     if (!_tipEl) {
@@ -243,31 +244,31 @@
 
   function show(anchor, html) {
     clearTimeout(_hideTimer);
-    const tip = getTipEl();
+    var tip = getTipEl();
     tip.innerHTML = html;
     tip.classList.remove("stp-visible");
 
-    const tipW = 234;
-    const rect = anchor.getBoundingClientRect();
-    let left = rect.left + rect.width / 2 - tipW / 2;
+    var tipW = 234;
+    var rect = anchor.getBoundingClientRect();
+    var left = rect.left + rect.width / 2 - tipW / 2;
     left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
     tip.style.left = left + "px";
     tip.style.top = "-9999px";
 
-    requestAnimationFrame(() => {
-      const tipH = tip.offsetHeight;
-      let top = rect.top - tipH - 10;
+    requestAnimationFrame(function () {
+      var tipH = tip.offsetHeight;
+      var top = rect.top - tipH - 10;
       if (top < 8) top = rect.bottom + 10;
       tip.style.top = top + "px";
-      requestAnimationFrame(() => tip.classList.add("stp-visible"));
+      requestAnimationFrame(function () { tip.classList.add("stp-visible"); });
     });
   }
 
   function showSticky(anchor, html) {
     show(anchor, html);
-    setTimeout(() => {
+    setTimeout(function () {
       function dismiss(e) {
-        const tip = getTipEl();
+        var tip = getTipEl();
         if (!tip.contains(e.target)) {
           hide();
           document.removeEventListener("touchstart", dismiss);
@@ -281,15 +282,19 @@
 
   function hide() {
     clearTimeout(_hideTimer);
-    _hideTimer = setTimeout(() => {
+    _hideTimer = setTimeout(function () {
       if (_tipEl) _tipEl.classList.remove("stp-visible");
     }, 80);
   }
 
-  // ── Public API ──────────────────────────────────────────────────────────
+  // -- Public API --------------------------------------------------------------
   window.HFTooltip = {
-    init,
-    show, showSticky, hide,
-    heroInfoHtml, skillTooltipHtml, skillTooltipText,
+    init: init,
+    show: show,
+    showSticky: showSticky,
+    hide: hide,
+    heroInfoHtml: heroInfoHtml,
+    skillTooltipHtml: skillTooltipHtml,
+    skillTooltipText: skillTooltipText,
   };
 })();

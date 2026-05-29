@@ -3227,8 +3227,28 @@
         line-height: 1.6;
       }
 
+      .stp-skill-title {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .stp-atk-tag {
+        display: inline-block;
+        align-self: flex-start;
+        font-size: 7px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: rgba(80, 160, 255, 0.10);
+        color: rgba(140, 200, 255, 0.65);
+        border: 1px solid rgba(100, 170, 255, 0.20);
+      }
+
       .stp-power {
-        margin: 3px 11px 11px;
+        margin: 2px 11px 10px;
         background: linear-gradient(135deg,
             rgba(100, 50, 220, 0.22),
             rgba(55, 28, 130, 0.14));
