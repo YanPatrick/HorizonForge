@@ -261,30 +261,33 @@ function simulate(pb, eb) {
     return tA || tC || null;
   }
 
-  // ── Iniciativa — fila por round ──────────────────────────────────────────────
-  // Cada round: todos os vivos rolam D20 + initiative (spd_offset).
-  // Maior resultado age primeiro. Após agir, espera o próximo round.
-  // Empates: resolvidos pelo shuffle aleatório anterior ao sort.
+  // ── Iniciativa — ordem fixa por batalha ──────────────────────────────────────
+  // D20 + initiative é rolado UMA VEZ no início da batalha para definir a ordem.
+  // Cada ciclo re-usa essa ordem, filtrando apenas os heróis vivos.
+  // Empates resolvidos pelo shuffle aleatório antes do sort.
+  const seenIdsInit = new Set();
+  const allUnitsInit = [...ps, ...es].filter((u) => {
+    if (seenIdsInit.has(u.id)) return false;
+    seenIdsInit.add(u.id);
+    return true;
+  });
+  for (let i = allUnitsInit.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allUnitsInit[i], allUnitsInit[j]] = [allUnitsInit[j], allUnitsInit[i]];
+  }
+  const battleOrder = allUnitsInit
+    .map((u) => ({ unit: u, rolled: roll(20) + (u.initiative || 0) }))
+    .sort((a, b) => b.rolled - a.rolled)
+    .map((r) => r.unit);
+
   function buildInitiativeQueue() {
-    // Deduplicate by id before building the queue: if the same unit id appears in
-    // both ps and es (or twice within one side due to an upstream board bug), it
-    // would act twice per round. The diagnostic console.warn at the top of
-    // simulate() will flag the root cause; this guard ensures correct turn order.
+    // Duplicate-safe filter: return living units in the fixed battle order.
     const seenIds = new Set();
-    const units = [...ps, ...es].filter((u) => {
+    return battleOrder.filter((u) => {
       if (!u.alive || seenIds.has(u.id)) return false;
       seenIds.add(u.id);
       return true;
     });
-    // Fisher-Yates shuffle para resolver empates de forma justa
-    for (let i = units.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [units[i], units[j]] = [units[j], units[i]];
-    }
-    return units
-      .map((u) => ({ unit: u, rolled: roll(20) + (u.initiative || 0) }))
-      .sort((a, b) => b.rolled - a.rolled)
-      .map((r) => r.unit);
   }
 
   // ── Main loop — round-based ───────────────────────────────────────────────────
@@ -295,6 +298,8 @@ function simulate(pb, eb) {
     const pa = ps.filter((u) => u.alive),
       ea = es.filter((u) => u.alive);
     if (!pa.length || !ea.length) break;
+
+    evs.push({ type: "round_start", round, tick });
 
     // Rola iniciativa para este round
     const roundQueue = buildInitiativeQueue();
