@@ -997,7 +997,45 @@ app.get('/api/gear', async (req, res) => {
   const { player } = req.query;
   if (!player) return res.status(400).json({ ok: false, error: 'player required' });
   const authedUser = authFromRequest(req);
-  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+
+  // Guests (no token): return the universal starter loadout read-only, no writes to hero_equipment
+  if (!authedUser) {
+    try {
+      const rows = await sql`
+        SELECT csl.character_cid, csl.slot_type,
+               i.id, i.name, i.description, i.rarity,
+               i.atk_bonus, i.hp_bonus, i.spd_bonus
+        FROM character_starter_loadout csl
+        JOIN items i ON i.id = csl.item_id
+        ORDER BY csl.character_cid, csl.slot_type
+      `;
+      const gear = {};
+      for (const r of rows) {
+        if (!gear[r.character_cid]) {
+          gear[r.character_cid] = { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } };
+        }
+        gear[r.character_cid].slots[r.slot_type] = {
+          id:          r.id,
+          name:        r.name,
+          description: r.description,
+          rarity:      r.rarity,
+          slot_type:   r.slot_type,
+          atk_bonus:   Number(r.atk_bonus),
+          hp_bonus:    Number(r.hp_bonus),
+          spd_bonus:   Number(r.spd_bonus),
+        };
+        gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
+        gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
+        gear[r.character_cid].totals.spd_bonus += Number(r.spd_bonus);
+      }
+      return res.json({ ok: true, gear });
+    } catch (err) {
+      console.error('[GET /api/gear guest]', err.message);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
+  if (authedUser.toLowerCase() !== player.toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
   try {
