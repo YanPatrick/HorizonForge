@@ -225,6 +225,44 @@ export default function GrimoireView() {
                 </div>
               </div>
 
+                 {/* ── Nova Seção: Drop Rates Adicionada Aqui ── */}
+              <div className="gr-section-title">📊 Chest Rarities &amp; Drop Rates</div>
+              <p className="gr-p">
+                Whenever you obtain and open a Chest, the <span className="gr-hl">Motor of Chaos</span> determines the item's rarity based on the following probability distribution and visual indicators:
+              </p>
+              <div className="gr-tips">
+                <div className="gr-tip">
+                  <span className="gr-tip-ico">⚪</span>
+                  <div>
+                    <strong>Common — 40%:</strong> Grants 1 stat bonus and has no requirements to equip.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#6acc6a' }}>🟢</span>
+                  <div>
+                    <strong style={{ color: '#6acc6a' }}>Uncommon — 30%:</strong> Grants 1 stat bonus and comes with 1 attribute requirement.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#4488ff' }}>🔵</span>
+                  <div>
+                    <strong style={{ color: '#4488ff' }}>Rare — 20%:</strong> Grants 2 stat bonuses and comes with 1 attribute requirements.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#aa44ff' }}>🟣</span>
+                  <div>
+                    <strong style={{ color: '#aa44ff' }}>Epic — 8%:</strong> Grants 2 stat bonuses and comes with 2 attribute requirements.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#ff33aa' }}>💗</span>
+                  <div>
+                    <strong style={{ color: '#ff33aa' }}>Legendary — 2%:</strong> Grants 3 stat bonuses and comes with 2 attribute requirements.
+                  </div>
+                </div>
+              </div>
+
               <div className="gr-section-title">📏 Requirements & Penalties</div>
               <p className="gr-p">
                 Any hero can equip any item, but effectiveness depends on your <span className="gr-hl">Aptitude (TA)</span>.

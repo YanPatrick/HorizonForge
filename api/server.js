@@ -898,7 +898,7 @@ app.post('/api/migrate', async (req, res) => {
     await sql`
       CREATE TABLE IF NOT EXISTS cosmetics (
         id          TEXT PRIMARY KEY,
-        type        TEXT NOT NULL CHECK (type IN ('background', 'skin')),
+        type        TEXT NOT NULL CHECK (type IN ('background', 'skin', 'treasure')),
         name        TEXT NOT NULL,
         preview     TEXT NOT NULL,
         price_hive  NUMERIC(10,3) NOT NULL DEFAULT 0,
@@ -906,6 +906,15 @@ app.post('/api/migrate', async (req, res) => {
         created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `;
+    // Update type constraint to allow 'treasure'. Try dropping the auto-generated name first.
+    try { await sql`ALTER TABLE cosmetics DROP CONSTRAINT IF EXISTS cosmetics_type_check`; } catch {}
+    try {
+      await sql`ALTER TABLE cosmetics ADD CONSTRAINT cosmetics_type_check CHECK (type IN ('background', 'skin', 'treasure'))`;
+    } catch (e) {
+      if (!String(e?.message).toLowerCase().includes('already exists')) {
+        console.error('[migrate] type constraint:', e.message);
+      }
+    }
     await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
     await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
     await sql`
@@ -944,6 +953,12 @@ app.post('/api/migrate', async (req, res) => {
         ('skin_archmage',  'skin', 'Archmage',  '/heroes/shop/archmage.webp',  0, 'archmage'),
         ('skin_barbarian', 'skin', 'Barbarian', '/heroes/shop/barbarian.webp', 0, 'barbarian')
       ON CONFLICT (id) DO UPDATE SET preview = EXCLUDED.preview
+    `;
+
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive) VALUES
+        ('treasure_chest', 'treasure', 'Veteran Chest', '/images/treasures/chest.png', 2.000)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, price_hive = EXCLUDED.price_hive, type = EXCLUDED.type, preview = EXCLUDED.preview
     `;
 
     await sql`
@@ -1243,6 +1258,38 @@ app.get('/api/shop', async (_req, res) => {
 
 const DEFAULT_BG_IDS = ['bg_desert', 'bg_florest', 'bg_snow'];
 const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin_barbarian', 'skin_healer', 'skin_knight', 'skin_mage', 'skin_paladin'];
+
+async function seedTreasures() {
+  try {
+    // pg_get_constraintdef normalizes IN(...) to = ANY(ARRAY[...]), so search by 'background'
+    const checks = await sql`
+      SELECT conname FROM pg_constraint
+      WHERE conrelid = 'cosmetics'::regclass AND contype = 'c'
+        AND pg_get_constraintdef(oid) LIKE '%background%'
+    `;
+    for (const { conname } of checks) {
+      await sql(`ALTER TABLE cosmetics DROP CONSTRAINT IF EXISTS "${conname}"`);
+    }
+    try {
+      await sql(`ALTER TABLE cosmetics ADD CONSTRAINT cosmetics_type_check CHECK (type IN ('background', 'skin', 'treasure'))`);
+    } catch (e) {
+      if (!String(e?.message).toLowerCase().includes('already exists')) throw e;
+    }
+  } catch (e) {
+    console.warn('   Treasures: ⚠️  constraint update skipped:', e.message);
+  }
+  try {
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive)
+      VALUES ('treasure_chest', 'treasure', 'Veteran Chest', '/images/treasures/chest.png', 2.000)
+      ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name, price_hive = EXCLUDED.price_hive, type = EXCLUDED.type, preview = EXCLUDED.preview
+    `;
+    console.log('   Treasures: ✅ seeded');
+  } catch (e) {
+    console.error('   Treasures: ❌', e.message);
+  }
+}
 
 async function ensureDefaultCosmetics(username) {
   // Fast-path: se o jogador já foi inicializado, não faz nada.
@@ -2664,6 +2711,7 @@ httpServer.listen(PORT, () => {
   // Load the max-units cap from horizon_forge_details before accepting any
   // submit_team. Falls back to 5 if the table or row is missing.
   refreshMaxUnitsCap();
+  seedTreasures();
   // Rehydrate any matches that were active at the time of the previous shutdown.
   // Refunds get processed automatically for paid players whose match can no
   // longer be resumed (e.g. payment phase that timed out across the restart).
