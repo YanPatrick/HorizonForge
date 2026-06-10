@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import '@styles/shop.css'
 
 const FILTERS = [
   { key: 'background', label: '🌄 Backgrounds' },
   { key: 'skin', label: '✨ Skins' },
+  { key: 'treasure', label: '🎁 Treasures' },
 ]
 
 const SEARCH_PLACEHOLDER = {
   background: 'Search backgrounds...',
   skin: 'Search skins...',
+  treasure: 'Search treasures...',
 }
 
 const SORT_OPTIONS = [
@@ -276,7 +278,7 @@ export default function ShopView({ session, toast, heroData }) {
             </div>
           </div>
 
-          {filter === 'skin' && (
+          {(filter === 'skin' || filter === 'treasure') && (
             <div className="shop-slot-counter-bar">
               <label className="shop-owned-toggle">
                 <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
@@ -300,7 +302,7 @@ export default function ShopView({ session, toast, heroData }) {
             </div>
           )}
 
-          <div className={`shop-grid${filter === 'skin' ? ' shop-grid-skins' : ''}`}>
+          <div className={`shop-grid${filter === 'skin' ? ' shop-grid-skins' : filter === 'treasure' ? ' shop-grid-treasures' : ''}`}>
             {sorted.map(item => (
               <ShopItemCard
                 key={item.id}
@@ -355,6 +357,61 @@ export default function ShopView({ session, toast, heroData }) {
   )
 }
 
+const CHEST_DROPS = [
+  { label: 'Comum',    pct: '40%', cls: 'r-comum' },
+  { label: 'Incomum',  pct: '30%', cls: 'r-incomum' },
+  { label: 'Raro',     pct: '20%', cls: 'r-raro' },
+  { label: 'Épico',    pct: '8%',  cls: 'r-epico' },
+  { label: 'Lendário', pct: '2%',  cls: 'r-lendario' },
+]
+
+const TOOLTIP_W = 170
+const TOOLTIP_H = 140
+const TOOLTIP_GAP = 14
+
+function ChestTooltip({ x, y }) {
+  const showBelow = y < TOOLTIP_H + TOOLTIP_GAP + 16
+  let left = x - TOOLTIP_W / 2
+  if (left < 8) left = 8
+  if (left + TOOLTIP_W > window.innerWidth - 8) left = window.innerWidth - TOOLTIP_W - 8
+  const top = showBelow ? y + TOOLTIP_GAP : y - TOOLTIP_H - TOOLTIP_GAP
+  const arrowX = Math.max(12, Math.min(x - left, TOOLTIP_W - 12))
+
+  return (
+    <div
+      className="chest-tooltip-fixed"
+      data-dir={showBelow ? 'below' : 'above'}
+      style={{ left, top, '--arrow-x': `${arrowX}px` }}
+    >
+      <div className="chest-tooltip-title">Drop Rates</div>
+      {CHEST_DROPS.map(d => (
+        <div key={d.label} className="chest-tooltip-row">
+          <span className={d.cls}>{d.label}</span>
+          <span>{d.pct}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function TreasurePreview({ previewStyle }) {
+  const [cursor, setCursor] = useState(null)
+  const handleMove = useCallback(e => setCursor({ x: e.clientX, y: e.clientY }), [])
+  const handleLeave = useCallback(() => setCursor(null), [])
+
+  return (
+    <>
+      <div
+        className="shop-card-preview"
+        style={previewStyle}
+        onMouseMove={handleMove}
+        onMouseLeave={handleLeave}
+      />
+      {cursor && <ChestTooltip x={cursor.x} y={cursor.y} />}
+    </>
+  )
+}
+
 function getItemEquipState(item, equippedBgIds, equippedSkins) {
   if (item.type === 'background') return equippedBgIds.has(item.id)
   if (item.type === 'skin') return equippedSkins[item.hero_cid]?.skin_id === item.id
@@ -379,13 +436,16 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
   const isEquipped = getItemEquipState(item, equippedBgIds, equippedSkins)
   const canEquip = item.type !== 'background' || equippedBgs.length < 4
   const isEquipping = equipping === item.id
-  const previewStyle = { backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+  const bgSize = item.type === 'treasure' ? 'contain' : 'cover'
+  const previewStyle = { backgroundImage: `url(${item.preview})`, backgroundSize: bgSize, backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
 
   return (
     <div className={`shop-card${isOwned ? ' shop-card-owned' : ''}${isEquipped ? ' shop-card-equipped' : ''}`}>
       {item.type === 'skin' && !item.preview
         ? <SkinPreview item={item} heroData={heroData} className="shop-card-preview" />
-        : <div className="shop-card-preview" style={previewStyle} />
+        : item.type === 'treasure'
+          ? <TreasurePreview previewStyle={previewStyle} />
+          : <div className="shop-card-preview" style={previewStyle} />
       }
       <div className="shop-card-body">
         <div className="shop-card-name">{item.name}</div>
@@ -396,15 +456,18 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
           <div className="shop-card-desc">{item.description}</div>
         )}
         <div className="shop-card-actions">
-          <button
-            className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
-            disabled={buyDisabled}
-            onClick={onBuy}
-            title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-          >
-            {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
-          </button>
-          {isOwned && (
+          {item.type === 'treasure' && !isOwned
+            ? <button className="shop-card-btn soon" disabled>Soon</button>
+            : <button
+                className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
+                disabled={buyDisabled}
+                onClick={onBuy}
+                title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
+              >
+                {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
+              </button>
+          }
+          {isOwned && item.type !== 'treasure' && (
             <button
               className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
               disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
@@ -435,41 +498,45 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
       }
       <div className="shop-row-info">
         <div className="shop-row-name">{item.name}</div>
-        <div className="shop-row-type">{item.type === 'background' ? 'Background' : `Skin · ${item.hero_cid || ''}`}</div>
+        <div className="shop-row-type">
+          {item.type === 'background' ? 'Background' : item.type === 'treasure' ? 'Treasure' : `Skin · ${item.hero_cid || ''}`}
+        </div>
       </div>
       <div className="shop-row-right">
         {isOwned
           ? <div className={`shop-row-state${isEquipped ? ' equipped' : ''}`}>
               {isEquipped ? '✦ Equipped' : '✓ Owned'}
             </div>
-          : <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive.toFixed(3)} HIVE`}</div>
+          : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive.toFixed(3)} HIVE`}</div>
         }
-        {isOwned
-          ? isEquipped
-            ? <button
-                className="shop-row-btn unequip"
-                disabled={isEquipping || !isHive}
-                onClick={onUnequip}
-                title={!isHive ? 'Login to equip cosmetics.' : undefined}
+        {item.type === 'treasure' && !isOwned
+          ? <button className="shop-row-btn soon" disabled>Soon</button>
+          : isOwned && item.type !== 'treasure'
+            ? isEquipped
+              ? <button
+                  className="shop-row-btn unequip"
+                  disabled={isEquipping || !isHive}
+                  onClick={onUnequip}
+                  title={!isHive ? 'Login to equip cosmetics.' : undefined}
+                >
+                  {isEquipping ? '⌛' : 'Remove'}
+                </button>
+              : <button
+                  className="shop-row-btn equip"
+                  disabled={isEquipping || !canEquip || !isHive}
+                  onClick={onEquip}
+                  title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
+                >
+                  {isEquipping ? '⌛' : 'Equip'}
+                </button>
+            : !isOwned && <button
+                className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
+                disabled={buyDisabled}
+                onClick={onBuy}
+                title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
               >
-                {isEquipping ? '⌛' : 'Remove'}
+                {isClaiming ? '⌛' : isFree ? 'Get Free' : 'Buy'}
               </button>
-            : <button
-                className="shop-row-btn equip"
-                disabled={isEquipping || !canEquip || !isHive}
-                onClick={onEquip}
-                title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
-              >
-                {isEquipping ? '⌛' : 'Equip'}
-              </button>
-          : <button
-              className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
-              disabled={buyDisabled}
-              onClick={onBuy}
-              title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-            >
-              {isClaiming ? '⌛' : isFree ? 'Get Free' : 'Buy'}
-            </button>
         }
       </div>
     </div>
