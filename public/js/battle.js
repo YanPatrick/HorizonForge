@@ -262,6 +262,9 @@ async function initGame() {
       const _fids = _cfg.formationHeroIds;
       _deckPool =
         Array.isArray(_fids) && _fids.length ? [..._fids] : null;
+      if (_cfg.mode === "campaign") {
+        window._CAMPAIGN_CFG = _cfg;
+      }
       if (_cfg.mode === "pvp") {
         pvpInit(_cfg);
       } else {
@@ -1043,28 +1046,27 @@ function startBattle() {
     "bbattle",
   );
   render();
-  // Apply flat equipment bonuses to both player and bot units.
-  // Bot units use the player's gear totals for their respective hero classes
-  // so the bot's damage scales with player progression (same gear level).
+  // Apply flat equipment bonuses: player's board gets item bonuses, enemy gets base stats only.
   const _gear = window.HF_gear || {};
   if (!window.HF_gear || Object.keys(_gear).length === 0) {
     console.warn('[startBattle] window.HF_gear is empty — gear bonuses will not be applied. Check gear API fetch timing.');
   }
-  const _applyGear = (u) => {
+  const _applyGear = (u, gear) => {
     if (!u) return;
     const base = C[u.cid]?.levels?.[u.lv];
     if (!base) {
       console.warn(`[startBattle] Missing level data for cid="${u.cid}" lv=${u.lv} — unit stats not updated.`);
       return;
     }
-    const eq = _gear[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+    const eq = gear[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
     u.atk = Math.floor(base.atk) + eq.atk_bonus;
     u.maxHp = base.max_hp + eq.hp_bonus;
     u.hp = u.maxHp;
     u.initiative = (base.initiative || 0) + eq.spd_bonus;
   };
-  G.board.forEach(_applyGear);
-  G.enemy.forEach(_applyGear);
+  G.board.forEach(u => _applyGear(u, _gear));
+  // Enemy in bot/campaign: base stats only — player gear must not apply to the opponent
+  G.enemy.forEach(u => _applyGear(u, {}));
   const res = simulate(G.board, G.enemy);
   window.HFBot?.learnFromBattle(res.evs, res.umap);
   playback(res);
@@ -1619,6 +1621,9 @@ function endBattle(w, stats) {
         }
         window.location.href = "/lobby";
       };
+    } else if (window._CAMPAIGN_CFG) {
+      nb.textContent = pw ? "🏆 Return to Campaign" : "🔄 Try Again";
+      nb.onclick = () => { window.location.href = '/lobby'; };
     } else {
       nb.textContent = "🌟 Next Duel";
       nb.onclick = nextDuel;
@@ -1672,6 +1677,7 @@ function _dispatchDuelResult(pw) {
       shortName: (u.name || "").slice(0, 4),
       alive: u.hp > 0,
     }));
+  const isCampaign = !!window._CAMPAIGN_CFG;
   window.showDuelResult?.({
     pw,
     scoreP: G.duelScore.p,
@@ -1687,11 +1693,13 @@ function _dispatchDuelResult(pw) {
     // PvP: final state from umap. AI: fallback to initial enemy board.
     teamE: summarizeUnits(G.lastEnemySnap || G.duelEnemy),
     isPvP,
+    isCampaign,
+    campaignStage: isCampaign ? window._CAMPAIGN_CFG.stage : null,
     wager: isPvP ? (window._PVP.wager || 0) : 0,
   });
 }
 
-// Next-duel button click: PvP returns to lobby; AI proceeds to next duel.
+// Next-duel button click: PvP/Campaign returns to lobby; AI proceeds to next duel.
 window.duelResultNext = function () {
   if (window._PVP) {
     if (window._PVP.socket) {
@@ -1699,6 +1707,8 @@ window.duelResultNext = function () {
       window._PVP.socket.disconnect();
     }
     window.location.href = "/lobby";
+  } else if (window._CAMPAIGN_CFG) {
+    window.location.href = "/lobby?tab=campaign";
   } else {
     nextDuel();
   }
@@ -2005,7 +2015,11 @@ function startGame(fmt, pvpMode = false) {
   window.setBattleFmt?.(`BO${fmt}`);
   document.getElementById("log").innerHTML = "";
   if (!pvpMode) {
-    window.HFBot.initDuel(_deckPool);
+    if (window._CAMPAIGN_CFG?.campaignEnemies) {
+      window.HFBot.initCampaign(window._CAMPAIGN_CFG.campaignEnemies);
+    } else {
+      window.HFBot.initDuel(_deckPool);
+    }
     validateGameState();
     G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
   }
@@ -2070,8 +2084,12 @@ function nextBattle() {
   G.fieldDrag = null;
   genShop();
   if (!window._PVP) {
-    window.HFBot.nextBattle(G.lastBattleResult === "win" ? "loss" : "win");
-    window.HFBot.runTurn();
+    if (window._CAMPAIGN_CFG?.campaignEnemies) {
+      window.HFBot.nextCampaignBattle();
+    } else {
+      window.HFBot.nextBattle(G.lastBattleResult === "win" ? "loss" : "win");
+      window.HFBot.runTurn();
+    }
     G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
   } else {
     // Hide opponent's board during shop phase — only revealed when battle starts.
@@ -2151,7 +2169,11 @@ function nextDuel() {
     mergesE: 0,
     battles: [],
   };
-  window.HFBot.initDuel(_deckPool);
+  if (window._CAMPAIGN_CFG?.campaignEnemies) {
+    window.HFBot.initCampaign(window._CAMPAIGN_CFG.campaignEnemies);
+  } else {
+    window.HFBot.initDuel(_deckPool);
+  }
   G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u } : null));
   G.enemy = Array(9).fill(null);
   genShop();

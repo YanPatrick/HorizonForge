@@ -76,7 +76,8 @@
 
   // ── Dependencies ──────────────────────────────────────────────────────────
   let _deps = null;
-  let _mirrorCids = null; // player's formation cids — bot is restricted to this pool
+  let _mirrorCids = null;    // player's formation cids — bot is restricted to this pool
+  let _campaignEnemies = null; // fixed enemy lineup for campaign mode
   function deps() {
     if (!_deps) throw new Error("HFBot.init() must be called before any other HFBot method");
     return _deps;
@@ -260,15 +261,45 @@
     BOT = makeInitialBOT();
     BOT.gold = deps().START_GOLD();
     _mirrorCids = (Array.isArray(playerCids) && playerCids.length) ? [...playerCids] : null;
+    _campaignEnemies = null;
     botRunTurn();
+  }
+
+  function botInitCampaign(enemies) {
+    BOT = makeInitialBOT();
+    _mirrorCids = null;
+    _campaignEnemies = Array.isArray(enemies) ? [...enemies] : null;
+    if (!_campaignEnemies) return;
+    const { mkUnit } = deps();
+    for (const { cid, level } of _campaignEnemies) {
+      const u = mkUnit(cid, level || 1);
+      u.stack = 1;
+      BOT.bench.push(u);
+    }
+    botPosition();
+  }
+
+  function botNextCampaignBattle() {
+    if (!_campaignEnemies) return;
+    BOT.bench = [];
+    BOT.board = Array(9).fill(null);
+    const { mkUnit } = deps();
+    for (const { cid, level } of _campaignEnemies) {
+      const u = mkUnit(cid, level || 1);
+      u.stack = 1;
+      BOT.bench.push(u);
+    }
+    botPosition();
   }
 
   // ── Public API ────────────────────────────────────────────────────────────
   window.HFBot = {
     init,
     initDuel: botInitDuel,
+    initCampaign: botInitCampaign,
     runTurn: botRunTurn,
     nextBattle: botNextBattle,
+    nextCampaignBattle: botNextCampaignBattle,
     learnFromBattle: botLearnFromBattle,
     getBoard: () => BOT.board,
   };
