@@ -213,7 +213,7 @@ export default function GrimoireView() {
                   <div>
                     <strong>PVP Mode (Cumulative):</strong> The arena retains at least 10% fee from every HIVE wager. 
                     This fee fills your <span className="gr-hl">Chest Meter</span>. 
-                    When you accumulate <strong>2.000 HIVE</strong> in fees <em>(the price of the Basic Chest)</em>, you automatically receive a <strong>Veteran Chest</strong>. 
+                    When you accumulate <strong>2 HIVE</strong> in fees <em>(the price of the Veteran Chest)</em>, you automatically receive a <strong>Veteran Chest</strong>. 
                     <em> (A winning in a 10 HIVE match with Payout Preference set to Hive Liquid grants a chest instantly!)</em>
                   </div>
                 </div>
