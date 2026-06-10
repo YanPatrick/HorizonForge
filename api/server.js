@@ -373,11 +373,9 @@ async function loadStatsTable() {
       cb.crit_rate::float,
       cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
       cb.primary_attr,
-      cb.skill_attr,
       cb.weapon_bonus,
-      cb.armor_bonus,
-      cb.spd_offset::float,
-      cb.sp_bonus::float
+      cb.skill_power::float,
+      cb.spd_offset::float
     FROM characters c
     JOIN characters_base cb ON cb.character_id = c.id
     CROSS JOIN level_scale ls
@@ -398,13 +396,14 @@ async function loadStatsTable() {
     map.get(r.cid).levels[r.level] = {
       max_hp:      st.max_hp,
       atk:         st.atk,
-      atk_speed:   st.atk_speed,
+      initiative:  st.initiative,
       crit_chance: r.crit_chance,
       crit_rate:   r.crit_rate,
       skill_power: st.skill_power,
+      evasion:     st.evasion,
+      armor:       st.armor,
       dex:         st.dex,
       wis:         st.wis,
-      armor:       st.armor,
     };
   }
   return map;
@@ -462,9 +461,9 @@ function stripBoard(board) {
   return board.map(u => u ? { cid: u.cid, lv: u.lv, id: u.id } : null);
 }
 
-// Build a simulator-ready board by joining the trusted (cid, lv, id) tuple
-// with the authoritative stats from the database.
-async function materializeBoard(board) {
+// Build a simulator-ready board: joins (cid, lv, id) with DB stats and applies
+// flat equipment bonuses from hero_equipment for the given player.
+async function materializeBoard(board, gearTotals = {}) {
   const stats = await getStatsTable();
   return board.map((u) => {
     if (!u) return null;
@@ -472,25 +471,72 @@ async function materializeBoard(board) {
     if (!ch) throw new Error(`Unknown character cid: ${u.cid}`);
     const lvStats = ch.levels[u.lv];
     if (!lvStats) throw new Error(`No stats for ${u.cid} at level ${u.lv}`);
+    const eq = gearTotals[u.cid] ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+    const maxHp = lvStats.max_hp + eq.hp_bonus;
     return {
-      id: u.id,
-      cid: u.cid,
-      lv: u.lv,
-      name: ch.name,
-      ico: ch.icon,
-      tp: ch.target_type,
-      atk: Math.floor(lvStats.atk),
-      maxHp: lvStats.max_hp,
-      hp: lvStats.max_hp,
-      spd: lvStats.atk_speed,
+      id:         u.id,
+      cid:        u.cid,
+      lv:         u.lv,
+      name:       ch.name,
+      ico:        ch.icon,
+      tp:         ch.target_type,
+      atk:        Math.floor(lvStats.atk) + eq.atk_bonus,
+      maxHp,
+      hp:         maxHp,
+      initiative: lvStats.initiative + eq.spd_bonus,   // bônus D20 de iniciativa por round
       critChance: lvStats.crit_chance,
-      critRate: lvStats.crit_rate,
+      critRate:   lvStats.crit_rate,
       skillPower: lvStats.skill_power,
-      dex: lvStats.dex,
-      wis: lvStats.wis,
-      armor: lvStats.armor,
+      evasion:    lvStats.evasion,      // % flat de evasão (máx 5% base)
+      armor:      lvStats.armor ?? 0,  // armadura base (sempre 0 — vem de item equipado)
+      dex:        lvStats.dex,          // DEX escalado — usado para absorção futura
+      wis:        lvStats.wis,          // WIS escalado — absorve dano mágico
     };
   });
+}
+
+// ── Equipment helpers ──────────────────────────────────────────────────────
+
+// Lazily inserts starter items into hero_equipment for any hero+slot
+// not yet initialized for this player. Idempotent — safe to call multiple times.
+async function ensureStarterGear(player) {
+  await sql`
+    INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
+    SELECT ${player}, csl.character_cid, csl.slot_type, csl.item_id
+    FROM character_starter_loadout csl
+    WHERE NOT EXISTS (
+      SELECT 1 FROM hero_equipment he
+      WHERE he.player     = ${player}
+        AND he.character_cid = csl.character_cid
+        AND he.slot_type     = csl.slot_type
+    )
+    ON CONFLICT DO NOTHING
+  `;
+}
+
+// Returns { [cid]: { atk_bonus, hp_bonus, spd_bonus } } for all heroes
+// that have at least one item equipped for the given player.
+async function getEquipmentBonuses(player) {
+  await ensureStarterGear(player);
+  const rows = await sql`
+    SELECT he.character_cid,
+           SUM(i.atk_bonus)::int          AS atk_bonus,
+           SUM(i.hp_bonus)::int           AS hp_bonus,
+           SUM(i.spd_bonus)::float        AS spd_bonus
+    FROM hero_equipment he
+    JOIN items i ON i.id = he.item_id
+    WHERE he.player = ${player}
+    GROUP BY he.character_cid
+  `;
+  const map = {};
+  for (const r of rows) {
+    map[r.character_cid] = {
+      atk_bonus: Number(r.atk_bonus) || 0,
+      hp_bonus:  Number(r.hp_bonus)  || 0,
+      spd_bonus: Number(r.spd_bonus) || 0,
+    };
+  }
+  return map;
 }
 
 // ── Routes ────────────────────────────────────────────────
@@ -500,20 +546,18 @@ async function materializeBoard(board) {
  * Stats calculados dinamicamente: characters_base × level_scale
  *
  * Fórmula por nível (calcStats):
- *   max_hp      = (con*20 + str*10 + armor_bonus)  × ls.multiplier
- *   atk         = (primary_attr*5 + weapon_bonus)  × ls.multiplier
- *   atk_speed   = (dex*0.3 + spd_offset)           × ls.multiplier
- *   crit_chance = base.crit_chance  (fixo)
- *   crit_rate   = base.crit_rate    (fixo)
- *   skill_power = (scaled_skill_attr / 2 / 100) + sp_bonus
+ *   max_hp      = con × 20 × m                        (apenas CON — itens adicionam HP)
+ *   atk         = primary_attr × 5 × m + weapon_bonus
+ *   initiative  = spd_offset                          (bônus fixo somado ao D20 por round)
+ *   skill_power = base.skill_power × m                (valor base definido por herói)
+ *   evasion     = max(0, floor((DEX_base − 10) / 2)) %  (máx 5% sem itens)
+ *   armor       = 0 por padrão                        (vem de item equipado)
  *
  * Retorno (mesmo contrato do frontend):
  * { cid, name, icon, role, color_hex, bg_gradient, target_type,
  *   skill: { key, name, description, type },
  *   levels: { 1: {...}, 2: {...}, 3: {...}, 4: {...}, 5: {...} } }
  */
-const HEROIC_SCALE = 10_000;
-
 function trunc4(v) {
   return Math.trunc(v * 10000) / 10000;
 }
@@ -525,28 +569,36 @@ function calcStats(base, multiplier) {
   const con = Number(base.con) * m;
   const int = Number(base.int) * m;
   const wis = Number(base.wis) * m;
-  const cha = Number(base.cha) * m;
-  const attrMap = { str, dex, con, int, wis, cha };
+  // cha: reservado para uso futuro
+  const attrMap = { str, dex, con, int, wis };
   const p = attrMap[base.primary_attr];
   if (p === undefined)
     throw new Error(`calcStats: invalid primary_attr="${base.primary_attr}"`);
-  const sk = attrMap[base.skill_attr];
-  if (sk === undefined)
-    throw new Error(`calcStats: invalid skill_attr="${base.skill_attr}"`);
+
+  // Evasion: bônus de DEX base (sem multiplicador de nível) → max 5% sem itens
+  const evasionMod = Math.max(0, Math.floor((Number(base.dex) - 10) / 2));
+
   return {
-    atk: Math.floor(
-      p * (5 + (p - 5) / HEROIC_SCALE) + Number(base.weapon_bonus)
-    ),
-    max_hp: Math.floor(
-      con * (20 + (con - 5) / HEROIC_SCALE) +
-      str * (10 + (str - 5) / HEROIC_SCALE)
-    ),
-    atk_speed:
-      Math.exp(Math.log(dex) + Math.log(0.3)) + Number(base.spd_offset),
-    skill_power: trunc4(sk / 2 / 100 + Number(base.sp_bonus)),
-    dex:   dex,
-    wis:   wis,
-    armor: Number(base.armor_bonus),
+    // HP: apenas CON × 20 × m  (itens adicionam HP separadamente)
+    max_hp: Math.floor(con * 20),
+
+    // ATK: atributo primário × 5 × m  +  bônus de arma base (weapon_bonus)
+    atk: Math.floor(p * 5 + Number(base.weapon_bonus)),
+
+    // Bônus de iniciativa — somado ao D20 no início de cada round
+    initiative: Number(base.spd_offset),
+
+    // Skill power: valor base × m  (definido por herói em characters_base.skill_power)
+    skill_power: trunc4(Number(base.skill_power) * m),
+
+    // Evasão: 1% por ponto de modificador de DEX, mínimo 0%
+    evasion: evasionMod / 100,
+
+    // Armadura: sempre 0 da ficha do herói — vem de item equipado
+    armor: 0,
+
+    dex: dex,
+    wis: wis,
   };
 }
 
@@ -561,9 +613,10 @@ app.get('/api/characters', async (_req, res) => {
         ls.level, ls.multiplier::float,
         cb.crit_chance::float, cb.crit_rate::float,
         cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.cha,
-        cb.primary_attr, cb.skill_attr,
-        cb.weapon_bonus, cb.armor_bonus,
-        cb.spd_offset::float, cb.sp_bonus::float
+        cb.primary_attr,
+        cb.weapon_bonus,
+        cb.skill_power::float,
+        cb.spd_offset::float
       FROM characters c
       JOIN characters_base cb ON cb.character_id = c.id
       JOIN skills          sk ON sk.character_id = c.id
@@ -585,10 +638,9 @@ app.get('/api/characters', async (_req, res) => {
           attrs: {
             str: Number(r.str), dex: Number(r.dex), con: Number(r.con),
             int: Number(r.int), wis: Number(r.wis), cha: Number(r.cha),
-            primary: r.primary_attr, skill: r.skill_attr,
+            primary:      r.primary_attr,
             weapon_bonus: Number(r.weapon_bonus),
-            armor_bonus:  Number(r.armor_bonus),
-            spd_offset:   Number(r.spd_offset),
+            initiative:   Number(r.spd_offset),
           },
           levels: {},
         };
@@ -597,13 +649,14 @@ app.get('/api/characters', async (_req, res) => {
       map[r.cid].levels[r.level] = {
         max_hp:      st.max_hp,
         atk:         st.atk,
-        atk_speed:   st.atk_speed,
+        initiative:  st.initiative,
         crit_chance: r.crit_chance,
         crit_rate:   r.crit_rate,
         skill_power: st.skill_power,
+        evasion:     st.evasion,
+        armor:       st.armor,
         dex:         st.dex,
         wis:         st.wis,
-        armor:       st.armor,
       };
     }
     res.json({ ok: true, characters: Object.values(map) });
@@ -948,6 +1001,191 @@ function authFromRequest(req) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   return verifyToken(token);
 }
+
+/**
+ * GET /api/gear?player=X
+ * Returns equipped gear (all slots, all heroes) for the given player.
+ * Lazily initializes starter items on first call.
+ * Response: { ok, gear: { [cid]: { slots: { [slot_type]: itemObj }, totals: { atk_bonus, hp_bonus, spd_bonus } } } }
+ */
+app.get('/api/gear', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+
+  // Guests (no token): return the universal starter loadout read-only, no writes to hero_equipment
+  if (!authedUser) {
+    try {
+      const rows = await sql`
+        SELECT csl.character_cid, csl.slot_type,
+               i.id, i.name, i.description, i.rarity,
+               i.atk_bonus, i.hp_bonus, i.spd_bonus
+        FROM character_starter_loadout csl
+        JOIN items i ON i.id = csl.item_id
+        ORDER BY csl.character_cid, csl.slot_type
+      `;
+      const gear = {};
+      for (const r of rows) {
+        if (!gear[r.character_cid]) {
+          gear[r.character_cid] = { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } };
+        }
+        gear[r.character_cid].slots[r.slot_type] = {
+          id:          r.id,
+          name:        r.name,
+          description: r.description,
+          rarity:      r.rarity,
+          slot_type:   r.slot_type,
+          atk_bonus:   Number(r.atk_bonus),
+          hp_bonus:    Number(r.hp_bonus),
+          spd_bonus:   Number(r.spd_bonus),
+        };
+        gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
+        gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
+        gear[r.character_cid].totals.spd_bonus += Number(r.spd_bonus);
+      }
+      return res.json({ ok: true, gear });
+    } catch (err) {
+      console.error('[GET /api/gear guest]', err.message);
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
+  if (authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await ensureStarterGear(player);
+    const rows = await sql`
+      SELECT he.character_cid, he.slot_type,
+             i.id, i.name, i.description, i.rarity,
+             i.atk_bonus, i.hp_bonus, i.spd_bonus
+      FROM hero_equipment he
+      JOIN items i ON i.id = he.item_id
+      WHERE he.player = ${player}
+      ORDER BY he.character_cid, he.slot_type
+    `;
+    const gear = {};
+    for (const r of rows) {
+      if (!gear[r.character_cid]) {
+        gear[r.character_cid] = {
+          slots: {},
+          totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 },
+        };
+      }
+      gear[r.character_cid].slots[r.slot_type] = {
+        id:          r.id,
+        name:        r.name,
+        description: r.description,
+        rarity:      r.rarity,
+        slot_type:   r.slot_type,
+        atk_bonus:   Number(r.atk_bonus),
+        hp_bonus:    Number(r.hp_bonus),
+        spd_bonus:   Number(r.spd_bonus),
+      };
+      gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
+      gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
+      gear[r.character_cid].totals.spd_bonus += Number(r.spd_bonus);
+    }
+    res.json({ ok: true, gear });
+  } catch (err) {
+    console.error('[GET /api/gear]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * PUT /api/gear/equip
+ * Body: { player, character_cid, slot_type, item_id }
+ * Equips an item into a hero's slot (insert or replace).
+ */
+app.put('/api/gear/equip', async (req, res) => {
+  const { player, character_cid, slot_type, item_id } = req.body;
+  if (!player || !character_cid || !slot_type || !item_id) {
+    return res.status(400).json({ ok: false, error: 'player, character_cid, slot_type, item_id required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Verify item exists
+    const [item] = await sql`SELECT id, name, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE id = ${item_id}`;
+    if (!item) return res.status(404).json({ ok: false, error: 'Item not found' });
+    if (item.slot_type !== slot_type) {
+      return res.status(400).json({ ok: false, error: `Item does not fit slot '${slot_type}' (item slot: '${item.slot_type}')` });
+    }
+
+    await sql`
+      INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
+      VALUES (${player}, ${character_cid}, ${slot_type}, ${item_id})
+      ON CONFLICT (player, character_cid, slot_type)
+      DO UPDATE SET item_id = ${item_id}, equipped_at = now()
+    `;
+    res.json({ ok: true, slot: { ...item, slot_type } });
+  } catch (err) {
+    console.error('[PUT /api/gear/equip]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/gear/unequip
+ * Body: { player, character_cid, slot_type }
+ * - If this slot has a starter item in character_starter_loadout:
+ *     - Current item IS starter → 403 (cannot unequip starter)
+ *     - Current item is NOT starter → revert to starter item
+ * - If slot has no starter → delete the row (slot becomes empty)
+ */
+app.post('/api/gear/unequip', async (req, res) => {
+  const { player, character_cid, slot_type } = req.body;
+  if (!player || !character_cid || !slot_type) {
+    return res.status(400).json({ ok: false, error: 'player, character_cid, slot_type required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Check current equipped item
+    const [current] = await sql`
+      SELECT he.item_id, i.rarity
+      FROM hero_equipment he
+      JOIN items i ON i.id = he.item_id
+      WHERE he.player = ${player} AND he.character_cid = ${character_cid} AND he.slot_type = ${slot_type}
+    `;
+    if (!current) return res.status(404).json({ ok: false, error: 'No item equipped in this slot' });
+
+    // Check if this slot has a starter default
+    const [starter] = await sql`
+      SELECT item_id FROM character_starter_loadout
+      WHERE character_cid = ${character_cid} AND slot_type = ${slot_type}
+    `;
+
+    if (starter) {
+      if (Number(current.item_id) === Number(starter.item_id)) {
+        return res.status(403).json({ ok: false, error: 'Cannot unequip a starter item' });
+      }
+      // Revert to starter
+      await sql`
+        UPDATE hero_equipment
+        SET item_id = ${starter.item_id}, equipped_at = now()
+        WHERE player = ${player} AND character_cid = ${character_cid} AND slot_type = ${slot_type}
+      `;
+      const [starterItem] = await sql`SELECT id, name, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE id = ${starter.item_id}`;
+      return res.json({ ok: true, slot: starterItem });
+    }
+
+    // No starter for this slot — empty it
+    await sql`
+      DELETE FROM hero_equipment
+      WHERE player = ${player} AND character_cid = ${character_cid} AND slot_type = ${slot_type}
+    `;
+    res.json({ ok: true, slot: null });
+  } catch (err) {
+    console.error('[POST /api/gear/unequip]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 /**
  * GET /api/formations?player=X
@@ -1791,8 +2029,12 @@ async function resolveBattleRound(matchId) {
   try {
     // Reconstruct stat-bearing units from the database — never trust stats
     // sent by the client. The client only supplied (cid, lv, id) per slot.
-    p1Board = await materializeBoard(p1Stripped);
-    p2Board = await materializeBoard(p2Stripped);
+    const [p1Gear, p2Gear] = await Promise.all([
+      getEquipmentBonuses(m.p1),
+      getEquipmentBonuses(m.p2),
+    ]);
+    p1Board = await materializeBoard(p1Stripped, p1Gear);
+    p2Board = await materializeBoard(p2Stripped, p2Gear);
     // p1 submits normally (front = col 2, simulation expects player front at col 2 ✓)
     // p2 builds on their own pfield (front = col 2) but simulation expects enemy front at col 0,
     // so we mirror p2's board before simulating.

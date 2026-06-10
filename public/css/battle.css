@@ -721,7 +721,7 @@
       }
 
       .unit.hit {
-        animation-duration: calc(0.3s * var(--battle-speed-mult));
+        animation-duration: calc(0.38s * var(--battle-speed-mult));
       }
 
       .unit.dead {
@@ -1698,21 +1698,16 @@
 
       /* Battle animations */
       .unit.hit {
-        animation: hf 0.3s;
+        animation: hf 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
       }
 
       @keyframes hf {
-        0% {
-          filter: brightness(1);
-        }
-
-        35% {
-          filter: brightness(3.5) saturate(0);
-        }
-
-        100% {
-          filter: brightness(1);
-        }
+        0%   { transform: translateX(0);    filter: brightness(1); }
+        20%  { transform: translateX(-6px); filter: brightness(2.8) saturate(0.3); }
+        40%  { transform: translateX(5px);  filter: brightness(1.8); }
+        60%  { transform: translateX(-3px); filter: brightness(1.2); }
+        80%  { transform: translateX(2px);  filter: brightness(1); }
+        100% { transform: translateX(0);    filter: brightness(1); }
       }
 
       .unit.dead {
@@ -2018,10 +2013,17 @@
       }
 
       .scard.broke {
-        opacity: 0.42;
-        filter: grayscale(0.5);
+        opacity: 0.32;
+        filter: grayscale(0.85) brightness(0.55);
         cursor: not-allowed;
         pointer-events: none;
+        /* kill card-deal and any other entry animation so opacity: 0.32 is not overridden */
+        animation: none !important;
+        transition:
+          left 0.38s cubic-bezier(0.22, 0.68, 0, 1.2),
+          opacity 0s,
+          filter 0s,
+          transform 0.18s ease;
       }
 
       .scard.broke .caction {
@@ -2059,14 +2061,19 @@
 
       .scard.combo-card.broke {
         animation: none !important;
-        border-color: rgba(68, 255, 136, 0.18) !important;
+        border-color: rgba(68, 255, 136, 0.15) !important;
         box-shadow: none !important;
-        filter: grayscale(0.55) brightness(0.7);
+        filter: grayscale(0.85) brightness(0.55);
+        transition:
+          left 0.38s cubic-bezier(0.22, 0.68, 0, 1.2),
+          opacity 0s,
+          filter 0s,
+          transform 0.18s ease;
       }
 
       .scard.combo-card.broke.combo-lift {
         transform: translateY(-9px) scale(1.03);
-        filter: grayscale(0.55) brightness(0.85);
+        filter: grayscale(0.85) brightness(0.65);
       }
 
       .scard.combo-card.combo-lift {
@@ -2630,6 +2637,21 @@
       .lglancing {
         color: rgba(180, 180, 180, 0.6);
         font-style: italic;
+      }
+
+      .lrnd {
+        color: rgba(255, 255, 255, 0.28);
+        font-style: italic;
+        font-size: 11px;
+        text-align: center;
+        letter-spacing: 0.05em;
+        padding: 2px 0;
+      }
+
+      .lsep {
+        margin-top: 8px;
+        padding-top: 6px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .lside-p {
@@ -3205,8 +3227,28 @@
         line-height: 1.6;
       }
 
+      .stp-skill-title {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .stp-atk-tag {
+        display: inline-block;
+        align-self: flex-start;
+        font-size: 7px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: rgba(80, 160, 255, 0.10);
+        color: rgba(140, 200, 255, 0.65);
+        border: 1px solid rgba(100, 170, 255, 0.20);
+      }
+
       .stp-power {
-        margin: 3px 11px 11px;
+        margin: 2px 11px 10px;
         background: linear-gradient(135deg,
             rgba(100, 50, 220, 0.22),
             rgba(55, 28, 130, 0.14));
@@ -3776,7 +3818,7 @@
          infinite throb animation. This selector is placed after the
          low-hp rule to increase precedence. */
       .unit.low-hp.hit {
-        animation: hf 0.3s;
+        animation: hf 0.38s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
       }
 
       @keyframes low-hp-throb {

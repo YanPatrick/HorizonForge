@@ -76,6 +76,7 @@
 
   // ── Dependencies ──────────────────────────────────────────────────────────
   let _deps = null;
+  let _mirrorCids = null; // player's formation cids — bot is restricted to this pool
   function deps() {
     if (!_deps) throw new Error("HFBot.init() must be called before any other HFBot method");
     return _deps;
@@ -105,7 +106,12 @@
 
   function botGenShop() {
     const { mkUnit, randCid } = deps();
-    BOT.shop = Array.from({ length: 5 }, () => mkUnit(randCid(), 1));
+    BOT.shop = Array.from({ length: 5 }, () => {
+      const cid = _mirrorCids
+        ? _mirrorCids[Math.floor(Math.random() * _mirrorCids.length)]
+        : randCid();
+      return mkUnit(cid, 1);
+    });
   }
 
   function botScoreCard(cid) {
@@ -250,9 +256,10 @@
     botPosition();
   }
 
-  function botInitDuel() {
+  function botInitDuel(playerCids) {
     BOT = makeInitialBOT();
     BOT.gold = deps().START_GOLD();
+    _mirrorCids = (Array.isArray(playerCids) && playerCids.length) ? [...playerCids] : null;
     botRunTurn();
   }
 

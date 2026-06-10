@@ -1847,6 +1847,13 @@
       .lv.active {
         display: flex;
         flex-direction: column;
+        /* #4 — smooth view transition */
+        animation: view-in 0.28s cubic-bezier(0.22, 0.68, 0, 1.15) both;
+      }
+
+      @keyframes view-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
 
       #view-home {
@@ -5549,6 +5556,13 @@
       .lv.active {
         display: flex;
         flex-direction: column;
+        /* #4 — smooth view transition */
+        animation: view-in 0.28s cubic-bezier(0.22, 0.68, 0, 1.15) both;
+      }
+
+      @keyframes view-in {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
 
       #view-home {
@@ -7478,12 +7492,13 @@
 
 .gear-container {
   display: grid;
-  grid-template-columns: repeat(3, 75px); /* 3 colunas fixas */
-  grid-template-rows: repeat(4, 75px);    /* 4 linhas fixas */
+  grid-template-columns: repeat(3, 75px);
+  grid-template-rows: repeat(4, 75px);
   gap: 15px;
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
+  overflow: visible;
 }
 
 .gear-slot {
@@ -7499,7 +7514,21 @@
   position: relative;
   opacity: 0.5;
   filter: grayscale(0.8);
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+/* Starter item — locked, red border */
+.gear-slot.gear-slot--starter {
+  opacity: 1;
+  filter: grayscale(0);
+  border-color: rgba(210, 55, 55, 0.7);
+}
+
+/* Equipped non-starter — swappable in future, green border */
+.gear-slot.gear-slot--equipped {
+  opacity: 1;
+  filter: grayscale(0);
+  border-color: rgba(50, 200, 80, 0.7);
 }
 
 /* Legendas dos slots (ex: ELMO, ARMA) */
@@ -7513,12 +7542,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Slot da Armadura (Maior e mais brilhante no centro) */
-.gear-slot.chest {
-  width: 70px;
-  height: 70px;
-  border-color: rgba(140, 100, 255, 0.4);
-}
+/* chest slot — same size as all others, no special border override */
 
 /* MAPEAMENTO DOS SLOTS (Conforme seu desenho) */
 .amulet { grid-column: 1; grid-row: 1; }
@@ -7581,51 +7605,79 @@
   border-radius: 6px;
 }
 
-/* ══════════════════════════════
-   TOOLTIP DE ITENS (INSTANTÂNEO)
-══════════════════════════════ */
-.gear-item-tooltip {
-  width: 90%;
-  max-width: 280px;
-  min-height: 45px;
-  margin: 10px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(30, 20, 50, 0.95), rgba(15, 10, 30, 0.95));
-  border: 1px solid #ffd700;
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 11px;
-  color: #fff;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(5px);
-  transition: all 0.15s ease-in-out;
-  pointer-events: none;
-}
-
-/* Mostra o balão quando hoverItem não for null */
-.gear-item-tooltip.show {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Deixa os ícones dos slots mais vivos ao interagir */
+/* Hover: amplify border brightness; lift slot above siblings for tooltip z-order */
 .gear-slot:hover {
   opacity: 1 !important;
   filter: grayscale(0) !important;
-  border-color: #ffd700 !important;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+  z-index: 10;
+}
+.gear-slot.gear-slot--starter:hover {
+  border-color: rgba(240, 80, 80, 0.95) !important;
+  box-shadow: 0 0 10px rgba(210, 55, 55, 0.3);
+}
+.gear-slot.gear-slot--equipped:hover {
+  border-color: rgba(70, 220, 90, 0.95) !important;
+  box-shadow: 0 0 10px rgba(50, 200, 80, 0.3);
 }
 
-/* Ajuste fino para telas pequenas (Mobile) */
-@media (max-width: 640px) {
-  .gear-item-tooltip {
-    font-size: 10px;
-    min-height: 40px;
-    margin: 10px auto;
-  }
+/* ══════════════════════════════
+   TOOLTIP FLUTUANTE NO SLOT
+══════════════════════════════ */
+.gear-slot-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(8, 4, 20, 0.97);
+  border: 1px solid rgba(200, 170, 255, 0.22);
+  border-radius: 7px;
+  padding: 8px 11px;
+  min-width: 120px;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 10px;
+  color: #e0d8ff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 20;
+}
+
+.gear-slot:hover .gear-slot-tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.gst-name {
+  font-weight: 700;
+  font-size: 10px;
+  color: #ffd89b;
+  margin-bottom: 5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gst-stat {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 0;
+}
+
+.gst-pos { color: #5dde6c; }
+.gst-neg { color: #e05050; }
+
+/* Primeira linha de slots — tooltip aparece abaixo para não ser clipado */
+.gear-slot.amulet .gear-slot-tip,
+.gear-slot.helm .gear-slot-tip,
+.gear-slot.special .gear-slot-tip {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%) translateY(-4px);
+}
+.gear-slot.amulet:hover .gear-slot-tip,
+.gear-slot.helm:hover .gear-slot-tip,
+.gear-slot.special:hover .gear-slot-tip {
+  transform: translateX(-50%) translateY(0);
 }
 
 /* ══════════════════════════════
