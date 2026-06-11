@@ -1835,6 +1835,63 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
   }
 });
 
+// ── POST /api/shop/review-purchases ──────────────────────────────────────────
+app.post('/api/shop/review-purchases', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    // Fetch up to 2000 ops in two pages of 1000 (newest first)
+    const pages = [];
+    const page1 = await hiveRpc('condenser_api.get_account_history', [username, -1, 1000]);
+    if (Array.isArray(page1)) {
+      pages.push(...page1);
+      if (page1.length === 1000) {
+        const minId = page1[0][0]; // lowest op_id in page1
+        const page2 = await hiveRpc('condenser_api.get_account_history', [username, minId - 1, 1000]);
+        if (Array.isArray(page2)) pages.push(...page2);
+      }
+    }
+
+    // Collect unique item_ids from shop_* transfers to the game account
+    const foundIds = new Set();
+    for (const [, entry] of pages) {
+      const [opType, op] = entry.op;
+      if (opType !== 'transfer') continue;
+      if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+      if (op.from.toLowerCase() !== username.toLowerCase()) continue;
+      if (!op.memo || !op.memo.startsWith('shop_')) continue;
+      foundIds.add(op.memo.slice(5));
+    }
+
+    if (foundIds.size === 0) return res.json({ ok: true, restored: 0, items: [] });
+
+    // Keep only ids that exist in the cosmetics catalog
+    const ids = [...foundIds];
+    const existing = await sql`SELECT id FROM cosmetics WHERE id = ANY(${ids})`;
+    const validIds = existing.map(r => r.id);
+
+    // Find which are not yet owned
+    const owned = await sql`
+      SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${validIds})
+    `;
+    const ownedSet = new Set(owned.map(r => r.item_id));
+    const toInsert = validIds.filter(id => !ownedSet.has(id));
+
+    for (const item_id of toInsert) {
+      await sql`
+        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+        ON CONFLICT DO NOTHING
+      `;
+    }
+
+    console.log(`🔍 Review purchases: ${username} — ${toInsert.length} restored of ${validIds.length} found on-chain`);
+    return res.json({ ok: true, restored: toInsert.length, items: toInsert });
+  } catch (err) {
+    console.error('[/api/shop/review-purchases]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ── GET /api/cosmetics/backgrounds/equipped ───────────────────────────────────
 app.get('/api/cosmetics/backgrounds/equipped', async (req, res) => {
   const username = authFromRequest(req);
