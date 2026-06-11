@@ -316,7 +316,9 @@ export default function BattlePage() {
       delete window.HF_equipped_backgrounds
       delete window.HF_equipped_skins
       delete window.HF_gear
-      for (const name of battleSide) delete window[name]
+      for (const name of battleSide) {
+        try { delete window[name] } catch { window[name] = undefined }
+      }
     }
   }, [closeQuit, confirmQuit])
 
@@ -530,8 +532,10 @@ export default function BattlePage() {
     return () => {
       links.forEach(el => el.remove())
       scripts.forEach(s => s.remove())
-      // Restore #root styles on unmount
       if (root) root.style.cssText = ''
+      document.body.style.backgroundImage = ''
+      document.body.style.backgroundSize = ''
+      document.body.style.backgroundPosition = ''
     }
   }, [navigate])
 
