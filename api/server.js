@@ -1836,57 +1836,70 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
 });
 
 // ── POST /api/shop/review-purchases ──────────────────────────────────────────
-// Rate-limited because each call makes up to 2 Hive RPC calls.
+// Rate-limited to avoid abuse. Scans full account history via paginated Hive RPC.
 const reviewPurchasesLimiter = rateLimit({
   windowMs: 60 * 1000,         // 1 minute
-  max: 3,                      // 3 requests per IP per minute
+  max: 2,                      // 2 requests per IP per minute (full scan can be slow)
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many review-purchases requests. Please wait a moment and try again.' },
 });
+// Items that were renamed after sale — maps old blockchain memo ID → current catalog ID
+const COSMETIC_ID_ALIASES = {
+  'skin_archer_determination': 'skin_kaelen_determination',
+};
+
 app.post('/api/shop/review-purchases', reviewPurchasesLimiter, async (req, res) => {
   const username = authFromRequest(req);
   if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   try {
     if (!HIVE_GAME_ACCOUNT) return res.status(503).json({ ok: false, error: 'Shop not configured' });
-    // Fetch up to 2000 ops in two pages of 1000 (newest first)
-    const pages = [];
-    const page1 = await hiveRpc('condenser_api.get_account_history', [username, -1, 1000]);
-    if (Array.isArray(page1)) {
-      pages.push(...page1);
-      if (page1.length === 1000) {
-        const minId = page1[0][0]; // lowest op_id in page1
-        const page2 = await hiveRpc('condenser_api.get_account_history', [username, minId - 1, 1000]);
-        if (Array.isArray(page2)) pages.push(...page2);
-      }
+
+    // Scan the game account's history (much smaller than a player's full HIVE history).
+    // Filter incoming transfers where the sender is the requesting player.
+    const allOps = [];
+    let cursor = -1;
+    while (true) {
+      const page = await hiveRpc('condenser_api.get_account_history', [HIVE_GAME_ACCOUNT, cursor, 1000]);
+      if (!Array.isArray(page) || page.length === 0) break;
+      allOps.push(...page);
+      if (page.length < 1000) break;
+      cursor = page[0][0] - 1;
+      if (cursor < 0) break;
     }
 
-    // Collect unique item_ids from shop_* transfers to the game account
+    // Collect unique item_ids from shop_* transfers sent by this player
     const foundIds = new Set();
-    for (const [, entry] of pages) {
+    for (const [, entry] of allOps) {
       const [opType, op] = entry.op;
       if (opType !== 'transfer') continue;
       if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
       if (op.from.toLowerCase() !== username.toLowerCase()) continue;
       if (!op.memo || !op.memo.startsWith('shop_')) continue;
       if (!op.amount.endsWith(' HIVE')) continue;
-      const itemId = op.memo.slice(5);
-      if (!/^[\w-]{1,64}$/.test(itemId)) continue;
-      foundIds.add(itemId);
+      const rawId = op.memo.slice(5);
+      if (!/^[\w-]{1,64}$/.test(rawId)) continue;
+      foundIds.add(COSMETIC_ID_ALIASES[rawId] ?? rawId);
     }
 
-    if (foundIds.size === 0) return res.json({ ok: true, restored: 0, items: [] });
+    const foundOnChain = [...foundIds];
+
+    if (foundIds.size === 0) {
+      console.log(`🔍 Review purchases: ${username} — 0 shop transfers found in ${allOps.length} ops scanned (game account history)`);
+      return res.json({ ok: true, restored: 0, items: [], debug: { opsScanned: allOps.length, foundOnChain: [], notInCatalog: [], alreadyOwned: [] } });
+    }
 
     // Keep only ids that exist in the cosmetics catalog
-    const ids = [...foundIds];
-    const existing = await sql`SELECT id FROM cosmetics WHERE id = ANY(${ids})`;
+    const existing = await sql`SELECT id FROM cosmetics WHERE id = ANY(${foundOnChain})`;
     const validIds = existing.map(r => r.id);
+    const notInCatalog = foundOnChain.filter(id => !validIds.includes(id));
 
     // Find which are not yet owned
     const owned = await sql`
       SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${validIds})
     `;
     const ownedSet = new Set(owned.map(r => r.item_id));
+    const alreadyOwned = validIds.filter(id => ownedSet.has(id));
     const toInsert = validIds.filter(id => !ownedSet.has(id));
 
     for (const item_id of toInsert) {
@@ -1896,8 +1909,8 @@ app.post('/api/shop/review-purchases', reviewPurchasesLimiter, async (req, res) 
       `;
     }
 
-    console.log(`🔍 Review purchases: ${username} — ${toInsert.length} restored of ${validIds.length} found on-chain`);
-    return res.json({ ok: true, restored: toInsert.length, items: toInsert });
+    console.log(`🔍 Review purchases: ${username} — ${allOps.length} game-account ops scanned | found on-chain: [${foundOnChain}] | not in catalog: [${notInCatalog}] | already owned: [${alreadyOwned}] | restored: [${toInsert}]`);
+    return res.json({ ok: true, restored: toInsert.length, items: toInsert, debug: { opsScanned: allOps.length, foundOnChain, notInCatalog, alreadyOwned } });
   } catch (err) {
     console.error('[/api/shop/review-purchases]', err.message);
     res.status(500).json({ ok: false, error: err.message });

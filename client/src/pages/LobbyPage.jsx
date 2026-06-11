@@ -1342,7 +1342,7 @@ export default function LobbyPage() {
   async function handleReviewPurchases() {
     setMenuOpen(false)
     clearTimeout(toastTimerRef.current)
-    setToastMsg('⏳ Varrendo blockchain…')
+    setToastMsg('⏳ Reviewing full purchase history... may take a few seconds.')
     try {
       const res = await fetch('/api/shop/review-purchases', {
         method: 'POST',
@@ -1350,14 +1350,16 @@ export default function LobbyPage() {
       })
       const data = await res.json()
       if (data.ok && data.restored > 0) {
-        showToast(`✅ ${data.restored} item(s) restaurado(s)!`)
+        showToast(`✅ ${data.restored} Item(s) restored!`)
+      } else if (data.ok && data.debug?.notInCatalog?.length > 0) {
+        showToast(`⚠️ Purchase found (${data.debug.notInCatalog.join(', ')}) but item is not in the catalog. Contact support.`)
       } else if (data.ok) {
-        showToast('ℹ️ Tudo já estava sincronizado')
+        showToast('ℹ️ Everything was already synchronized!')
       } else {
-        showToast('❌ Erro ao revisar compras')
+        showToast('❌ Error when reviewing purchases.')
       }
     } catch {
-      showToast('❌ Erro ao revisar compras')
+      showToast('❌ Error when reviewing purchases.')
     }
   }
 
@@ -1402,7 +1404,7 @@ export default function LobbyPage() {
               <div className="user-dropdown" onClick={e => e.stopPropagation()}>
                 {session?.mode === 'hive' && (
                   <button className="user-dropdown-item" onClick={handleReviewPurchases}>
-                    🔍 Revisar Compras
+                    🔍 Review Purchases
                   </button>
                 )}
                 <button className="user-dropdown-item danger" onClick={doLogout}>
