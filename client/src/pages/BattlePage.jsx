@@ -536,6 +536,11 @@ export default function BattlePage() {
       document.body.style.backgroundImage = ''
       document.body.style.backgroundSize = ''
       document.body.style.backgroundPosition = ''
+      // skill-tooltip.js injects a persistent .skill-tip into body; hide and remove it
+      window.HFTooltip?.hide()
+      document.querySelector('.skill-tip')?.remove()
+      // defensive: remove any mid-animation battle fx elements
+      document.querySelectorAll('.dmg-float, .impact-ring, .merge-badge').forEach(el => el.remove())
     }
   }, [navigate])
 
