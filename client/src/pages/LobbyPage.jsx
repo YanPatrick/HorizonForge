@@ -54,26 +54,6 @@ function fmtSP(v) {
 
 const FMT_OPTS = [{ val: 3, label: 'BO3' }, { val: 5, label: 'BO5' }, { val: 7, label: 'BO7' }]
 const BET_OPTS = [{ val: 0, label: 'Free' }, { val: 1, label: '1 HIVE' }, { val: 5, label: '5 HIVE' }, { val: 10, label: '10 HIVE' }]
-const MODE_TIPS = {
-  ai: {
-    title: 'Solo Battle',
-    body: 'Fight against an AI opponent. Choose the duel format, build your army through recruitment, and win the required number of battles.',
-    theme: 'ai',
-    sections: [
-      { label: 'Format', rows: [['BO3', 'First to 2 wins'], ['BO5', 'First to 3 wins'], ['BO7', 'First to 4 wins']] },
-    ],
-  },
-  pvp: {
-    title: 'PvP Match',
-    body: 'Find another player with the same wager and duel format. Paid matches use Hive Keychain to confirm the wager before the match starts.',
-    theme: 'pvp',
-    sections: [
-      { label: 'Format', rows: [['BO3', 'First to 2 wins'], ['BO5', 'First to 3 wins'], ['BO7', 'First to 4 wins']] },
-      { label: 'Wager', rows: [['Free', 'No HIVE transfer'], ['Paid', 'Both players send the selected amount']] },
-    ],
-  },
-}
-
 const EMPTY_FORMATIONS = [
   { slot: 1, name: '', hero_ids: [] },
   { slot: 2, name: '', hero_ids: [] },
@@ -97,33 +77,33 @@ function BonusChip({ value }) {
 }
 
 function StatsPanel({ hero, lv1, playerGear }) {
+  const { t } = useT()
   const totals  = playerGear?.[hero.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 }
   const baseAtk = lv1?.atk ?? 0
   const baseHp  = lv1?.max_hp ?? 0
   const baseSpd = lv1?.initiative ?? 0
-  const spd     = baseSpd + totals.spd_bonus
   const attrs   = hero.attrs || {}
   const evasion = Math.max(0, Math.floor(((attrs.dex ?? 10) - 10) / 2))
 
   return (
     <div className="stats-panel">
       <div className="stat-row">
-        <span>Attack:</span>
+        <span>{t('stats.attack')}:</span>
         <span className="stat-val">{baseAtk}<BonusChip value={totals.atk_bonus} /></span>
       </div>
       <div className="stat-row">
-        <span>HP:</span>
+        <span>{t('stats.hp')}:</span>
         <span className="stat-val">{baseHp}<BonusChip value={totals.hp_bonus} /></span>
       </div>
       <div className="stat-row">
-        <span>Speed:</span>
+        <span>{t('stats.speed')}:</span>
         <span className="stat-val">
           {baseSpd % 1 === 0 ? baseSpd : baseSpd.toFixed(2)}
           {totals.spd_bonus !== 0 && <BonusChip value={totals.spd_bonus} />}
         </span>
       </div>
-      <div className="stat-row"><span>Armor:</span>  <span className="stat-val">0</span></div>
-      <div className="stat-row"><span>Evasion:</span><span className="stat-val">{evasion}%</span></div>
+      <div className="stat-row"><span>{t('stats.armor')}:</span>  <span className="stat-val">0</span></div>
+      <div className="stat-row"><span>{t('stats.evasion')}:</span><span className="stat-val">{evasion}%</span></div>
     </div>
   )
 }
@@ -154,7 +134,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
   if (!hero) return null
 
   const cat = roleCategory(hero.role)
-  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
+  const label = cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')
   const lv1 = hero.levels?.[1] || {}
   const levelKeys = Object.keys(hero.levels || {}).map(Number).sort((a, b) => a - b)
   const attrs = hero.attrs || { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
@@ -174,8 +154,8 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
         </div>
 
         <div className="hf-detail-tabs">
-          <button className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>INFO</button>
-          <button className={`hf-tab-item ${activeTab === 'gear'  ? 'active' : ''}`} onClick={() => setActiveTab('gear')}>GEAR</button>
+          <button className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>{t('hero.tabInfo')}</button>
+          <button className={`hf-tab-item ${activeTab === 'gear'  ? 'active' : ''}`} onClick={() => setActiveTab('gear')}>{t('hero.tabGear')}</button>
         </div>
 
         <div className="detail-slider-viewport">
@@ -186,7 +166,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
               <div className="hf-detail-role-wrap">
                 <span className={`gr-hero-role role-${cat}`}>{label}</span>
               </div>
-              <div className="hf-detail-section-label">Skill</div>
+              <div className="hf-detail-section-label">{t('hero.sectionSkill')}</div>
               <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
               <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
               {hero.skill?.lore && (
@@ -201,7 +181,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                 </div>
               )}
 
-              <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
+              <div className="hf-detail-section-label">{t('hero.sectionStats')}</div>
               <div className="hf-detail-stats">
                 <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}{heroGear.totals.hp_bonus  !== 0 && <BonusChip value={heroGear.totals.hp_bonus} />}</span></div>
                 <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}{heroGear.totals.atk_bonus !== 0 && <BonusChip value={heroGear.totals.atk_bonus} />}</span></div>
@@ -210,13 +190,13 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
               </div>
 
               <button type="button" className="hf-detail-l2-btn" style={{ marginTop: '15px' }} onClick={() => setExpanded(!expanded)}>
-                <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
+                <span className="hf-l2-label">{expanded ? t('hero.collapse') : t('hero.viewFullStats')}</span>
                 <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
               </button>
               {expanded && (
                 <div className="hf-detail-l2 expanded">
                   <table className="hf-detail-l2-table">
-                    <thead><tr><th>Level</th><th>HP</th><th>ATK</th><th>SP</th></tr></thead>
+                    <thead><tr><th>{t('hero.lvlHeader')}</th><th>HP</th><th>ATK</th><th>SP</th></tr></thead>
                     <tbody>
                       {levelKeys.map(lv => {
                         const s = hero.levels[lv] || {}
@@ -228,7 +208,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
               )}
 
               <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(!rpgExpanded)}>
-                <span className="hf-l2-label">{rpgExpanded ? 'Hide RPG Sheet' : 'View RPG Sheet'}</span>
+                <span className="hf-l2-label">{rpgExpanded ? t('hero.hideRpgSheet') : t('hero.viewRpgSheet')}</span>
                 <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
               </button>
               {rpgExpanded && (
@@ -241,7 +221,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                       </div>
                     ))}
                   </div>
-                  <p className="rpg-note">Attributes used for item requirements and penalties.</p>
+                  <p className="rpg-note">{t('hero.rpgNote')}</p>
                 </div>
               )}
             </div>
@@ -318,7 +298,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
               <StatsPanel hero={hero} lv1={lv1} playerGear={playerGear} />
 
               <div className="inventory-preview">
-                <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>INVENTORY</p>
+                <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>{t('hero.inventory')}</p>
                 {(() => {
                   const unequipped = playerItems.filter(item => !item.equipped_on)
                   if (unequipped.length === 0) return (
@@ -377,18 +357,19 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
 
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
 function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
   useEffect(() => { setExpanded(false) }, [hero])
 
   const cat = hero ? roleCategory(hero.role) : ''
-  const label = cat === 'tank' ? 'Tank' : cat === 'support' ? 'Support' : 'DPS'
+  const label = cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')
   const lv1 = hero?.levels?.[1] || {}
   const levelKeys = Object.keys(hero?.levels || {}).map(Number).sort((a, b) => a - b)
 
   return createPortal(
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
       <div className="hf-mhp-header">
-        <button type="button" className="hf-mhp-back-btn" onClick={onClose}>← Back</button>
+        <button type="button" className="hf-mhp-back-btn" onClick={onClose}>{t('hero.back')}</button>
         <span className="hf-mhp-title">{hero?.name ?? ''}</span>
       </div>
       {hero && (
@@ -403,10 +384,10 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
             <div className="hf-detail-role-wrap">
               <span className={`gr-hero-role role-${cat}`}>{label}</span>
             </div>
-            <div className="hf-detail-section-label">Skill</div>
+            <div className="hf-detail-section-label">{t('hero.sectionSkill')}</div>
             <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
             <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
-            <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
+            <div className="hf-detail-section-label">{t('hero.sectionStats')}</div>
             <div className="hf-detail-stats">
               <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
               <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
@@ -414,13 +395,13 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
               <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
             </div>
             <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
-              <span className="hf-l2-label">{expanded ? 'Collapse' : 'View full stats'}</span>
+              <span className="hf-l2-label">{expanded ? t('hero.collapse') : t('hero.viewFullStats')}</span>
               <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
             </button>
             {expanded && (
               <div className="hf-detail-l2 expanded">
                 <table className="hf-detail-l2-table">
-                  <thead><tr><th>Level</th><th>HP</th><th>ATK</th><th>Skill Power</th></tr></thead>
+                  <thead><tr><th>{t('hero.lvlHeader')}</th><th>HP</th><th>ATK</th><th>{t('hero.skillPower')}</th></tr></thead>
                   <tbody>
                     {levelKeys.map(lv => {
                       const s = hero.levels[lv] || {}
@@ -440,6 +421,7 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
 
 /* ── FormationView ──────────────────────────────────────── */
 function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
+  const { t } = useT()
   const [editingSlot, setEditingSlot] = useState(null)
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -480,16 +462,16 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
     setDefaultSlot(idx)
     savePref('default_form_slot', session?.username, idx)
     const name = formations[idx].name || `format${idx + 1}`
-    toast(`✅ "${name}" is now your active deck!`)
+    toast(t('toast.formationSetActive', { name }))
   }
 
   async function saveDeck() {
     if (editingSlot === null) return
     const f = formations[editingSlot]
-    if (f.hero_ids.length < 8) { toast('⚠️ Select 8 heroes to save the deck.'); return }
+    if (f.hero_ids.length < 8) { toast(t('toast.formationNeedHeroes')); return }
     if (isGuest) {
       localStorage.setItem('hf_guest_formation', JSON.stringify({ slot: 1, hero_ids: f.hero_ids, name: f.name }))
-      toast('✅ Formation saved!')
+      toast(t('toast.formationSaved'))
       closeSlot()
       return
     }
@@ -500,9 +482,9 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
         body: JSON.stringify({ player: session.username, slot: editingSlot + 1, name: f.name || `format${editingSlot + 1}`, hero_ids: f.hero_ids }),
       })
       const d = await res.json()
-      if (d.ok) { toast('✅ Formation saved!'); closeSlot() }
-      else toast('❌ Error saving formation.')
-    } catch { toast('❌ Network error.') }
+      if (d.ok) { toast(t('toast.formationSaved')); closeSlot() }
+      else toast(t('toast.formationSaveError'))
+    } catch { toast(t('toast.formationNetworkError')) }
   }
 
   const filtered = (heroData || []).filter(h => {
@@ -518,14 +500,14 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
       <div className="fv-wrap">
         <div className="fv-hero-frame">
           <div className="fv-filter-bar">
-            <input className="fv-search" type="text" placeholder="🔍 Search hero…" value={search} onChange={e => setSearch(e.target.value)} />
-            {[['all', 'All'], ['tank', '🛡️'], ['dps', '⚔️'], ['support', '💚']].map(([r, label]) => (
+            <input className="fv-search" type="text" placeholder={t('formation.searchPlaceholder')} value={search} onChange={e => setSearch(e.target.value)} />
+            {[['all', t('formation.filterAll')], ['tank', '🛡️'], ['dps', '⚔️'], ['support', '💚']].map(([r, label]) => (
               <button key={r} className={`fv-role-btn${roleFilter === r ? ' active' : ''}`} onClick={() => setRoleFilter(r)}>{label}</button>
             ))}
           </div>
           <div className="fv-hero-scroll">
             <div id="form-hero-grid" className={editingSlot !== null ? 'fhc-editing-mode' : ''}>
-              {!heroData && <div id="form-heroes-loading">⏳ Loading heroes…</div>}
+              {!heroData && <div id="form-heroes-loading">{t('formation.loading')}</div>}
               {filtered.map(h => {
                 const isSelected = activeForm?.hero_ids.includes(h.cid)
                 const isAddable = editingSlot !== null && !isSelected && !isFull
@@ -543,7 +525,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
                   </div>
                 )
               })}
-              {heroData && filtered.length === 0 && <div className="hh-empty">No heroes found</div>}
+              {heroData && filtered.length === 0 && <div className="hh-empty">{t('formation.noHeroesFound')}</div>}
             </div>
           </div>
         </div>
@@ -554,7 +536,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
               if (isGuest && i !== 0) return (
                 <div key={i} className="fv-deck-card fdc-locked" onClick={() => setConvCtx('formation')}>
                   <span className="fdc-locked-icon">🔒</span>
-                  <div className="fv-tab-name" style={{ opacity: 0.5 }}>Formation {i + 1}</div>
+                  <div className="fv-tab-name" style={{ opacity: 0.5 }}>{t('formation.locked', { n: i + 1 })}</div>
                 </div>
               )
               const isDefault = i === defaultSlot
@@ -582,9 +564,9 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
                     setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, name: e.target.value } : f))
                   }}
                 />
-                <button className="fv-done-btn" onClick={saveDeck}>DONE</button>
+                <button className="fv-done-btn" onClick={saveDeck}>{t('formation.done')}</button>
               </div>
-              <div className="fv-slide-label">Heroes selected: <span>{formations[editingSlot].hero_ids.length}</span>/8</div>
+              <div className="fv-slide-label">{t('formation.heroesSelected')} <span>{formations[editingSlot].hero_ids.length}</span>/8</div>
               <div className="fv-slide-slots">
                 {Array.from({ length: 8 }, (_, i) => {
                   const cid = formations[editingSlot].hero_ids[i]
@@ -646,28 +628,28 @@ function SettingsView({ session, payoutPct }) {
   return (
     <div id="view-settings" className="lv active">
       <div className="sv-wrap">
-        <div className="sv-page-title">Settings</div>
+        <div className="sv-page-title">{t('settings.title')}</div>
         <div className="stg-content" style={{ padding: 0, overflow: 'visible' }}>
           <div className="stg-section">
-            <div className="stg-section-title">Payout Preference</div>
+            <div className="stg-section-title">{t('settings.payout')}</div>
             <div className="stg-toggle-row">
               <div className="stg-toggle-info">
-                <span className="stg-toggle-title">Receive payouts in Hive Power (stake)</span>
-                <span className="stg-toggle-sub">Liquid: {liquidPct} · Stake: {stakePct} payout</span>
+                <span className="stg-toggle-title">{t('settings.payoutToggle')}</span>
+                <span className="stg-toggle-sub">{t('settings.payoutSub', { liquid: liquidPct, stake: stakePct })}</span>
               </div>
               <label className="stg-toggle-switch">
                 <input type="checkbox" checked={stakeMode} onChange={togglePayout} />
                 <span className="stg-toggle-slider" />
               </label>
             </div>
-            <div className="stg-note">The remaining % goes to the game treasury.</div>
+            <div className="stg-note">{t('settings.payoutNote')}</div>
           </div>
           <div className="stg-section">
-            <div className="stg-section-title">Shop</div>
+            <div className="stg-section-title">{t('settings.shop')}</div>
             <div className="stg-toggle-row">
               <div className="stg-toggle-info">
-                <span className="stg-toggle-title">Show owned items by default</span>
-                <span className="stg-toggle-sub">Owned items are visible when you open the shop</span>
+                <span className="stg-toggle-title">{t('settings.shopShowOwned')}</span>
+                <span className="stg-toggle-sub">{t('settings.shopShowOwnedSub')}</span>
               </div>
               <label className="stg-toggle-switch">
                 <input type="checkbox" checked={showOwnedDefault} onChange={toggleShowOwned} />
@@ -691,11 +673,11 @@ function SettingsView({ session, payoutPct }) {
             </div>
           </div>
           <div className="stg-section">
-            <div className="stg-section-title">About</div>
+            <div className="stg-section-title">{t('settings.about')}</div>
             <div className="stg-about">
               <div className="stg-about-row"><span>Horizon Forge</span><span className="stg-version">v{__APP_VERSION__}</span></div>
-              <div className="stg-about-row"><span>Developer</span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a></div>
-              <div className="stg-about-row"><span>Discord</span><a href="https://discord.gg/w6QFKapJ3Q" target="_blank" rel="noreferrer">Join Server</a></div>
+              <div className="stg-about-row"><span>{t('settings.developer')}</span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a></div>
+              <div className="stg-about-row"><span>{t('settings.discord')}</span><a href="https://discord.gg/w6QFKapJ3Q" target="_blank" rel="noreferrer">{t('settings.joinServer')}</a></div>
             </div>
           </div>
           <div className="stg-save-row">
@@ -709,6 +691,7 @@ function SettingsView({ session, payoutPct }) {
 
 /* ── SearchOverlay ──────────────────────────────────────── */
 function SearchOverlay({ search, onCancel, onSendWager, onRetry }) {
+  const { t } = useT()
   const { open, found, paying, title, timer, sub, configTag, queueText,
     payStatus, payError, showRetry, showSendWager, payCountdown, paySteps } = search
 
@@ -730,10 +713,10 @@ function SearchOverlay({ search, onCancel, onSendWager, onRetry }) {
           <div className="search-queue">{queueText}</div>
           <div className="search-dots"><span /><span /><span /></div>
           {payCountdown && <div id="pay-countdown" style={{ display: 'block' }} className={payCountdown.urgent ? 'urgent' : ''}>{payCountdown.text}</div>}
-          {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>💸 Send Wager via Keychain</button>}
+          {showSendWager && <button id="btn-send-wager" onClick={onSendWager}>{t('search.sendWager')}</button>}
           {paying && (
             <div id="pay-steps" style={{ display: 'flex' }}>
-              {[['pay-step-send', '💸', 'Wager'], ['pay-step-verify', '🔍', 'Verifying'], ['pay-step-opponent', '⏳', 'Opponent']].map(([id, ico, label]) => (
+              {[['pay-step-send', '💸', t('search.payWager')], ['pay-step-verify', '🔍', t('search.payVerify')], ['pay-step-opponent', '⏳', t('search.payOpponent')]].map(([id, ico, label]) => (
                 <div key={id} className={`pay-step${paySteps?.[id] ? ' ' + paySteps[id] : ''}`}>
                   <span className="pay-step-icon">{paySteps?.[id] === 'done' ? '✅' : paySteps?.[id] === 'error' ? '❌' : ico}</span>
                   <span>{label}</span>
@@ -742,8 +725,8 @@ function SearchOverlay({ search, onCancel, onSendWager, onRetry }) {
             </div>
           )}
           {payError && <div id="pay-error" style={{ display: 'block' }}>{payError}</div>}
-          {showRetry && <button id="btn-retry-pay" onClick={onRetry}>↩ Retry Keychain</button>}
-          <button className="btn-cancel" onClick={onCancel}>Cancel</button>
+          {showRetry && <button id="btn-retry-pay" onClick={onRetry}>{t('search.retry')}</button>}
+          <button className="btn-cancel" onClick={onCancel}>{t('search.cancel')}</button>
         </div>
       </div>
     </div>
@@ -755,6 +738,27 @@ const SEARCH_PHRASES = ['FINDING OPPONENT', 'SCANNING ARENA', 'SEEKING CHALLENGE
 
 export default function LobbyPage() {
   const { t } = useT()
+
+  const MODE_TIPS = {
+    ai: {
+      title: t('mode.ai.title'),
+      body: t('mode.ai.body'),
+      theme: 'ai',
+      sections: [
+        { label: t('mode.format'), rows: [['BO3', t('mode.bo3')], ['BO5', t('mode.bo5')], ['BO7', t('mode.bo7')]] },
+      ],
+    },
+    pvp: {
+      title: t('mode.pvp.title'),
+      body: t('mode.pvp.body'),
+      theme: 'pvp',
+      sections: [
+        { label: t('mode.format'), rows: [['BO3', t('mode.bo3')], ['BO5', t('mode.bo5')], ['BO7', t('mode.bo7')]] },
+        { label: t('mode.wager'), rows: [[t('shop.free'), t('mode.wagerFree')], ['Paid', t('mode.wagerPaid')]] },
+      ],
+    },
+  }
+
   const navigate = useNavigate()
   const location = useLocation()
   const session = getSession()
@@ -1336,7 +1340,7 @@ export default function LobbyPage() {
   /* ── AI battle start ─────────────────────────────────── */
   async function startAiBattle() {
     const formationHeroIds = await ensureActiveDeck()
-    if (!formationHeroIds) { showToast('⚠️ No deck selected. Build a formation first!'); return }
+    if (!formationHeroIds) { showToast(t('toast.formationNoDecks')); return }
     sessionStorage.setItem('hf_battle_cfg', JSON.stringify({ mode: 'ai', format: aiFormat, formationHeroIds }))
     navigate('/battle')
   }
@@ -1344,13 +1348,13 @@ export default function LobbyPage() {
   /* ── PvP start ───────────────────────────────────────── */
   async function startPvp() {
     if (isGuest) { setConvCtx('pvp'); return }
-    if (session?.mode !== 'hive') { showToast('PvP requires a Hive account. Log in with Hive to play! 🏆'); return }
+    if (session?.mode !== 'hive') { showToast(t('toast.pvpHiveRequired')); return }
     const heroIds = await ensureActiveDeck()
-    if (!heroIds) { showToast('⚠️ No deck selected. Build a formation first!'); return }
+    if (!heroIds) { showToast(t('toast.formationNoDecks')); return }
     if (pvpBet > 0) {
       const bal = await fetchBalance(username)
-      if (bal === null) { showToast('⚠️ Could not verify your balance. Please try again.'); return }
-      if (bal < pvpBet) { showToast(`⚠️ Insufficient balance! You have ${bal.toFixed(3)} HIVE but the wager is ${pvpBet} HIVE.`); return }
+      if (bal === null) { showToast(t('toast.balanceCheckFailed')); return }
+      if (bal < pvpBet) { showToast(t('toast.insufficientBalance', { bal: bal.toFixed(3), wager: pvpBet })); return }
     }
     if (window.hive_keychain && pvpBet > 0) window.hive_keychain.requestHandshake(() => { })
     startSearchUI()
@@ -1361,7 +1365,7 @@ export default function LobbyPage() {
   async function handleReviewPurchases() {
     setMenuOpen(false)
     clearTimeout(toastTimerRef.current)
-    setToastMsg('⏳ Reviewing full purchase history... may take a few seconds.')
+    setToastMsg(t('toast.reviewingPurchases'))
     try {
       const res = await fetch('/api/shop/review-purchases', {
         method: 'POST',
@@ -1369,16 +1373,16 @@ export default function LobbyPage() {
       })
       const data = await res.json()
       if (data.ok && data.restored > 0) {
-        showToast(`✅ ${data.restored} Item(s) restored!`)
+        showToast(t('toast.itemsRestored', { count: data.restored }))
       } else if (data.ok && data.debug?.notInCatalog?.length > 0) {
-        showToast(`⚠️ Purchase found (${data.debug.notInCatalog.join(', ')}) but item is not in the catalog. Contact support.`)
+        showToast(t('toast.purchaseNotInCatalog', { items: data.debug.notInCatalog.join(', ') }))
       } else if (data.ok) {
-        showToast('ℹ️ Everything was already synchronized!')
+        showToast(t('toast.alreadySynced'))
       } else {
-        showToast('❌ Error when reviewing purchases.')
+        showToast(t('toast.purchaseReviewError'))
       }
     } catch {
-      showToast('❌ Error when reviewing purchases.')
+      showToast(t('toast.purchaseReviewError'))
     }
   }
 
@@ -1423,11 +1427,11 @@ export default function LobbyPage() {
               <div className="user-dropdown" onClick={e => e.stopPropagation()}>
                 {session?.mode === 'hive' && (
                   <button className="user-dropdown-item" onClick={handleReviewPurchases}>
-                    🔍 Review Purchases
+                    {t('user.reviewPurchases')}
                   </button>
                 )}
                 <button className="user-dropdown-item danger" onClick={doLogout}>
-                  🚪 Exit
+                  {t('user.exit')}
                 </button>
               </div>
             )}
@@ -1451,7 +1455,7 @@ export default function LobbyPage() {
           <div id="view-home" className="lv active">
             <div className="view-scroll">
               <div className="view-col">
-                <p className="duel-title">Battle Mode</p>
+                <p className="duel-title">{t('home.battleMode')}</p>
 
                 <div className="banners-grid">
                 {/* AI Card */}
@@ -1495,7 +1499,7 @@ export default function LobbyPage() {
                   </div>
                   <div className="banner-expand">
                     <div className="cfg-divider" />
-                    <button className="btn-action btn-start" onClick={startAiBattle}>▶ START BATTLE</button>
+                    <button className="btn-action btn-start" onClick={startAiBattle}>{t('home.startBattle')}</button>
                   </div>
                   </div>
                 </section>
@@ -1554,7 +1558,7 @@ export default function LobbyPage() {
                   </div>
                   <div className="banner-expand">
                     <div className="cfg-divider" />
-                    <button className="btn-action btn-find" onClick={startPvp}>🔍 FIND MATCH</button>
+                    <button className="btn-action btn-find" onClick={startPvp}>{t('home.findMatch')}</button>
                   </div>
                   </div>
                 </section>
@@ -1572,14 +1576,14 @@ export default function LobbyPage() {
                     </div>
                     <div className="banner-expand">
                       <div className="cfg-divider" />
-                      <button className="btn-action btn-start" onClick={() => setView('campaign')}>📜 PLAY CAMPAIGN</button>
+                      <button className="btn-action btn-start" onClick={() => setView('campaign')}>{t('home.playCampaign')}</button>
                     </div>
                   </div>
                 </section>
 
                 {isGuest && (
                   <div className="free-pvp-card">
-                    <div className="free-pvp-title">🎮 Free PvP · Guest Match</div>
+                    <div className="free-pvp-title">{t('home.freePvp')}</div>
                     {!freeRoom ? (
                       <>
                         <button
@@ -1587,13 +1591,13 @@ export default function LobbyPage() {
                           style={{ width: '100%', marginBottom: 10 }}
                           onClick={() => socketRef.current?.emit('create_free_match', { format: 5 })}
                         >
-                          CREATE ROOM
+                          {t('home.createRoom')}
                         </button>
                         <div className="free-pvp-row">
                           <input
                             className="free-pvp-input"
                             type="text"
-                            placeholder="Room code"
+                            placeholder={t('home.roomCode')}
                             value={joinCode}
                             maxLength={6}
                             onChange={e => setJoinCode(e.target.value.toUpperCase())}
@@ -1605,7 +1609,7 @@ export default function LobbyPage() {
                               socketRef.current?.emit('join_free_match', { code: joinCode.trim() })
                             }}
                           >
-                            JOIN
+                            {t('home.join')}
                           </button>
                         </div>
                         {freeMatchErr && <div className="free-pvp-err">{freeMatchErr}</div>}
@@ -1613,13 +1617,13 @@ export default function LobbyPage() {
                     ) : (
                       <>
                         <div className="free-pvp-code">{freeRoom.code}</div>
-                        <div className="free-pvp-status">Waiting for opponent…</div>
+                        <div className="free-pvp-status">{t('home.waitingOpponent')}</div>
                         <button
                           className="btn-free-pvp"
                           style={{ width: '100%' }}
                           onClick={() => setFreeRoom(null)}
                         >
-                          Cancel
+                          {t('search.cancel')}
                         </button>
                       </>
                     )}
@@ -1655,19 +1659,19 @@ export default function LobbyPage() {
 
         <nav className="mobile-bottom-tabs">
           <button type="button" className={navTabClass('grimoire')} onClick={() => setView('grimoire')}>
-            <span className="mbt-ico">📖</span><span className="mbt-lbl">Grimoire</span>
+            <span className="mbt-ico">📖</span><span className="mbt-lbl">{t('nav.grimoire')}</span>
           </button>
           <button type="button" className={navTabClass('formation')} onClick={() => setView('formation')}>
-            <span className="mbt-ico">🏰</span><span className="mbt-lbl">Formation</span>
+            <span className="mbt-ico">🏰</span><span className="mbt-lbl">{t('nav.formation')}</span>
           </button>
           <button type="button" className={navTabClass('home')} onClick={() => setView('home')}>
-            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">Duel</span>
+            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">{t('nav.duel')}</span>
           </button>
           <button type="button" className={navTabClass('campaign')} onClick={() => setView('campaign')}>
-            <span className="mbt-ico">📜</span><span className="mbt-lbl">Campaign</span>
+            <span className="mbt-ico">📜</span><span className="mbt-lbl">{t('nav.campaign')}</span>
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
-            <span className="mbt-ico">🛒</span><span className="mbt-lbl">Shop</span>
+            <span className="mbt-ico">🛒</span><span className="mbt-lbl">{t('nav.shop')}</span>
           </button>
           <button type="button" className={navTabClass('settings')} onClick={() => setView('settings')}>
             <span className="mbt-ico">⚙️</span><span className="mbt-lbl">{t('nav.settings')}</span>

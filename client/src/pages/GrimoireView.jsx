@@ -1,14 +1,21 @@
 import { useState, useEffect} from 'react'
-
-const CHAPTERS = {
-  0: 'Basics', 1: 'Formation', 2: 'Gold & Recruit',
-  3: 'Battlefield', 4: 'Combos', 5: 'Fusion', 6: 'Strategies',
-  7: 'Chests & Items'
-}
+import { useT } from '../context/LanguageContext'
 
 export default function GrimoireView() {
+  const { t } = useT()
   const [activeChapter, setActiveChapter] = useState(0)
   const [topicsOpen, setTopicsOpen] = useState(false)
+
+  const CHAPTERS = {
+    0: t('grimoire.basics').replace(/^📖 /, ''),
+    1: t('grimoire.formation').replace(/^🛡️ /, ''),
+    2: t('grimoire.goldRecruit').replace(/^💰 /, ''),
+    3: t('grimoire.battlefield').replace(/^⚔️ /, ''),
+    4: t('grimoire.combos').replace(/^✨ /, ''),
+    5: t('grimoire.fusion').replace(/^⭐ /, ''),
+    6: t('grimoire.strategies').replace(/^💡 /, ''),
+    7: t('grimoire.chestsItems').replace(/^🎁 /, ''),
+  }
 
   useEffect(() => {
     const content = document.getElementById('gr-wiki-content');
@@ -29,12 +36,12 @@ export default function GrimoireView() {
 
       <div className="wiki-layout">
         <aside className="wiki-sidebar">
-          <div className="wiki-category">How to Play</div>
-          {[[0,'📖 Basics'],[1,'🛡️ Formation'],[3,'⚔️ Battlefield'],[6,'💡 Strategies']].map(([ch,label]) => (
+          <div className="wiki-category">{t('grimoire.howToPlay')}</div>
+          {[[0, t('grimoire.basics')],[1, t('grimoire.formation')],[3, t('grimoire.battlefield')],[6, t('grimoire.strategies')]].map(([ch,label]) => (
             <button key={ch} className={`wiki-item${activeChapter === ch ? ' active' : ''}`} onClick={() => setActiveChapter(ch)}>{label}</button>
           ))}
-          <div className="wiki-category">Mechanics</div>
-          {[[2,'💰 Gold & Recruit'],[4,'✨ Combos'],[5,'⭐ Fusion'],[7,'🎁 Chests & Items']].map(([ch,label]) => (
+          <div className="wiki-category">{t('grimoire.mechanics')}</div>
+          {[[2, t('grimoire.goldRecruit')],[4, t('grimoire.combos')],[5, t('grimoire.fusion')],[7, t('grimoire.chestsItems')]].map(([ch,label]) => (
             <button key={ch} className={`wiki-item${activeChapter === ch ? ' active' : ''}`} onClick={() => setActiveChapter(ch)}>{label}</button>
           ))}
         </aside>
@@ -283,15 +290,15 @@ export default function GrimoireView() {
         <div className="gr-topics-overlay open" onClick={() => setTopicsOpen(false)}>
           <div className="gr-topics-panel" onClick={e => e.stopPropagation()}>
             <div className="gr-tp-header">
-              <span className="gr-tp-title">📖 GRIMOIRE</span>
+              <span className="gr-tp-title">{t('grimoire.title')}</span>
               <button className="gr-tp-close" onClick={() => setTopicsOpen(false)}>✕</button>
             </div>
-            <div className="gr-tp-group">How to Play</div>
-            {[[0,'📖 Basics'],[1,'🛡️ Formation'],[3,'⚔️ Battlefield'],[6,'💡 Strategies']].map(([ch,label]) => (
+            <div className="gr-tp-group">{t('grimoire.howToPlay')}</div>
+            {[[0, t('grimoire.basics')],[1, t('grimoire.formation')],[3, t('grimoire.battlefield')],[6, t('grimoire.strategies')]].map(([ch,label]) => (
               <button key={ch} className={`gr-tp-item${activeChapter === ch ? ' active' : ''}`} onClick={() => { setActiveChapter(ch); setTopicsOpen(false) }}>{label}</button>
             ))}
-            <div className="gr-tp-group">Mechanics</div>
-            {[[2,'💰 Gold & Recruit'],[4,'✨ Combos'],[5,'⭐ Fusion'],[7, '🎁 Chests and Items']].map(([ch,label]) => (
+            <div className="gr-tp-group">{t('grimoire.mechanics')}</div>
+            {[[2, t('grimoire.goldRecruit')],[4, t('grimoire.combos')],[5, t('grimoire.fusion')],[7, t('grimoire.chestsItems')]].map(([ch,label]) => (
               <button key={ch} className={`gr-tp-item${activeChapter === ch ? ' active' : ''}`} onClick={() => { setActiveChapter(ch); setTopicsOpen(false) }}>{label}</button>
             ))}
           </div>

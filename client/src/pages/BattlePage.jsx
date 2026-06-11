@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/session'
 import GuestConversionModal from '../components/GuestConversionModal'
+import { useT } from '../context/LanguageContext'
 
 const DR_RARITY_COLORS = {
   common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
@@ -9,6 +10,7 @@ const DR_RARITY_COLORS = {
 }
 
 export default function BattlePage() {
+  const { t } = useT()
   const navigate = useNavigate()
   const initialized = useRef(false)
   const [cssReady, setCssReady] = useState(false)
@@ -144,8 +146,7 @@ export default function BattlePage() {
     campaignStage: null,
     campaignReward: null, // set async when POST /api/campaign/complete resolves
     wager: 0,
-    nextLabel: '🌟 Next Duel',
-    submitting: null, // null | { state: 'pending' | 'done', text, sub }
+    submitting: null, // null | { state: 'pending' | 'done' }
   })
 
   const closeQuit = useCallback(() => setQuitOpen(false), [])
@@ -264,16 +265,7 @@ export default function BattlePage() {
       campaignStage: data?.campaignStage ?? null,
       campaignReward: null,
       wager: data?.wager ?? 0,
-      nextLabel: data?.isPvP ? '🏠 Back to Lobby' : data?.isCampaign ? (data?.pw ? '📜 Back to Campaign' : '🔄 Tentar Novamente') : '🌟 Next Duel',
-      submitting: data?.isPvP
-        ? {
-          state: 'pending',
-          text: 'Submitting results...',
-          sub: data.wager > 0
-            ? `${data.wager} HIVE will be transferred to the winner`
-            : 'Friendly match — no wager to process',
-        }
-        : null,
+      submitting: data?.isPvP ? { state: 'pending' } : null,
       })
     }
     window.closeDuelResult = () => setDuelResult((prev) => ({ ...prev, open: false }))
@@ -329,19 +321,13 @@ export default function BattlePage() {
   useEffect(() => {
     if (!duelResult.open || !duelResult.isPvP) return
     if (duelResult.submitting?.state === 'done') return
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setDuelResult((prev) => prev.open && prev.isPvP ? {
         ...prev,
-        submitting: {
-          state: 'done',
-          text: 'Results submitted!',
-          sub: prev.wager > 0
-            ? 'Transfer complete. Check your Hive wallet.'
-            : 'Match recorded.',
-        },
+        submitting: { state: 'done' },
       } : prev)
     }, 3000)
-    return () => clearTimeout(t)
+    return () => clearTimeout(timer)
   }, [duelResult.open, duelResult.isPvP, duelResult.submitting?.state])
 
   // ── Fullscreen banner + handlers (Phase 4 of #16) ───────────────────
@@ -628,13 +614,11 @@ export default function BattlePage() {
         onClick={e => e.target === e.currentTarget && closeQuit()}>
         <div id="quit-modal">
           <div className="qm-icon">⚠️</div>
-          <div className="qm-title">Quit Match?</div>
-          <div className="qm-body">
-            You will lose all progress in this match and return to the Lobby.
-          </div>
+          <div className="qm-title">{t('battle.quitTitle')}</div>
+          <div className="qm-body">{t('battle.quitBody')}</div>
           <div className="qm-btns">
-            <button className="qm-btn qm-cancel" onClick={closeQuit}>Keep Playing</button>
-            <button className="qm-btn qm-confirm" onClick={confirmQuit}>Quit</button>
+            <button className="qm-btn qm-cancel" onClick={closeQuit}>{t('battle.keepPlaying')}</button>
+            <button className="qm-btn qm-confirm" onClick={confirmQuit}>{t('battle.quit')}</button>
           </div>
         </div>
       </div>
@@ -720,7 +704,7 @@ export default function BattlePage() {
           <div id="fields-row">
             <div className="fwrap">
               <div className="flbl flbl-row">
-                <span id="lbl-player" style={{ color: '#88aaff' }}>⚔ Your Army</span>
+                <span id="lbl-player" style={{ color: '#88aaff' }}>{t('battle.yourArmy')}</span>
                 <span id="army-count">{armyCount}</span>
               </div>
               <div className="field pf" id="pfield">{renderFieldCells('p')}</div>
@@ -728,7 +712,7 @@ export default function BattlePage() {
             <div id="vs"><span className="vstxt">VS</span></div>
             <div className="fwrap">
               <div className="flbl" style={{ color: '#ff8888' }}>
-                <span id="lbl-enemy">☠ Opponent</span>
+                <span id="lbl-enemy">{t('battle.opponentArmy')}</span>
               </div>
               <div className="field ef" id="efield">{renderFieldCells('e')}</div>
             </div>
@@ -740,7 +724,7 @@ export default function BattlePage() {
           {/* LEFT: Barracks */}
           <div id="benchwrap" className={`${bench.count > 0 ? 'expanded' : ''}${mobileView === 'barracks' ? ' mobile-open' : ''}`.trim()}>
             <div className="sec-hdr">
-              <span className="sec-title barracks-title">Barracks</span>
+              <span className="sec-title barracks-title">{t('battle.barracks')}</span>
               <span className="sec-title bcount-lbl" id="bcount">
                 {`${bench.count}/${bench.max}`}
               </span>
@@ -800,7 +784,7 @@ export default function BattlePage() {
           <div id="center-col">
             <div id="ctrl">
               <button className="btn bbtn" id="bfight" onClick={() => window.startBattle?.()}>
-                Battle!
+                {t('battle.battleBtn')}
               </button>
               <div
                 id="phase-timer"
@@ -817,7 +801,7 @@ export default function BattlePage() {
           <div id="shopwrap" className={mobileView === 'recruit' ? 'mobile-open' : ''}>
             <div className="sec-hdr">
               <span className="sec-title recruit-title">
-                Recruitment <span className="sb sg" id="h-gold">{`💰 ${shop.gold}`}</span>
+                {t('battle.recruitment')} <span className="sb sg" id="h-gold">{`💰 ${shop.gold}`}</span>
               </span>
               <div className="recruit-controls">
                 <button
@@ -826,7 +810,7 @@ export default function BattlePage() {
                   disabled={shop.rerollDisabled}
                   onClick={() => window.rerollShop?.()}
                 >
-                  New Recruitment (2💰)
+                  {t('battle.newRecruitment')}
                 </button>
               </div>
             </div>
@@ -896,14 +880,14 @@ export default function BattlePage() {
       {/* ══ MOBILE LOG OVERLAY ══ */}
       <div id="mobile-log-overlay" className={mobileView === 'log' ? 'open' : ''}>
         <div className="mob-log-handle" onClick={() => window.togglePanel?.('log')}></div>
-        <div className="mob-log-title">Battle Log</div>
+        <div className="mob-log-title">{t('battle.battleLog')}</div>
         <div id="mobile-log-entries"></div>
       </div>
 
       {/* ══ MOBILE MENU PANEL ══ */}
       <div id="mobile-menu-overlay" className={mobileView === 'menu' ? 'open' : ''}>
         <div className="mob-log-handle" onClick={() => window.toggleMobileMenu?.()}></div>
-        <div className="mmp-title">Menu</div>
+        <div className="mmp-title">{t('battle.menu')}</div>
 
         <button
           className="mmp-btn"
@@ -912,7 +896,7 @@ export default function BattlePage() {
             window.openHowTo?.()
           }}
         >
-          Rules
+          {t('battle.rules')}
         </button>
 
         <button
@@ -930,7 +914,7 @@ export default function BattlePage() {
             window.openQuitModal?.()
           }}
         >
-          Concede
+          {t('battle.concede')}
         </button>
       </div>
 
@@ -939,12 +923,12 @@ export default function BattlePage() {
         <button type="button" data-step="recruit"
           className={mobileView === 'recruit' ? 'ms-active' : ''}
           onClick={() => window.setMobileStep?.('recruit')}>
-          🛍️<span>Recruit</span>
+          🛍️<span>{t('battle.recruit')}</span>
         </button>
         <button type="button" data-step="barracks"
           className={mobileView === 'barracks' ? 'ms-active' : ''}
           onClick={() => window.setMobileStep?.('barracks')}>
-          🏕️<span>Barracks</span>
+          🏕️<span>{t('battle.barracks')}</span>
         </button>
         <div className="mab-center">
           <button id="mobile-battle-btn" type="button" onClick={() => window.startBattle?.()}>⚔️</button>
@@ -952,12 +936,12 @@ export default function BattlePage() {
         <button type="button" data-step="log"
           className={mobileView === 'log' ? 'ms-active' : ''}
           onClick={() => window.togglePanel?.('log')}>
-          📜<span>Log</span>
+          📜<span>{t('battle.log')}</span>
         </button>
         <button type="button" data-step="menu"
           className={mobileView === 'menu' ? 'ms-active' : ''}
           onClick={() => window.toggleMobileMenu?.()}>
-          ⚙️<span>Menu</span>
+          ⚙️<span>{t('battle.menu')}</span>
         </button>
       </div>
 
@@ -965,7 +949,7 @@ export default function BattlePage() {
       <div id="duel-result" className={duelResult.open ? 'open' : ''}>
         <div id="dr-box">
           <div className={`dr-title ${duelResult.pw ? 'win' : 'loss'}`} id="dr-title">
-            {duelResult.pw ? '🏆 DUEL WON!' : '💔 DUEL LOST!'}
+            {duelResult.pw ? t('battle.duelWon') : t('battle.duelLost')}
           </div>
           <div className="dr-score" id="dr-score">
             <span style={{ color: '#88ff88' }}>{duelResult.scoreP}</span>
@@ -983,17 +967,17 @@ export default function BattlePage() {
           <div className="dr-stats-grid">
             <div className="dr-stat-row">
               <div className="dr-val p" id="drs-dmgP">{duelResult.dmgP.toLocaleString()}</div>
-              <div className="dr-stat-lbl">⚔️ Total Damage</div>
+              <div className="dr-stat-lbl">{t('battle.totalDamage')}</div>
               <div className="dr-val e" id="drs-dmgE">{duelResult.dmgE.toLocaleString()}</div>
             </div>
             <div className="dr-stat-row">
               <div className="dr-val p" id="drs-killsP">{duelResult.killsP}</div>
-              <div className="dr-stat-lbl">💀 Kills</div>
+              <div className="dr-stat-lbl">{t('battle.kills')}</div>
               <div className="dr-val e" id="drs-killsE">{duelResult.killsE}</div>
             </div>
             <div className="dr-stat-row">
               <div className="dr-val p" id="drs-merges">{duelResult.mergesP}</div>
-              <div className="dr-stat-lbl">✨ Merges</div>
+              <div className="dr-stat-lbl">{t('battle.merges')}</div>
               <div className="dr-val e" id="drs-mergesE">{duelResult.mergesE}</div>
             </div>
           </div>
@@ -1001,7 +985,7 @@ export default function BattlePage() {
           <div className="dr-teams">
             <div className="dr-team">
               <div className="dr-team-lbl" style={{ color: 'rgba(136, 170, 255, 0.6)' }}>
-                Your Final Army
+                {t('battle.yourFinalArmy')}
               </div>
               <div className="dr-team-units" id="drt-p">
                 {duelResult.teamP.length === 0
@@ -1017,7 +1001,7 @@ export default function BattlePage() {
             </div>
             <div className="dr-team">
               <div className="dr-team-lbl" style={{ color: 'rgba(255, 100, 100, 0.6)' }}>
-                Enemy Army
+                {t('battle.enemyArmy')}
               </div>
               <div className="dr-team-units" id="drt-e">
                 {duelResult.teamE.length === 0
@@ -1044,16 +1028,18 @@ export default function BattlePage() {
                 {duelResult.submitting?.state === 'done' ? '✓' : ''}
               </div>
               <div className="dr-submit-text" id="dr-submit-text">
-                {duelResult.submitting?.text || 'Submitting results...'}
+                {duelResult.submitting?.state === 'done' ? t('battle.submitted') : t('battle.submitting')}
               </div>
             </div>
             <div className="dr-submit-sub" id="dr-submit-sub">
-              {duelResult.submitting?.sub || 'Processing match outcome on the blockchain...'}
+              {duelResult.submitting?.state === 'done'
+                ? (duelResult.wager > 0 ? t('battle.submittedWager') : t('battle.submittedFree'))
+                : (duelResult.wager > 0 ? t('battle.submittingWager', { wager: duelResult.wager }) : t('battle.submittingFree'))}
             </div>
           </div>
           {duelResult.isCampaign && duelResult.pw && duelResult.campaignReward && (
             <div className="dr-campaign-reward">
-              <div className="dr-campaign-reward-label">🎁 Recompensa desbloqueada</div>
+              <div className="dr-campaign-reward-label">{t('battle.campaignReward')}</div>
               <div
                 className="dr-campaign-reward-name"
                 style={{ color: DR_RARITY_COLORS[duelResult.campaignReward.rarity] || '#ccc' }}
@@ -1084,14 +1070,18 @@ export default function BattlePage() {
                 }
               }}
             >
-              {duelResult.nextLabel}
+              {duelResult.isPvP
+                ? t('battle.backToLobby')
+                : duelResult.isCampaign
+                  ? (duelResult.pw ? t('battle.backToCampaign') : t('battle.tryAgain'))
+                  : t('battle.nextDuel')}
             </button>
             <button
               className="btn"
               style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.6)' }}
               onClick={() => window.closeDuelResult?.()}
             >
-              ✕ View Field
+              {t('battle.viewField')}
             </button>
           </div>
         </div>
@@ -1101,13 +1091,13 @@ export default function BattlePage() {
       <div id="howto" className={howToOpen ? 'open' : ''}
         onClick={e => e.target === e.currentTarget && setHowToOpen(false)}>
         <div id="htp-box">
-          <button id="htp-close" onClick={() => setHowToOpen(false)}>✕ Close</button>
-          <div className="htp-h1">📖 How To Play</div>
-          <div className="htp-h2">🎯 Objective</div>
+          <button id="htp-close" onClick={() => setHowToOpen(false)}>{t('htp.close')}</button>
+          <div className="htp-h1">{t('htp.title')}</div>
+          <div className="htp-h2">{t('htp.objective')}</div>
           <p className="htp-p">
             Win the most rounds in a duel to emerge victorious. The number of rounds will depend on which game mode you selected. Recruit, combine, level up and win.
           </p>
-          <div className="htp-h2">💰 Gold</div>
+          <div className="htp-h2">{t('htp.gold')}</div>
           <div className="htp-tips">
             <div className="htp-tip">
               <span className="htp-tip-ico">🏁</span>
@@ -1122,7 +1112,7 @@ export default function BattlePage() {
               <div>New Recruitment costs <b style={{ color: '#ffdd55' }}>2💰</b>.</div>
             </div>
           </div>
-          <div className="htp-h2">⛺ Recruitment &amp; Bench</div>
+          <div className="htp-h2">{t('htp.recruitAndBench')}</div>
           <div className="htp-tips">
             <div className="htp-tip">
               <span className="htp-tip-ico">🆕</span>
@@ -1137,7 +1127,7 @@ export default function BattlePage() {
               <div><b>Drag</b> a card from Barracks to a field slot, or click it then click the slot.</div>
             </div>
           </div>
-          <div className="htp-h2">✨ Card Merging</div>
+          <div className="htp-h2">{t('htp.cardMerging')}</div>
           <div className="htp-tips">
             <div className="htp-tip">
               <span className="htp-tip-ico">⭐</span>
@@ -1152,10 +1142,10 @@ export default function BattlePage() {
 
       {/* ══ FULLSCREEN BANNER ══ */}
       <div id="fs-banner" className={fsBannerOpen ? 'show' : ''}>
-        <div className="fsb-text">🎮 Play in fullscreen for the best experience?</div>
+        <div className="fsb-text">{t('battle.fullscreen')}</div>
         <div className="fsb-btns">
-          <button className="fsb-yes" onClick={() => window.acceptFullscreen?.()}>Yes, fullscreen</button>
-          <button className="fsb-no" onClick={() => window.declineFullscreen?.()}>No thanks</button>
+          <button className="fsb-yes" onClick={() => window.acceptFullscreen?.()}>{t('battle.fullscreenYes')}</button>
+          <button className="fsb-no" onClick={() => window.declineFullscreen?.()}>{t('battle.fullscreenNo')}</button>
         </div>
       </div>
 
