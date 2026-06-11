@@ -542,24 +542,36 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
           <div className="shop-card-desc">{item.description}</div>
         )}
         <div className="shop-card-actions">
-          <button
-            className={`shop-card-btn${isFree ? ' free' : ' buy'}`}
-            disabled={isClaiming || !isHive}
-            onClick={onBuy}
-            title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
-          >
-            {isClaiming ? '⌛' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
-          </button>
-          {isOwned && item.type !== 'treasure' && (
-            <button
-              className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
-              disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
-              onClick={isEquipped ? onUnequip : onEquip}
-              title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
-            >
-              {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
-            </button>
-          )}
+          {item.type === 'treasure'
+            ? <button
+                className="shop-card-btn buy"
+                disabled={isClaiming || !isHive}
+                onClick={onBuy}
+                title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
+              >
+                {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
+              </button>
+            : isOwned
+              ? <>
+                  <div className="shop-card-owned-badge">✓ Owned</div>
+                  <button
+                    className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
+                    disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
+                    onClick={isEquipped ? onUnequip : onEquip}
+                    title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
+                  >
+                    {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
+                  </button>
+                </>
+              : <button
+                  className={`shop-card-btn${isFree ? ' free' : ' buy'}`}
+                  disabled={isClaiming || !isHive}
+                  onClick={onBuy}
+                  title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
+                >
+                  {isClaiming ? '⌛' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
+                </button>
+          }
         </div>
       </div>
     </div>
