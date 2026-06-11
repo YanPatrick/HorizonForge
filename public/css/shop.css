@@ -710,3 +710,96 @@
   font-weight: 600;
   margin-left: 4px;
 }
+
+/* ── Chest result modal ──────────────────────────────────── */
+.chest-result-modal {
+  max-width: 320px;
+  text-align: center;
+}
+.chest-result-header {
+  margin-bottom: 16px;
+}
+.chest-result-chest-name {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.chest-result-crit-hit {
+  color: #ffd700;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.chest-result-crit-fail {
+  color: #ff6b6b;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.chest-result-d20 {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.8rem;
+}
+.chest-result-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.chest-result-item-name {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.chest-result-item-meta {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 12px;
+  font-size: 0.72rem;
+  text-transform: capitalize;
+}
+.chest-result-slot {
+  color: rgba(255,255,255,0.4);
+}
+.chest-result-rarity {
+  font-weight: 600;
+}
+.chest-result-stats {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.chest-result-stat {
+  background: rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a8e6a0;
+}
+.chest-result-stat.negative {
+  color: #ff8a8a;
+  background: rgba(255,100,100,0.08);
+}
+.chest-result-req {
+  font-size: 0.75rem;
+  color: #f0c060;
+  margin-bottom: 8px;
+}
+.chest-result-flavor {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+  margin-top: 8px;
+}
+.chest-result-acquired {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  margin-top: 6px;
+}

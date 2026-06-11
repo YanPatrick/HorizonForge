@@ -209,6 +209,7 @@ async function initGame() {
         role: char.role,
         tp: char.target_type,
         levels: char.levels,
+        attrs: char.attrs || {},
         abi: {
           ico: skillIcon(char.skill.key),
           name: char.skill.name,
@@ -1058,11 +1059,30 @@ function startBattle() {
       console.warn(`[startBattle] Missing level data for cid="${u.cid}" lv=${u.lv} — unit stats not updated.`);
       return;
     }
-    const eq = gear[u.cid]?.totals ?? { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
-    u.atk = Math.floor(base.atk) + eq.atk_bonus;
-    u.maxHp = base.max_hp + eq.hp_bonus;
-    u.hp = u.maxHp;
-    u.initiative = (base.initiative || 0) + eq.spd_bonus;
+    // Calculate aptidão per item: if item has req_attr + req_value, scale bonus
+    // proportionally to how much of the requirement the hero meets.
+    // aptidão = min(1, hero_attr / req_value)  →  bonus × aptidão
+    const heroAttrs = C[u.cid]?.attrs || {};
+    const slots     = gear[u.cid]?.slots || {};
+    let atkBonus = 0, hpBonus = 0, spdBonus = 0;
+    for (const item of Object.values(slots)) {
+      let fit = 1.0;
+      if (item.req_attr && item.req_value) {
+        const heroVal = heroAttrs[item.req_attr] ?? 10;
+        fit *= Math.min(1.0, heroVal / item.req_value);
+      }
+      if (item.req_attr2 && item.req_value2) {
+        const heroVal2 = heroAttrs[item.req_attr2] ?? 10;
+        fit *= Math.min(1.0, heroVal2 / item.req_value2);
+      }
+      atkBonus += item.atk_bonus * fit;
+      hpBonus  += item.hp_bonus  * fit;
+      spdBonus += item.spd_bonus * fit;
+    }
+    u.atk        = Math.max(1, Math.floor(base.atk) + Math.round(atkBonus));
+    u.maxHp      = Math.max(1, base.max_hp + Math.round(hpBonus));
+    u.hp         = u.maxHp;
+    u.initiative = (base.initiative || 0) + parseFloat(spdBonus.toFixed(2));
   };
   G.board.forEach(u => _applyGear(u, _gear));
   // Enemy in bot/campaign: base stats only — player gear must not apply to the opponent

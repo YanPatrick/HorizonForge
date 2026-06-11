@@ -1438,7 +1438,7 @@ export default function LobbyPage() {
                 {/* AI Card */}
                 <section className="banner banner-ai">
                   <div className="banner-img">
-                    <img src="/images/image_bot.jpeg" alt="Solo Battle" />
+                    <img src="/images/image_bot.jpeg" alt="Solo Battle" loading="lazy" />
                   </div>
                   <div className="banner-body">
                   <div className="banner-preview">
@@ -1484,7 +1484,7 @@ export default function LobbyPage() {
                 {/* PvP Card */}
                 <section className="banner banner-pvp">
                   <div className="banner-img">
-                    <img src="/images/image_pvp.jpeg" alt="PvP Match" />
+                    <img src="/images/image_pvp.jpeg" alt="PvP Match" loading="lazy" />
                   </div>
                   <div className="banner-body">
                   <div className="banner-preview">
@@ -1543,7 +1543,7 @@ export default function LobbyPage() {
                 {/* Campaign Card */}
                 <section className="banner banner-campaign">
                   <div className="banner-img">
-                    <img src="/images/campaign/chapter1-bg.jpg" alt="Campaign" />
+                    <img src="/images/campaign/chapter1-bg.jpg" alt="Campaign" loading="lazy" />
                   </div>
                   <div className="banner-body">
                     <div className="banner-preview">
