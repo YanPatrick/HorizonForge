@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import '@styles/lobby.css'
 import '@styles/components.css'
@@ -11,6 +11,7 @@ import TavernPanel from './TavernPanel'          // IMP tavern
 import '@styles/tavern.css'                       // Imp tavern
 import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
+import CampaignView from './CampaignView'
 
 /* ── helpers ────────────────────────────────────────────── */
 function prefKey(name, username) {
@@ -115,7 +116,10 @@ function StatsPanel({ hero, lv1, playerGear }) {
       </div>
       <div className="stat-row">
         <span>Speed:</span>
-        <span className="stat-val">{spd % 1 === 0 ? spd : spd.toFixed(2)}</span>
+        <span className="stat-val">
+          {baseSpd % 1 === 0 ? baseSpd : baseSpd.toFixed(2)}
+          {totals.spd_bonus !== 0 && <BonusChip value={totals.spd_bonus} />}
+        </span>
       </div>
       <div className="stat-row"><span>Armor:</span>  <span className="stat-val">0</span></div>
       <div className="stat-row"><span>Evasion:</span><span className="stat-val">{evasion}%</span></div>
@@ -133,12 +137,18 @@ const SLOT_ICONS = {
   chest: '🛡️', offhand: '📜', belt: '🏷️', legs: '👖',
   gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
 }
+const RARITY_COLORS = {
+  common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
+  epic: '#ba68c8', legendary: '#ff2d9b', starter: '#6a6080',
+}
 const SLOT_ORDER = ['amulet','helm','special','weapon','chest','offhand','belt','legs','gloves','ring1','boots','ring2']
 
-function HeroDetail({ hero, onClose, playerGear = null }) {
+function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
   const [expanded, setExpanded] = useState(false)
   const [rpgExpanded, setRpgExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState('stats')
+  const [equipPending, setEquipPending] = useState(null)
+  const [slotUnequipPending, setSlotUnequipPending] = useState(null)
   if (!hero) return null
 
   const cat = roleCategory(hero.role)
@@ -191,9 +201,9 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
 
               <div className="hf-detail-section-label">Base Stats (Lv 1)</div>
               <div className="hf-detail-stats">
-                <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
-                <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
-                <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.initiative != null ? lv1.initiative.toFixed(2) : '—'}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}{heroGear.totals.hp_bonus  !== 0 && <BonusChip value={heroGear.totals.hp_bonus} />}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}{heroGear.totals.atk_bonus !== 0 && <BonusChip value={heroGear.totals.atk_bonus} />}</span></div>
+                <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.initiative != null ? (lv1.initiative % 1 === 0 ? lv1.initiative : lv1.initiative.toFixed(2)) : '—'}{heroGear.totals.spd_bonus !== 0 && <BonusChip value={heroGear.totals.spd_bonus} />}</span></div>
                 <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
               </div>
 
@@ -239,14 +249,19 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
               <div className="gear-container">
                 {SLOT_ORDER.map((slotKey) => {
                   const item = heroGear.slots[slotKey]
+                  const isStarter = item?.rarity === 'starter'
+                  const isUnequipPending = slotUnequipPending?.slotKey === slotKey
+                  const canUnequip = item && !isStarter && onUnequipItem
                   const rarityClass = item
-                    ? (item.rarity === 'starter' ? 'gear-slot--starter' : 'gear-slot--equipped')
+                    ? (isStarter ? 'gear-slot--starter' : 'gear-slot--equipped')
                     : ''
                   return (
                     <div
                       key={slotKey}
-                      className={`gear-slot ${slotKey} ${rarityClass}`}
+                      className={`gear-slot ${slotKey} ${rarityClass}${isUnequipPending ? ' gear-slot--unequip-pending' : ''}`}
                       data-label={SLOT_LABELS[slotKey]}
+                      style={canUnequip ? { cursor: 'pointer' } : undefined}
+                      onClick={canUnequip ? () => setSlotUnequipPending(isUnequipPending ? null : { slotKey, item }) : undefined}
                     >
                       <span style={{ fontSize: '1.4em', opacity: item ? 1 : 0.3 }}>
                         {SLOT_ICONS[slotKey]}
@@ -269,21 +284,85 @@ function HeroDetail({ hero, onClose, playerGear = null }) {
                               {Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD
                             </div>
                           )}
+                          {canUnequip && <div className="gst-hint">Clique para remover</div>}
                         </div>
                       )}
                     </div>
                   )
                 })}
               </div>
+              {slotUnequipPending && (
+                <div className="inv-equip-confirm" style={{ marginBottom: '10px' }}>
+                  <div className="inv-equip-confirm-name"
+                    style={{ color: RARITY_COLORS[slotUnequipPending.item.rarity] || '#ccc' }}
+                  >{slotUnequipPending.item.name}</div>
+                  <div className="inv-equip-confirm-stats">
+                    {slotUnequipPending.item.atk_bonus !== 0 && <span>{slotUnequipPending.item.atk_bonus > 0 ? '+' : ''}{slotUnequipPending.item.atk_bonus} ATK</span>}
+                    {slotUnequipPending.item.hp_bonus  !== 0 && <span>{slotUnequipPending.item.hp_bonus  > 0 ? '+' : ''}{slotUnequipPending.item.hp_bonus} HP</span>}
+                    {slotUnequipPending.item.spd_bonus !== 0 && <span>{slotUnequipPending.item.spd_bonus > 0 ? '+' : ''}{Number(slotUnequipPending.item.spd_bonus).toFixed(2)} SPD</span>}
+                  </div>
+                  <div className="inv-equip-confirm-actions">
+                    <button
+                      type="button"
+                      className="inv-equip-btn-remove"
+                      onClick={() => { onUnequipItem(hero.cid, slotUnequipPending.slotKey); setSlotUnequipPending(null) }}
+                    >↩ Remover de {hero.name}</button>
+                    <button type="button" className="inv-equip-btn-cancel" onClick={() => setSlotUnequipPending(null)}>✕</button>
+                  </div>
+                </div>
+              )}
 
               {/* Stats with equipment */}
               <StatsPanel hero={hero} lv1={lv1} playerGear={playerGear} />
 
               <div className="inventory-preview">
-                <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>INVENTORY (COMING SOON)</p>
-                <div className="inv-grid">
-                  {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="inv-slot"></div>)}
-                </div>
+                <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>INVENTORY</p>
+                {(() => {
+                  const unequipped = playerItems.filter(item => !item.equipped_on)
+                  if (unequipped.length === 0) return (
+                    <p style={{ fontSize: '11px', opacity: 0.35, fontStyle: 'italic', textAlign: 'center', margin: '4px 0 8px' }}>
+                      {playerItems.length === 0 ? 'Sem itens ainda' : 'Todos os itens estão equipados'}
+                    </p>
+                  )
+                  return (
+                    <div className="inv-grid">
+                      {unequipped.map(item => {
+                        const isPending = equipPending?.id === item.id
+                        return (
+                          <div
+                            key={item.id}
+                            className={['inv-slot inv-slot--item', isPending ? 'inv-slot--pending' : ''].filter(Boolean).join(' ')}
+                            title={`${item.name} (${item.slot_type})`}
+                            onClick={() => onEquipItem && setEquipPending(isPending ? null : item)}
+                          >
+                            <span className="inv-item-slot-ico">{SLOT_ICONS[item.slot_type] || '📦'}</span>
+                            <span className="inv-item-rarity-bar" style={{ background: RARITY_COLORS[item.rarity] || '#888' }} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
+                {equipPending && onEquipItem && (
+                  <div className="inv-equip-confirm">
+                    <div className="inv-equip-confirm-name"
+                      style={{ color: RARITY_COLORS[equipPending.rarity] || '#ccc' }}
+                    >{equipPending.name}</div>
+                    <div className="inv-equip-confirm-stats">
+                      {equipPending.atk_bonus !== 0 && <span>{equipPending.atk_bonus > 0 ? '+' : ''}{equipPending.atk_bonus} ATK</span>}
+                      {equipPending.hp_bonus  !== 0 && <span>{equipPending.hp_bonus  > 0 ? '+' : ''}{equipPending.hp_bonus} HP</span>}
+                      {equipPending.spd_bonus !== 0 && <span>{equipPending.spd_bonus > 0 ? '+' : ''}{Number(equipPending.spd_bonus).toFixed(2)} SPD</span>}
+                    </div>
+                    <div className="inv-equip-confirm-actions">
+                      <button
+                        type="button"
+                        className="inv-equip-btn-confirm"
+                        onClick={() => { onEquipItem(equipPending.id, hero.cid, equipPending.slot_type); setEquipPending(null) }}
+                      >✓ Equipar em {hero.name}</button>
+                      <button type="button" className="inv-equip-btn-cancel" onClick={() => setEquipPending(null)}>✕</button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -358,7 +437,7 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
 }
 
 /* ── FormationView ──────────────────────────────────────── */
-function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null }) {
+function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
   const [editingSlot, setEditingSlot] = useState(null)
   const [roleFilter, setRoleFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -432,7 +511,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
 
   return (
     <div id="view-formation" className="lv active">
-      {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} playerGear={playerGear} />}
+      {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} playerGear={playerGear} playerItems={playerItems} onEquipItem={onEquipItem} onUnequipItem={onUnequipItem} />}
       <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} equippedSkins={equippedSkins} />
       <div className="fv-wrap">
         <div className="fv-hero-frame">
@@ -658,11 +737,17 @@ const SEARCH_PHRASES = ['FINDING OPPONENT', 'SCANNING ARENA', 'SEEKING CHALLENGE
 
 export default function LobbyPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const session = getSession()
   const username = session?.username
   const isGuest = session?.mode === 'guest'
 
-  const [view, setView] = useState('home')
+  const [view, setView] = useState(() => {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get('tab')
+    const allowed = ['home', 'campaign', 'shop', 'formation', 'grimoire', 'settings']
+    return allowed.includes(tab) ? tab : 'home'
+  })
   const [balance, setBalance] = useState(null)
   const [avatarError, setAvatarError] = useState(false)
   const [aiFormat, setAiFormat] = useState(() => Number(loadPref('ai_fmt', username, 5)))
@@ -671,6 +756,7 @@ export default function LobbyPage() {
   const [heroData, setHeroData] = useState(null)
   const [equippedSkins, setEquippedSkins] = useState({})
   const [playerGear, setPlayerGear] = useState(null)
+  const [playerItems, setPlayerItems] = useState([])
   const [formations, setFormations] = useState(EMPTY_FORMATIONS)
   const [formationsLoaded, setFormationsLoaded] = useState(false)
   const [defaultSlot, setDefaultSlot] = useState(() => Number(loadPref('default_form_slot', username, 0)))
@@ -956,6 +1042,67 @@ export default function LobbyPage() {
       .then(d => { if (d.ok) setPlayerGear(d.gear) })
       .catch(() => {})
   }, []) // eslint-disable-line
+
+  /* ── load communal inventory ─────────────────────────── */
+  useEffect(() => {
+    if (!session?.token || !session?.username) return
+    fetch(`/api/player-items?player=${encodeURIComponent(session.username)}`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setPlayerItems(d.items) })
+      .catch(() => {})
+  }, []) // eslint-disable-line
+
+  /* ── unequip inventory item (revert hero to starter) ─── */
+  async function handleUnequipItem(characterCid, slotType) {
+    try {
+      const res = await fetch('/api/gear/unequip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ player: username, character_cid: characterCid, slot_type: slotType }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        const [gr, ir] = await Promise.all([
+          fetch(`/api/gear?player=${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${session.token}` } }).then(r => r.json()),
+          fetch(`/api/player-items?player=${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${session.token}` } }).then(r => r.json()),
+        ])
+        if (gr.ok) setPlayerGear(gr.gear)
+        if (ir.ok) setPlayerItems(ir.items)
+        showToast('↩️ Item removido — herói voltou ao equipamento inicial')
+      } else {
+        showToast('⚠️ ' + (d.error || 'Não foi possível remover'))
+      }
+    } catch {
+      showToast('⚠️ Erro ao remover item')
+    }
+  }
+
+  /* ── equip item from inventory ───────────────────────── */
+  async function handleEquipItem(itemId, characterCid, slotType) {
+    try {
+      const res = await fetch('/api/gear/equip', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ player: username, character_cid: characterCid, slot_type: slotType, item_id: itemId }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        const [gr, ir] = await Promise.all([
+          fetch(`/api/gear?player=${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${session.token}` } }).then(r => r.json()),
+          fetch(`/api/player-items?player=${encodeURIComponent(username)}`, { headers: { Authorization: `Bearer ${session.token}` } }).then(r => r.json()),
+        ])
+        if (gr.ok) setPlayerGear(gr.gear)
+        if (ir.ok) setPlayerItems(ir.items)
+        showToast('✅ Item equipado!')
+      } else {
+        showToast('⚠️ ' + (d.error || 'Não foi possível equipar'))
+      }
+    } catch {
+      showToast('⚠️ Erro ao equipar item')
+    }
+  }
 
   /* ── load formations ─────────────────────────────────── */
   useEffect(() => {
@@ -1341,6 +1488,24 @@ export default function LobbyPage() {
                   </div>
                 </section>
 
+                {/* Campaign Card */}
+                <section className="banner banner-campaign">
+                  <div className="banner-img">
+                    <img src="/images/campaign/chapter1-bg.jpg" alt="Campaign" />
+                  </div>
+                  <div className="banner-body">
+                    <div className="banner-preview">
+                      <div className="banner-title-row">
+                        <span className="banner-type-badge" style={{ background: 'linear-gradient(135deg,#6b3fa0,#4a2080)', borderColor: 'rgba(160,100,255,0.5)' }}>CAMPAIGN</span>
+                      </div>
+                    </div>
+                    <div className="banner-expand">
+                      <div className="cfg-divider" />
+                      <button className="btn-action btn-start" onClick={() => setView('campaign')}>📜 PLAY CAMPAIGN</button>
+                    </div>
+                  </div>
+                </section>
+
                 {isGuest && (
                   <div className="free-pvp-card">
                     <div className="free-pvp-title">🎮 Free PvP · Guest Match</div>
@@ -1398,6 +1563,12 @@ export default function LobbyPage() {
 
         {view === 'grimoire' && <GrimoireView />}
 
+        {view === 'campaign' && (
+          <CampaignView
+            session={session} formations={formations} defaultSlot={defaultSlot} toast={showToast}
+          />
+        )}
+
         {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
 
         {view === 'formation' && (
@@ -1405,7 +1576,7 @@ export default function LobbyPage() {
             session={session} formations={formations} setFormations={setFormations}
             defaultSlot={defaultSlot} setDefaultSlot={setDefaultSlot}
             heroData={heroData} toast={showToast} equippedSkins={equippedSkins}
-            playerGear={playerGear}
+            playerGear={playerGear} playerItems={playerItems} onEquipItem={handleEquipItem} onUnequipItem={handleUnequipItem}
           />
         )}
 
@@ -1420,6 +1591,9 @@ export default function LobbyPage() {
           </button>
           <button type="button" className={navTabClass('home')} onClick={() => setView('home')}>
             <span className="mbt-ico">⚔️</span><span className="mbt-lbl">Duel</span>
+          </button>
+          <button type="button" className={navTabClass('campaign')} onClick={() => setView('campaign')}>
+            <span className="mbt-ico">📜</span><span className="mbt-lbl">Campaign</span>
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">Shop</span>

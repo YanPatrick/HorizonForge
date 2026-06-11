@@ -213,7 +213,7 @@ export default function GrimoireView() {
                   <div>
                     <strong>PVP Mode (Cumulative):</strong> The arena retains at least 10% fee from every HIVE wager. 
                     This fee fills your <span className="gr-hl">Chest Meter</span>. 
-                    When you accumulate <strong>2.000 HIVE</strong> in fees <em>(the price of the Basic Chest)</em>, you automatically receive a <strong>Veteran Chest</strong>. 
+                    When you accumulate <strong>2 HIVE</strong> in fees <em>(the price of the Veteran Chest)</em>, you automatically receive a <strong>Veteran Chest</strong>. 
                     <em> (A winning in a 10 HIVE match with Payout Preference set to Hive Liquid grants a chest instantly!)</em>
                   </div>
                 </div>
@@ -221,6 +221,44 @@ export default function GrimoireView() {
                   <span className="gr-tip-ico">🍃</span>
                   <div>
                     <strong>Free Mode:</strong> Each victory in Free PvP has a <span className="gr-hl">1% flat chance</span> <em>(which can be increased with items)</em> to grant a Basic Chest. It's all a matter of luck! 
+                  </div>
+                </div>
+              </div>
+
+                 {/* ── Nova Seção: Drop Rates Adicionada Aqui ── */}
+              <div className="gr-section-title">📊 Chest Rarities &amp; Drop Rates</div>
+              <p className="gr-p">
+                Whenever you obtain and open a Chest, the <span className="gr-hl">Motor of Chaos</span> determines the item's rarity based on the following probability distribution and visual indicators:
+              </p>
+              <div className="gr-tips">
+                <div className="gr-tip">
+                  <span className="gr-tip-ico">⚪</span>
+                  <div>
+                    <strong>Common — 40%:</strong> Grants 1 stat bonus and has no requirements to equip.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#6acc6a' }}>🟢</span>
+                  <div>
+                    <strong style={{ color: '#6acc6a' }}>Uncommon — 30%:</strong> Grants 1 stat bonus and comes with 1 attribute requirement.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#4488ff' }}>🔵</span>
+                  <div>
+                    <strong style={{ color: '#4488ff' }}>Rare — 20%:</strong> Grants 2 stat bonuses and comes with 1 attribute requirements.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#aa44ff' }}>🟣</span>
+                  <div>
+                    <strong style={{ color: '#aa44ff' }}>Epic — 8%:</strong> Grants 2 stat bonuses and comes with 2 attribute requirements.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico" style={{ color: '#ff33aa' }}>💗</span>
+                  <div>
+                    <strong style={{ color: '#ff33aa' }}>Legendary — 2%:</strong> Grants 3 stat bonuses and comes with 2 attribute requirements.
                   </div>
                 </div>
               </div>
