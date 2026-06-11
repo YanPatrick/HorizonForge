@@ -52,6 +52,7 @@ export default function ShopView({ session, toast, heroData }) {
   const [claiming, setClaiming] = useState(null)
   const [equipping, setEquipping] = useState(null)
   const [modalError, setModalError] = useState('')
+  const [chestResult, setChestResult] = useState(null)
 
   const isHive = session?.mode === 'hive'
   const token = session?.token
@@ -226,8 +227,13 @@ export default function ShopView({ session, toast, heroData }) {
             body: JSON.stringify({ item_id: modal.id }),
           }).then(r => r.json())
           if (res.ok) {
-            setOwned(prev => new Set([...prev, modal.id]))
-            toast?.(`${modal.name} acquired!`)
+            if (res.item) {
+              // Chest purchase: show rolled item result
+              setChestResult({ chestName: modal.name, item: res.item })
+            } else {
+              setOwned(prev => new Set([...prev, modal.id]))
+              toast?.(`${modal.name} acquired!`)
+            }
             setModal(null)
           } else {
             setModalError('Payment not confirmed. Please try again.')
@@ -343,7 +349,10 @@ export default function ShopView({ session, toast, heroData }) {
             <div className="shop-modal-body">
               <div className="shop-modal-name">{modal.name}</div>
               <div className="shop-modal-price">{modal.price_hive.toFixed(3)} HIVE</div>
-              <div className="shop-modal-tos">This is a non-transferable digital cosmetic with no resale value. Purchases are final.</div>
+              {modal.type === 'treasure'
+                ? <div className="shop-modal-tos">You will receive one randomly generated item added to your inventory. Purchases are final.</div>
+                : <div className="shop-modal-tos">This is a non-transferable digital cosmetic with no resale value. Purchases are final.</div>
+              }
               {modalError && <div className="shop-modal-error">{modalError}</div>}
               <div className="shop-modal-actions">
                 <button className="shop-btn-cancel" onClick={() => setModal(null)} disabled={!!claiming}>Cancel</button>
@@ -353,6 +362,83 @@ export default function ShopView({ session, toast, heroData }) {
           </div>
         </div>
       )}
+
+      {chestResult && (
+        <ChestResultModal result={chestResult} onClose={() => setChestResult(null)} />
+      )}
+    </div>
+  )
+}
+
+const CHEST_RESULT_RARITY_COLORS = {
+  common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
+  epic: '#ba68c8', legendary: '#ff2d9b',
+}
+
+const ATTR_LABELS = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' }
+
+function ChestResultModal({ result, onClose }) {
+  const { chestName, item } = result
+  const rarityColor = CHEST_RESULT_RARITY_COLORS[item.rarity] || '#ccc'
+  const isCritFail  = item.d20_roll === 1
+  const isCritHit   = item.d20_roll === 20
+  const hasNegative = item.atk_bonus < 0 || item.hp_bonus < 0 || item.spd_bonus < 0
+
+  return (
+    <div className="shop-modal-overlay" onClick={onClose}>
+      <div className="shop-modal chest-result-modal" onClick={e => e.stopPropagation()}>
+        <div className="chest-result-header">
+          <div className="chest-result-chest-name">{chestName}</div>
+          {isCritHit && <div className="chest-result-crit-hit">⚡ CRITICAL HIT · D20 = 20</div>}
+          {isCritFail && <div className="chest-result-crit-fail">💀 CRITICAL FAIL · D20 = 1</div>}
+          {!isCritHit && !isCritFail && <div className="chest-result-d20">🎲 D20 = {item.d20_roll}</div>}
+        </div>
+
+        <div className="chest-result-item">
+          <div className="chest-result-item-name" style={{ color: rarityColor }}>{item.name}</div>
+          <div className="chest-result-item-meta">
+            <span className="chest-result-slot">{item.slot_type}</span>
+            <span className="chest-result-rarity" style={{ color: rarityColor }}>{item.rarity}</span>
+          </div>
+
+          <div className="chest-result-stats">
+            {item.atk_bonus !== 0 && (
+              <div className={`chest-result-stat${item.atk_bonus < 0 ? ' negative' : ''}`}>
+                {item.atk_bonus > 0 ? '+' : ''}{item.atk_bonus} ATK
+              </div>
+            )}
+            {item.hp_bonus !== 0 && (
+              <div className={`chest-result-stat${item.hp_bonus < 0 ? ' negative' : ''}`}>
+                {item.hp_bonus > 0 ? '+' : ''}{item.hp_bonus} HP
+              </div>
+            )}
+            {item.spd_bonus !== 0 && (
+              <div className={`chest-result-stat${item.spd_bonus < 0 ? ' negative' : ''}`}>
+                {item.spd_bonus > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD
+              </div>
+            )}
+          </div>
+
+          {item.req_attr && item.req_value && (
+            <div className="chest-result-req">
+              Requires {ATTR_LABELS[item.req_attr] || item.req_attr} ≥ {item.req_value}
+            </div>
+          )}
+
+          {item.flavor_text && (
+            <div className="chest-result-flavor">"{item.flavor_text}"</div>
+          )}
+
+          {!hasNegative && !item.flavor_text && (
+            <div className="chest-result-acquired">Item added to your inventory.</div>
+          )}
+          {hasNegative && !item.flavor_text && (
+            <div className="chest-result-acquired">Cursed item added to your inventory.</div>
+          )}
+        </div>
+
+        <button className="shop-btn-confirm" onClick={onClose}>Close</button>
+      </div>
     </div>
   )
 }
@@ -394,7 +480,7 @@ function ChestTooltip({ x, y }) {
   )
 }
 
-function TreasurePreview({ previewStyle }) {
+function TreasurePreview({ previewStyle, showDropRates = true }) {
   const [cursor, setCursor] = useState(null)
   const handleMove = useCallback(e => setCursor({ x: e.clientX, y: e.clientY }), [])
   const handleLeave = useCallback(() => setCursor(null), [])
@@ -404,10 +490,10 @@ function TreasurePreview({ previewStyle }) {
       <div
         className="shop-card-preview"
         style={previewStyle}
-        onMouseMove={handleMove}
-        onMouseLeave={handleLeave}
+        onMouseMove={showDropRates ? handleMove : undefined}
+        onMouseLeave={showDropRates ? handleLeave : undefined}
       />
-      {cursor && <ChestTooltip x={cursor.x} y={cursor.y} />}
+      {showDropRates && cursor && <ChestTooltip x={cursor.x} y={cursor.y} />}
     </>
   )
 }
@@ -444,7 +530,7 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
       {item.type === 'skin' && !item.preview
         ? <SkinPreview item={item} heroData={heroData} className="shop-card-preview" />
         : item.type === 'treasure'
-          ? <TreasurePreview previewStyle={previewStyle} />
+          ? <TreasurePreview previewStyle={previewStyle} showDropRates={item.id !== 'chaos_chest'} />
           : <div className="shop-card-preview" style={previewStyle} />
       }
       <div className="shop-card-body">
@@ -456,17 +542,14 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
           <div className="shop-card-desc">{item.description}</div>
         )}
         <div className="shop-card-actions">
-          {item.type === 'treasure' && !isOwned
-            ? <button className="shop-card-btn soon" disabled>Soon</button>
-            : <button
-                className={`shop-card-btn${isOwned ? ' owned' : isFree ? ' free' : ' buy'}`}
-                disabled={buyDisabled}
-                onClick={onBuy}
-                title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-              >
-                {isClaiming ? '⌛' : isOwned ? '✓ Owned' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
-              </button>
-          }
+          <button
+            className={`shop-card-btn${isFree ? ' free' : ' buy'}`}
+            disabled={isClaiming || !isHive}
+            onClick={onBuy}
+            title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
+          >
+            {isClaiming ? '⌛' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
+          </button>
           {isOwned && item.type !== 'treasure' && (
             <button
               className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
@@ -509,8 +592,15 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
             </div>
           : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive.toFixed(3)} HIVE`}</div>
         }
-        {item.type === 'treasure' && !isOwned
-          ? <button className="shop-row-btn soon" disabled>Soon</button>
+        {item.type === 'treasure'
+          ? <button
+              className="shop-row-btn buy"
+              disabled={isClaiming || !isHive}
+              onClick={onBuy}
+              title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
+            >
+              {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
+            </button>
           : isOwned && item.type !== 'treasure'
             ? isEquipped
               ? <button
