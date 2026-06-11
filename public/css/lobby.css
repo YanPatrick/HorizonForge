@@ -228,6 +228,60 @@
         box-shadow: 0 0 14px rgba(220, 40, 40, 0.2);
       }
 
+      /* ── User dropdown menu ── */
+      .nav-user-badge {
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+      }
+      .nav-user-chevron {
+        font-size: 9px;
+        color: rgba(160, 140, 210, 0.6);
+        margin-left: 2px;
+        transition: transform 0.15s;
+      }
+      .user-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: #1a1535;
+        border: 1px solid rgba(130, 100, 220, 0.35);
+        border-radius: 8px;
+        min-width: 175px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        z-index: 200;
+      }
+      .user-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: none;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        width: 100%;
+        text-align: left;
+        font-size: 12px;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        font-weight: 500;
+        color: rgba(200, 185, 245, 0.88);
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .user-dropdown-item:last-child {
+        border-bottom: none;
+      }
+      .user-dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .user-dropdown-item.danger {
+        color: rgba(255, 110, 110, 0.9);
+      }
+      .user-dropdown-item.danger:hover {
+        background: rgba(220, 40, 40, 0.12);
+      }
+
       /* ══════════════════════════════
        LOBBY MAIN
     ══════════════════════════════ */
