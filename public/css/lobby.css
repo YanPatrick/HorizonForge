@@ -228,6 +228,60 @@
         box-shadow: 0 0 14px rgba(220, 40, 40, 0.2);
       }
 
+      /* ── User dropdown menu ── */
+      .nav-user-badge {
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+      }
+      .nav-user-chevron {
+        font-size: 9px;
+        color: rgba(160, 140, 210, 0.6);
+        margin-left: 2px;
+        transition: transform 0.15s;
+      }
+      .user-dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        background: #1a1535;
+        border: 1px solid rgba(130, 100, 220, 0.35);
+        border-radius: 8px;
+        min-width: 175px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        z-index: 200;
+      }
+      .user-dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: none;
+        border: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        width: 100%;
+        text-align: left;
+        font-size: 12px;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        font-weight: 500;
+        color: rgba(200, 185, 245, 0.88);
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .user-dropdown-item:last-child {
+        border-bottom: none;
+      }
+      .user-dropdown-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .user-dropdown-item.danger {
+        color: rgba(255, 110, 110, 0.9);
+      }
+      .user-dropdown-item.danger:hover {
+        background: rgba(220, 40, 40, 0.12);
+      }
+
       /* ══════════════════════════════
        LOBBY MAIN
     ══════════════════════════════ */
@@ -7603,6 +7657,133 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px dashed rgba(255, 255, 255, 0.1);
   border-radius: 6px;
+}
+
+/* inventory item slots */
+.inv-slot--item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.inv-slot--item:hover {
+  border-color: rgba(160, 100, 255, 0.6);
+  border-style: solid;
+  transform: translateY(-1px);
+}
+.inv-slot--on-hero {
+  border-color: rgba(76, 175, 80, 0.8) !important;
+  border-style: solid !important;
+  background: rgba(76, 175, 80, 0.1);
+}
+.inv-slot--on-other {
+  opacity: 0.55;
+}
+.inv-slot--pending {
+  border-color: rgba(160, 100, 255, 0.9) !important;
+  border-style: solid !important;
+  background: rgba(120, 80, 220, 0.18);
+}
+.inv-item-slot-ico {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+.inv-item-rarity-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 5px 5px;
+}
+
+/* equip confirm panel */
+.inv-equip-confirm {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(160, 100, 255, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.inv-equip-confirm-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.inv-equip-confirm-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #8fd;
+  flex-wrap: wrap;
+}
+.inv-equip-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+.inv-equip-btn-confirm {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #5a3fa0, #3a2070);
+  border: 1px solid rgba(160, 100, 255, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.inv-equip-btn-confirm:hover {
+  background: linear-gradient(135deg, #7040c0, #5030a0);
+}
+.inv-equip-btn-remove {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f0b060;
+  background: rgba(180, 90, 20, 0.15);
+  border: 1px solid rgba(200, 110, 30, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.inv-equip-btn-remove:hover {
+  background: rgba(180, 90, 20, 0.3);
+  border-color: rgba(200, 110, 30, 0.7);
+}
+.inv-equip-btn-cancel {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: #888;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.inv-equip-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+}
+
+.gear-slot--unequip-pending {
+  border-color: rgba(240, 150, 40, 0.9) !important;
+  box-shadow: 0 0 8px rgba(220, 120, 20, 0.4);
+}
+.gst-hint {
+  font-size: 0.65rem;
+  color: #f0b060;
+  opacity: 0.8;
+  margin-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 4px;
 }
 
 /* Hover: amplify border brightness; lift slot above siblings for tooltip z-order */

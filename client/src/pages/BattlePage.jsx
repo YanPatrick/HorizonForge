@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/session'
 import GuestConversionModal from '../components/GuestConversionModal'
 
+const DR_RARITY_COLORS = {
+  common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
+  epic: '#ba68c8', legendary: '#ff2d9b',
+}
+
 export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
@@ -135,6 +140,9 @@ export default function BattlePage() {
     teamP: [],
     teamE: [],
     isPvP: false,
+    isCampaign: false,
+    campaignStage: null,
+    campaignReward: null, // set async when POST /api/campaign/complete resolves
     wager: 0,
     nextLabel: '🌟 Next Duel',
     submitting: null, // null | { state: 'pending' | 'done', text, sub }
@@ -220,6 +228,23 @@ export default function BattlePage() {
           setTimeout(() => setConvModal(true), 1500)
         }
       }
+
+      // Grant campaign reward immediately — item saved server-side before player navigates away
+      if (data?.isCampaign && data?.pw && data?.campaignStage && sessionForBadge?.token) {
+        fetch('/api/campaign/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionForBadge.token}` },
+          body: JSON.stringify({ stage: data.campaignStage }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.ok && d.reward) {
+              setDuelResult(prev => ({ ...prev, campaignReward: d.reward }))
+            }
+          })
+          .catch(() => {})
+      }
+
       setDuelResult({
       open: true,
       pw: !!data?.pw,
@@ -235,8 +260,11 @@ export default function BattlePage() {
       teamP: data?.teamP ?? [],
       teamE: data?.teamE ?? [],
       isPvP: !!data?.isPvP,
+      isCampaign: !!data?.isCampaign,
+      campaignStage: data?.campaignStage ?? null,
+      campaignReward: null,
       wager: data?.wager ?? 0,
-      nextLabel: data?.isPvP ? '🏠 Back to Lobby' : '🌟 Next Duel',
+      nextLabel: data?.isPvP ? '🏠 Back to Lobby' : data?.isCampaign ? (data?.pw ? '📜 Back to Campaign' : '🔄 Tentar Novamente') : '🌟 Next Duel',
       submitting: data?.isPvP
         ? {
           state: 'pending',
@@ -288,7 +316,9 @@ export default function BattlePage() {
       delete window.HF_equipped_backgrounds
       delete window.HF_equipped_skins
       delete window.HF_gear
-      for (const name of battleSide) delete window[name]
+      for (const name of battleSide) {
+        try { delete window[name] } catch { window[name] = undefined }
+      }
     }
   }, [closeQuit, confirmQuit])
 
@@ -502,8 +532,15 @@ export default function BattlePage() {
     return () => {
       links.forEach(el => el.remove())
       scripts.forEach(s => s.remove())
-      // Restore #root styles on unmount
       if (root) root.style.cssText = ''
+      document.body.style.backgroundImage = ''
+      document.body.style.backgroundSize = ''
+      document.body.style.backgroundPosition = ''
+      // skill-tooltip.js injects a persistent .skill-tip into body; hide and remove it
+      window.HFTooltip?.hide()
+      document.querySelector('.skill-tip')?.remove()
+      // defensive: remove any mid-animation battle fx elements
+      document.querySelectorAll('.dmg-float, .impact-ring, .merge-badge').forEach(el => el.remove())
     }
   }, [navigate])
 
@@ -1014,11 +1051,38 @@ export default function BattlePage() {
               {duelResult.submitting?.sub || 'Processing match outcome on the blockchain...'}
             </div>
           </div>
+          {duelResult.isCampaign && duelResult.pw && duelResult.campaignReward && (
+            <div className="dr-campaign-reward">
+              <div className="dr-campaign-reward-label">🎁 Recompensa desbloqueada</div>
+              <div
+                className="dr-campaign-reward-name"
+                style={{ color: DR_RARITY_COLORS[duelResult.campaignReward.rarity] || '#ccc' }}
+              >{duelResult.campaignReward.name}</div>
+              <div className="dr-campaign-reward-stats">
+                {Number(duelResult.campaignReward.atk_bonus) !== 0 && <span>{Number(duelResult.campaignReward.atk_bonus) > 0 ? '+' : ''}{Number(duelResult.campaignReward.atk_bonus)} ATK</span>}
+                {Number(duelResult.campaignReward.hp_bonus)  !== 0 && <span>{Number(duelResult.campaignReward.hp_bonus)  > 0 ? '+' : ''}{Number(duelResult.campaignReward.hp_bonus)} HP</span>}
+                {Number(duelResult.campaignReward.spd_bonus) !== 0 && <span>{Number(duelResult.campaignReward.spd_bonus) > 0 ? '+' : ''}{Number(duelResult.campaignReward.spd_bonus).toFixed(2)} SPD</span>}
+              </div>
+              <div className="dr-campaign-reward-slot">
+                {duelResult.campaignReward.slot_type} · {duelResult.campaignReward.rarity}
+              </div>
+            </div>
+          )}
           <div className="dr-cta">
             <button
               className="btn gnbtn"
               id="dr-next-btn"
-              onClick={() => window.duelResultNext?.()}
+              onClick={() => {
+                if (duelResult.isCampaign) {
+                  if (duelResult.pw) {
+                    navigate('/lobby?tab=campaign')
+                  } else {
+                    window.location.href = '/battle'
+                  }
+                } else {
+                  window.duelResultNext?.()
+                }
+              }}
             >
               {duelResult.nextLabel}
             </button>

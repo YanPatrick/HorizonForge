@@ -431,6 +431,45 @@ async function refreshMaxUnitsCap() {
   }
 }
 
+// ── Campaign: Chapter 1 stage definitions ─────────────────────────────────────
+const CAMPAIGN_STAGES = [
+  {
+    stage: 1, name: 'Os Portões do Bastião', format: 3,
+    lore_pre:  'Para entrar no torneio da Forja, todo comandante deve provar seu valor nos Portões do Bastião. Dois guardas veteranos bloqueiam sua passagem. Eles riram quando você anunciou seu nome. Não rirão por muito tempo.',
+    lore_post: 'As portas se abrem. Os guardas, ainda atordoados, acenam em silêncio. Dentro do Bastião, o nome de um novo comandante começa a circular nos corredores.',
+    enemies: [{ cid: 'knight', level: 1 }, { cid: 'paladin', level: 1 }],
+    reward_slug: 'campaign_ch1_s1',
+  },
+  {
+    stage: 2, name: 'A Emboscada da Floresta Cinzenta', format: 3,
+    lore_pre:  'O caminho para a arena passa pela Floresta Cinzenta. Dizem que mercenários contratados por rivais eliminam competidores promissores aqui. Você sentiu os olhos no escuro antes de vê-los.',
+    lore_post: 'Os mercenários fogem entre as árvores. Quem os contratou ainda é um mistério — mas o recado está claro: você já é ameaça suficiente para ser caçado.',
+    enemies: [{ cid: 'archer', level: 1 }, { cid: 'assassin', level: 1 }],
+    reward_slug: 'campaign_ch1_s2',
+  },
+  {
+    stage: 3, name: 'O Templo dos Guardiões', format: 5,
+    lore_pre:  'No coração do território central ergue-se o Templo dos Guardiões — uma ordem antiga que julga a dignidade de quem aspira ao poder. Eles não atacam por malícia. Atacam por dever.',
+    lore_post: 'O Guardião sênior inclina a cabeça. "Você passou pelo teste da resistência", diz ele. "Mas o poder real está além deste templo." Uma insígnia dourada é colocada em sua mão.',
+    enemies: [{ cid: 'paladin', level: 2 }, { cid: 'barbarian', level: 1 }, { cid: 'healer', level: 1 }],
+    reward_slug: 'campaign_ch1_s3',
+  },
+  {
+    stage: 4, name: 'A Torre de Cristal', format: 5,
+    lore_pre:  'A Torre de Cristal flutua sobre o lago a leste — lar dos Magos do Conselho. Eles raramente descem para lutar. Hoje desceram.',
+    lore_post: '"Impressionante", murmura o Archmago, manto chamuscado. "Há décadas não víamos um comandante como você. O Conselho vai querer conhecê-lo... ou silenciá-lo."',
+    enemies: [{ cid: 'mage', level: 2 }, { cid: 'archmage', level: 2 }, { cid: 'barbarian', level: 2 }],
+    reward_slug: 'campaign_ch1_s4',
+  },
+  {
+    stage: 5, name: 'O Trono do Conselho', format: 7,
+    lore_pre:  'Quatro membros do Grande Conselho aguardam no salão dourado. Não como árbitros — como adversários. "Você subiu longe demais", declara a Voz do Conselho. "Esta batalha decide se você entra para a história... ou desaparece dela."',
+    lore_post: 'Silêncio no salão. O Conselho, pela primeira vez em gerações, se levanta e inclina a cabeça. "Bem-vindo à Forja", diz a Voz. Seu nome será gravado no Grimório do Bastião. O Capítulo 1 termina — mas o verdadeiro jogo mal começou.',
+    enemies: [{ cid: 'knight', level: 3 }, { cid: 'paladin', level: 2 }, { cid: 'archer', level: 2 }, { cid: 'mage', level: 2 }],
+    reward_slug: 'campaign_ch1_s5',
+  },
+];
+
 function validateClientBoard(board) {
   if (!Array.isArray(board) || board.length !== 9) throw new Error('Board must have 9 slots');
   const seenCids = new Set();
@@ -898,7 +937,7 @@ app.post('/api/migrate', async (req, res) => {
     await sql`
       CREATE TABLE IF NOT EXISTS cosmetics (
         id          TEXT PRIMARY KEY,
-        type        TEXT NOT NULL CHECK (type IN ('background', 'skin')),
+        type        TEXT NOT NULL CHECK (type IN ('background', 'skin', 'treasure')),
         name        TEXT NOT NULL,
         preview     TEXT NOT NULL,
         price_hive  NUMERIC(10,3) NOT NULL DEFAULT 0,
@@ -906,6 +945,15 @@ app.post('/api/migrate', async (req, res) => {
         created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
       )
     `;
+    // Update type constraint to allow 'treasure'. Try dropping the auto-generated name first.
+    try { await sql`ALTER TABLE cosmetics DROP CONSTRAINT IF EXISTS cosmetics_type_check`; } catch {}
+    try {
+      await sql`ALTER TABLE cosmetics ADD CONSTRAINT cosmetics_type_check CHECK (type IN ('background', 'skin', 'treasure'))`;
+    } catch (e) {
+      if (!String(e?.message).toLowerCase().includes('already exists')) {
+        console.error('[migrate] type constraint:', e.message);
+      }
+    }
     await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
     await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
     await sql`
@@ -944,6 +992,12 @@ app.post('/api/migrate', async (req, res) => {
         ('skin_archmage',  'skin', 'Archmage',  '/heroes/shop/archmage.webp',  0, 'archmage'),
         ('skin_barbarian', 'skin', 'Barbarian', '/heroes/shop/barbarian.webp', 0, 'barbarian')
       ON CONFLICT (id) DO UPDATE SET preview = EXCLUDED.preview
+    `;
+
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive) VALUES
+        ('treasure_chest', 'treasure', 'Veteran Chest', '/images/treasures/chest.png', 2.000)
+      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, price_hive = EXCLUDED.price_hive, type = EXCLUDED.type, preview = EXCLUDED.preview
     `;
 
     await sql`
@@ -1023,6 +1077,10 @@ app.get('/api/gear', async (req, res) => {
           atk_bonus:   Number(r.atk_bonus),
           hp_bonus:    Number(r.hp_bonus),
           spd_bonus:   Number(r.spd_bonus),
+          req_attr:    null,
+          req_value:   null,
+          req_attr2:   null,
+          req_value2:  null,
         };
         gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
         gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
@@ -1043,7 +1101,8 @@ app.get('/api/gear', async (req, res) => {
     const rows = await sql`
       SELECT he.character_cid, he.slot_type,
              i.id, i.name, i.description, i.rarity,
-             i.atk_bonus, i.hp_bonus, i.spd_bonus
+             i.atk_bonus, i.hp_bonus, i.spd_bonus,
+             i.req_attr, i.req_value, i.req_attr2, i.req_value2
       FROM hero_equipment he
       JOIN items i ON i.id = he.item_id
       WHERE he.player = ${player}
@@ -1066,6 +1125,10 @@ app.get('/api/gear', async (req, res) => {
         atk_bonus:   Number(r.atk_bonus),
         hp_bonus:    Number(r.hp_bonus),
         spd_bonus:   Number(r.spd_bonus),
+        req_attr:    r.req_attr  || null,
+        req_value:   r.req_value  ? Number(r.req_value)  : null,
+        req_attr2:   r.req_attr2 || null,
+        req_value2:  r.req_value2 ? Number(r.req_value2) : null,
       };
       gear[r.character_cid].totals.atk_bonus += Number(r.atk_bonus);
       gear[r.character_cid].totals.hp_bonus  += Number(r.hp_bonus);
@@ -1100,6 +1163,11 @@ app.put('/api/gear/equip', async (req, res) => {
       return res.status(400).json({ ok: false, error: `Item does not fit slot '${slot_type}' (item slot: '${item.slot_type}')` });
     }
 
+    // Remove item from any other hero before equipping (communal inventory: one item = one hero)
+    await sql`
+      DELETE FROM hero_equipment
+      WHERE player = ${player} AND item_id = ${item_id} AND character_cid != ${character_cid}
+    `;
     await sql`
       INSERT INTO hero_equipment (player, character_cid, slot_type, item_id)
       VALUES (${player}, ${character_cid}, ${slot_type}, ${item_id})
@@ -1109,6 +1177,54 @@ app.put('/api/gear/equip', async (req, res) => {
     res.json({ ok: true, slot: { ...item, slot_type } });
   } catch (err) {
     console.error('[PUT /api/gear/equip]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/player-items?player=X
+ * Returns all items in the player's communal inventory with equip status.
+ */
+app.get('/api/player-items', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    const rows = await sql`
+      SELECT
+        i.id, i.name, i.description, i.rarity, i.slot_type,
+        COALESCE(i.atk_bonus, 0) AS atk_bonus,
+        COALESCE(i.hp_bonus, 0)  AS hp_bonus,
+        COALESCE(i.spd_bonus, 0) AS spd_bonus,
+        COALESCE(i.source, 'normal') AS source,
+        he.character_cid AS equipped_on
+      FROM player_items pi
+      JOIN items i ON i.id = pi.item_id
+      LEFT JOIN LATERAL (
+        SELECT character_cid FROM hero_equipment
+        WHERE item_id = i.id AND player = ${player}
+        LIMIT 1
+      ) he ON true
+      WHERE pi.player = ${player}
+      ORDER BY pi.acquired_at DESC
+    `;
+    res.json({ ok: true, items: rows.map(r => ({
+      id:          Number(r.id),
+      name:        r.name,
+      description: r.description,
+      rarity:      r.rarity,
+      slot_type:   r.slot_type,
+      atk_bonus:   Number(r.atk_bonus),
+      hp_bonus:    Number(r.hp_bonus),
+      spd_bonus:   Number(r.spd_bonus),
+      source:      r.source,
+      equipped_on: r.equipped_on || null,
+    })) });
+  } catch (err) {
+    console.error('[GET /api/player-items]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -1171,6 +1287,199 @@ app.post('/api/gear/unequip', async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
+// ── Motor of Chaos ────────────────────────────────────────────────────────────
+// Both chests use the same stat scaling and req_count table.
+// Veteran Chest: fixed moderate req values per rarity (curated, predictable).
+// Chaos Chest:   req values scale inversely with D20 (harder on low rolls).
+// D20 = 1 (critical fail): stats random between neg floor and rarity floor.
+//   Flavor text only on Chaos Chest.
+
+const CHEST_RARITY_ROLL = [
+  { rarity: 'common',    max: 40  },
+  { rarity: 'uncommon',  max: 70  },
+  { rarity: 'rare',      max: 90  },
+  { rarity: 'epic',      max: 98  },
+  { rarity: 'legendary', max: 100 },
+];
+
+// [floor, ceiling] per rarity. D20 roll scales linearly between them.
+// SPD teto: common=1, uncommon=2, rare=3, epic=4, legendary=5 (one unit per tier).
+// req_count: 0=common, 1=uncommon/rare, 2=epic/legendary.
+const CHEST_STAT_CFG = {
+  common:    { count: 1, req_count: 0, atk: [3,10],  hp: [30,80],   spd: [0,1],   neg: { atk:-5,  hp:-30,  spd:-0.5 } },
+  uncommon:  { count: 1, req_count: 1, atk: [8,18],  hp: [60,150],  spd: [1,2],   neg: { atk:-8,  hp:-50,  spd:-1.0 } },
+  rare:      { count: 2, req_count: 1, atk: [15,28], hp: [130,250], spd: [2,3],   neg: { atk:-12, hp:-80,  spd:-1.5 } },
+  epic:      { count: 2, req_count: 2, atk: [25,38], hp: [240,380], spd: [3,4],   neg: { atk:-18, hp:-120, spd:-2.0 } },
+  legendary: { count: 3, req_count: 2, atk: [35,50], hp: [360,550], spd: [4,5],   neg: { atk:-25, hp:-180, spd:-2.5 } },
+};
+
+// Veteran Chest: fixed moderate requirement values per rarity.
+const VETERAN_REQ_VALUE = { uncommon: 10, rare: 13, epic: 16, legendary: 20 };
+
+const CHEST_PREFIXES   = ['Ancient','Cursed','Divine','Shadow','Burning','Frozen','Runed','Spectral','Wicked','Sacred'];
+const CHEST_SUFFIXES   = ['of Ruin','of the Fallen','of Chaos','of Dawn','of Shadows','of the Void','of Eternity','of Power'];
+const CHEST_SLOT_WORDS = {
+  amulet:'Amulet', helm:'Helm', weapon:'Blade', chest:'Cuirass',
+  offhand:'Shield', belt:'Belt', legs:'Greaves', gloves:'Gauntlets',
+  ring1:'Ring', ring2:'Ring', boots:'Boots', special:'Relic',
+};
+const CHAOS_FLAVOR_TEXTS = [
+  'Forjada às 3 da manhã por um ferreiro bêbado.',
+  'Pertenceu a três generais diferentes. Todos pediram demissão.',
+  'O próprio dragão recusou usar esta peça.',
+  'Encontrada no lixo. Duas vezes.',
+  'A lâmina sussurra insultos durante a batalha.',
+  'Certificada como inútil por três guildas diferentes.',
+  'Rejeitada até pelo mercado de usados.',
+  'Foi usada por um goblin por 12 anos antes de ser lavada.',
+  'Amaldiçoada levemente. Talvez.',
+  'O ferreiro se desculpou ao entregá-la.',
+];
+const CHAOS_ATTR_POOL = ['str','dex','con','int','wis','cha'];
+
+function _rollRarity() {
+  const r = Math.random() * 100;
+  return CHEST_RARITY_ROLL.find(x => r < x.max).rarity;
+}
+
+// Rolls a single stat value scaled by D20 (rolls 2-20).
+// stat = floor + (d20/20) * (ceiling - floor)
+function _scaleByD20(min, max, d20) {
+  return min + (d20 / 20) * (max - min);
+}
+
+// Veteran Chest: D20=2-20 linear scaling, no requirements.
+function _rollVeteranStats(rarity, d20) {
+  const cfg  = CHEST_STAT_CFG[rarity];
+  const keys = ['atk','hp','spd'].sort(() => Math.random() - 0.5).slice(0, cfg.count);
+  const out  = { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+  for (const k of keys) {
+    const [mn, mx] = cfg[k];
+    const raw = _scaleByD20(mn, mx, d20);
+    if (k === 'spd') out.spd_bonus = parseFloat(Math.min(raw, mx).toFixed(2));
+    else if (k === 'atk') out.atk_bonus = Math.min(Math.round(raw), mx);
+    else out.hp_bonus = Math.min(Math.round(raw), mx);
+  }
+  return out;
+}
+
+// Chaos Chest D20=1: each stat independently random between neg floor and rarity floor.
+function _rollCriticalFail(rarity) {
+  const cfg  = CHEST_STAT_CFG[rarity];
+  const keys = ['atk','hp','spd'].sort(() => Math.random() - 0.5).slice(0, cfg.count);
+  const out  = { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
+  for (const k of keys) {
+    const negFloor = cfg.neg[k];
+    const posMax   = cfg[k][0]; // rarity floor = teto do D20=1
+    const raw      = negFloor + Math.random() * (posMax - negFloor);
+    if (k === 'spd') out.spd_bonus = parseFloat(raw.toFixed(2));
+    else if (k === 'atk') out.atk_bonus = Math.round(raw);
+    else out.hp_bonus = Math.round(raw);
+  }
+  return out;
+}
+
+// Returns requirement fields for both chest types based on rarity req_count.
+// Veteran: fixed moderate values. Chaos: inversely D20-scaled (harder on low rolls).
+function _pickReqs(rarity, d20, chestType) {
+  const reqCount = CHEST_STAT_CFG[rarity].req_count;
+  if (reqCount === 0) return { reqAttr: null, reqValue: null, reqAttr2: null, reqValue2: null };
+
+  const attrs   = [...CHAOS_ATTR_POOL].sort(() => Math.random() - 0.5);
+  const reqAttr  = attrs[0];
+  const reqAttr2 = reqCount >= 2 ? attrs[1] : null;
+
+  let reqValue, reqValue2 = null;
+  if (chestType === 'chaos_chest') {
+    reqValue  = Math.round(20 - (d20 / 20) * 10);
+    if (reqCount >= 2) reqValue2 = Math.round(20 - (d20 / 20) * 10);
+  } else {
+    reqValue  = VETERAN_REQ_VALUE[rarity] || 12;
+    if (reqCount >= 2) reqValue2 = reqValue;
+  }
+
+  return { reqAttr, reqValue, reqAttr2, reqValue2 };
+}
+
+function _rollName(slot) {
+  const p = CHEST_PREFIXES[Math.floor(Math.random() * CHEST_PREFIXES.length)];
+  const s = CHEST_SUFFIXES[Math.floor(Math.random() * CHEST_SUFFIXES.length)];
+  return `${p} ${CHEST_SLOT_WORDS[slot] || 'Item'} ${s}`;
+}
+
+function _randomSlot() {
+  const slots = Object.keys(CHEST_SLOT_WORDS);
+  return slots[Math.floor(Math.random() * slots.length)];
+}
+
+// Returns { item_data, d20, flavor_text } ready to INSERT into items table.
+function _generateChestItem(chestType) {
+  const rarity  = _rollRarity();
+  const slot    = _randomSlot();
+  const name    = _rollName(slot);
+  const d20     = Math.floor(Math.random() * 20) + 1;
+  const desc    = chestType === 'chaos_chest' ? 'Motor of Chaos — Chaos Chest' : 'Motor of Chaos — Veteran Chest';
+
+  let stats, flavorText = null;
+
+  if (d20 === 1) {
+    stats = _rollCriticalFail(rarity);
+    if (chestType === 'chaos_chest') {
+      const hasNegative = stats.atk_bonus < 0 || stats.hp_bonus < 0 || stats.spd_bonus < 0;
+      if (hasNegative) {
+        flavorText = CHAOS_FLAVOR_TEXTS[Math.floor(Math.random() * CHAOS_FLAVOR_TEXTS.length)];
+      }
+    }
+  } else {
+    stats = _rollVeteranStats(rarity, d20);
+  }
+
+  const { reqAttr, reqValue, reqAttr2, reqValue2 } = _pickReqs(rarity, d20, chestType);
+
+  return { name, desc, rarity, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText };
+}
+
+/**
+ * POST /api/chest/open
+ * Body: { chest_type: 'treasure_chest' | 'chaos_chest' }
+ * Verifies the player has paid (via verify-purchase flow) and opens a chest,
+ * rolling an item and adding it to player_items.
+ * Called internally from verify-purchase — not a public standalone endpoint.
+ */
+async function openChest(username, chestType) {
+  const { name, desc, rarity, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText } = _generateChestItem(chestType);
+  const [item] = await sql`
+    INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus,
+                       source, d20_roll, req_attr, req_value, req_attr2, req_value2, flavor_text)
+    VALUES (${name}, ${desc}, ${rarity}, ${slot},
+            ${stats.atk_bonus}, ${stats.hp_bonus}, ${stats.spd_bonus},
+            ${'chest'}, ${d20}, ${reqAttr}, ${reqValue}, ${reqAttr2}, ${reqValue2}, ${flavorText})
+    RETURNING *
+  `;
+  await sql`
+    INSERT INTO player_items (player, item_id, source)
+    VALUES (${username}, ${item.id}, ${'chest'})
+    ON CONFLICT DO NOTHING
+  `;
+  const reqLog = [reqAttr && `${reqAttr}>=${reqValue}`, reqAttr2 && `${reqAttr2}>=${reqValue2}`].filter(Boolean).join(' ');
+  console.log(`🎲 Chest opened: ${username} → "${name}" (${rarity}) D20=${d20} atk${stats.atk_bonus>=0?'+':''}${stats.atk_bonus} hp${stats.hp_bonus>=0?'+':''}${stats.hp_bonus} spd${stats.spd_bonus>=0?'+':''}${stats.spd_bonus}${reqLog ? ` req:${reqLog}` : ''}`);
+  return {
+    id:          Number(item.id),
+    name:        item.name,
+    rarity:      item.rarity,
+    slot_type:   item.slot_type,
+    atk_bonus:   Number(item.atk_bonus),
+    hp_bonus:    Number(item.hp_bonus),
+    spd_bonus:   Number(item.spd_bonus),
+    d20_roll:    d20,
+    req_attr:    reqAttr,
+    req_value:   reqValue,
+    req_attr2:   reqAttr2,
+    req_value2:  reqValue2,
+    flavor_text: flavorText,
+  };
+}
 
 /**
  * GET /api/formations?player=X
@@ -1243,6 +1552,298 @@ app.get('/api/shop', async (_req, res) => {
 
 const DEFAULT_BG_IDS = ['bg_desert', 'bg_florest', 'bg_snow'];
 const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin_barbarian', 'skin_healer', 'skin_knight', 'skin_mage', 'skin_paladin'];
+
+/**
+ * GET /api/campaign?player=X
+ * Returns the 5 campaign stages with the player's completed stages.
+ */
+app.get('/api/campaign', async (req, res) => {
+  const { player } = req.query;
+  try {
+    const completed = player
+      ? (await sql`SELECT stage FROM campaign_progress WHERE player = ${player} AND chapter = 1`).map(r => r.stage)
+      : [];
+    const stages = CAMPAIGN_STAGES.map(s => ({
+      stage: s.stage, name: s.name, format: s.format,
+      lore_pre: s.lore_pre, lore_post: s.lore_post,
+      enemies: s.enemies, reward_slug: s.reward_slug,
+      completed: completed.includes(s.stage),
+      unlocked: s.stage === 1 || completed.includes(s.stage - 1),
+    }));
+    res.json({ ok: true, stages, completed });
+  } catch (err) {
+    console.error('[/api/campaign GET]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/campaign/complete
+ * Body: { stage }
+ * Marks stage as completed and grants campaign reward item to player_items.
+ */
+app.post('/api/campaign/complete', async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  const stage = Number(req.body?.stage);
+  if (!stage || stage < 1 || stage > 5) return res.status(400).json({ ok: false, error: 'Invalid stage' });
+
+  try {
+    // Idempotent — if already completed, return success with reward info
+    const [existing] = await sql`
+      SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = 1 AND stage = ${stage}
+    `;
+    const stageDef = CAMPAIGN_STAGES.find(s => s.stage === stage);
+    const [rewardItem] = await sql`SELECT id, name, rarity, slug, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE slug = ${stageDef.reward_slug}`;
+
+    if (!existing) {
+      // Validate previous stage completed (unless stage 1)
+      if (stage > 1) {
+        const [prev] = await sql`
+          SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = 1 AND stage = ${stage - 1}
+        `;
+        if (!prev) return res.status(403).json({ ok: false, error: 'Previous stage not completed' });
+      }
+      await sql`
+        INSERT INTO campaign_progress (player, chapter, stage) VALUES (${username}, 1, ${stage})
+        ON CONFLICT DO NOTHING
+      `;
+      if (rewardItem) {
+        await sql`
+          INSERT INTO player_items (player, item_id, source) VALUES (${username}, ${rewardItem.id}, 'campaign')
+          ON CONFLICT DO NOTHING
+        `;
+      }
+      console.log(`🏆 Campaign: ${username} completed Chapter 1 Stage ${stage}`);
+    }
+
+    const reward = rewardItem ? {
+      id:        Number(rewardItem.id),
+      name:      rewardItem.name,
+      rarity:    rewardItem.rarity,
+      slot_type: rewardItem.slot_type,
+      atk_bonus: Number(rewardItem.atk_bonus) || 0,
+      hp_bonus:  Number(rewardItem.hp_bonus)  || 0,
+      spd_bonus: Number(rewardItem.spd_bonus) || 0,
+    } : null;
+    res.json({ ok: true, reward });
+  } catch (err) {
+    console.error('[/api/campaign/complete POST]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+async function restoreSpeedOffsets() {
+  // Canonical spd_offset values (initiative bonus added to D20 each round).
+  // Only runs if archer is not yet at the expected value — prevents overwriting on every restart.
+  try {
+    const rows = await sql`
+      SELECT cb.spd_offset FROM characters_base cb
+      JOIN characters c ON c.id = cb.character_id
+      WHERE c.cid = 'archer' LIMIT 1
+    `;
+    if (Number(rows[0]?.spd_offset) === 4) {
+      console.log('   Speed offsets: ✅ ok');
+      return;
+    }
+    const speeds = [
+      { cid: 'knight',    spd: 1.0 },
+      { cid: 'paladin',   spd: 1.0 },
+      { cid: 'barbarian', spd: 1.5 },
+      { cid: 'mage',      spd: 2.0 },
+      { cid: 'archer',    spd: 4.0 },
+      { cid: 'assassin',  spd: 4.0 },
+      { cid: 'archmage',  spd: 1.0 },
+      { cid: 'healer',    spd: 1.0 },
+    ];
+    for (const { cid, spd } of speeds) {
+      await sql`UPDATE characters_base SET spd_offset=${spd} WHERE character_id=(SELECT id FROM characters WHERE cid=${cid})`;
+    }
+    console.log('   Speed offsets: ✅ restored');
+  } catch (e) {
+    console.warn('   Speed offsets: ⚠️', e.message);
+  }
+}
+
+async function migrateRpgAttrs() {
+  // 1. Add columns — always safe (idempotent)
+  const cols = [
+    `ADD COLUMN IF NOT EXISTS str          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS dex          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS con          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS int          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS wis          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS cha          SMALLINT     NOT NULL DEFAULT 10`,
+    `ADD COLUMN IF NOT EXISTS primary_attr VARCHAR(8)   NOT NULL DEFAULT 'str'`,
+    `ADD COLUMN IF NOT EXISTS skill_attr   VARCHAR(8)   NOT NULL DEFAULT 'str'`,
+    `ADD COLUMN IF NOT EXISTS weapon_bonus SMALLINT     NOT NULL DEFAULT 0`,
+    `ADD COLUMN IF NOT EXISTS armor_bonus  SMALLINT     NOT NULL DEFAULT 0`,
+    `ADD COLUMN IF NOT EXISTS spd_offset   NUMERIC(5,2) NOT NULL DEFAULT 0`,
+    `ADD COLUMN IF NOT EXISTS sp_bonus     NUMERIC(6,3) NOT NULL DEFAULT 0`,
+  ];
+  for (const col of cols) {
+    try { await sql(`ALTER TABLE characters_base ${col}`); } catch {}
+  }
+
+  // 2. Only populate values on first-time setup (str still at default 10 for knight)
+  try {
+    const rows = await sql`
+      SELECT cb.str FROM characters_base cb
+      JOIN characters c ON c.id = cb.character_id
+      WHERE c.cid = 'knight' LIMIT 1
+    `;
+    if (rows[0]?.str !== 10) {
+      // Already configured — just clean up any leftover dev-test items
+      await sql`DELETE FROM hero_equipment WHERE item_id IN (SELECT id FROM items WHERE description = '[DEV-TEST] Motor of Chaos')`;
+      await sql`DELETE FROM items WHERE description = '[DEV-TEST] Motor of Chaos'`;
+      console.log('   RPG attrs: ✅ columns ok');
+      return;
+    }
+  } catch {}
+
+  // 3. First-time: populate all RPG attribute values
+  const updates = [
+    { cid: 'knight',    vals: `str=15,dex=10,con=20,int=7, wis=10,cha=10, primary_attr='str',skill_attr='con', weapon_bonus=17,armor_bonus=142,spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'paladin',   vals: `str=13,dex=10,con=19,int=10,wis=10,cha=10, primary_attr='str',skill_attr='cha', weapon_bonus=23,armor_bonus=137,spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'barbarian', vals: `str=20,dex=12,con=15,int=5, wis=8, cha=12, primary_attr='str',skill_attr='str', weapon_bonus=0, armor_bonus=130,spd_offset=1.5,sp_bonus=0`    },
+    { cid: 'assassin',  vals: `str=14,dex=18,con=10,int=10,wis=10,cha=10, primary_attr='dex',skill_attr='dex', weapon_bonus=42,armor_bonus=13, spd_offset=4.0,sp_bonus=0`    },
+    { cid: 'archer',    vals: `str=12,dex=17,con=10,int=10,wis=11,cha=12, primary_attr='dex',skill_attr='dex', weapon_bonus=60,armor_bonus=60, spd_offset=4.0,sp_bonus=0`    },
+    { cid: 'mage',      vals: `str=8, dex=10,con=10,int=20,wis=14,cha=10, primary_attr='int',skill_attr='int', weapon_bonus=70,armor_bonus=30, spd_offset=2.0,sp_bonus=0`    },
+    { cid: 'archmage',  vals: `str=7, dex=10,con=10,int=20,wis=15,cha=10, primary_attr='int',skill_attr='int', weapon_bonus=88,armor_bonus=58, spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'healer',    vals: `str=8, dex=10,con=8, int=18,wis=10,cha=18, primary_attr='wis',skill_attr='wis', weapon_bonus=2, armor_bonus=39, spd_offset=1.0,sp_bonus=1.25` },
+  ];
+  for (const { cid, vals } of updates) {
+    try { await sql(`UPDATE characters_base SET ${vals} WHERE character_id=(SELECT id FROM characters WHERE cid='${cid}')`); } catch {}
+  }
+  console.log('   RPG attrs: ✅ migrated');
+}
+
+async function seedTreasures() {
+  try {
+    // pg_get_constraintdef normalizes IN(...) to = ANY(ARRAY[...]), so search by 'background'
+    const checks = await sql`
+      SELECT conname FROM pg_constraint
+      WHERE conrelid = 'cosmetics'::regclass AND contype = 'c'
+        AND pg_get_constraintdef(oid) LIKE '%background%'
+    `;
+    for (const { conname } of checks) {
+      await sql(`ALTER TABLE cosmetics DROP CONSTRAINT IF EXISTS "${conname}"`);
+    }
+    try {
+      await sql(`ALTER TABLE cosmetics ADD CONSTRAINT cosmetics_type_check CHECK (type IN ('background', 'skin', 'treasure'))`);
+    } catch (e) {
+      if (!String(e?.message).toLowerCase().includes('already exists')) throw e;
+    }
+  } catch (e) {
+    console.warn('   Treasures: ⚠️  constraint update skipped:', e.message);
+  }
+  try {
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive)
+      VALUES ('treasure_chest', 'treasure', 'Veteran Chest', '/images/treasures/chest.png', 2.000)
+      ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name, price_hive = EXCLUDED.price_hive, type = EXCLUDED.type, preview = EXCLUDED.preview
+    `;
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive)
+      VALUES ('chaos_chest', 'treasure', 'Chaos Chest', '/images/treasures/chaos-chest.png', 10.000)
+      ON CONFLICT (id) DO UPDATE
+        SET name = EXCLUDED.name, price_hive = EXCLUDED.price_hive, type = EXCLUDED.type, preview = EXCLUDED.preview
+    `;
+    console.log('   Treasures: ✅ seeded');
+  } catch (e) {
+    console.error('   Treasures: ❌', e.message);
+  }
+}
+
+async function fixupPrecisionQuiver() {
+  try {
+    const [item] = await sql`
+      UPDATE items SET slot_type = 'offhand'
+      WHERE name = 'Precision Quiver' AND slot_type = 'special'
+      RETURNING id
+    `;
+    if (!item) return; // already corrected or not found
+    await sql`
+      UPDATE character_starter_loadout
+      SET slot_type = 'offhand'
+      WHERE character_cid = 'archer' AND slot_type = 'special' AND item_id = ${item.id}
+    `;
+    await sql`
+      UPDATE hero_equipment
+      SET slot_type = 'offhand'
+      WHERE character_cid = 'archer' AND slot_type = 'special' AND item_id = ${item.id}
+    `;
+    console.log('   Fixup: ✅ Precision Quiver moved from special → offhand');
+  } catch (e) {
+    console.warn('   Fixup Precision Quiver: ⚠️', e.message);
+  }
+}
+
+async function migrateCampaign() {
+  try {
+    // Add slug + source columns to items (idempotent)
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS slug TEXT`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS source VARCHAR(20) NOT NULL DEFAULT 'normal'`); } catch {}
+    try { await sql(`CREATE UNIQUE INDEX IF NOT EXISTS items_slug_uidx ON items(slug)`); } catch {}
+    // Chaos Chest columns
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS d20_roll    SMALLINT`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr    VARCHAR(4)`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_value   SMALLINT`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr2   VARCHAR(4)`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_value2  SMALLINT`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS flavor_text TEXT`); } catch {}
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS campaign_progress (
+        player       TEXT     NOT NULL,
+        chapter      SMALLINT NOT NULL DEFAULT 1,
+        stage        SMALLINT NOT NULL,
+        completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY (player, chapter, stage)
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS player_items (
+        id          SERIAL PRIMARY KEY,
+        player      TEXT NOT NULL,
+        item_id     INT  NOT NULL,
+        source      VARCHAR(20) NOT NULL DEFAULT 'normal',
+        acquired_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE (player, item_id)
+      )
+    `;
+
+    // Campaign reward items — one per stage, progressively rarer.
+    // Slots chosen to complement the starter loadout (none of these exist as starters).
+    // SPD values nerfed intentionally: uncommon=0.3, rare=0.8, legendary=1.0.
+    const desc    = 'Item de Campanha — não pode ser negociado.';
+    const rewards = [
+      { slug: 'campaign_ch1_s1', name: 'Correia do Bastião',      rarity: 'common',    slot_type: 'belt',    atk: 0,  hp: 65,  spd: 0   },
+      { slug: 'campaign_ch1_s2', name: 'Manoplas da Floresta',    rarity: 'uncommon',  slot_type: 'gloves',  atk: 12, hp: 0,   spd: 0.3 },
+      { slug: 'campaign_ch1_s3', name: 'Grevas dos Guardiões',    rarity: 'rare',      slot_type: 'legs',    atk: 0,  hp: 200, spd: 0.8 },
+      { slug: 'campaign_ch1_s4', name: 'Anel da Torre de Cristal',rarity: 'epic',      slot_type: 'ring2',   atk: 30, hp: 260, spd: 0   },
+      { slug: 'campaign_ch1_s5', name: 'Relíquia do Grande Conselho', rarity: 'legendary', slot_type: 'special', atk: 42, hp: 420, spd: 1.0 },
+    ];
+    for (const r of rewards) {
+      await sql`
+        INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source)
+        VALUES (${r.name}, ${desc}, ${r.rarity}, ${r.slot_type}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'campaign')
+        ON CONFLICT (slug) DO UPDATE
+          SET name      = EXCLUDED.name,
+              rarity    = EXCLUDED.rarity,
+              slot_type = EXCLUDED.slot_type,
+              atk_bonus = EXCLUDED.atk_bonus,
+              hp_bonus  = EXCLUDED.hp_bonus,
+              spd_bonus = EXCLUDED.spd_bonus
+      `;
+    }
+    console.log('   Campaign: ✅ tables and items ready');
+  } catch (e) {
+    console.warn('   Campaign: ⚠️', e.message);
+  }
+}
 
 async function ensureDefaultCosmetics(username) {
   // Fast-path: se o jogador já foi inicializado, não faz nada.
@@ -1336,15 +1937,30 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
   if (!item_id) return res.status(400).json({ ok: false, error: 'item_id required' });
 
   try {
-    const [item] = await sql`SELECT id, price_hive FROM cosmetics WHERE id = ${item_id}`;
-    if (!item) return res.status(400).json({ ok: false, error: 'Item not found' });
+    const [cosmetic] = await sql`SELECT id, type, price_hive FROM cosmetics WHERE id = ${item_id}`;
+    if (!cosmetic) return res.status(400).json({ ok: false, error: 'Item not found' });
 
+    const price = parseFloat(cosmetic.price_hive);
+
+    // ── Treasure chests: consumable — verify payment then roll an item ──────
+    if (cosmetic.type === 'treasure') {
+      if (price > 0) {
+        try {
+          await verifyShopPayment(username, price, item_id);
+        } catch {
+          return res.status(402).json({ ok: false, error: 'Payment not found or timed out' });
+        }
+      }
+      const rolledItem = await openChest(username, item_id);
+      console.log(`💰 Chest purchased: ${username} → ${item_id} (${price} HIVE)`);
+      return res.json({ ok: true, item: rolledItem });
+    }
+
+    // ── Cosmetics: idempotent ownership grant ────────────────────────────────
     const [existing] = await sql`
       SELECT 1 FROM user_cosmetics WHERE player = ${username} AND item_id = ${item_id}
     `;
     if (existing) return res.json({ ok: true });
-
-    const price = parseFloat(item.price_hive);
 
     if (price === 0) {
       await sql`
@@ -1368,6 +1984,88 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
     return res.json({ ok: true });
   } catch (err) {
     console.error('[/api/shop/verify-purchase]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ── POST /api/shop/review-purchases ──────────────────────────────────────────
+// Rate-limited to avoid abuse. Scans full account history via paginated Hive RPC.
+const reviewPurchasesLimiter = rateLimit({
+  windowMs: 60 * 1000,         // 1 minute
+  max: 2,                      // 2 requests per IP per minute (full scan can be slow)
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many review-purchases requests. Please wait a moment and try again.' },
+});
+// Items that were renamed after sale — maps old blockchain memo ID → current catalog ID
+const COSMETIC_ID_ALIASES = {
+  'skin_archer_determination': 'skin_kaelen_determination',
+};
+
+app.post('/api/shop/review-purchases', reviewPurchasesLimiter, async (req, res) => {
+  const username = authFromRequest(req);
+  if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    if (!HIVE_GAME_ACCOUNT) return res.status(503).json({ ok: false, error: 'Shop not configured' });
+
+    // Scan the game account's history (much smaller than a player's full HIVE history).
+    // Filter incoming transfers where the sender is the requesting player.
+    const allOps = [];
+    let cursor = -1;
+    while (true) {
+      const page = await hiveRpc('condenser_api.get_account_history', [HIVE_GAME_ACCOUNT, cursor, 1000]);
+      if (!Array.isArray(page) || page.length === 0) break;
+      allOps.push(...page);
+      if (page.length < 1000) break;
+      cursor = page[0][0] - 1;
+      if (cursor < 0) break;
+    }
+
+    // Collect unique item_ids from shop_* transfers sent by this player
+    const foundIds = new Set();
+    for (const [, entry] of allOps) {
+      const [opType, op] = entry.op;
+      if (opType !== 'transfer') continue;
+      if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
+      if (op.from.toLowerCase() !== username.toLowerCase()) continue;
+      if (!op.memo || !op.memo.startsWith('shop_')) continue;
+      if (!op.amount.endsWith(' HIVE')) continue;
+      const rawId = op.memo.slice(5);
+      if (!/^[\w-]{1,64}$/.test(rawId)) continue;
+      foundIds.add(COSMETIC_ID_ALIASES[rawId] ?? rawId);
+    }
+
+    const foundOnChain = [...foundIds];
+
+    if (foundIds.size === 0) {
+      console.log(`🔍 Review purchases: ${username} — 0 shop transfers found in ${allOps.length} ops scanned (game account history)`);
+      return res.json({ ok: true, restored: 0, items: [], debug: { opsScanned: allOps.length, foundOnChain: [], notInCatalog: [], alreadyOwned: [] } });
+    }
+
+    // Keep only ids that exist in the cosmetics catalog
+    const existing = await sql`SELECT id FROM cosmetics WHERE id = ANY(${foundOnChain})`;
+    const validIds = existing.map(r => r.id);
+    const notInCatalog = foundOnChain.filter(id => !validIds.includes(id));
+
+    // Find which are not yet owned
+    const owned = await sql`
+      SELECT item_id FROM user_cosmetics WHERE player = ${username} AND item_id = ANY(${validIds})
+    `;
+    const ownedSet = new Set(owned.map(r => r.item_id));
+    const alreadyOwned = validIds.filter(id => ownedSet.has(id));
+    const toInsert = validIds.filter(id => !ownedSet.has(id));
+
+    for (const item_id of toInsert) {
+      await sql`
+        INSERT INTO user_cosmetics (player, item_id) VALUES (${username}, ${item_id})
+        ON CONFLICT DO NOTHING
+      `;
+    }
+
+    console.log(`🔍 Review purchases: ${username} — ${allOps.length} game-account ops scanned | found on-chain: [${foundOnChain}] | not in catalog: [${notInCatalog}] | already owned: [${alreadyOwned}] | restored: [${toInsert}]`);
+    return res.json({ ok: true, restored: toInsert.length, items: toInsert, debug: { opsScanned: allOps.length, foundOnChain, notInCatalog, alreadyOwned } });
+  } catch (err) {
+    console.error('[/api/shop/review-purchases]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -2664,6 +3362,11 @@ httpServer.listen(PORT, () => {
   // Load the max-units cap from horizon_forge_details before accepting any
   // submit_team. Falls back to 5 if the table or row is missing.
   refreshMaxUnitsCap();
+  migrateRpgAttrs();
+  restoreSpeedOffsets();
+  seedTreasures();
+  migrateCampaign();
+  fixupPrecisionQuiver();
   // Rehydrate any matches that were active at the time of the previous shutdown.
   // Refunds get processed automatically for paid players whose match can no
   // longer be resumed (e.g. payment phase that timed out across the restart).

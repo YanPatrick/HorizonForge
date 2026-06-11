@@ -114,9 +114,8 @@
     }
     var skillInfo = SKILL_DESCRIPTIONS[skillKey];
     var skillPower = unit.skillPower || 0;
-    var gear = (window.HF_gear && window.HF_gear[unit.cid] && window.HF_gear[unit.cid].totals) || { atk_bonus: 0 };
     var st = C[unit.cid] && C[unit.cid].levels && C[unit.cid].levels[unit.lv];
-    var atk = Math.floor((st && st.atk != null ? st.atk : (unit.atk || 0))) + gear.atk_bonus;
+    var atk = unit.atk != null ? unit.atk : Math.floor((st && st.atk != null ? st.atk : 0));
     var maxHp = unit.maxHp || 0;
     var level = unit.lv || 1;
     var calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
@@ -134,9 +133,8 @@
       return '<div class="stp-header"><span class="stp-icon">' + icon + '</span><span class="stp-name">' + name + '</span></div>';
     }
     var skillPower = unit.skillPower || 0;
-    var gear = (window.HF_gear && window.HF_gear[unit.cid] && window.HF_gear[unit.cid].totals) || { atk_bonus: 0 };
     var st = cc && cc.levels && cc.levels[unit.lv];
-    var atk = Math.floor((st && st.atk != null ? st.atk : (unit.atk || 0))) + gear.atk_bonus;
+    var atk = unit.atk != null ? unit.atk : Math.floor((st && st.atk != null ? st.atk : 0));
     var maxHp = unit.maxHp || 0;
     var level = unit.lv || 1;
     var calculatedValue = skillInfo.format(skillPower, level, atk, maxHp);
@@ -168,11 +166,11 @@
     var abiIco = (cc && cc.abi && cc.abi.ico) || "✨";
     var abiName = (cc && cc.abi && cc.abi.name) || "Skill";
 
-    var gear = (window.HF_gear && window.HF_gear[u.cid] && window.HF_gear[u.cid].totals) || { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 };
-    var hp   = ((st && st.max_hp) || 0) + gear.hp_bonus;
-    var atk  = Math.floor((st && st.atk != null ? st.atk : 0)) + gear.atk_bonus;
-    var spdRaw = ((st && st.initiative) || 0) + gear.spd_bonus;
-    var spd  = Number(spdRaw).toFixed(2);
+    // Use pre-applied stats from the unit object — correctly reflects gear for
+    // player units and base stats for enemies (set by startBattle's _applyGear).
+    var hp     = u.maxHp != null ? u.maxHp : ((st && st.max_hp) || 0);
+    var atk    = u.atk   != null ? u.atk   : Math.floor((st && st.atk != null ? st.atk : 0));
+    var spd    = Number(u.initiative != null ? u.initiative : ((st && st.initiative) || 0)).toFixed(2);
 
     var skillSection = "";
     if (skillInfo) {
