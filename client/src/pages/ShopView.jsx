@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import '@styles/shop.css'
+import { useT } from '../context/LanguageContext'
 
 const FILTERS = [
   { key: 'background', label: '🌄 Backgrounds' },
@@ -444,11 +445,11 @@ function ChestResultModal({ result, onClose }) {
 }
 
 const CHEST_DROPS = [
-  { label: 'Comum',    pct: '40%', cls: 'r-comum' },
-  { label: 'Incomum',  pct: '30%', cls: 'r-incomum' },
-  { label: 'Raro',     pct: '20%', cls: 'r-raro' },
-  { label: 'Épico',    pct: '8%',  cls: 'r-epico' },
-  { label: 'Lendário', pct: '2%',  cls: 'r-lendario' },
+  { key: 'common',    pct: '40%', cls: 'r-comum' },
+  { key: 'uncommon',  pct: '30%', cls: 'r-incomum' },
+  { key: 'rare',      pct: '20%', cls: 'r-raro' },
+  { key: 'epic',      pct: '8%',  cls: 'r-epico' },
+  { key: 'legendary', pct: '2%',  cls: 'r-lendario' },
 ]
 
 const TOOLTIP_W = 170
@@ -456,6 +457,7 @@ const TOOLTIP_H = 140
 const TOOLTIP_GAP = 14
 
 function ChestTooltip({ x, y }) {
+  const { t } = useT()
   const showBelow = y < TOOLTIP_H + TOOLTIP_GAP + 16
   let left = x - TOOLTIP_W / 2
   if (left < 8) left = 8
@@ -471,8 +473,8 @@ function ChestTooltip({ x, y }) {
     >
       <div className="chest-tooltip-title">Drop Rates</div>
       {CHEST_DROPS.map(d => (
-        <div key={d.label} className="chest-tooltip-row">
-          <span className={d.cls}>{d.label}</span>
+        <div key={d.key} className="chest-tooltip-row">
+          <span className={d.cls}>{t(`rarity.${d.key}`)}</span>
           <span>{d.pct}</span>
         </div>
       ))}
