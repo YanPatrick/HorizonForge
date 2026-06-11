@@ -766,6 +766,7 @@ export default function LobbyPage() {
   const [aiFmtOpen, setAiFmtOpen] = useState(false)
   const [pvpBetOpen, setPvpBetOpen] = useState(false)
   const [pvpFmtOpen, setPvpFmtOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [activeInfoTip, setActiveInfoTip] = useState(null)
   const [tavernUsers, setTavernUsers] = useState([])         // + IMP tavern
   const [chatMessages, setChatMessages] = useState([])
@@ -785,6 +786,7 @@ export default function LobbyPage() {
   const preTimerRef = useRef(null)
   const preTimeoutRef = useRef(null)
   const toastTimerRef = useRef(null)
+  const userMenuRef = useRef(null)
   const isManualAfkRef = useRef(false)
   const afkTimerRef = useRef(null)
   const isChatTabOpenRef = useRef(false)
@@ -813,6 +815,18 @@ export default function LobbyPage() {
   function handleChatClose() {
     isChatTabOpenRef.current = false
   }
+
+  /* ── user menu close-on-outside-click ───────────────────────── */
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleOutside(e) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [menuOpen])
 
   /* ── toast ───────────────────────────────────────────── */
   const showToast = useCallback((msg) => {
@@ -1324,6 +1338,29 @@ export default function LobbyPage() {
     socketRef.current?.emit('join_queue', { username, wager: pvpBet, format: pvpFmt })
   }
 
+  /* ── review blockchain purchases ────────────────────────── */
+  async function handleReviewPurchases() {
+    setMenuOpen(false)
+    clearTimeout(toastTimerRef.current)
+    setToastMsg('⏳ Varrendo blockchain…')
+    try {
+      const res = await fetch('/api/shop/review-purchases', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.token}` },
+      })
+      const data = await res.json()
+      if (data.ok && data.restored > 0) {
+        showToast(`✅ ${data.restored} item(s) restaurado(s)!`)
+      } else if (data.ok) {
+        showToast('ℹ️ Tudo já estava sincronizado')
+      } else {
+        showToast('❌ Erro ao revisar compras')
+      }
+    } catch {
+      showToast('❌ Erro ao revisar compras')
+    }
+  }
+
   /* ── logout ──────────────────────────────────────────── */
   function doLogout() {
     sessionStorage.removeItem('hf_session')
@@ -1341,7 +1378,7 @@ export default function LobbyPage() {
     <>
       <nav className="topnav">
         <div className="nav-right">
-           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
+          {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
           <div className="nav-chest-pill" title="Fight for a chance to open a new chest!">
             <span className="nav-chest-ico">🎁</span>
             <span className="nav-chest-status">0 %</span>
@@ -1354,13 +1391,26 @@ export default function LobbyPage() {
               <span>{balance}</span>
             </div>
           )}
-          <div className="nav-user-badge">
+
+          <div className="nav-user-badge" ref={userMenuRef} onClick={() => setMenuOpen(o => !o)}>
             {session?.mode === 'hive' && !avatarError && (
               <img className="nav-avatar" src={`https://images.hive.blog/u/${username}/avatar`} alt="avatar" onError={() => setAvatarError(true)} />
             )}
             <span>@{username}</span>
+            <span className="nav-user-chevron">▼</span>
+            {menuOpen && (
+              <div className="user-dropdown" onClick={e => e.stopPropagation()}>
+                {session?.mode === 'hive' && (
+                  <button className="user-dropdown-item" onClick={handleReviewPurchases}>
+                    🔍 Revisar Compras
+                  </button>
+                )}
+                <button className="user-dropdown-item danger" onClick={doLogout}>
+                  🚪 Exit
+                </button>
+              </div>
+            )}
           </div>
-          <button className="btn-exit" onClick={doLogout}>Exit</button>
         </div>
       </nav>
 
