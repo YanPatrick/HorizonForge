@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '../context/LanguageContext'
 
 /**
  * TavernPanel — real-time online players list with global chat.
@@ -28,6 +29,7 @@ export default function TavernPanel({
   onChatOpen,
   onChatClose,
 }) {
+  const { t } = useT()
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('players')
   const [chatInput, setChatInput] = useState('')
@@ -71,7 +73,12 @@ export default function TavernPanel({
     afk:       sorted.filter(u => u.status === 'afk'),
   }
 
-  const BADGE_LABEL = { battle: 'battle', searching: 'searching', tavern: 'tavern', afk: 'absent' }
+  const BADGE_LABEL = {
+    battle:    t('tavern.badgeBattle'),
+    searching: t('tavern.badgeSearching'),
+    tavern:    t('tavern.badgeTavern'),
+    afk:       t('tavern.badgeAbsent'),
+  }
 
   function initials(name) {
     return (name ?? '?').slice(0, 2).toUpperCase()
@@ -104,14 +111,14 @@ export default function TavernPanel({
                   onClick={() => { onSetAvailable?.(); setMenuOpen(false) }}
                 >
                   <span className="tv-status-opt-dot tv-status-opt-dot-available" />
-                  Available
+                  {t('tavern.available')}
                 </button>
                 <button
                   className="tv-status-opt"
                   onClick={() => { onSetAbsent?.(); setMenuOpen(false) }}
                 >
                   <span className="tv-status-opt-dot tv-status-opt-dot-absent" />
-                  Absent
+                  {t('tavern.absent')}
                 </button>
               </div>
             )}
@@ -139,7 +146,7 @@ export default function TavernPanel({
   const emptyState = (
     <div className="tv-empty">
       <span className="tv-empty-icon">🍺</span>
-      <span>Nobody's in the tavern yet.</span>
+      <span>{t('tavern.empty')}</span>
     </div>
   )
 
@@ -149,13 +156,13 @@ export default function TavernPanel({
         className={`tv-tab${activeTab === 'players' ? ' tv-tab-active' : ''}`}
         onClick={() => { setActiveTab('players'); onChatClose?.() }}
       >
-        👥 Players{users.length > 0 ? ` (${users.length})` : ''}
+        {t('tavern.players')}{users.length > 0 ? ` (${users.length})` : ''}
       </button>
       <button
         className={`tv-tab${activeTab === 'chat' ? ' tv-tab-active' : ''}`}
         onClick={() => { setActiveTab('chat'); onChatOpen?.() }}
       >
-        💬 Chat{chatUnread && activeTab !== 'chat' && <span className="tv-tab-dot" />}
+        {t('tavern.chat')}{chatUnread && activeTab !== 'chat' && <span className="tv-tab-dot" />}
       </button>
     </div>
   )
@@ -180,7 +187,7 @@ export default function TavernPanel({
           value={chatInput}
           onChange={e => setChatInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) sendMessage() }}
-          placeholder="type a message…"
+          placeholder={t('tavern.chatPlaceholder')}
           maxLength={200}
           disabled={myStatus !== 'tavern' && myStatus !== 'afk'}
         />
@@ -199,18 +206,18 @@ export default function TavernPanel({
     return (
       <div className="tv-panel tv-panel-mobile">
         <div className="tv-mobile-header">
-          <span className="tv-title">Tavern</span>
-          <span className="tv-count">{users.length} online</span>
+          <span className="tv-title">{t('tavern.title')}</span>
+          <span className="tv-count">{t('tavern.online', { n: users.length })}</span>
         </div>
         {tabBar}
         {activeTab === 'players' && (
           <div className="tv-list">
             {users.length === 0 ? emptyState : (
               <>
-                <Group title="In Battle"   list={groups.battle} />
-                <Group title="Searching"   list={groups.searching} />
-                <Group title="In Tavern"   list={groups.tavern} />
-                <Group title="Absent"      list={groups.afk} />
+                <Group title={t('tavern.groupBattle')}    list={groups.battle} />
+                <Group title={t('tavern.groupSearching')} list={groups.searching} />
+                <Group title={t('tavern.groupTavern')}    list={groups.tavern} />
+                <Group title={t('tavern.groupAbsent')}    list={groups.afk} />
               </>
             )}
           </div>
@@ -228,10 +235,10 @@ export default function TavernPanel({
           <div className="tv-list">
             {users.length === 0 ? emptyState : (
               <>
-                <Group title="In Battle"   list={groups.battle} />
-                <Group title="Searching"   list={groups.searching} />
-                <Group title="In Tavern"   list={groups.tavern} />
-                <Group title="Absent"      list={groups.afk} />
+                <Group title={t('tavern.groupBattle')}    list={groups.battle} />
+                <Group title={t('tavern.groupSearching')} list={groups.searching} />
+                <Group title={t('tavern.groupTavern')}    list={groups.tavern} />
+                <Group title={t('tavern.groupAbsent')}    list={groups.afk} />
               </>
             )}
           </div>

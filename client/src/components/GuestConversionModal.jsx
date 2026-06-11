@@ -1,26 +1,17 @@
 import '@styles/components.css'
-
-const CONFIGS = {
-  pvp: {
-    icon: '⚔️',
-    title: 'Unlock Real PvP',
-    body: 'Play against real players, climb the leaderboard, and earn actual HIVE tokens.',
-  },
-  victory: {
-    icon: '🏆',
-    title: 'Congrats on the Win!',
-    body: 'Create a Hive account to save your progress, climb the leaderboard, and earn real HIVE.',
-  },
-  formation: {
-    icon: '📋',
-    title: 'Save More Formations',
-    body: 'Create a Hive account to save up to 3 different team formations.',
-  },
-}
+import { useT } from '../context/LanguageContext'
 
 export default function GuestConversionModal({ open, context, onClose }) {
+  const { t } = useT()
   if (!open) return null
+
+  const CONFIGS = {
+    pvp:       { icon: '⚔️',  title: t('gcm.pvp.title'),       body: t('gcm.pvp.body') },
+    victory:   { icon: '🏆',  title: t('gcm.victory.title'),    body: t('gcm.victory.body') },
+    formation: { icon: '📋',  title: t('gcm.formation.title'),  body: t('gcm.formation.body') },
+  }
   const cfg = CONFIGS[context] || CONFIGS.pvp
+
   return (
     <div className="gcm-backdrop" onClick={onClose}>
       <div className="gcm-card" onClick={e => e.stopPropagation()}>
@@ -35,9 +26,9 @@ export default function GuestConversionModal({ open, context, onClose }) {
           rel="noreferrer"
           onClick={onClose}
         >
-          Create free Hive account →
+          {t('gcm.cta')}
         </a>
-        <button className="gcm-dismiss" type="button" onClick={onClose}>Continue as guest</button>
+        <button className="gcm-dismiss" type="button" onClick={onClose}>{t('gcm.dismiss')}</button>
       </div>
     </div>
   )

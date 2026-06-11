@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/index.css'
 import { getSession } from '../lib/session'
+import { useT } from '../context/LanguageContext'
 
 const GUEST_PREFIXES = ['Iron', 'Shadow', 'Storm', 'Void', 'Flame', 'Frost', 'Dark', 'Swift', 'Brave', 'Wild']
 const GUEST_CLASSES  = ['Knight', 'Mage', 'Archer', 'Paladin', 'Hunter', 'Rogue', 'Sage', 'Blade']
@@ -11,6 +12,7 @@ function randomGuestName() {
 }
 
 export default function LoginPage() {
+  const { t } = useT()
   const navigate = useNavigate()
   const inputRef = useRef(null)
   const [username, setUsername] = useState('')
@@ -24,31 +26,29 @@ export default function LoginPage() {
   async function doLogin() {
     setErr('')
     const raw = username.trim()
-    if (!raw) { setErr('Please enter your Hive username.'); return }
+    if (!raw) { setErr(t('login.errEnterUser')); return }
     const user = raw.toLowerCase()
 
     if (typeof window.hive_keychain === 'undefined') {
       setShowKcWarn(true)
-      setErr('Hive Keychain extension not found.')
+      setErr(t('login.errKcNotFound'))
       return
     }
     setShowKcWarn(false)
 
-    // Fetch a one-shot server nonce before asking Keychain to sign.
-    // This prevents replay attacks: the nonce is deleted on first use server-side.
     let nonce
     try {
       const cr = await fetch('/api/auth/challenge')
-      if (!cr.ok) { setErr('Could not start login. Please try again.'); return }
+      if (!cr.ok) { setErr(t('login.errCouldNotStart')); return }
       ;({ nonce } = await cr.json())
     } catch {
-      setErr('Network error. Please try again.')
+      setErr(t('login.errNetwork'))
       return
     }
 
     const memo = `horizon-forge-login-${nonce}`
     window.hive_keychain.requestSignBuffer(user, memo, 'Posting', async (resp) => {
-      if (!resp.success) { setErr(resp.message || 'Login cancelled or failed.'); return }
+      if (!resp.success) { setErr(resp.message || t('login.errCancelled')); return }
       try {
         const body = JSON.stringify({ username: user, memo, signature: resp.result })
         const fetchOpts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
@@ -60,11 +60,11 @@ export default function LoginPage() {
           r = await fetch('/api/auth/verify', fetchOpts)
         }
         const data = await r.json()
-        if (!r.ok || !data.token) { setErr(data.error || 'Server verification failed.'); return }
+        if (!r.ok || !data.token) { setErr(data.error || t('login.errServer')); return }
         sessionStorage.setItem('hf_session', JSON.stringify({ username: user, mode: 'hive', ts: Date.now(), token: data.token }))
         navigate('/lobby')
       } catch {
-        setErr('Network error. Please try again.')
+        setErr(t('login.errNetwork'))
       }
     })
   }
@@ -80,15 +80,15 @@ export default function LoginPage() {
         <div className="logo">
           <span className="logo-ico">⚔️</span>
           <h1 className="logo-name">HORIZON FORGE</h1>
-          <p className="logo-tag">A Fantasy Auto-Battler on the Hive Blockchain</p>
+          <p className="logo-tag">{t('login.tagline')}</p>
         </div>
 
-        <button className="btn-guest" onClick={doGuest}>Play as Guest</button>
-        <p className="guest-hint">No account required</p>
+        <button className="btn-guest" onClick={doGuest}>{t('login.playGuest')}</button>
+        <p className="guest-hint">{t('login.noAccount')}</p>
 
-        <div className="or-div"><span>or</span></div>
+        <div className="or-div"><span>{t('login.or')}</span></div>
 
-        <label className="field-lbl" htmlFor="hive-user">Hive Username</label>
+        <label className="field-lbl" htmlFor="hive-user">{t('login.hiveUsername')}</label>
         <div className="input-row">
           <span className="input-at">@</span>
           <input
@@ -107,24 +107,24 @@ export default function LoginPage() {
         <span className="err-msg">{err}</span>
 
         <button className="btn-kc" onClick={doLogin}>
-          Enter with Hive Keychain
+          {t('login.enterKeychain')}
         </button>
 
         {showKcWarn && (
           <div className="kc-warn show">
-            Hive Keychain not detected.<br />
+            {t('login.kcNotDetected')}<br />
             <a href="https://hive-keychain.com" target="_blank" rel="noreferrer">
-              Install the browser extension →
+              {t('login.installExt')}
             </a>
           </div>
         )}
 
         <div className="card-foot">
           <a href="https://hive-keychain.com" target="_blank" rel="noreferrer">
-            Don't have Hive Keychain? Install it
+            {t('login.noKeychain')}
           </a>
           <a href="https://peakd.com/register?ref=shiftrox" target="_blank" rel="noreferrer">
-            New to Hive? Create a free account
+            {t('login.newToHive')}
           </a>
         </div>
       </div>

@@ -1,25 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import '@styles/shop.css'
+import { useT } from '../context/LanguageContext'
 
-const FILTERS = [
-  { key: 'background', label: '🌄 Backgrounds' },
-  { key: 'skin', label: '✨ Skins' },
-  { key: 'treasure', label: '🎁 Treasures' },
-]
-
-const SEARCH_PLACEHOLDER = {
-  background: 'Search backgrounds...',
-  skin: 'Search skins...',
-  treasure: 'Search treasures...',
-}
-
-const SORT_OPTIONS = [
-  { value: 'new', label: 'New' },
-  { value: 'old', label: 'Old' },
-  { value: 'name', label: 'Name' },
-  { value: 'owned', label: 'Owned' },
-  { value: 'not_owned', label: 'Not Owned' },
-]
 
 function sortItems(items, sortBy, owned) {
   const copy = [...items]
@@ -34,6 +16,26 @@ function sortItems(items, sortBy, owned) {
 }
 
 export default function ShopView({ session, toast, heroData }) {
+  const { t } = useT()
+
+  const FILTERS = [
+    { key: 'background', label: t('shop.filterBg') },
+    { key: 'skin',       label: t('shop.filterSkin') },
+    { key: 'treasure',   label: t('shop.filterTreasure') },
+  ]
+  const SEARCH_PLACEHOLDER = {
+    background: t('shop.searchBg'),
+    skin:       t('shop.searchSkin'),
+    treasure:   t('shop.searchTreasure'),
+  }
+  const SORT_OPTIONS = [
+    { value: 'new',       label: t('sort.new') },
+    { value: 'old',       label: t('sort.old') },
+    { value: 'name',      label: t('sort.name') },
+    { value: 'owned',     label: t('sort.owned') },
+    { value: 'not_owned', label: t('sort.notOwned') },
+  ]
+
   const [catalog, setCatalog] = useState([])
   const [owned, setOwned] = useState(new Set())
   const [equippedBgs, setEquippedBgs] = useState([])
@@ -251,7 +253,7 @@ export default function ShopView({ session, toast, heroData }) {
     <div id="view-shop" className="lv active">
       <div className="wiki-layout">
         <aside className="wiki-sidebar">
-          <div className="wiki-category">Category</div>
+          <div className="wiki-category">{t('shop.category')}</div>
           {FILTERS.map(f => (
             <button key={f.key} className={`wiki-item${filter === f.key ? ' active' : ''}`} onClick={() => setFilter(f.key)}>
               {f.label}
@@ -277,7 +279,7 @@ export default function ShopView({ session, toast, heroData }) {
               onChange={e => setSearch(e.target.value)}
             />
             <div className="shop-sort-wrap">
-              <span className="shop-sort-label">Sort by</span>
+              <span className="shop-sort-label">{t('shop.sortBy')}</span>
               <select className="shop-sort" value={sortBy} onChange={e => setSortBy(e.target.value)}>
                 {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -288,7 +290,7 @@ export default function ShopView({ session, toast, heroData }) {
             <div className="shop-slot-counter-bar">
               <label className="shop-owned-toggle">
                 <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
-                Show owned
+                {t('shop.showOwned')}
               </label>
             </div>
           )}
@@ -300,10 +302,10 @@ export default function ShopView({ session, toast, heroData }) {
                   <span key={i} className={`shop-slot-dot${i < equippedBgs.length ? ' filled' : ''}`} />
                 ))}
               </div>
-              <span className="shop-slot-label">{equippedBgs.length}/4 backgrounds equipped</span>
+              <span className="shop-slot-label">{t('shop.bgsEquipped', { n: equippedBgs.length })}</span>
               <label className="shop-owned-toggle">
                 <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
-                Show owned
+                {t('shop.showOwned')}
               </label>
             </div>
           )}
@@ -321,7 +323,7 @@ export default function ShopView({ session, toast, heroData }) {
                 {...sharedCardProps}
               />
             ))}
-            {sorted.length === 0 && <div className="shop-empty">No items found.</div>}
+            {sorted.length === 0 && <div className="shop-empty">{t('shop.noItems')}</div>}
           </div>
 
           <div className="shop-list">
@@ -337,7 +339,7 @@ export default function ShopView({ session, toast, heroData }) {
                 {...sharedCardProps}
               />
             ))}
-            {sorted.length === 0 && <div className="shop-empty">No items found.</div>}
+            {sorted.length === 0 && <div className="shop-empty">{t('shop.noItems')}</div>}
           </div>
         </div>
       </div>
@@ -350,13 +352,13 @@ export default function ShopView({ session, toast, heroData }) {
               <div className="shop-modal-name">{modal.name}</div>
               <div className="shop-modal-price">{modal.price_hive.toFixed(3)} HIVE</div>
               {modal.type === 'treasure'
-                ? <div className="shop-modal-tos">You will receive one randomly generated item added to your inventory. Purchases are final.</div>
-                : <div className="shop-modal-tos">This is a non-transferable digital cosmetic with no resale value. Purchases are final.</div>
+                ? <div className="shop-modal-tos">{t('shop.tosTreasure')}</div>
+                : <div className="shop-modal-tos">{t('shop.tosCosmetic')}</div>
               }
               {modalError && <div className="shop-modal-error">{modalError}</div>}
               <div className="shop-modal-actions">
-                <button className="shop-btn-cancel" onClick={() => setModal(null)} disabled={!!claiming}>Cancel</button>
-                <button className="shop-btn-confirm" onClick={confirmBuy} disabled={!!claiming}>{claiming ? '⌛ Verifying...' : 'Confirm'}</button>
+                <button className="shop-btn-cancel" onClick={() => setModal(null)} disabled={!!claiming}>{t('shop.cancel')}</button>
+                <button className="shop-btn-confirm" onClick={confirmBuy} disabled={!!claiming}>{claiming ? t('shop.verifying') : t('shop.confirm')}</button>
               </div>
             </div>
           </div>
@@ -378,6 +380,7 @@ const CHEST_RESULT_RARITY_COLORS = {
 const ATTR_LABELS = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' }
 
 function ChestResultModal({ result, onClose }) {
+  const { t } = useT()
   const { chestName, item } = result
   const rarityColor = CHEST_RESULT_RARITY_COLORS[item.rarity] || '#ccc'
   const isCritFail  = item.d20_roll === 1
@@ -421,7 +424,7 @@ function ChestResultModal({ result, onClose }) {
 
           {item.req_attr && item.req_value && (
             <div className="chest-result-req">
-              Requires {ATTR_LABELS[item.req_attr] || item.req_attr} ≥ {item.req_value}
+              {t('shop.requires', { attr: ATTR_LABELS[item.req_attr] || item.req_attr, value: item.req_value })}
             </div>
           )}
 
@@ -430,25 +433,25 @@ function ChestResultModal({ result, onClose }) {
           )}
 
           {!hasNegative && !item.flavor_text && (
-            <div className="chest-result-acquired">Item added to your inventory.</div>
+            <div className="chest-result-acquired">{t('shop.itemAdded')}</div>
           )}
           {hasNegative && !item.flavor_text && (
-            <div className="chest-result-acquired">Cursed item added to your inventory.</div>
+            <div className="chest-result-acquired">{t('shop.cursedItemAdded')}</div>
           )}
         </div>
 
-        <button className="shop-btn-confirm" onClick={onClose}>Close</button>
+        <button className="shop-btn-confirm" onClick={onClose}>{t('shop.close')}</button>
       </div>
     </div>
   )
 }
 
 const CHEST_DROPS = [
-  { label: 'Comum',    pct: '40%', cls: 'r-comum' },
-  { label: 'Incomum',  pct: '30%', cls: 'r-incomum' },
-  { label: 'Raro',     pct: '20%', cls: 'r-raro' },
-  { label: 'Épico',    pct: '8%',  cls: 'r-epico' },
-  { label: 'Lendário', pct: '2%',  cls: 'r-lendario' },
+  { key: 'common',    pct: '40%', cls: 'r-comum' },
+  { key: 'uncommon',  pct: '30%', cls: 'r-incomum' },
+  { key: 'rare',      pct: '20%', cls: 'r-raro' },
+  { key: 'epic',      pct: '8%',  cls: 'r-epico' },
+  { key: 'legendary', pct: '2%',  cls: 'r-lendario' },
 ]
 
 const TOOLTIP_W = 170
@@ -456,6 +459,7 @@ const TOOLTIP_H = 140
 const TOOLTIP_GAP = 14
 
 function ChestTooltip({ x, y }) {
+  const { t } = useT()
   const showBelow = y < TOOLTIP_H + TOOLTIP_GAP + 16
   let left = x - TOOLTIP_W / 2
   if (left < 8) left = 8
@@ -469,10 +473,10 @@ function ChestTooltip({ x, y }) {
       data-dir={showBelow ? 'below' : 'above'}
       style={{ left, top, '--arrow-x': `${arrowX}px` }}
     >
-      <div className="chest-tooltip-title">Drop Rates</div>
+      <div className="chest-tooltip-title">{t('shop.dropRates')}</div>
       {CHEST_DROPS.map(d => (
-        <div key={d.label} className="chest-tooltip-row">
-          <span className={d.cls}>{d.label}</span>
+        <div key={d.key} className="chest-tooltip-row">
+          <span className={d.cls}>{t(`rarity.${d.key}`)}</span>
           <span>{d.pct}</span>
         </div>
       ))}
@@ -517,6 +521,7 @@ function SkinPreview({ item, heroData, className, style }) {
 }
 
 function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUnequip, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }) {
+  const { t } = useT()
   const isFree = item.price_hive === 0
   const buyDisabled = isOwned || isClaiming || !isHive
   const isEquipped = getItemEquipState(item, equippedBgIds, equippedSkins)
@@ -553,14 +558,14 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
               </button>
             : isOwned
               ? <>
-                  <div className="shop-card-owned-badge">✓ Owned</div>
+                  <div className="shop-card-owned-badge">{t('shop.owned')}</div>
                   <button
                     className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
                     disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
                     onClick={isEquipped ? onUnequip : onEquip}
                     title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
                   >
-                    {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? 'Remove' : 'Unequip') : 'Equip'}
+                    {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? t('shop.remove') : t('shop.unequip')) : t('shop.equip')}
                   </button>
                 </>
               : <button
@@ -569,7 +574,7 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
                   onClick={onBuy}
                   title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
                 >
-                  {isClaiming ? '⌛' : isFree ? 'Get Free' : `${item.price_hive.toFixed(3)} HIVE`}
+                  {isClaiming ? '⌛' : isFree ? t('shop.getFree') : `${item.price_hive.toFixed(3)} HIVE`}
                 </button>
           }
         </div>
@@ -579,6 +584,7 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
 }
 
 function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUnequip, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }) {
+  const { t } = useT()
   const isFree = item.price_hive === 0
   const buyDisabled = isOwned || isClaiming || !isHive
   const isEquipped = getItemEquipState(item, equippedBgIds, equippedSkins)
@@ -594,15 +600,15 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
       <div className="shop-row-info">
         <div className="shop-row-name">{item.name}</div>
         <div className="shop-row-type">
-          {item.type === 'background' ? 'Background' : item.type === 'treasure' ? 'Treasure' : `Skin · ${item.hero_cid || ''}`}
+          {item.type === 'background' ? t('shop.typeBackground') : item.type === 'treasure' ? t('shop.typeTreasure') : `${t('shop.typeSkin')} · ${item.hero_cid || ''}`}
         </div>
       </div>
       <div className="shop-row-right">
         {isOwned
           ? <div className={`shop-row-state${isEquipped ? ' equipped' : ''}`}>
-              {isEquipped ? '✦ Equipped' : '✓ Owned'}
+              {isEquipped ? t('shop.equipped') : t('shop.owned')}
             </div>
-          : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? 'Free' : `${item.price_hive.toFixed(3)} HIVE`}</div>
+          : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? t('shop.free') : `${item.price_hive.toFixed(3)} HIVE`}</div>
         }
         {item.type === 'treasure'
           ? <button
@@ -621,7 +627,7 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
                   onClick={onUnequip}
                   title={!isHive ? 'Login to equip cosmetics.' : undefined}
                 >
-                  {isEquipping ? '⌛' : 'Remove'}
+                  {isEquipping ? '⌛' : t('shop.remove')}
                 </button>
               : <button
                   className="shop-row-btn equip"
@@ -629,7 +635,7 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
                   onClick={onEquip}
                   title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
                 >
-                  {isEquipping ? '⌛' : 'Equip'}
+                  {isEquipping ? '⌛' : t('shop.equip')}
                 </button>
             : !isOwned && <button
                 className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
@@ -637,7 +643,7 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
                 onClick={onBuy}
                 title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
               >
-                {isClaiming ? '⌛' : isFree ? 'Get Free' : 'Buy'}
+                {isClaiming ? '⌛' : isFree ? t('shop.getFree') : t('shop.buy')}
               </button>
         }
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '@styles/campaign.css'
+import { useT } from '../context/LanguageContext'
 
 const HERO_ICONS = {
   knight: '⚔️', paladin: '🛡️', barbarian: '🪓', mage: '🔮',
@@ -8,6 +9,7 @@ const HERO_ICONS = {
 }
 
 export default function CampaignView({ session, formations, defaultSlot, toast }) {
+  const { t, lang } = useT()
   const navigate = useNavigate()
   const [stages, setStages] = useState([])
   const [selected, setSelected] = useState(null)
@@ -66,9 +68,9 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
 
       <div className="campaign-layout">
         <div className="campaign-stage-list">
-          <div className="campaign-chapter-title">Capítulo 1</div>
+          <div className="campaign-chapter-title">{t('campaign.chapter1')}</div>
           {loading ? (
-            <div className="campaign-loading">Carregando...</div>
+            <div className="campaign-loading">{t('campaign.loading')}</div>
           ) : (
             stages.map(s => (
               <button
@@ -84,7 +86,7 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
                 type="button"
               >
                 <span className="campaign-stage-num">{s.stage}</span>
-                <span className="campaign-stage-name">{s.name}</span>
+                <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
                 <span className="campaign-stage-status">
                   {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
                 </span>
@@ -95,13 +97,13 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
 
         {selectedStage && (
           <div className="campaign-detail">
-            <div className="campaign-detail-title">{selectedStage.name}</div>
+            <div className="campaign-detail-title">{lang === 'pt-BR' ? selectedStage.name : (selectedStage.name_en || selectedStage.name)}</div>
             <div className="campaign-detail-format">
               {selectedStage.format === 3 ? 'BO3' : selectedStage.format === 5 ? 'BO5' : 'BO7'}
             </div>
-            <p className="campaign-detail-lore">{selectedStage.lore_pre}</p>
+            <p className="campaign-detail-lore">{lang === 'pt-BR' ? selectedStage.lore_pre : (selectedStage.lore_pre_en || selectedStage.lore_pre)}</p>
 
-            <div className="campaign-detail-enemies-label">Inimigos</div>
+            <div className="campaign-detail-enemies-label">{t('campaign.enemies')}</div>
             <div className="campaign-detail-enemies">
               {selectedStage.enemies.map((e, i) => (
                 <div key={i} className="campaign-enemy-chip">
@@ -115,14 +117,14 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
             </div>
 
             {selectedStage.completed ? (
-              <div className="campaign-detail-done">✅ Estágio concluído</div>
+              <div className="campaign-detail-done">{t('campaign.stageCompleted')}</div>
             ) : (
               <button
                 className="campaign-battle-btn"
                 type="button"
                 onClick={() => startStage(selectedStage)}
               >
-                ⚔️ Batalhar
+                {t('campaign.battleBtn')}
               </button>
             )}
           </div>

@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import LobbyPage from './pages/LobbyPage'
 import BattlePage from './pages/BattlePage'
 import { getSession } from './lib/session'
+import { LanguageProvider } from './context/LanguageContext'
 
 function RequireAuth({ children }) {
   return getSession() ? children : <Navigate to="/" replace />
@@ -10,13 +11,15 @@ function RequireAuth({ children }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/lobby" element={<RequireAuth><LobbyPage /></RequireAuth>} />
-        <Route path="/battle" element={<RequireAuth><BattlePage /></RequireAuth>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/lobby" element={<RequireAuth><LobbyPage /></RequireAuth>} />
+          <Route path="/battle" element={<RequireAuth><BattlePage /></RequireAuth>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </LanguageProvider>
   )
 }

@@ -1,4 +1,29 @@
-﻿// ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
+﻿// ── i18n ─────────────────────────────────────────────────
+const _lang = localStorage.getItem('hf_lang') || 'en'
+const _STRINGS = {
+  en: {
+    'battle.waitingOpponent': '📤 Team submitted! Waiting for opponent...',
+    'battle.roundBegins':     '⚔️ Round {n}/{total} — Battle begins!',
+    'battle.backToLobby':     '🏠 Back to Lobby',
+    'battle.connectError':    'Could not connect to the server',
+    'battle.backToLobbyLink': '← Back to Lobby',
+  },
+  'pt-BR': {
+    'battle.waitingOpponent': '📤 Time enviado! Aguardando oponente...',
+    'battle.roundBegins':     '⚔️ Round {n}/{total} — Batalha começa!',
+    'battle.backToLobby':     '🏠 Voltar ao Lobby',
+    'battle.connectError':    'Não foi possível conectar ao servidor',
+    'battle.backToLobbyLink': '← Voltar ao Lobby',
+  },
+}
+function t(key, vars = {}) {
+  const dict = _STRINGS[_lang] ?? _STRINGS.en
+  let str = dict[key] ?? _STRINGS.en[key] ?? key
+  for (const [k, v] of Object.entries(vars)) str = str.replaceAll(`{${k}}`, v)
+  return str
+}
+// ─────────────────────────────────────────────────────────
+// ── RESPONSIVIDADE: atualiza --s com base na resolução real ──
 const BASE_W = 1280; // resolução de referência (seu design base)
 const BASE_H = 720;
 
@@ -282,7 +307,7 @@ async function initGame() {
     const ov = document.createElement("div");
     ov.style.cssText =
       "position:fixed;inset:0;background:#03020e;display:flex;align-items:center;justify-content:center;z-index:300;color:#ff8888;font-size:13px;text-align:center;padding:24px";
-    ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>Could not connect to the server</b><br><br>${err.message}<br><br><a href="/lobby" style="color:#aa88ff">← Back to Lobby</a></div>`;
+    ov.innerHTML = `<div><div style="font-size:28px;margin-bottom:8px">⚠️</div><b>${t('battle.connectError')}</b><br><br>${err.message}<br><br><a href="/lobby" style="color:#aa88ff">${t('battle.backToLobbyLink')}</a></div>`;
     document.body.appendChild(ov);
   }
 
@@ -1021,7 +1046,7 @@ function startBattle() {
       btn.textContent = "⏳ Waiting for opponent...";
     }
     G.phase = "waiting";
-    log("📤 Team submitted! Waiting for opponent...", "lr");
+    log(t('battle.waitingOpponent'), "lr");
     _dispatchBanner(
       `⏳ Battle ${G.battleNum}/${G.format} — waiting for opponent`,
       "bbattle",
@@ -1041,7 +1066,7 @@ function startBattle() {
   // No pre-apply pass: shared/simulate.js applies Sacred Aura on both
   // sides during simulation and emits the aura events the prep phase
   // animates (same code path PvP already exercises).
-  log(`⚔️ Round ${G.battleNum}/${G.format} — Battle begins!`, "lr lsep");
+  log(t('battle.roundBegins', { n: G.battleNum, total: G.format }), "lr lsep");
   _dispatchBanner(
     `⚔️ Battle ${G.battleNum}/${G.format} in progress...`,
     "bbattle",
@@ -1633,7 +1658,7 @@ function endBattle(w, stats) {
     setTimeout(() => _dispatchDuelResult(pw), 500);
     nb.className = "btn gnbtn";
     if (window._PVP) {
-      nb.textContent = "🏠 Back to Lobby";
+      nb.textContent = t('battle.backToLobby');
       nb.onclick = () => {
         if (window._PVP.socket) {
           window._PVP.socket.emit('concede');
@@ -1944,7 +1969,7 @@ function pvpInit(cfg) {
     stopRoundTimer(); // battle started — hide countdown
     render();
 
-    log(`⚔️ Round ${G.battleNum}/${G.format} — Battle begins!`, "lr lsep");
+    log(t('battle.roundBegins', { n: G.battleNum, total: G.format }), "lr lsep");
     // Abilities at tick=-1 (Sacred Aura, Sneak Strike, etc.) are logged
     // by playback() → runPrepPhase() below — logging them here too would
     // produce duplicate log entries in PvP mode.
