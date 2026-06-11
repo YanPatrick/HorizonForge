@@ -1836,10 +1836,19 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
 });
 
 // ── POST /api/shop/review-purchases ──────────────────────────────────────────
-app.post('/api/shop/review-purchases', async (req, res) => {
+// Rate-limited because each call makes up to 2 Hive RPC calls.
+const reviewPurchasesLimiter = rateLimit({
+  windowMs: 60 * 1000,         // 1 minute
+  max: 3,                      // 3 requests per IP per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many review-purchases requests. Please wait a moment and try again.' },
+});
+app.post('/api/shop/review-purchases', reviewPurchasesLimiter, async (req, res) => {
   const username = authFromRequest(req);
   if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
   try {
+    if (!HIVE_GAME_ACCOUNT) return res.status(503).json({ ok: false, error: 'Shop not configured' });
     // Fetch up to 2000 ops in two pages of 1000 (newest first)
     const pages = [];
     const page1 = await hiveRpc('condenser_api.get_account_history', [username, -1, 1000]);
@@ -1860,7 +1869,10 @@ app.post('/api/shop/review-purchases', async (req, res) => {
       if (op.to.toLowerCase() !== HIVE_GAME_ACCOUNT.toLowerCase()) continue;
       if (op.from.toLowerCase() !== username.toLowerCase()) continue;
       if (!op.memo || !op.memo.startsWith('shop_')) continue;
-      foundIds.add(op.memo.slice(5));
+      if (!op.amount.endsWith(' HIVE')) continue;
+      const itemId = op.memo.slice(5);
+      if (!/^[\w-]{1,64}$/.test(itemId)) continue;
+      foundIds.add(itemId);
     }
 
     if (foundIds.size === 0) return res.json({ ok: true, restored: 0, items: [] });
