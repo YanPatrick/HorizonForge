@@ -19,7 +19,7 @@ export function LanguageProvider({ children }) {
     const dict = LOCALES[lang] ?? LOCALES.en
     let str = dict[key] ?? LOCALES.en[key] ?? key
     for (const [k, v] of Object.entries(vars)) {
-      str = str.replace(`{${k}}`, v)
+      str = str.replaceAll(`{${k}}`, v)
     }
     return str
   }
