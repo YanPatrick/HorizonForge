@@ -9,7 +9,7 @@ const HERO_ICONS = {
 }
 
 export default function CampaignView({ session, formations, defaultSlot, toast }) {
-  const { t } = useT()
+  const { t, lang } = useT()
   const navigate = useNavigate()
   const [stages, setStages] = useState([])
   const [selected, setSelected] = useState(null)
@@ -86,7 +86,7 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
                 type="button"
               >
                 <span className="campaign-stage-num">{s.stage}</span>
-                <span className="campaign-stage-name">{s.name}</span>
+                <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
                 <span className="campaign-stage-status">
                   {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
                 </span>
@@ -97,11 +97,11 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
 
         {selectedStage && (
           <div className="campaign-detail">
-            <div className="campaign-detail-title">{selectedStage.name}</div>
+            <div className="campaign-detail-title">{lang === 'pt-BR' ? selectedStage.name : (selectedStage.name_en || selectedStage.name)}</div>
             <div className="campaign-detail-format">
               {selectedStage.format === 3 ? 'BO3' : selectedStage.format === 5 ? 'BO5' : 'BO7'}
             </div>
-            <p className="campaign-detail-lore">{selectedStage.lore_pre}</p>
+            <p className="campaign-detail-lore">{lang === 'pt-BR' ? selectedStage.lore_pre : (selectedStage.lore_pre_en || selectedStage.lore_pre)}</p>
 
             <div className="campaign-detail-enemies-label">{t('campaign.enemies')}</div>
             <div className="campaign-detail-enemies">
