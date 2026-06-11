@@ -12,6 +12,7 @@ import '@styles/tavern.css'                       // Imp tavern
 import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
+import { useT } from '../context/LanguageContext'
 
 /* ── helpers ────────────────────────────────────────────── */
 function prefKey(name, username) {
@@ -144,6 +145,7 @@ const RARITY_COLORS = {
 const SLOT_ORDER = ['amulet','helm','special','weapon','chest','offhand','belt','legs','gloves','ring1','boots','ring2']
 
 function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
+  const { t } = useT()
   const [expanded, setExpanded] = useState(false)
   const [rpgExpanded, setRpgExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState('stats')
@@ -284,7 +286,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                               {Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD
                             </div>
                           )}
-                          {canUnequip && <div className="gst-hint">Clique para remover</div>}
+                          {canUnequip && <div className="gst-hint">{t('gear.clickToRemove')}</div>}
                         </div>
                       )}
                     </div>
@@ -306,7 +308,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                       type="button"
                       className="inv-equip-btn-remove"
                       onClick={() => { onUnequipItem(hero.cid, slotUnequipPending.slotKey); setSlotUnequipPending(null) }}
-                    >↩ Remover de {hero.name}</button>
+                    >{t('gear.removeFrom', { name: hero.name })}</button>
                     <button type="button" className="inv-equip-btn-cancel" onClick={() => setSlotUnequipPending(null)}>✕</button>
                   </div>
                 </div>
@@ -321,7 +323,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                   const unequipped = playerItems.filter(item => !item.equipped_on)
                   if (unequipped.length === 0) return (
                     <p style={{ fontSize: '11px', opacity: 0.35, fontStyle: 'italic', textAlign: 'center', margin: '4px 0 8px' }}>
-                      {playerItems.length === 0 ? 'Sem itens ainda' : 'Todos os itens estão equipados'}
+                      {playerItems.length === 0 ? t('gear.noItems') : t('gear.allEquipped')}
                     </p>
                   )
                   return (
@@ -358,7 +360,7 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
                         type="button"
                         className="inv-equip-btn-confirm"
                         onClick={() => { onEquipItem(equipPending.id, hero.cid, equipPending.slot_type); setEquipPending(null) }}
-                      >✓ Equipar em {hero.name}</button>
+                      >{t('gear.equipOn', { name: hero.name })}</button>
                       <button type="button" className="inv-equip-btn-cancel" onClick={() => setEquipPending(null)}>✕</button>
                     </div>
                   </div>
@@ -609,6 +611,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
 
 /* ── SettingsView ───────────────────────────────────────── */
 function SettingsView({ session, payoutPct }) {
+  const { lang, changeLang, t } = useT()
   const username = session?.username
   const payoutKey = username ? `hf_payout_${username}` : 'hf_payout'
   const showOwnedKey = username ? `hf_shop_show_owned_${username}` : 'hf_shop_show_owned'
@@ -670,6 +673,21 @@ function SettingsView({ session, payoutPct }) {
                 <input type="checkbox" checked={showOwnedDefault} onChange={toggleShowOwned} />
                 <span className="stg-toggle-slider" />
               </label>
+            </div>
+          </div>
+          <div className="stg-section">
+            <div className="stg-section-title">{t('settings.language')}</div>
+            <div className="stg-lang-row">
+              {[['en', '🇺🇸 English'], ['pt-BR', '🇧🇷 Português (BR)']].map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  className={`stg-lang-btn${lang === val ? ' active' : ''}`}
+                  onClick={() => changeLang(val)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
           <div className="stg-section">
@@ -736,6 +754,7 @@ function SearchOverlay({ search, onCancel, onSendWager, onRetry }) {
 const SEARCH_PHRASES = ['FINDING OPPONENT', 'SCANNING ARENA', 'SEEKING CHALLENGER', 'ENTERING QUEUE', 'AWAITING DUEL']
 
 export default function LobbyPage() {
+  const { t } = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const session = getSession()
@@ -1084,12 +1103,12 @@ export default function LobbyPage() {
         ])
         if (gr.ok) setPlayerGear(gr.gear)
         if (ir.ok) setPlayerItems(ir.items)
-        showToast('↩️ Item removido — herói voltou ao equipamento inicial')
+        showToast(t('toast.itemRemoved'))
       } else {
-        showToast('⚠️ ' + (d.error || 'Não foi possível remover'))
+        showToast('⚠️ ' + (d.error || t('toast.couldNotRemove')))
       }
     } catch {
-      showToast('⚠️ Erro ao remover item')
+      showToast(t('toast.errorRemoving'))
     }
   }
 
@@ -1109,12 +1128,12 @@ export default function LobbyPage() {
         ])
         if (gr.ok) setPlayerGear(gr.gear)
         if (ir.ok) setPlayerItems(ir.items)
-        showToast('✅ Item equipado!')
+        showToast(t('toast.itemEquipped'))
       } else {
-        showToast('⚠️ ' + (d.error || 'Não foi possível equipar'))
+        showToast('⚠️ ' + (d.error || t('toast.couldNotEquip')))
       }
     } catch {
-      showToast('⚠️ Erro ao equipar item')
+      showToast(t('toast.errorEquipping'))
     }
   }
 
@@ -1651,7 +1670,7 @@ export default function LobbyPage() {
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">Shop</span>
           </button>
           <button type="button" className={navTabClass('settings')} onClick={() => setView('settings')}>
-            <span className="mbt-ico">⚙️</span><span className="mbt-lbl">Config</span>
+            <span className="mbt-ico">⚙️</span><span className="mbt-lbl">{t('nav.settings')}</span>
           </button>
         </nav>
       </div>
