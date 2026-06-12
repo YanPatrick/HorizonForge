@@ -109,12 +109,12 @@ function StatsPanel({ hero, lv1, playerGear }) {
 }
 
 const SLOT_LABELS = {
-  amulet: 'AMULET', helm: 'HELM', special: 'SPECIAL', weapon: 'WEAPON',
+  amulet: 'AMULET', helm: 'HELMET', special: 'SPECIAL', weapon: 'WEAPON',
   chest: 'CHEST', offhand: 'OFF-HAND', belt: 'BELT', legs: 'LEGS',
   gloves: 'GLOVES', ring1: 'RING 1', boots: 'BOOTS', ring2: 'RING 2',
 }
 const SLOT_ICONS = {
-  amulet: '📿', helm: '🪖', special: '✨', weapon: '⚔️',
+  amulet: '📿', helm: '⛑️', special: '✨', weapon: '⚔️',
   chest: '🛡️', offhand: '📜', belt: '🏷️', legs: '👖',
   gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
 }

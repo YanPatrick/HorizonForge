@@ -55,11 +55,16 @@ The modal uses the rarity color as its primary accent throughout:
 - **Item name:** rendered in full rarity color
 - **Badge:** pill with chest name (e.g. "✦ VETERAN CHEST") using rarity color border + background tint
 
-**Slot emoji map:**
+**Slot icon:** reuse the existing `SLOT_ICONS` map already defined in `LobbyPage.jsx` — redeclare a copy in `ShopView.jsx` with identical values so the modal shows the same icons as the gear slots grid. Key: `item.slot_type` (values: `amulet`, `helm`, `weapon`, `chest`, `offhand`, `belt`, `legs`, `gloves`, `ring1`, `ring2`, `boots`, `special`).
+
+```js
+const SLOT_ICONS = {
+  amulet: '📿', helm: '⛑️', special: '✨', weapon: '⚔️',
+  chest: '🛡️', offhand: '📜', belt: '🏷️', legs: '👖',
+  gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
+}
 ```
-chest → 🛡️   weapon → ⚔️   ring → 💍   boots → 👟
-gloves → 🧤   amulet → 📿   helmet → ⛑️   (default) → ✦
-```
+Fallback for unknown slot: `'✦'`.
 
 ### 2.2 Animation — Scale Pop
 
