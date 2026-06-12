@@ -8334,7 +8334,7 @@
     gap: 14px;
     align-items: stretch;
     overflow: hidden;
-    height: 100%;
+    height: 95%;
   }
 
   .fvpc-loading,
@@ -8350,7 +8350,8 @@
 
   /* Hero card — portrait grande (estilo shop) */
   .fvpc-hero-card {
-    flex: 1;
+    flex: 0 0 calc(25% - 10.5px);
+    max-width: calc(25% - 10.5px);
     border-radius: 10px;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.07);
@@ -8433,23 +8434,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .fvpc-hero-role {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
-    color: rgba(180, 165, 145, 0.45);
-  }
-  .fvpc-hero-role.role-tank    { color: rgba(96, 144, 208, 0.8); }
-  .fvpc-hero-role.role-dps     { color: rgba(192, 112, 80, 0.8); }
-  .fvpc-hero-role.role-support { color: rgba(96, 176, 96, 0.8); }
+  .fvpc-hero-role { display: none; }
 
-  .fvpc-carousel-hint {
-    font-size: 10px;
-    color: rgba(200, 185, 165, 0.22);
-    text-align: center;
-    flex-shrink: 0;
-  }
+  .fvpc-carousel-hint { display: none; }
 
   /* ── Unit's Deck ── */
   .fvpc-section-deck {
