@@ -1402,6 +1402,23 @@ export default function LobbyPage() {
   return (
     <>
       <nav className="topnav">
+        <div className="nav-center">
+          <button type="button" className={`top-nav-tab${view === 'grimoire' ? ' active' : ''}`} onClick={() => setView('grimoire')}>
+            <span className="tnt-ico">📖</span><span className="tnt-lbl">{t('nav.grimoire')}</span>
+          </button>
+          <button type="button" className={`top-nav-tab${view === 'formation' ? ' active' : ''}`} onClick={() => setView('formation')}>
+            <span className="tnt-ico">🏰</span><span className="tnt-lbl">{t('nav.formation')}</span>
+          </button>
+          <button type="button" className={`top-nav-tab${view === 'home' ? ' active' : ''}`} onClick={() => setView('home')}>
+            <span className="tnt-ico">⚔️</span><span className="tnt-lbl">{t('nav.duel')}</span>
+          </button>
+          <button type="button" className={`top-nav-tab${view === 'campaign' ? ' active' : ''}`} onClick={() => setView('campaign')}>
+            <span className="tnt-ico">📜</span><span className="tnt-lbl">{t('nav.campaign')}</span>
+          </button>
+          <button type="button" className={`top-nav-tab${view === 'shop' ? ' active' : ''}`} onClick={() => setView('shop')}>
+            <span className="tnt-ico">🛒</span><span className="tnt-lbl">{t('nav.shop')}</span>
+          </button>
+        </div>
         <div className="nav-right">
           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
           <div className="nav-chest-pill" title="Fight for a chance to open a new chest!">

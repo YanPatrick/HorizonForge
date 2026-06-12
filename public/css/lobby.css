@@ -149,6 +149,47 @@
         border: none;
       }
 
+      /* ── Desktop top nav tabs ── */
+      .top-nav-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 6px 18px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        color: rgba(190, 170, 240, 0.5);
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        transition: color 0.15s, border-color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .top-nav-tab:hover {
+        color: rgba(215, 195, 255, 0.85);
+      }
+      .top-nav-tab.active {
+        color: #ffd700;
+        border-bottom: 2px solid rgba(255, 215, 0, 0.45);
+      }
+      .tnt-ico {
+        font-size: 17px;
+        line-height: 1;
+      }
+      .top-nav-tab.active .tnt-ico {
+        filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
+      }
+      .tnt-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+
       .nav-right {
         display: flex;
         align-items: center;
@@ -2617,22 +2658,27 @@
          LOBBY LAYOUT REDESIGN — RESPONSIVE (no mobile.css)
          ═══════════════════════════════════════════════ */
 
-      /* TopNav: right-align items only, no logo space */
+      /* TopNav: nav-center is absolutely centered; nav-right stays at right */
       .topnav {
         justify-content: flex-end;
-      }
-      .nav-center {
-        display: none !important;
       }
       .nav-logo {
         display: none !important;
       }
+      .nav-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+      }
 
-      /* Lobby wrap: fixed between topnav (58px) and bottom nav (60px) */
+      /* Desktop: lobby fills full height below topnav */
       .lobby-wrap {
         position: fixed !important;
         top: 58px;
-        bottom: 60px;
+        bottom: 0;
         left: 0;
         right: 0;
         overflow: hidden;
@@ -2682,9 +2728,9 @@
         align-items: stretch;
       }
 
-      /* ── Bottom navigation (always visible) ── */
+      /* ── Bottom navigation (mobile only) ── */
       .mobile-bottom-tabs {
-        display: flex !important;
+        display: none;
         position: fixed;
         bottom: 0;
         left: 0;
@@ -2736,6 +2782,20 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      @media (max-width: 640px) {
+        .nav-center {
+          display: none !important;
+          position: static;
+          transform: none;
+        }
+        .mobile-bottom-tabs {
+          display: flex !important;
+        }
+        .lobby-wrap {
+          bottom: 60px;
+        }
       }
 
       /* ── Duel view title ── */
@@ -3910,6 +3970,47 @@
         -webkit-text-stroke: 1px rgba(180, 130, 0, 0.5);
         background: none;
         border: none;
+      }
+
+      /* ── Desktop top nav tabs ── */
+      .top-nav-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 6px 18px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        color: rgba(190, 170, 240, 0.5);
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        transition: color 0.15s, border-color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .top-nav-tab:hover {
+        color: rgba(215, 195, 255, 0.85);
+      }
+      .top-nav-tab.active {
+        color: #ffd700;
+        border-bottom: 2px solid rgba(255, 215, 0, 0.45);
+      }
+      .tnt-ico {
+        font-size: 17px;
+        line-height: 1;
+      }
+      .top-nav-tab.active .tnt-ico {
+        filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
+      }
+      .tnt-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
       }
 
       .nav-right {
@@ -6326,22 +6427,27 @@
          LOBBY LAYOUT REDESIGN — RESPONSIVE (no mobile.css)
          ═══════════════════════════════════════════════ */
 
-      /* TopNav: right-align items only, no logo space */
+      /* TopNav: nav-center is absolutely centered; nav-right stays at right */
       .topnav {
         justify-content: flex-end;
-      }
-      .nav-center {
-        display: none !important;
       }
       .nav-logo {
         display: none !important;
       }
+      .nav-center {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+      }
 
-      /* Lobby wrap: fixed between topnav (58px) and bottom nav (60px) */
+      /* Desktop: lobby fills full height below topnav */
       .lobby-wrap {
         position: fixed !important;
         top: 58px;
-        bottom: 60px;
+        bottom: 0;
         left: 0;
         right: 0;
         overflow: hidden;
@@ -6391,9 +6497,9 @@
         align-items: stretch;
       }
 
-      /* ── Bottom navigation (always visible) ── */
+      /* ── Bottom navigation (mobile only) ── */
       .mobile-bottom-tabs {
-        display: flex !important;
+        display: none;
         position: fixed;
         bottom: 0;
         left: 0;
@@ -6445,6 +6551,20 @@
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+      }
+
+      @media (max-width: 640px) {
+        .nav-center {
+          display: none !important;
+          position: static;
+          transform: none;
+        }
+        .mobile-bottom-tabs {
+          display: flex !important;
+        }
+        .lobby-wrap {
+          bottom: 60px;
+        }
       }
 
       /* ── Duel view title ── */
