@@ -419,6 +419,310 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
   )
 }
 
+/* ── useDesktop ─────────────────────────────────────────── */
+function useDesktop() {
+  const [ok, setOk] = useState(() => window.innerWidth >= 901)
+  useEffect(() => {
+    const h = () => setOk(window.innerWidth >= 901)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  return ok
+}
+
+/* ── FormationViewPC — desktop layout ──────────────────── */
+function FormationViewPC({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
+  const { t } = useT()
+  const [editingSlot, setEditingSlot] = useState(defaultSlot ?? 0)
+  const [carouselOffset, setCarouselOffset] = useState(0)
+  const [roleFilter, setRoleFilter] = useState('all')
+  const [search, setSearch] = useState('')
+  const [slideNameVal, setSlideNameVal] = useState(
+    () => formations[defaultSlot ?? 0]?.name || `format${(defaultSlot ?? 0) + 1}`
+  )
+  const [detailHero, setDetailHero] = useState(null)
+  const holdRef = useRef(null)
+
+  const isGuest = session?.mode === 'guest'
+  const activeForm = formations[editingSlot]
+  const skinUrl = (h) => (h && equippedSkins[h.cid]?.preview) || h?.url_portrait || null
+
+  useEffect(() => () => clearInterval(holdRef.current), [])
+
+  const filteredHeroes = (heroData || []).filter(h => {
+    const matchRole = roleFilter === 'all' || roleCategory(h.role) === roleFilter
+    const matchSearch = !search || h.name.toLowerCase().includes(search.toLowerCase())
+    return matchRole && matchSearch
+  })
+
+  const total = filteredHeroes.length
+  const visibleHeroes = total === 0
+    ? []
+    : Array.from({ length: Math.min(4, total) }, (_, i) => filteredHeroes[(carouselOffset + i) % total])
+
+  function moveCarousel(dir) {
+    if (total === 0) return
+    setCarouselOffset(prev => (prev + dir + total) % total)
+  }
+
+  function startHold(dir) {
+    holdRef.current = setInterval(() => moveCarousel(dir), 150)
+  }
+
+  function stopHold() {
+    clearInterval(holdRef.current)
+    holdRef.current = null
+  }
+
+  function selectDeck(i) {
+    setEditingSlot(i)
+    setCarouselOffset(0)
+    setSearch('')
+    setRoleFilter('all')
+    setSlideNameVal(formations[i]?.name || `format${i + 1}`)
+  }
+
+  function toggleHero(cid) {
+    const f = formations[editingSlot]
+    if (f.hero_ids.includes(cid)) {
+      setFormations(prev => prev.map((fm, i) =>
+        i === editingSlot ? { ...fm, hero_ids: fm.hero_ids.filter(x => x !== cid) } : fm
+      ))
+    } else if (f.hero_ids.length < 8) {
+      setFormations(prev => prev.map((fm, i) =>
+        i === editingSlot ? { ...fm, hero_ids: [...fm.hero_ids, cid] } : fm
+      ))
+    }
+  }
+
+  function removeFromSlot(cid) {
+    setFormations(prev => prev.map((f, i) =>
+      i === editingSlot ? { ...f, hero_ids: f.hero_ids.filter(x => x !== cid) } : f
+    ))
+  }
+
+  function setDefaultAndToast(idx) {
+    setDefaultSlot(idx)
+    savePref('default_form_slot', session?.username, idx)
+    const name = formations[idx].name || `format${idx + 1}`
+    toast(t('toast.formationSetActive', { name }))
+  }
+
+  async function saveDeck() {
+    const f = formations[editingSlot]
+    if (f.hero_ids.length < 8) { toast(t('toast.formationNeedHeroes')); return }
+    if (isGuest) {
+      localStorage.setItem('hf_guest_formation', JSON.stringify({ slot: 1, hero_ids: f.hero_ids, name: f.name }))
+      toast(t('toast.formationSaved'))
+      return
+    }
+    try {
+      const res = await fetch('/api/formations', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.token}` },
+        body: JSON.stringify({ player: session.username, slot: editingSlot + 1, name: f.name || `format${editingSlot + 1}`, hero_ids: f.hero_ids }),
+      })
+      const d = await res.json()
+      if (d.ok) toast(t('toast.formationSaved'))
+      else toast(t('toast.formationSaveError'))
+    } catch { toast(t('toast.formationNetworkError')) }
+  }
+
+  return (
+    <div className="fvpc-root">
+      {detailHero && (
+        <HeroDetail
+          hero={detailHero}
+          onClose={() => setDetailHero(null)}
+          playerGear={playerGear}
+          playerItems={playerItems}
+          onEquipItem={onEquipItem}
+          onUnequipItem={onUnequipItem}
+        />
+      )}
+
+      {/* ── Coluna esquerda — Seleção de deck ── */}
+      <div className="fvpc-col-decks">
+        {formations.map((f, i) => {
+          if (isGuest && i !== 0) return (
+            <div key={i} className="fvpc-deck-card fvpc-deck-locked">
+              <span className="fvpc-lock-icon">🔒</span>
+              <div className="fvpc-deck-name" style={{ opacity: 0.4 }}>{t('formation.locked', { n: i + 1 })}</div>
+            </div>
+          )
+          const isDefault = i === defaultSlot
+          const isFull = f.hero_ids.length === 8
+          return (
+            <div
+              key={i}
+              className={`fvpc-deck-card${editingSlot === i ? ' active' : ''}${isFull ? ' full' : ''}`}
+              onClick={() => selectDeck(i)}
+            >
+              <span
+                className={`fvpc-deck-star${isDefault ? ' starred' : ''}`}
+                onClick={e => { e.stopPropagation(); setDefaultAndToast(i) }}
+              >{isDefault ? '★' : '☆'}</span>
+              <div className="fvpc-deck-stack">
+                <div className="fvpc-ds-card c3" />
+                <div className="fvpc-ds-card c2" />
+                <div className="fvpc-ds-card c1" />
+              </div>
+              <div className="fvpc-deck-name">{f.name || `format${i + 1}`}</div>
+              <div className="fvpc-deck-count">{f.hero_ids.length}/8</div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Coluna direita ── */}
+      <div className="fvpc-col-main">
+
+        {/* COLLECTION */}
+        <div className="fvpc-section-collection">
+          <div className="fvpc-section-title">{t('formation.collection')}</div>
+
+          <div className="fvpc-filter-bar">
+            <input
+              className="fvpc-search"
+              type="text"
+              placeholder={t('formation.searchPlaceholder')}
+              value={search}
+              onChange={e => { setSearch(e.target.value); setCarouselOffset(0) }}
+            />
+            {[['all', t('formation.filterAll')], ['tank', '🛡️'], ['dps', '⚔️'], ['support', '💚']].map(([r, label]) => (
+              <button
+                key={r}
+                type="button"
+                className={`fvpc-filter-btn${roleFilter === r ? ' active' : ''}`}
+                onClick={() => { setRoleFilter(r); setCarouselOffset(0) }}
+              >{label}</button>
+            ))}
+          </div>
+
+          <div className="fvpc-carousel-wrap">
+            <button
+              type="button"
+              className="fvpc-arrow"
+              disabled={total === 0}
+              onClick={() => moveCarousel(-1)}
+              onMouseDown={() => startHold(-1)}
+              onMouseUp={stopHold}
+              onMouseLeave={stopHold}
+            >‹</button>
+
+            <div className="fvpc-hero-list">
+              {!heroData && <div className="fvpc-loading">{t('formation.loading')}</div>}
+              {heroData && total === 0 && <div className="fvpc-empty">{t('formation.noHeroesFound')}</div>}
+              {visibleHeroes.map(h => {
+                const inDeck = activeForm?.hero_ids.includes(h.cid) ?? false
+                const url = skinUrl(h)
+                return (
+                  <div
+                    key={h.cid}
+                    className={`fvpc-hero-card${inDeck ? ' in-deck' : ''}`}
+                    onClick={() => toggleHero(h.cid)}
+                  >
+                    <div
+                      className={`fvpc-hero-portrait${url ? ' has-portrait' : ''}`}
+                      style={url ? { '--portrait-url': `url('${url}')` } : {}}
+                    >
+                      {!url && <div className="fvpc-hero-icon">{h.icon}</div>}
+                      <button
+                        type="button"
+                        className="fvpc-info-btn"
+                        aria-label="Hero info"
+                        onClick={e => { e.stopPropagation(); setDetailHero(h) }}
+                      >i</button>
+                    </div>
+                    <div className="fvpc-hero-footer">
+                      <div className="fvpc-hero-name">{h.name}</div>
+                      <div className={`fvpc-hero-role role-${roleCategory(h.role)}`}>
+                        {roleCategory(h.role) === 'tank'
+                          ? t('role.tank')
+                          : roleCategory(h.role) === 'support'
+                            ? t('role.support')
+                            : t('role.dps')}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              className="fvpc-arrow"
+              disabled={total === 0}
+              onClick={() => moveCarousel(1)}
+              onMouseDown={() => startHold(1)}
+              onMouseUp={stopHold}
+              onMouseLeave={stopHold}
+            >›</button>
+          </div>
+
+          {total > 0 && (
+            <div className="fvpc-carousel-hint">
+              {carouselOffset + 1}–{Math.min(carouselOffset + Math.min(4, total), total)} / {total}
+            </div>
+          )}
+        </div>
+
+        {/* UNIT'S DECK */}
+        <div className="fvpc-section-deck">
+          <div className="fvpc-deck-controls">
+            <div className="fvpc-section-title">{t('formation.unitsDeck')}</div>
+            <div className="fvpc-deck-actions">
+              <input
+                className="fvpc-deck-name-input"
+                type="text"
+                maxLength={10}
+                value={slideNameVal}
+                onChange={e => {
+                  setSlideNameVal(e.target.value)
+                  setFormations(prev => prev.map((f, i) =>
+                    i === editingSlot ? { ...f, name: e.target.value } : f
+                  ))
+                }}
+              />
+              <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
+              <button
+                type="button"
+                className="fvpc-clear-btn"
+                disabled={!activeForm?.hero_ids.length}
+                onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
+              >{t('formation.clearDeck')}</button>
+              <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
+                {t('formation.done')}
+              </button>
+            </div>
+          </div>
+
+          <div className="fvpc-slot-row">
+            {Array.from({ length: 8 }, (_, i) => {
+              const cid = activeForm?.hero_ids[i]
+              const hero = heroData?.find(h => h.cid === cid)
+              const url = skinUrl(hero)
+              return (
+                <div
+                  key={i}
+                  className={`fvpc-slot${cid ? ' filled' : ''}${url ? ' has-portrait' : ''}`}
+                  style={url ? { '--portrait-url': `url('${url}')` } : {}}
+                  title={cid ? `${hero?.name || cid}` : ''}
+                  onClick={() => cid && removeFromSlot(cid)}
+                >
+                  {cid && !url && <span className="fvpc-slot-icon">{hero?.icon || '?'}</span>}
+                  {!cid && <span className="fvpc-slot-plus">+</span>}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
 /* ── FormationView ──────────────────────────────────────── */
 function FormationView({ session, formations, setFormations, defaultSlot, setDefaultSlot, heroData, toast, equippedSkins = {}, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
   const { t } = useT()
@@ -427,6 +731,26 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
   const [search, setSearch] = useState('')
   const [slideNameVal, setSlideNameVal] = useState('')
   const [detailHero, setDetailHero] = useState(null)
+
+  const isDesktop = useDesktop()
+  if (isDesktop) {
+    return (
+      <FormationViewPC
+        session={session}
+        formations={formations}
+        setFormations={setFormations}
+        defaultSlot={defaultSlot}
+        setDefaultSlot={setDefaultSlot}
+        heroData={heroData}
+        toast={toast}
+        equippedSkins={equippedSkins}
+        playerGear={playerGear}
+        playerItems={playerItems}
+        onEquipItem={onEquipItem}
+        onUnequipItem={onUnequipItem}
+      />
+    )
+  }
 
   const isGuest = session?.mode === 'guest'
   const activeForm = editingSlot !== null ? formations[editingSlot] : null
