@@ -101,6 +101,8 @@ export default {
   'formation.heroesSelected':    'Heróis selecionados:',
   'formation.done':              'PRONTO',
   'formation.locked':            'Formação {n}',
+  'formation.collection':       'COLEÇÃO',
+  'formation.unitsDeck':        'DECK DA UNIDADE',
 
   // ── Home view ─────────────────────────────────────────────
   'home.battleMode':      'Modo de Batalha',
