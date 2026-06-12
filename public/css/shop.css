@@ -716,9 +716,10 @@
   position: relative;
   width: 320px;
   max-width: 92vw;
+  max-height: 90vh;
+  overflow: hidden auto;
   background: #0e0b1a;
   border-radius: 16px;
-  overflow: hidden;
   text-align: center;
   animation: crModalPop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
