@@ -401,7 +401,7 @@ function ChestResultModal({ result, onClose }) {
 
   const accentColor = isCritHit  ? '#ffd700'
     : isCritFail ? '#ff4444'
-    : (CHEST_RESULT_RARITY_COLORS[item.rarity] || '#ccc')
+    : (CHEST_RESULT_RARITY_COLORS[item.rarity] || '#cccccc')
 
   const rgb = hexToRgb(accentColor)
 
