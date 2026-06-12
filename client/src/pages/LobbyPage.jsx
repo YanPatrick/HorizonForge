@@ -122,6 +122,7 @@ const RARITY_COLORS = {
   common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
   epic: '#ba68c8', legendary: '#ff2d9b', starter: '#6a6080',
 }
+const RARITY_ORDER = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4, starter: 5 }
 const SLOT_ORDER = ['amulet','helm','special','weapon','chest','offhand','belt','legs','gloves','ring1','boots','ring2']
 
 function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
@@ -300,7 +301,9 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
               <div className="inventory-preview">
                 <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>{t('hero.inventory')}</p>
                 {(() => {
-                  const unequipped = playerItems.filter(item => !item.equipped_on)
+                  const unequipped = playerItems
+                    .filter(item => !item.equipped_on)
+                    .sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6))
                   if (unequipped.length === 0) return (
                     <p style={{ fontSize: '11px', opacity: 0.35, fontStyle: 'italic', textAlign: 'center', margin: '4px 0 8px' }}>
                       {playerItems.length === 0 ? t('gear.noItems') : t('gear.allEquipped')}
