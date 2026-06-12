@@ -100,6 +100,7 @@ export default {
   'formation.noHeroesFound':     'Nenhum herói encontrado',
   'formation.heroesSelected':    'Heróis selecionados:',
   'formation.done':              'PRONTO',
+  'formation.clearDeck':         'Limpar Deck',
   'formation.locked':            'Formação {n}',
   'formation.collection':       'COLEÇÃO',
   'formation.unitsDeck':        'DECK DA UNIDADE',

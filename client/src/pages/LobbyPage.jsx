@@ -685,6 +685,12 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
                 }}
               />
               <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
+              <button
+                type="button"
+                className="fvpc-clear-btn"
+                disabled={!activeForm?.hero_ids.length}
+                onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
+              >{t('formation.clearDeck')}</button>
               <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
                 {t('formation.done')}
               </button>
