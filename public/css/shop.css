@@ -747,6 +747,8 @@
 }
 
 .cr-inner {
+  position: relative;
+  z-index: 1;
   padding: 20px 20px 18px;
 }
 
