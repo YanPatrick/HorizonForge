@@ -1443,7 +1443,7 @@ export default function LobbyPage() {
             {menuOpen && (
               <div className="user-dropdown" onClick={e => e.stopPropagation()}>
                 <button className="user-dropdown-item" onClick={() => { setMenuOpen(false); setView('settings') }}>
-                  {t('nav.settings')}
+                  ⚙️ {t('nav.settings')}
                 </button>
                 {session?.mode === 'hive' && (
                   <button className="user-dropdown-item" onClick={handleReviewPurchases}>
@@ -1591,7 +1591,7 @@ export default function LobbyPage() {
                   <div className="banner-body">
                     <div className="banner-preview">
                       <div className="banner-title-row">
-                        <span className="banner-type-badge" style={{ background: 'linear-gradient(135deg,#6b3fa0,#4a2080)', borderColor: 'rgba(160,100,255,0.5)' }}>CAMPAIGN</span>
+                        <span className="banner-type-badge" style={{ background: 'linear-gradient(135deg,#6b3fa0,#4a2080)', borderColor: 'rgba(160,100,255,0.5)' }}>{t('nav.campaign').toUpperCase()}</span>
                       </div>
                     </div>
                     <div className="banner-expand">
