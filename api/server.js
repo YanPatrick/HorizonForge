@@ -1829,13 +1829,13 @@ async function migrateCampaign() {
     // Campaign reward items — one per stage, progressively rarer.
     // Slots chosen to complement the starter loadout (none of these exist as starters).
     // SPD values nerfed intentionally: uncommon=0.3, rare=0.8, legendary=1.0.
-    const desc    = 'Item de Campanha — não pode ser negociado.';
+    const desc    = 'Campaign item — cannot be traded.';
     const rewards = [
-      { slug: 'campaign_ch1_s1', name: 'Correia do Bastião',      rarity: 'common',    slot_type: 'belt',    atk: 0,  hp: 65,  spd: 0   },
-      { slug: 'campaign_ch1_s2', name: 'Manoplas da Floresta',    rarity: 'uncommon',  slot_type: 'gloves',  atk: 12, hp: 0,   spd: 0.3 },
-      { slug: 'campaign_ch1_s3', name: 'Grevas dos Guardiões',    rarity: 'rare',      slot_type: 'legs',    atk: 0,  hp: 200, spd: 0.8 },
-      { slug: 'campaign_ch1_s4', name: 'Anel da Torre de Cristal',rarity: 'epic',      slot_type: 'ring2',   atk: 30, hp: 260, spd: 0   },
-      { slug: 'campaign_ch1_s5', name: 'Relíquia do Grande Conselho', rarity: 'legendary', slot_type: 'special', atk: 42, hp: 420, spd: 1.0 },
+      { slug: 'campaign_ch1_s1', name: "Bastion's Belt",          rarity: 'common',    slot_type: 'belt',    atk: 0,  hp: 65,  spd: 0   },
+      { slug: 'campaign_ch1_s2', name: 'Forest Gauntlets',        rarity: 'uncommon',  slot_type: 'gloves',  atk: 12, hp: 0,   spd: 0.3 },
+      { slug: 'campaign_ch1_s3', name: "Guardians' Greaves",      rarity: 'rare',      slot_type: 'legs',    atk: 0,  hp: 200, spd: 0.8 },
+      { slug: 'campaign_ch1_s4', name: 'Crystal Tower Ring',      rarity: 'epic',      slot_type: 'ring2',   atk: 30, hp: 260, spd: 0   },
+      { slug: 'campaign_ch1_s5', name: 'Relic of the Great Council', rarity: 'legendary', slot_type: 'special', atk: 42, hp: 420, spd: 1.0 },
     ];
     for (const r of rewards) {
       await sql`
