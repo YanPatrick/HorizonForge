@@ -1061,7 +1061,7 @@ export default function BattlePage() {
               onClick={() => {
                 if (duelResult.isCampaign) {
                   if (duelResult.pw) {
-                    navigate('/lobby?tab=campaign')
+                    window.location.href = '/lobby?tab=campaign'
                   } else {
                     window.location.href = '/battle'
                   }

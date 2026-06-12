@@ -24,7 +24,7 @@ export default {
   'toast.pvpHiveRequired':        'PvP requires a Hive account. Log in with Hive to play! 🏆',
   'toast.balanceCheckFailed':     '⚠️ Could not verify your balance. Please try again.',
   'toast.insufficientBalance':    '⚠️ Insufficient balance! You have {bal} HIVE but the wager is {wager} HIVE.',
-  'toast.reviewingPurchases':     '⏳ Reviewing full purchase history... may take a few seconds.',
+  'toast.reviewingPurchases':     '⏳ Reviewing purchase history... may take a few seconds.',
   'toast.itemsRestored':          '✅ {count} Item(s) restored!',
   'toast.purchaseNotInCatalog':   '⚠️ Purchase found ({items}) but item is not in the catalog. Contact support.',
   'toast.alreadySynced':          'ℹ️ Everything was already synchronized!',

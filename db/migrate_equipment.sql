@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS items (
   atk_bonus   INT           NOT NULL DEFAULT 0,
   hp_bonus    INT           NOT NULL DEFAULT 0,
   spd_bonus   NUMERIC(5,2)  NOT NULL DEFAULT 0,
-  CHECK (rarity IN ('starter','common','rare','epic','legendary')),
+  CHECK (rarity IN ('starter','common','uncommon','rare','epic','legendary')),
   CHECK (slot_type IN ('amulet','helm','special','weapon','chest','offhand',
                        'belt','legs','gloves','ring1','boots','ring2'))
 );

@@ -1425,6 +1425,9 @@ export default function LobbyPage() {
             <span className="nav-user-chevron">▼</span>
             {menuOpen && (
               <div className="user-dropdown" onClick={e => e.stopPropagation()}>
+                <button className="user-dropdown-item" onClick={() => { setMenuOpen(false); setView('settings') }}>
+                  {t('nav.settings')}
+                </button>
                 {session?.mode === 'hive' && (
                   <button className="user-dropdown-item" onClick={handleReviewPurchases}>
                     {t('user.reviewPurchases')}
@@ -1672,9 +1675,6 @@ export default function LobbyPage() {
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">{t('nav.shop')}</span>
-          </button>
-          <button type="button" className={navTabClass('settings')} onClick={() => setView('settings')}>
-            <span className="mbt-ico">⚙️</span><span className="mbt-lbl">{t('nav.settings')}</span>
           </button>
         </nav>
       </div>
