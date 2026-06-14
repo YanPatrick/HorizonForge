@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import '@styles/inventory.css'
 import { useT } from '../context/LanguageContext'
 
@@ -185,6 +185,52 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
   )
 }
 
+function SkinsTab({ catalog, ownedIds, equippedSkins, heroData, onEquipSkin, onUnequipSkin, t }) {
+  const ownedSkins = catalog.filter(i => i.type === 'skin' && ownedIds.has(i.id))
+
+  if (ownedSkins.length === 0) {
+    return <div className="inv-empty" style={{ marginTop: 40 }}>{t('inv.noItems')}</div>
+  }
+
+  return (
+    <div className="inv-cosmetics-grid">
+      {ownedSkins.map(item => {
+        const isEquipped = equippedSkins?.[item.hero_cid]?.skin_id === item.id
+        const hero = heroData?.find(h => h.cid === item.hero_cid)
+        const previewStyle = item.preview
+          ? { backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: hero?.bg_gradient || '#1a1a2e' }
+
+        return (
+          <div key={item.id} className={`inv-cosm-card${isEquipped ? ' equipped-card' : ''}`}>
+            <div className="inv-cosm-preview" style={previewStyle}>
+              {!item.preview && <span>{hero?.icon || '✨'}</span>}
+            </div>
+            <div className="inv-cosm-body">
+              <div className="inv-cosm-name">{item.name}</div>
+              {item.hero_cid && (
+                <div className="inv-cosm-hero">
+                  {item.hero_cid.charAt(0).toUpperCase() + item.hero_cid.slice(1)}
+                </div>
+              )}
+              <div className="inv-cosm-actions">
+                {isEquipped
+                  ? <button type="button" className="inv-cosm-btn unequip" onClick={() => onUnequipSkin?.(item.id)}>
+                      {t('shop.unequip')}
+                    </button>
+                  : <button type="button" className="inv-cosm-btn equip" onClick={() => onEquipSkin?.(item.id)}>
+                      {t('shop.equip')}
+                    </button>
+                }
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function InventoryView({
   session, heroData, playerGear, playerItems,
   equippedSkins, equippedBgs,
@@ -202,6 +248,21 @@ export default function InventoryView({
   const [unequipPending, setUnequipPending] = useState(null)
   const [sortBy, setSortBy] = useState('rarity')
   const [equipPending, setEquipPending] = useState(null)
+
+  const [catalog, setCatalog] = useState([])
+  const [ownedIds, setOwnedIds] = useState(new Set())
+  const [cosmeticsLoading, setCosmeticsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!session?.token) { setCosmeticsLoading(false); return }
+    Promise.all([
+      fetch('/api/shop').then(r => r.json()),
+      fetch('/api/shop/owned', { headers: { Authorization: `Bearer ${session.token}` } }).then(r => r.json()),
+    ]).then(([cat, owned]) => {
+      setCatalog(cat.items || [])
+      setOwnedIds(new Set(owned.owned || []))
+    }).catch(() => {}).finally(() => setCosmeticsLoading(false))
+  }, [session?.token]) // eslint-disable-line
 
   const filteredHeroes = (heroData || []).filter(h => {
     const matchRole = roleFilter === 'all' || roleCategory(h.role) === roleFilter
@@ -368,7 +429,19 @@ export default function InventoryView({
               </div>
             </>
           )}
-          {activeTab === 'skins' && <p style={{ color: '#5a5080' }}>Skins tab — coming in next task</p>}
+          {activeTab === 'skins' && (
+            cosmeticsLoading
+              ? <div className="inv-empty">{t('campaign.loading')}</div>
+              : <SkinsTab
+                  catalog={catalog}
+                  ownedIds={ownedIds}
+                  equippedSkins={equippedSkins}
+                  heroData={heroData}
+                  onEquipSkin={onEquipSkin}
+                  onUnequipSkin={onUnequipSkin}
+                  t={t}
+                />
+          )}
           {activeTab === 'backgrounds' && <p style={{ color: '#5a5080' }}>Backgrounds tab — coming in next task</p>}
         </div>
       </div>
