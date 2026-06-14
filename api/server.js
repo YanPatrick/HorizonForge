@@ -1057,6 +1057,42 @@ function authFromRequest(req) {
  * Lazily initializes starter items on first call.
  * Response: { ok, gear: { [cid]: { slots: { [slot_type]: itemObj }, totals: { atk_bonus, hp_bonus, spd_bonus } } } }
  */
+app.get('/api/chest-meter', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  try {
+    const [row] = await sql`SELECT chest_meter, pending_chests_queue FROM player_init WHERE player = ${player}`;
+    const meter   = row ? Number(row.chest_meter) : 0;
+    const queue   = Array.isArray(row?.pending_chests_queue) ? row.pending_chests_queue : [];
+    const pct     = Math.min(100, Math.round((meter / 2.0) * 100));
+    res.json({ ok: true, meter, pct, pending: queue.length });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+const CHEST_DISPLAY_NAMES = { veteran: 'Veteran Chest', basic: 'Basic Chest', chaos: 'Chaos Chest' };
+const CHEST_TYPE_MAP      = { veteran: 'treasure_chest', basic: 'basic_chest', chaos: 'chaos_chest' };
+
+app.post('/api/chest-meter/open', async (req, res) => {
+  const authedUser = authFromRequest(req);
+  if (!authedUser) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  try {
+    const [row] = await sql`SELECT pending_chests_queue FROM player_init WHERE player = ${authedUser}`;
+    const queue = Array.isArray(row?.pending_chests_queue) ? row.pending_chests_queue : [];
+    if (queue.length < 1) return res.status(400).json({ ok: false, error: 'No pending chests' });
+    const chestKey  = queue[0];
+    const newQueue  = queue.slice(1);
+    const chestType = CHEST_TYPE_MAP[chestKey] || 'treasure_chest';
+    const chestName = CHEST_DISPLAY_NAMES[chestKey] || 'Veteran Chest';
+    await sql`UPDATE player_init SET pending_chests_queue = ${JSON.stringify(newQueue)} WHERE player = ${authedUser}`;
+    const item = await openChest(authedUser, chestType);
+    res.json({ ok: true, item, chestName, pending: newQueue.length });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.get('/api/gear', async (req, res) => {
   const { player } = req.query;
   if (!player) return res.status(400).json({ ok: false, error: 'player required' });
@@ -1348,9 +1384,9 @@ const CHAOS_FLAVOR_TEXTS = [
 ];
 const CHAOS_ATTR_POOL = ['str','dex','con','int','wis','cha'];
 
-function _rollRarity() {
+function _rollRarity(table = CHEST_RARITY_ROLL) {
   const r = Math.random() * 100;
-  return CHEST_RARITY_ROLL.find(x => r < x.max).rarity;
+  return table.find(x => r < x.max).rarity;
 }
 
 // Rolls a single stat value scaled by D20 (rolls 2-20).
@@ -1425,7 +1461,8 @@ function _randomSlot() {
 
 // Returns { item_data, d20, flavor_text } ready to INSERT into items table.
 function _generateChestItem(chestType) {
-  const rarity  = _rollRarity();
+  const rarityTable = chestType === 'basic_chest' ? BASIC_CHEST_RARITY_ROLL : CHEST_RARITY_ROLL;
+  const rarity  = _rollRarity(rarityTable);
   const slot    = _randomSlot();
   const name    = _rollName(slot);
   const d20     = Math.floor(Math.random() * 20) + 1;
@@ -1788,6 +1825,85 @@ async function fixupPrecisionQuiver() {
     console.log('   Fixup: ✅ Precision Quiver moved from special → offhand');
   } catch (e) {
     console.warn('   Fixup Precision Quiver: ⚠️', e.message);
+  }
+}
+
+async function migrateChestMeter() {
+  try {
+    await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS chest_meter            NUMERIC(10,3) NOT NULL DEFAULT 0`;
+    await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS pending_chests_queue   JSONB         NOT NULL DEFAULT '[]'`;
+    await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS last_basic_chest_at    DATE`;
+    console.log('   chest_meter columns: ✅');
+  } catch (e) {
+    console.error('   chest_meter migration: ❌', e.message);
+  }
+}
+
+// ── Basic Chest drop (Free PvP) ───────────────────────────────────────────────
+// NOT ACTIVE YET — call tryBasicChestDrop(username) after a Free PvP win
+// when the rarity % have been confirmed. Rarity table to be filled by owner.
+const BASIC_CHEST_RARITY_ROLL = [
+  { rarity: 'common',    max: 55  },
+  { rarity: 'uncommon',  max: 85  },
+  { rarity: 'rare',      max: 95  },
+  { rarity: 'epic',      max: 99  },
+  { rarity: 'legendary', max: 100 },
+];
+
+async function tryBasicChestDrop(username) {
+  if (BASIC_CHEST_RARITY_ROLL.length === 0) return; // not active yet
+  if (Math.random() > 0.01) return;                  // 1% chance
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const [row] = await sql`SELECT last_basic_chest_at, pending_chests_queue FROM player_init WHERE player = ${username}`;
+    if (row?.last_basic_chest_at?.toISOString?.()?.slice(0, 10) === today) return; // daily limit
+    const queue = Array.isArray(row?.pending_chests_queue) ? [...row.pending_chests_queue, 'basic'] : ['basic'];
+    await sql`
+      INSERT INTO player_init (player, pending_chests_queue, last_basic_chest_at)
+      VALUES (${username}, ${JSON.stringify(queue)}, ${today})
+      ON CONFLICT (player) DO UPDATE
+        SET pending_chests_queue = ${JSON.stringify(queue)},
+            last_basic_chest_at  = ${today}
+    `;
+    console.log(`📦 Basic Chest dropped for ${username} (pending: ${queue.length})`);
+    const socketId = [...(io.sockets.sockets || new Map()).values()]
+      .find(s => s.data?.username === username)?.id;
+    if (socketId) {
+      io.to(socketId).emit('chest_meter_update', { player: username, pending: queue.length });
+    }
+  } catch (e) {
+    console.error('[tryBasicChestDrop]', e.message);
+  }
+}
+
+// Adds the arena fee to the winner's chest meter.
+// liquid → +20% of wager; stake → +10%.
+// Each time meter crosses 2.0 HIVE, increments pending_chests (player opens manually).
+async function addToChestMeter(username, wager, payoutPref) {
+  try {
+    const fee = wager * (payoutPref === 'liquid' ? 0.20 : 0.10);
+    await sql`
+      INSERT INTO player_init (player, chest_meter)
+      VALUES (${username}, ${fee})
+      ON CONFLICT (player) DO UPDATE
+        SET chest_meter = player_init.chest_meter + ${fee}
+    `;
+    const [row] = await sql`SELECT chest_meter, pending_chests_queue FROM player_init WHERE player = ${username}`;
+    let meter = Number(row.chest_meter);
+    let queue = Array.isArray(row.pending_chests_queue) ? row.pending_chests_queue : [];
+    let earned = 0;
+    while (meter >= 2.0) {
+      meter -= 2.0;
+      queue.push('veteran');
+      earned += 1;
+    }
+    if (earned > 0) {
+      await sql`UPDATE player_init SET chest_meter = ${meter}, pending_chests_queue = ${JSON.stringify(queue)} WHERE player = ${username}`;
+      console.log(`🎁 Chest Meter: ${earned} Veteran Chest(s) queued for ${username} (pending: ${queue.length})`);
+    }
+    return { meter, pending: queue.length };
+  } catch (e) {
+    console.error('[addToChestMeter]', e.message);
   }
 }
 
@@ -2766,17 +2882,27 @@ async function resolveBattleRound(matchId) {
         WHERE id=${matchId}`
       .catch(err => console.error('[match update]', err.message));
 
+    // ── Basic Chest drop on Free PvP win ─────────────────────────────────────
+    if (m.wager === 0) {
+      tryBasicChestDrop(matchWinner).catch(err => console.error('[tryBasicChestDrop]', err.message));
+    }
+
     // ── Send prize if match had a real wager ──────────────────────────────────
     if (m.wager > 0 && HIVE_GAME_ACCOUNT) {
       const pot = m.wager * 2;
       const payoutPref = m.payoutPrefs[matchWinner] || 'liquid';
-      sendHivePrize(matchWinner, pot, payoutPref, matchId).then(result => {
+      sendHivePrize(matchWinner, pot, payoutPref, matchId).then(async result => {
         if (result.ok) {
           io.to(matchId).emit('prize_sent', {
             to: matchWinner,
             amount: result.amount,
             type: result.payoutPref,
           });
+          const meterResult = await addToChestMeter(matchWinner, m.wager, payoutPref);
+          if (meterResult) {
+            const pct = Math.min(100, Math.round((meterResult.meter / 2.0) * 100));
+            io.to(matchId).emit('chest_meter_update', { player: matchWinner, meter: meterResult.meter, pct, pending: meterResult.pending });
+          }
         } else {
           io.to(matchId).emit('prize_error', {
             message: 'Prize transfer failed — contact support.',
@@ -2842,9 +2968,14 @@ function forfeitBattle(matchId, winner) {
     if (m.wager > 0 && HIVE_GAME_ACCOUNT) {
       const pot = m.wager * 2;
       const payoutPref = m.payoutPrefs[winner] || 'liquid';
-      sendHivePrize(winner, pot, payoutPref, matchId).then(result => {
+      sendHivePrize(winner, pot, payoutPref, matchId).then(async result => {
         if (result.ok) {
           io.to(matchId).emit('prize_sent', { to: winner, amount: result.amount, type: result.payoutPref });
+          const result = await addToChestMeter(winner, m.wager, payoutPref);
+          if (result) {
+            const pct = Math.min(100, Math.round((result.meter / 2.0) * 100));
+            io.to(matchId).emit('chest_meter_update', { player: winner, meter: result.meter, pct, pending: result.pending });
+          }
         } else {
           io.to(matchId).emit('prize_error', { error: result.error });
         }
@@ -3377,6 +3508,7 @@ httpServer.listen(PORT, () => {
   restoreSpeedOffsets();
   seedTreasures();
   migrateCampaign();
+  migrateChestMeter();
   fixupPrecisionQuiver();
   // Rehydrate any matches that were active at the time of the previous shutdown.
   // Refunds get processed automatically for paid players whose match can no

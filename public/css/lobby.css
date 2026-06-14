@@ -8054,6 +8054,25 @@
   100% { left: 100%; }
 }
 
+/* Estado: baú(s) pronto(s) para abrir */
+.nav-chest-pill--ready {
+  border-color: rgba(255, 215, 0, 0.9);
+  background: rgba(80, 40, 10, 0.9);
+  animation: chest-pulse 1.2s ease-in-out infinite;
+}
+.nav-chest-pill--ready:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 22px rgba(255, 215, 0, 0.5);
+}
+.nav-chest-status--ready {
+  color: #ffe066;
+  letter-spacing: 0.05em;
+}
+@keyframes chest-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(255, 215, 0, 0.7); }
+}
+
 /* Ajuste para telas muito pequenas */
 @media (max-width: 400px) {
   .nav-chest-pill {
