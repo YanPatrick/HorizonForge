@@ -323,6 +323,26 @@ export default function GrimoireView() {
                 <div className="gr-tip"><div><strong style={{ color: '#ff33aa' }}>{t('rarity.legendary').toUpperCase()} — 2%:</strong> {t('grimoire.ch7.vl')}</div></div>
               </div>
 
+              {/* ── Basic Chest ── */}
+              <div className="gr-section-title" style={{ marginTop: '1.4rem' }}>📦 Basic Chest</div>
+              <p className="gr-p">
+                The <span className="gr-hl">Basic Chest</span> cannot be bought. It is the arena's way of rewarding those who show up and fight — no strings attached.
+              </p>
+              <div className="gr-tips">
+                <div className="gr-tip">
+                  <span className="gr-tip-ico">🍃</span>
+                  <div>
+                    <strong>How to obtain:</strong> Every victory in <span className="gr-hl">Free PvP</span> has a <strong>1% flat chance</strong> of dropping a Basic Chest. Pure luck — nothing you can grind or buy.
+                  </div>
+                </div>
+                <div className="gr-tip">
+                  <span className="gr-tip-ico">📅</span>
+                  <div>
+                    <strong>Daily limit: 1 chest per day.</strong> Once you earn one, further victories that day will not trigger another drop. Come back tomorrow.
+                  </div>
+                </div>
+              </div>
+
               <div className="gr-section-title" style={{ marginTop: '1.4rem' }}>{t('grimoire.ch7.s2')}</div>
               <p className="gr-p">
                 {pt ? t('grimoire.ch7.cp1') : <>The <span className="gr-hl">Chaos Chest</span> is a gamble with the universe. Powered by the <strong>Motor of Chaos</strong>, every item rolled here is unique — procedurally generated with stats, attribute requirements, and sometimes a fate-sealed inscription. The odds? That's between you and the dice.</>}
