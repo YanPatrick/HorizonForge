@@ -395,3 +395,133 @@
     text-align: center;
   }
 }
+
+/* ── Campaign Leaderboard ────────────────────────────────── */
+.campaign-leaderboard {
+  margin-top: 20px;
+  border-top: 1px solid rgba(120, 80, 220, 0.2);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campaign-lb-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #7b6caa;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.campaign-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  transition: background 0.12s;
+}
+
+.campaign-lb-row--me {
+  background: rgba(120, 80, 220, 0.15);
+  border-color: rgba(120, 80, 220, 0.35);
+}
+
+.campaign-lb-rank {
+  font-size: 0.85rem;
+  min-width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.campaign-lb-name {
+  flex: 1;
+  font-size: 0.78rem;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.campaign-lb-row--me .campaign-lb-name {
+  color: #c4b0ff;
+  font-weight: 600;
+}
+
+.campaign-lb-pos {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f5c542;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+  .campaign-leaderboard {
+    display: none;
+  }
+}
+
+/* ── Chapter navigator ───────────────────────────────────── */
+.campaign-chapter-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.campaign-chapter-arrow {
+  background: none;
+  border: none;
+  color: #7b6caa;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.campaign-chapter-arrow:hover:not(:disabled) {
+  color: #c4b0ff;
+  background: rgba(120, 80, 220, 0.15);
+}
+
+.campaign-chapter-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* ── Coming soon mask ────────────────────────────────────── */
+.campaign-coming-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.campaign-cs-lock {
+  font-size: 2rem;
+  opacity: 0.5;
+}
+
+.campaign-cs-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7b6caa;
+}
+
+.campaign-cs-sub {
+  font-size: 0.75rem;
+  color: #5a5070;
+  line-height: 1.5;
+}
