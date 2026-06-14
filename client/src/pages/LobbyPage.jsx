@@ -1468,9 +1468,9 @@ export default function LobbyPage() {
           setEquippedSkins(prev => ({ ...prev, [item.hero_cid]: { skin_id, preview: item.preview || '' } }))
         }
       } else {
-        showToast(res.error || t('toast.couldNotEquip'))
+        showToast('⚠️ ' + (res.error || t('toast.couldNotEquip')))
       }
-    } catch { showToast(t('toast.errorEquipping')) }
+    } catch { showToast('⚠️ ' + t('toast.errorEquipping')) }
   }
 
   async function handleUnequipSkin(skin_id) {
@@ -1485,9 +1485,9 @@ export default function LobbyPage() {
       if (res.ok) {
         setEquippedSkins(prev => { const next = { ...prev }; delete next[hero_cid]; return next })
       } else {
-        showToast(res.error || t('toast.couldNotRemove'))
+        showToast('⚠️ ' + (res.error || t('toast.couldNotRemove')))
       }
-    } catch { showToast(t('toast.errorRemoving')) }
+    } catch { showToast('⚠️ ' + t('toast.errorRemoving')) }
   }
 
   /* ── equip / unequip background ─────────────────────── */
@@ -1503,9 +1503,9 @@ export default function LobbyPage() {
         const item = (catalogRes.items || []).find(i => i.id === item_id)
         setEquippedBgs(prev => [...prev, { id: item_id, preview: item?.preview || '' }])
       } else {
-        showToast(res.error || t('toast.couldNotEquip'))
+        showToast('⚠️ ' + (res.error || t('toast.couldNotEquip')))
       }
-    } catch { showToast(t('toast.errorEquipping')) }
+    } catch { showToast('⚠️ ' + t('toast.errorEquipping')) }
   }
 
   async function handleUnequipBg(item_id) {
@@ -1519,9 +1519,9 @@ export default function LobbyPage() {
       if (res.ok) {
         setEquippedBgs(prev => prev.filter(b => b.id !== item_id))
       } else {
-        showToast(res.error || t('toast.couldNotRemove'))
+        showToast('⚠️ ' + (res.error || t('toast.couldNotRemove')))
       }
-    } catch { showToast(t('toast.errorRemoving')) }
+    } catch { showToast('⚠️ ' + t('toast.errorRemoving')) }
   }
 
   /* ── equip item from inventory ───────────────────────── */
