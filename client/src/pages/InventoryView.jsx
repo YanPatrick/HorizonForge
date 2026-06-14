@@ -231,6 +231,69 @@ function SkinsTab({ catalog, ownedIds, equippedSkins, heroData, onEquipSkin, onU
   )
 }
 
+function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg, t }) {
+  const ownedBgs = catalog.filter(i => i.type === 'background' && ownedIds.has(i.id))
+  const equippedBgIds = new Set((equippedBgs || []).map(b => b.id))
+
+  if (ownedBgs.length === 0) {
+    return <div className="inv-empty" style={{ marginTop: 40 }}>{t('inv.noItems')}</div>
+  }
+
+  return (
+    <>
+      {/* Slot dots */}
+      <div className="inv-bg-dots-bar">
+        {[0, 1, 2, 3].map(i => (
+          <span key={i} className={`inv-bg-dot${i < (equippedBgs?.length ?? 0) ? ' filled' : ''}`} />
+        ))}
+        <span style={{ fontSize: 10, color: '#7a70a0', marginLeft: 6 }}>
+          {t('inv.bgsEquipped', { n: equippedBgs?.length ?? 0 })}
+        </span>
+      </div>
+
+      <div className="inv-cosmetics-grid">
+        {ownedBgs.map(item => {
+          const isEquipped = equippedBgIds.has(item.id)
+          const previewStyle = item.preview
+            ? { backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { background: '#1a1a2e' }
+
+          return (
+            <div key={item.id} className={`inv-cosm-card${isEquipped ? ' equipped-card' : ''}`}>
+              <div className="inv-cosm-preview" style={previewStyle} />
+              <div className="inv-cosm-body">
+                <div className="inv-cosm-name">{item.name}</div>
+                <div className="inv-cosm-actions">
+                  {isEquipped
+                    ? <button
+                        type="button"
+                        className="inv-cosm-btn unequip"
+                        disabled={(equippedBgs?.length ?? 0) <= 1}
+                        onClick={() => onUnequipBg?.(item.id)}
+                        title={(equippedBgs?.length ?? 0) <= 1 ? t('inv.minOneBg') : undefined}
+                      >
+                        {t('shop.remove')}
+                      </button>
+                    : <button
+                        type="button"
+                        className="inv-cosm-btn equip"
+                        disabled={(equippedBgs?.length ?? 0) >= 4}
+                        onClick={() => onEquipBg?.(item.id)}
+                        title={(equippedBgs?.length ?? 0) >= 4 ? '4/4 slots used' : undefined}
+                      >
+                        {t('shop.equip')}
+                      </button>
+                  }
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 export default function InventoryView({
   session, heroData, playerGear, playerItems,
   equippedSkins, equippedBgs,
@@ -442,7 +505,18 @@ export default function InventoryView({
                   t={t}
                 />
           )}
-          {activeTab === 'backgrounds' && <p style={{ color: '#5a5080' }}>Backgrounds tab — coming in next task</p>}
+          {activeTab === 'backgrounds' && (
+            cosmeticsLoading
+              ? <div className="inv-empty">{t('campaign.loading')}</div>
+              : <BackgroundsTab
+                  catalog={catalog}
+                  ownedIds={ownedIds}
+                  equippedBgs={equippedBgs}
+                  onEquipBg={onEquipBg}
+                  onUnequipBg={onUnequipBg}
+                  t={t}
+                />
+          )}
         </div>
       </div>
     </div>
