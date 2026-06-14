@@ -113,6 +113,78 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
   )
 }
 
+function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, setEquipPending, onEquipItem, t }) {
+  const SORT_OPTS = [
+    { value: 'rarity',      label: t('inv.sortRarity') },
+    { value: 'name',        label: t('inv.sortName') },
+    { value: 'total_stats', label: t('inv.sortStats') },
+  ]
+
+  return (
+    <div className="inv-items-panel">
+      <div className="inv-panel-header">
+        <div className="inv-panel-title">
+          {t('hero.inventory')} ({items.length})
+        </div>
+        <select
+          className="inv-sort-select"
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+        >
+          {SORT_OPTS.map(o => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
+        </select>
+      </div>
+
+      {items.length === 0
+        ? <div className="inv-empty">{t('inv.noItems')}</div>
+        : (
+          <div className="inv-items-grid">
+            {items.map(item => {
+              const isPending = equipPending?.id === item.id
+              const color = RARITY_COLORS[item.rarity] || '#888'
+              return (
+                <div
+                  key={item.id}
+                  className={`inv-item-slot${isPending ? ' selected' : ''}`}
+                  style={{ border: `1px solid ${color}55` }}
+                  title={`${item.name} (${item.slot_type})`}
+                  onClick={() => setEquipPending(isPending ? null : item)}
+                >
+                  <span>{SLOT_ICONS[item.slot_type] || '📦'}</span>
+                  <span className="inv-item-rarity-bar" style={{ background: color }} />
+                </div>
+              )
+            })}
+          </div>
+        )
+      }
+
+      {equipPending && hero && onEquipItem && (
+        <div className="inv-equip-confirm">
+          <div className="inv-equip-confirm-name" style={{ color: RARITY_COLORS[equipPending.rarity] || '#ccc' }}>
+            {equipPending.name}
+          </div>
+          <div className="inv-equip-confirm-stats">
+            {equipPending.atk_bonus !== 0 && <span>{equipPending.atk_bonus > 0 ? '+' : ''}{equipPending.atk_bonus} ATK</span>}
+            {equipPending.hp_bonus  !== 0 && <span>{equipPending.hp_bonus  > 0 ? '+' : ''}{equipPending.hp_bonus} HP</span>}
+            {Number(equipPending.spd_bonus) !== 0 && <span>{Number(equipPending.spd_bonus) > 0 ? '+' : ''}{Number(equipPending.spd_bonus).toFixed(2)} SPD</span>}
+          </div>
+          <div className="inv-equip-confirm-actions">
+            <button
+              type="button"
+              className="inv-btn-equip"
+              onClick={() => { onEquipItem(equipPending.id, hero.cid, equipPending.slot_type); setEquipPending(null) }}
+            >
+              {t('inv.equipOn', { name: hero.name })}
+            </button>
+            <button type="button" className="inv-btn-cancel" onClick={() => setEquipPending(null)}>✕</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function InventoryView({
   session, heroData, playerGear, playerItems,
   equippedSkins, equippedBgs,
@@ -128,6 +200,8 @@ export default function InventoryView({
   const [roleFilter, setRoleFilter] = useState('all')
   const [carouselOffset, setCarouselOffset] = useState(0)
   const [unequipPending, setUnequipPending] = useState(null)
+  const [sortBy, setSortBy] = useState('rarity')
+  const [equipPending, setEquipPending] = useState(null)
 
   const filteredHeroes = (heroData || []).filter(h => {
     const matchRole = roleFilter === 'all' || roleCategory(h.role) === roleFilter
@@ -147,6 +221,22 @@ export default function InventoryView({
   }
 
   const currentHero = selectedHero ?? filteredHeroes[0] ?? null
+
+  function sortItems(items, by) {
+    const copy = [...items]
+    if (by === 'rarity') return copy.sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6))
+    if (by === 'name')   return copy.sort((a, b) => a.name.localeCompare(b.name))
+    if (by === 'total_stats') return copy.sort((a, b) => {
+      const score = i => Math.abs(i.atk_bonus || 0) + Math.abs(i.hp_bonus || 0) + Math.abs(Number(i.spd_bonus) || 0) * 10
+      return score(b) - score(a)
+    })
+    return copy
+  }
+
+  const unequippedItems = sortItems(
+    (playerItems || []).filter(i => !i.equipped_on),
+    sortBy,
+  )
 
   const TABS = [
     { key: 'gear',        icon: '⚔️', label: t('inv.tabGear') },
@@ -265,10 +355,16 @@ export default function InventoryView({
                   setUnequipPending={setUnequipPending}
                   t={t}
                 />
-                {/* Inventory items placeholder — next task */}
-                <div className="inv-items-panel">
-                  <p style={{ color: '#5a5080', fontSize: 11 }}>Items list — next task</p>
-                </div>
+                <InventoryItemsPanel
+                  hero={currentHero}
+                  items={unequippedItems}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  equipPending={equipPending}
+                  setEquipPending={setEquipPending}
+                  onEquipItem={onEquipItem}
+                  t={t}
+                />
               </div>
             </>
           )}
