@@ -13,6 +13,8 @@ import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
 import { useT } from '../context/LanguageContext'
+import ChestResultModal from '../components/ChestResultModal'
+import '@styles/shop.css'
 
 /* ── helpers ────────────────────────────────────────────── */
 function prefKey(name, username) {
@@ -1127,6 +1129,10 @@ export default function LobbyPage() {
   const [freeRoom, setFreeRoom] = useState(null)
   const [joinCode, setJoinCode] = useState('')
   const [freeMatchErr, setFreeMatchErr] = useState('')
+  const [chestMeterPct, setChestMeterPct] = useState(0)
+  const [pendingChests, setPendingChests] = useState(0)
+  const [chestResult, setChestResult] = useState(null)
+  const [openingChest, setOpeningChest] = useState(false)
 
   const socketRef = useRef(null)
   const searchTimerRef = useRef(null)
@@ -1142,6 +1148,27 @@ export default function LobbyPage() {
   const isChatTabOpenRef = useRef(false)
 
   const myStatus = tavernUsers.find(u => u.username === username)?.status ?? 'tavern'
+
+  async function handleOpenPendingChest() {
+    if (openingChest || pendingChests < 1) return
+    setOpeningChest(true)
+    try {
+      const token = localStorage.getItem('hf_token')
+      const res = await fetch('/api/chest-meter/open', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setChestResult({ chestName: data.chestName, item: data.item })
+        setPendingChests(data.pending)
+      }
+    } catch (e) {
+      showToast('Failed to open chest. Try again.')
+    } finally {
+      setOpeningChest(false)
+    }
+  }
 
   function handleSetAvailable() {
     isManualAfkRef.current = false
@@ -1316,6 +1343,17 @@ export default function LobbyPage() {
     })
     socket.on('disconnect', () => {
       setSearch(s => s.open && !s.found ? { ...s, queueText: 'Connection lost — reconnecting...' } : s)
+    })
+
+    // chest meter — load initial value and react to updates
+    if (session?.mode === 'hive' && username) {
+      fetch(`/api/chest-meter?player=${username}`)
+        .then(r => r.json())
+        .then(d => { if (d.ok) { setChestMeterPct(d.pct); setPendingChests(d.pending ?? 0) } })
+        .catch(() => {})
+    }
+    socket.on('chest_meter_update', d => {
+      if (d.player === username) { setChestMeterPct(d.pct); setPendingChests(d.pending ?? 0) }
     })
 
     // tavern — real-time online players list
@@ -1748,9 +1786,17 @@ export default function LobbyPage() {
         </div>
         <div className="nav-right">
           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
-          <div className="nav-chest-pill" title="Fight for a chance to open a new chest!">
+          <div
+            className={`nav-chest-pill${pendingChests > 0 ? ' nav-chest-pill--ready' : ''}`}
+            title={pendingChests > 0 ? `${pendingChests} Veteran Chest${pendingChests > 1 ? 's' : ''} ready to open!` : 'Win paid PvP matches to fill your Chest Meter!'}
+            onClick={pendingChests > 0 ? handleOpenPendingChest : undefined}
+            style={pendingChests > 0 ? { cursor: 'pointer' } : {}}
+          >
             <span className="nav-chest-ico">🎁</span>
-            <span className="nav-chest-status">0 %</span>
+            {pendingChests > 0
+              ? <span className="nav-chest-status nav-chest-status--ready">OPEN{pendingChests > 1 ? ` ×${pendingChests}` : '!'}</span>
+              : <span className="nav-chest-status">{chestMeterPct} %</span>
+            }
             <div className="nav-chest-glow"></div>
           </div>
 
@@ -2072,6 +2118,7 @@ export default function LobbyPage() {
         onComplete={() => { localStorage.setItem('hf_tutorial_done', '1'); setShowTutorial(false) }}
       />
       <GuestConversionModal open={!!convCtx} context={convCtx} onClose={() => setConvCtx(null)} />
+      {chestResult && <ChestResultModal result={chestResult} onClose={() => setChestResult(null)} />}
       <div
         id="desc-tooltip"
         className={activeInfoTip ? 'visible' : ''}
