@@ -8350,7 +8350,7 @@
   .fvpc-hero-list {
     flex: 1;
     display: flex;
-    gap: 14px;
+    gap: 10px;
     align-items: stretch;
     overflow: hidden;
     height: 95%;
@@ -8369,8 +8369,8 @@
 
   /* Hero card — portrait grande (estilo shop) */
   .fvpc-hero-card {
-    flex: 0 0 calc(25% - 10.5px);
-    max-width: calc(25% - 10.5px);
+    flex: 0 0 calc(20% - 8px);
+    max-width: calc(20% - 8px);
     border-radius: 10px;
     overflow: hidden;
     border: 2px solid rgba(255, 255, 255, 0.07);
@@ -8455,7 +8455,7 @@
   }
   .fvpc-hero-role { display: none; }
 
-  .fvpc-carousel-hint { display: none; }
+.fvpc-carousel-hint { display: none; }
 
   /* ── Unit's Deck ── */
   .fvpc-section-deck {
@@ -8468,13 +8468,12 @@
   .fvpc-deck-controls {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
   }
-  .fvpc-deck-controls .fvpc-section-title {
+
+  .fvpc-section-deck > .fvpc-section-title {
     margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
   }
 
   .fvpc-deck-actions {
@@ -8554,7 +8553,7 @@
   /* Slot — compacto, estilo battle card */
   .fvpc-slot {
     flex: 1;
-    height: 100px;
+    height: 130px;
     border-radius: 7px;
     border: 1.5px dashed rgba(255, 255, 255, 0.09);
     background: rgba(255, 255, 255, 0.02);
@@ -8588,7 +8587,7 @@
   .fvpc-slot.has-portrait {
     background-image: var(--portrait-url);
     background-size: cover;
-    background-position: top center;
+    background-position: center 15%;
   }
   .fvpc-slot-plus  { font-size: 20px; color: rgba(255, 255, 255, 0.09); }
   .fvpc-slot-icon  { font-size: 1.5em; }

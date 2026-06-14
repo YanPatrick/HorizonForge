@@ -12,6 +12,7 @@ import '@styles/tavern.css'                       // Imp tavern
 import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
+import InventoryView from './InventoryView'
 import { useT } from '../context/LanguageContext'
 import ChestResultModal from '../components/ChestResultModal'
 import '@styles/shop.css'
@@ -587,7 +588,7 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
   const total = filteredHeroes.length
   const visibleHeroes = total === 0
     ? []
-    : Array.from({ length: Math.min(4, total) }, (_, i) => filteredHeroes[(carouselOffset + i) % total])
+    : Array.from({ length: Math.min(5, total) }, (_, i) => filteredHeroes[(carouselOffset + i) % total])
 
   function moveCarousel(dir) {
     if (total === 0) return
@@ -764,13 +765,8 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
                       >i</button>
                     </div>
                     <div className="fvpc-hero-footer">
-                      <div className="fvpc-hero-name">{h.name}</div>
-                      <div className={`fvpc-hero-role role-${roleCategory(h.role)}`}>
-                        {roleCategory(h.role) === 'tank'
-                          ? t('role.tank')
-                          : roleCategory(h.role) === 'support'
-                            ? t('role.support')
-                            : t('role.dps')}
+                      <div className="fvpc-hero-name">
+                        {h.name}{' — '}{roleCategory(h.role) === 'tank' ? t('role.tank') : roleCategory(h.role) === 'support' ? t('role.support') : t('role.dps')}
                       </div>
                     </div>
                   </div>
@@ -798,32 +794,30 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
 
         {/* UNIT'S DECK */}
         <div className="fvpc-section-deck">
-          <div className="fvpc-deck-controls">
-            <div className="fvpc-section-title">{t('formation.unitsDeck')}</div>
-            <div className="fvpc-deck-actions">
-              <input
-                className="fvpc-deck-name-input"
-                type="text"
-                maxLength={10}
-                value={slideNameVal}
-                onChange={e => {
-                  setSlideNameVal(e.target.value)
-                  setFormations(prev => prev.map((f, i) =>
-                    i === editingSlot ? { ...f, name: e.target.value } : f
-                  ))
-                }}
-              />
-              <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
-              <button
-                type="button"
-                className="fvpc-clear-btn"
-                disabled={!activeForm?.hero_ids.length}
-                onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
-              >{t('formation.clearDeck')}</button>
-              <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
-                {t('formation.done')}
-              </button>
-            </div>
+          <div className="fvpc-section-title">{t('formation.unitsDeck')}</div>
+          <div className="fvpc-deck-actions">
+            <input
+              className="fvpc-deck-name-input"
+              type="text"
+              maxLength={10}
+              value={slideNameVal}
+              onChange={e => {
+                setSlideNameVal(e.target.value)
+                setFormations(prev => prev.map((f, i) =>
+                  i === editingSlot ? { ...f, name: e.target.value } : f
+                ))
+              }}
+            />
+            <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
+            <button
+              type="button"
+              className="fvpc-clear-btn"
+              disabled={!activeForm?.hero_ids.length}
+              onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
+            >{t('formation.clearDeck')}</button>
+            <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
+              {t('formation.done')}
+            </button>
           </div>
 
           <div className="fvpc-slot-row">
@@ -1221,7 +1215,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'campaign', 'shop', 'formation', 'grimoire', 'settings']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
@@ -1231,6 +1225,7 @@ export default function LobbyPage() {
   const [pvpFmt, setPvpFmt] = useState(() => Number(loadPref('pvp_fmt', username, 5)))
   const [heroData, setHeroData] = useState(null)
   const [equippedSkins, setEquippedSkins] = useState({})
+  const [equippedBgs, setEquippedBgs] = useState([])
   const [playerGear, setPlayerGear] = useState(null)
   const [playerItems, setPlayerItems] = useState([])
   const [formations, setFormations] = useState(EMPTY_FORMATIONS)
@@ -1613,6 +1608,15 @@ export default function LobbyPage() {
       .catch(() => {})
   }, []) // eslint-disable-line
 
+  /* ── load equipped backgrounds ───────────────────────── */
+  useEffect(() => {
+    if (!session?.token) return
+    fetch('/api/cosmetics/backgrounds/equipped', { headers: { Authorization: `Bearer ${session.token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setEquippedBgs(d.equipped || []) })
+      .catch(() => {})
+  }, []) // eslint-disable-line
+
   /* ── load player gear ────────────────────────────────── */
   useEffect(() => {
     if (!session?.token || !session?.username) return
@@ -1658,6 +1662,77 @@ export default function LobbyPage() {
     } catch {
       showToast(t('toast.errorRemoving'))
     }
+  }
+
+  /* ── equip / unequip skin ────────────────────────────── */
+  async function handleEquipSkin(skin_id) {
+    try {
+      const res = await fetch('/api/cosmetics/skins/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ skin_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        const catalogRes = await fetch('/api/shop').then(r => r.json())
+        const item = (catalogRes.items || []).find(i => i.id === skin_id)
+        if (item?.hero_cid) {
+          setEquippedSkins(prev => ({ ...prev, [item.hero_cid]: { skin_id, preview: item.preview || '' } }))
+        }
+      } else {
+        showToast('⚠️ ' + (res.error || t('toast.couldNotEquip')))
+      }
+    } catch { showToast('⚠️ ' + t('toast.errorEquipping')) }
+  }
+
+  async function handleUnequipSkin(skin_id) {
+    const hero_cid = Object.keys(equippedSkins).find(k => equippedSkins[k].skin_id === skin_id)
+    if (!hero_cid) return
+    try {
+      const res = await fetch('/api/cosmetics/skins/unequip', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ hero_cid }),
+      }).then(r => r.json())
+      if (res.ok) {
+        setEquippedSkins(prev => { const next = { ...prev }; delete next[hero_cid]; return next })
+      } else {
+        showToast('⚠️ ' + (res.error || t('toast.couldNotRemove')))
+      }
+    } catch { showToast('⚠️ ' + t('toast.errorRemoving')) }
+  }
+
+  /* ── equip / unequip background ─────────────────────── */
+  async function handleEquipBg(item_id) {
+    try {
+      const res = await fetch('/api/cosmetics/backgrounds/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ item_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        const catalogRes = await fetch('/api/shop').then(r => r.json())
+        const item = (catalogRes.items || []).find(i => i.id === item_id)
+        setEquippedBgs(prev => [...prev, { id: item_id, preview: item?.preview || '' }])
+      } else {
+        showToast('⚠️ ' + (res.error || t('toast.couldNotEquip')))
+      }
+    } catch { showToast('⚠️ ' + t('toast.errorEquipping')) }
+  }
+
+  async function handleUnequipBg(item_id) {
+    if (equippedBgs.length <= 1) { showToast(t('inv.minOneBg')); return }
+    try {
+      const res = await fetch('/api/cosmetics/backgrounds/unequip', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ item_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        setEquippedBgs(prev => prev.filter(b => b.id !== item_id))
+      } else {
+        showToast('⚠️ ' + (res.error || t('toast.couldNotRemove')))
+      }
+    } catch { showToast('⚠️ ' + t('toast.errorRemoving')) }
   }
 
   /* ── equip item from inventory ───────────────────────── */
@@ -1954,10 +2029,10 @@ export default function LobbyPage() {
             <span className="tnt-ico">🏰</span><span className="tnt-lbl">{t('nav.formation')}</span>
           </button>
           <button type="button" className={`top-nav-tab${view === 'home' ? ' active' : ''}`} onClick={() => setView('home')}>
-            <span className="tnt-ico">⚔️</span><span className="tnt-lbl">{t('nav.duel')}</span>
+            <span className="tnt-ico">⚔️</span><span className="tnt-lbl">{t('nav.play')}</span>
           </button>
-          <button type="button" className={`top-nav-tab${view === 'campaign' ? ' active' : ''}`} onClick={() => setView('campaign')}>
-            <span className="tnt-ico">📜</span><span className="tnt-lbl">{t('nav.campaign')}</span>
+          <button type="button" className={`top-nav-tab${view === 'inventory' ? ' active' : ''}`} onClick={() => setView('inventory')}>
+            <span className="tnt-ico">🎒</span><span className="tnt-lbl">{t('nav.inventory')}</span>
           </button>
           <button type="button" className={`top-nav-tab${view === 'shop' ? ' active' : ''}`} onClick={() => setView('shop')}>
             <span className="tnt-ico">🛒</span><span className="tnt-lbl">{t('nav.shop')}</span>
@@ -2216,6 +2291,24 @@ export default function LobbyPage() {
           />
         )}
 
+        {view === 'inventory' && (
+          <InventoryView
+            session={session}
+            heroData={heroData}
+            playerGear={playerGear}
+            playerItems={playerItems}
+            equippedSkins={equippedSkins}
+            equippedBgs={equippedBgs}
+            onEquipItem={handleEquipItem}
+            onUnequipItem={handleUnequipItem}
+            onEquipSkin={handleEquipSkin}
+            onUnequipSkin={handleUnequipSkin}
+            onEquipBg={handleEquipBg}
+            onUnequipBg={handleUnequipBg}
+            toast={showToast}
+          />
+        )}
+
         {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
 
         {view === 'formation' && (
@@ -2237,10 +2330,10 @@ export default function LobbyPage() {
             <span className="mbt-ico">🏰</span><span className="mbt-lbl">{t('nav.formation')}</span>
           </button>
           <button type="button" className={navTabClass('home')} onClick={() => setView('home')}>
-            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">{t('nav.duel')}</span>
+            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">{t('nav.play')}</span>
           </button>
-          <button type="button" className={navTabClass('campaign')} onClick={() => setView('campaign')}>
-            <span className="mbt-ico">📜</span><span className="mbt-lbl">{t('nav.campaign')}</span>
+          <button type="button" className={navTabClass('inventory')} onClick={() => setView('inventory')}>
+            <span className="mbt-ico">🎒</span><span className="mbt-lbl">{t('nav.inventory')}</span>
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">{t('nav.shop')}</span>
