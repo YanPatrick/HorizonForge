@@ -1105,6 +1105,7 @@ export default function LobbyPage() {
   const [pvpFmt, setPvpFmt] = useState(() => Number(loadPref('pvp_fmt', username, 5)))
   const [heroData, setHeroData] = useState(null)
   const [equippedSkins, setEquippedSkins] = useState({})
+  const [equippedBgs, setEquippedBgs] = useState([])
   const [playerGear, setPlayerGear] = useState(null)
   const [playerItems, setPlayerItems] = useState([])
   const [formations, setFormations] = useState(EMPTY_FORMATIONS)
@@ -1396,6 +1397,15 @@ export default function LobbyPage() {
       .catch(() => {})
   }, []) // eslint-disable-line
 
+  /* ── load equipped backgrounds ───────────────────────── */
+  useEffect(() => {
+    if (!session?.token) return
+    fetch('/api/cosmetics/backgrounds/equipped', { headers: { Authorization: `Bearer ${session.token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.ok) setEquippedBgs(d.equipped || []) })
+      .catch(() => {})
+  }, []) // eslint-disable-line
+
   /* ── load player gear ────────────────────────────────── */
   useEffect(() => {
     if (!session?.token || !session?.username) return
@@ -1441,6 +1451,77 @@ export default function LobbyPage() {
     } catch {
       showToast(t('toast.errorRemoving'))
     }
+  }
+
+  /* ── equip / unequip skin ────────────────────────────── */
+  async function handleEquipSkin(skin_id) {
+    try {
+      const res = await fetch('/api/cosmetics/skins/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ skin_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        const catalogRes = await fetch('/api/shop').then(r => r.json())
+        const item = (catalogRes.items || []).find(i => i.id === skin_id)
+        if (item?.hero_cid) {
+          setEquippedSkins(prev => ({ ...prev, [item.hero_cid]: { skin_id, preview: item.preview || '' } }))
+        }
+      } else {
+        showToast(res.error || t('toast.couldNotEquip'))
+      }
+    } catch { showToast(t('toast.errorEquipping')) }
+  }
+
+  async function handleUnequipSkin(skin_id) {
+    const hero_cid = Object.keys(equippedSkins).find(k => equippedSkins[k].skin_id === skin_id)
+    if (!hero_cid) return
+    try {
+      const res = await fetch('/api/cosmetics/skins/unequip', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ hero_cid }),
+      }).then(r => r.json())
+      if (res.ok) {
+        setEquippedSkins(prev => { const next = { ...prev }; delete next[hero_cid]; return next })
+      } else {
+        showToast(res.error || t('toast.couldNotRemove'))
+      }
+    } catch { showToast(t('toast.errorRemoving')) }
+  }
+
+  /* ── equip / unequip background ─────────────────────── */
+  async function handleEquipBg(item_id) {
+    try {
+      const res = await fetch('/api/cosmetics/backgrounds/equip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ item_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        const catalogRes = await fetch('/api/shop').then(r => r.json())
+        const item = (catalogRes.items || []).find(i => i.id === item_id)
+        setEquippedBgs(prev => [...prev, { id: item_id, preview: item?.preview || '' }])
+      } else {
+        showToast(res.error || t('toast.couldNotEquip'))
+      }
+    } catch { showToast(t('toast.errorEquipping')) }
+  }
+
+  async function handleUnequipBg(item_id) {
+    if (equippedBgs.length <= 1) { showToast(t('inv.minOneBg')); return }
+    try {
+      const res = await fetch('/api/cosmetics/backgrounds/unequip', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({ item_id }),
+      }).then(r => r.json())
+      if (res.ok) {
+        setEquippedBgs(prev => prev.filter(b => b.id !== item_id))
+      } else {
+        showToast(res.error || t('toast.couldNotRemove'))
+      }
+    } catch { showToast(t('toast.errorRemoving')) }
   }
 
   /* ── equip item from inventory ───────────────────────── */
