@@ -279,7 +279,7 @@ function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg
                         className="inv-cosm-btn equip"
                         disabled={(equippedBgs?.length ?? 0) >= 4}
                         onClick={() => onEquipBg?.(item.id)}
-                        title={(equippedBgs?.length ?? 0) >= 4 ? '4/4 slots used' : undefined}
+                        title={(equippedBgs?.length ?? 0) >= 4 ? t('inv.bgsEquipped', { n: 4 }) : undefined}
                       >
                         {t('shop.equip')}
                       </button>
