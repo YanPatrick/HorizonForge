@@ -40,9 +40,25 @@ export default {
   'nav.settings':  'Settings',
   'nav.grimoire':  'Grimoire',
   'nav.formation': 'Formation',
-  'nav.duel':      'Duel',
-  'nav.campaign':  'Campaign',
+  'nav.play':      'Play',
+  'nav.inventory': 'Inventory',
   'nav.shop':      'Shop',
+
+  // ── Inventory screen ──────────────────────────────────────
+  'inv.tabGear':      'Gear',
+  'inv.tabSkins':     'Skins',
+  'inv.tabBgs':       'Backgrounds',
+  'inv.sortRarity':   'Rarity',
+  'inv.sortName':     'Name',
+  'inv.sortStats':    'Total Stats',
+  'inv.searchHero':   '🔍 Search hero…',
+  'inv.noItems':      'No items in inventory',
+  'inv.equipOn':      '✓ Equip on {name}',
+  'inv.removeFrom':   '↩ Remove from {name}',
+  'inv.allEquipped':  'All items are equipped',
+  'inv.bgsEquipped':  '{n}/4 backgrounds equipped',
+  'inv.minOneBg':     'At least 1 background must remain equipped.',
+  'inv.minOneSkin':   'At least 1 skin must remain equipped for this hero.',
 
   // ── Rarity labels ─────────────────────────────────────────
   'rarity.common':    'Common',

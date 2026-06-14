@@ -40,9 +40,25 @@ export default {
   'nav.settings':  'Config',
   'nav.grimoire':  'Grimório',
   'nav.formation': 'Formação',
-  'nav.duel':      'Duelo',
-  'nav.campaign':  'Campanha',
+  'nav.play':      'Play',
+  'nav.inventory': 'Inventário',
   'nav.shop':      'Loja',
+
+  // ── Inventory screen ──────────────────────────────────────
+  'inv.tabGear':      'Equipamentos',
+  'inv.tabSkins':     'Skins',
+  'inv.tabBgs':       'Cenários',
+  'inv.sortRarity':   'Raridade',
+  'inv.sortName':     'Nome',
+  'inv.sortStats':    'Total de Stats',
+  'inv.searchHero':   '🔍 Buscar herói…',
+  'inv.noItems':      'Nenhum item no inventário',
+  'inv.equipOn':      '✓ Equipar em {name}',
+  'inv.removeFrom':   '↩ Remover de {name}',
+  'inv.allEquipped':  'Todos os itens estão equipados',
+  'inv.bgsEquipped':  '{n}/4 cenários equipados',
+  'inv.minOneBg':     'Ao menos 1 cenário deve permanecer equipado.',
+  'inv.minOneSkin':   'Ao menos 1 skin deve permanecer equipada para este herói.',
 
   // ── Rarity labels ─────────────────────────────────────────
   'rarity.common':    'Comum',
