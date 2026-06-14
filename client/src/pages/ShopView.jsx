@@ -38,8 +38,6 @@ export default function ShopView({ session, toast, heroData }) {
 
   const [catalog, setCatalog] = useState([])
   const [owned, setOwned] = useState(new Set())
-  const [equippedBgs, setEquippedBgs] = useState([])
-  const [equippedSkins, setEquippedSkins] = useState({})
   const [gameAccount, setGameAccount] = useState('')
   const [filter, setFilter] = useState('background')
   const [search, setSearch] = useState('')
@@ -52,15 +50,12 @@ export default function ShopView({ session, toast, heroData }) {
   const [sortBy, setSortBy] = useState('new')
   const [modal, setModal] = useState(null)
   const [claiming, setClaiming] = useState(null)
-  const [equipping, setEquipping] = useState(null)
   const [modalError, setModalError] = useState('')
   const [chestResult, setChestResult] = useState(null)
 
   const isHive = session?.mode === 'hive'
   const token = session?.token
   const username = session?.username
-
-  const equippedBgIds = new Set(equippedBgs.map(b => b.id))
 
   useEffect(() => {
     fetch('/api/shop')
@@ -69,20 +64,9 @@ export default function ShopView({ session, toast, heroData }) {
       .catch(() => { })
 
     if (isHive && token) {
-      const h = { Authorization: `Bearer ${token}` }
-      // /api/shop/owned runs ensureDefaultCosmetics (inserts defaults for new users).
-      // Equipped reads must come AFTER it resolves to avoid reading before INSERTs finish.
-      fetch('/api/shop/owned', { headers: h })
+      fetch('/api/shop/owned', { headers: { Authorization: `Bearer ${token}` } })
         .then(r => r.json())
-        .then(async d => {
-          setOwned(new Set(d.owned || []))
-          const [bgs, skins] = await Promise.all([
-            fetch('/api/cosmetics/backgrounds/equipped', { headers: h }).then(r => r.json()),
-            fetch('/api/cosmetics/skins/equipped', { headers: h }).then(r => r.json()),
-          ])
-          setEquippedBgs(bgs.equipped || [])
-          setEquippedSkins(skins.equipped || {})
-        })
+        .then(d => { setOwned(new Set(d.owned || [])) })
         .catch(() => { })
     }
   }, [isHive, token])
@@ -114,97 +98,6 @@ export default function ShopView({ session, toast, heroData }) {
       }
     } catch { toast?.('Network error.') }
     finally { setClaiming(null) }
-  }
-
-  async function equipBackground(item_id) {
-    if (!isHive || !token) return
-    setEquipping(item_id)
-    try {
-      const res = await fetch('/api/cosmetics/backgrounds/equip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ item_id }),
-      }).then(r => r.json())
-      if (res.ok) {
-        const item = catalog.find(i => i.id === item_id)
-        setEquippedBgs(prev => [...prev, { id: item_id, preview: item?.preview || '' }])
-      } else {
-        toast?.(res.error || 'Failed to equip.')
-      }
-    } catch { toast?.('Network error.') }
-    finally { setEquipping(null) }
-  }
-
-  async function unequipBackground(item_id) {
-    if (!isHive || !token) return
-    if (equippedBgs.length <= 1) {
-      toast?.('At least 1 background must be equipped.')
-      return
-    }
-    setEquipping(item_id)
-    try {
-      const res = await fetch('/api/cosmetics/backgrounds/unequip', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ item_id }),
-      }).then(r => r.json())
-      if (res.ok) {
-        setEquippedBgs(prev => prev.filter(b => b.id !== item_id))
-      } else {
-        toast?.(res.error || 'Failed to unequip background.')
-      }
-    } catch { toast?.('Network error.') }
-    finally { setEquipping(null) }
-  }
-
-  async function equipSkin(skin_id) {
-    if (!isHive || !token) return
-    setEquipping(skin_id)
-    try {
-      const res = await fetch('/api/cosmetics/skins/equip', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ skin_id }),
-      }).then(r => r.json())
-      if (res.ok) {
-        const item = catalog.find(i => i.id === skin_id)
-        if (item?.hero_cid) {
-          setEquippedSkins(prev => ({ ...prev, [item.hero_cid]: { skin_id, preview: item.preview || '' } }))
-        }
-      } else {
-        toast?.(res.error || 'Failed to equip skin.')
-      }
-    } catch { toast?.('Network error.') }
-    finally { setEquipping(null) }
-  }
-
-  async function unequipSkin(skin_id) {
-    if (!isHive || !token) return
-    const hero_cid = Object.keys(equippedSkins).find(k => equippedSkins[k].skin_id === skin_id)
-    if (!hero_cid) return
-    const ownedForHero = catalog.filter(i => i.type === 'skin' && i.hero_cid === hero_cid && owned.has(i.id))
-    if (ownedForHero.length <= 1) {
-      toast?.(`At least 1 skin must remain equipped for ${hero_cid.charAt(0).toUpperCase() + hero_cid.slice(1)}.`)
-      return
-    }
-    setEquipping(skin_id)
-    try {
-      const res = await fetch('/api/cosmetics/skins/unequip', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ hero_cid }),
-      }).then(r => r.json())
-      if (res.ok) {
-        setEquippedSkins(prev => {
-          const next = { ...prev }
-          delete next[hero_cid]
-          return next
-        })
-      } else {
-        toast?.(res.error || 'Failed to unequip skin.')
-      }
-    } catch { toast?.('Network error.') }
-    finally { setEquipping(null) }
   }
 
   function openModal(item) { setModal(item); setModalError('') }
@@ -247,7 +140,7 @@ export default function ShopView({ session, toast, heroData }) {
   }
 
   const sorted = sortItems(filtered, sortBy, owned)
-  const sharedCardProps = { isHive, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }
+  const sharedCardProps = { isHive, heroData }
 
   return (
     <div id="view-shop" className="lv active">
@@ -297,12 +190,6 @@ export default function ShopView({ session, toast, heroData }) {
 
           {filter === 'background' && (
             <div className="shop-slot-counter-bar">
-              <div className="shop-slot-dots">
-                {[0, 1, 2, 3].map(i => (
-                  <span key={i} className={`shop-slot-dot${i < equippedBgs.length ? ' filled' : ''}`} />
-                ))}
-              </div>
-              <span className="shop-slot-label">{t('shop.bgsEquipped', { n: equippedBgs.length })}</span>
               <label className="shop-owned-toggle">
                 <input type="checkbox" checked={showOwned} onChange={e => setShowOwned(e.target.checked)} />
                 {t('shop.showOwned')}
@@ -318,8 +205,6 @@ export default function ShopView({ session, toast, heroData }) {
                 isOwned={owned.has(item.id)}
                 isClaiming={claiming === item.id}
                 onBuy={() => item.price_hive === 0 ? claimFree(item) : openModal(item)}
-                onEquip={() => item.type === 'background' ? equipBackground(item.id) : equipSkin(item.id)}
-                onUnequip={() => item.type === 'background' ? unequipBackground(item.id) : unequipSkin(item.id)}
                 {...sharedCardProps}
               />
             ))}
@@ -334,8 +219,6 @@ export default function ShopView({ session, toast, heroData }) {
                 isOwned={owned.has(item.id)}
                 isClaiming={claiming === item.id}
                 onBuy={() => item.price_hive === 0 ? claimFree(item) : openModal(item)}
-                onEquip={() => item.type === 'background' ? equipBackground(item.id) : equipSkin(item.id)}
-                onUnequip={() => item.type === 'background' ? unequipBackground(item.id) : unequipSkin(item.id)}
                 {...sharedCardProps}
               />
             ))}
@@ -553,12 +436,6 @@ function TreasurePreview({ previewStyle, showDropRates = true }) {
   )
 }
 
-function getItemEquipState(item, equippedBgIds, equippedSkins) {
-  if (item.type === 'background') return equippedBgIds.has(item.id)
-  if (item.type === 'skin') return equippedSkins[item.hero_cid]?.skin_id === item.id
-  return false
-}
-
 function SkinPreview({ item, heroData, className, style }) {
   if (item.preview) {
     return <div className={className} style={{ ...style, backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
@@ -571,18 +448,14 @@ function SkinPreview({ item, heroData, className, style }) {
   )
 }
 
-function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUnequip, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }) {
+function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, heroData }) {
   const { t } = useT()
   const isFree = item.price_hive === 0
-  const buyDisabled = isOwned || isClaiming || !isHive
-  const isEquipped = getItemEquipState(item, equippedBgIds, equippedSkins)
-  const canEquip = item.type !== 'background' || equippedBgs.length < 4
-  const isEquipping = equipping === item.id
   const bgSize = item.type === 'treasure' ? 'contain' : 'cover'
   const previewStyle = { backgroundImage: `url(${item.preview})`, backgroundSize: bgSize, backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }
 
   return (
-    <div className={`shop-card${isOwned ? ' shop-card-owned' : ''}${isEquipped ? ' shop-card-equipped' : ''}`}>
+    <div className={`shop-card${isOwned ? ' shop-card-owned' : ''}`}>
       {item.type === 'skin' && !item.preview
         ? <SkinPreview item={item} heroData={heroData} className="shop-card-preview" />
         : item.type === 'treasure'
@@ -608,17 +481,7 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
                 {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
               </button>
             : isOwned
-              ? <>
-                  <div className="shop-card-owned-badge">{t('shop.owned')}</div>
-                  <button
-                    className={`shop-card-btn ${isEquipped ? 'unequip' : 'equip'}`}
-                    disabled={isEquipping || !isHive || (!isEquipped && !canEquip)}
-                    onClick={isEquipped ? onUnequip : onEquip}
-                    title={!isHive ? 'Login to equip cosmetics.' : (!isEquipped && !canEquip) ? '4/4 background slots used' : undefined}
-                  >
-                    {isEquipping ? '⌛' : isEquipped ? (item.type === 'background' ? t('shop.remove') : t('shop.unequip')) : t('shop.equip')}
-                  </button>
-                </>
+              ? <div className="shop-card-owned-badge">{t('shop.owned')}</div>
               : <button
                   className={`shop-card-btn${isFree ? ' free' : ' buy'}`}
                   disabled={isClaiming || !isHive}
@@ -634,16 +497,12 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUne
   )
 }
 
-function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUnequip, heroData, equippedBgs, equippedBgIds, equippedSkins, equipping }) {
+function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, heroData }) {
   const { t } = useT()
   const isFree = item.price_hive === 0
-  const buyDisabled = isOwned || isClaiming || !isHive
-  const isEquipped = getItemEquipState(item, equippedBgIds, equippedSkins)
-  const canEquip = item.type !== 'background' || equippedBgs.length < 4
-  const isEquipping = equipping === item.id
 
   return (
-    <div className={`shop-row${isOwned ? ' shop-row-owned' : ''}${isEquipped ? ' shop-row-equipped' : ''}`}>
+    <div className={`shop-row${isOwned ? ' shop-row-owned' : ''}`}>
       {item.type === 'skin' && !item.preview
         ? <SkinPreview item={item} heroData={heroData} className="shop-row-preview" />
         : <div className="shop-row-preview" style={{ backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
@@ -656,9 +515,7 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
       </div>
       <div className="shop-row-right">
         {isOwned
-          ? <div className={`shop-row-state${isEquipped ? ' equipped' : ''}`}>
-              {isEquipped ? t('shop.equipped') : t('shop.owned')}
-            </div>
+          ? <div className="shop-row-state">{t('shop.owned')}</div>
           : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? t('shop.free') : `${item.price_hive.toFixed(3)} HIVE`}</div>
         }
         {item.type === 'treasure'
@@ -670,32 +527,16 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, onEquip, onUneq
             >
               {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
             </button>
-          : isOwned && item.type !== 'treasure'
-            ? isEquipped
-              ? <button
-                  className="shop-row-btn unequip"
-                  disabled={isEquipping || !isHive}
-                  onClick={onUnequip}
-                  title={!isHive ? 'Login to equip cosmetics.' : undefined}
-                >
-                  {isEquipping ? '⌛' : t('shop.remove')}
-                </button>
-              : <button
-                  className="shop-row-btn equip"
-                  disabled={isEquipping || !canEquip || !isHive}
-                  onClick={onEquip}
-                  title={!isHive ? 'Login to equip cosmetics.' : !canEquip ? '4/4 slots used' : undefined}
-                >
-                  {isEquipping ? '⌛' : t('shop.equip')}
-                </button>
-            : !isOwned && <button
+          : !isOwned
+            ? <button
                 className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
-                disabled={buyDisabled}
+                disabled={isClaiming || !isHive}
                 onClick={onBuy}
                 title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
               >
                 {isClaiming ? '⌛' : isFree ? t('shop.getFree') : t('shop.buy')}
               </button>
+            : null
         }
       </div>
     </div>
