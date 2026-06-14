@@ -12,6 +12,7 @@ import '@styles/tavern.css'                       // Imp tavern
 import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
+import InventoryView from './InventoryView'
 import { useT } from '../context/LanguageContext'
 
 /* ── helpers ────────────────────────────────────────────── */
@@ -2069,6 +2070,24 @@ export default function LobbyPage() {
         {view === 'campaign' && (
           <CampaignView
             session={session} formations={formations} defaultSlot={defaultSlot} toast={showToast}
+          />
+        )}
+
+        {view === 'inventory' && (
+          <InventoryView
+            session={session}
+            heroData={heroData}
+            playerGear={playerGear}
+            playerItems={playerItems}
+            equippedSkins={equippedSkins}
+            equippedBgs={equippedBgs}
+            onEquipItem={handleEquipItem}
+            onUnequipItem={handleUnequipItem}
+            onEquipSkin={handleEquipSkin}
+            onUnequipSkin={handleUnequipSkin}
+            onEquipBg={handleEquipBg}
+            onUnequipBg={handleUnequipBg}
+            toast={showToast}
           />
         )}
 
