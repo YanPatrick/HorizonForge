@@ -1095,7 +1095,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'campaign', 'shop', 'formation', 'grimoire', 'settings']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
@@ -1737,10 +1737,10 @@ export default function LobbyPage() {
             <span className="tnt-ico">🏰</span><span className="tnt-lbl">{t('nav.formation')}</span>
           </button>
           <button type="button" className={`top-nav-tab${view === 'home' ? ' active' : ''}`} onClick={() => setView('home')}>
-            <span className="tnt-ico">⚔️</span><span className="tnt-lbl">{t('nav.duel')}</span>
+            <span className="tnt-ico">⚔️</span><span className="tnt-lbl">{t('nav.play')}</span>
           </button>
-          <button type="button" className={`top-nav-tab${view === 'campaign' ? ' active' : ''}`} onClick={() => setView('campaign')}>
-            <span className="tnt-ico">📜</span><span className="tnt-lbl">{t('nav.campaign')}</span>
+          <button type="button" className={`top-nav-tab${view === 'inventory' ? ' active' : ''}`} onClick={() => setView('inventory')}>
+            <span className="tnt-ico">🎒</span><span className="tnt-lbl">{t('nav.inventory')}</span>
           </button>
           <button type="button" className={`top-nav-tab${view === 'shop' ? ' active' : ''}`} onClick={() => setView('shop')}>
             <span className="tnt-ico">🛒</span><span className="tnt-lbl">{t('nav.shop')}</span>
@@ -2012,10 +2012,10 @@ export default function LobbyPage() {
             <span className="mbt-ico">🏰</span><span className="mbt-lbl">{t('nav.formation')}</span>
           </button>
           <button type="button" className={navTabClass('home')} onClick={() => setView('home')}>
-            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">{t('nav.duel')}</span>
+            <span className="mbt-ico">⚔️</span><span className="mbt-lbl">{t('nav.play')}</span>
           </button>
-          <button type="button" className={navTabClass('campaign')} onClick={() => setView('campaign')}>
-            <span className="mbt-ico">📜</span><span className="mbt-lbl">{t('nav.campaign')}</span>
+          <button type="button" className={navTabClass('inventory')} onClick={() => setView('inventory')}>
+            <span className="mbt-ico">🎒</span><span className="mbt-lbl">{t('nav.inventory')}</span>
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">{t('nav.shop')}</span>
