@@ -56,18 +56,17 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
               key={slotKey}
               className={[
                 'inv-slot',
-                item ? 'equipped' : '',
+                slotKey,
+                item ? (isStarter ? 'equipped starter-equipped' : 'equipped') : '',
                 isPending ? 'unequip-pending' : '',
               ].filter(Boolean).join(' ')}
-              style={item ? { borderColor: rarityColor + '99' } : undefined}
+              data-label={SLOT_LABELS[slotKey]}
               onClick={canUnequip ? () => setUnequipPending(isPending ? null : { slotKey, item }) : undefined}
-              title={!item ? SLOT_LABELS[slotKey] : undefined}
             >
-              <span>{item ? (SLOT_ICONS[slotKey] || '?') : <span style={{ fontSize: 9, color: '#3a3860' }}>{SLOT_LABELS[slotKey]}</span>}</span>
-              {item && <span className="inv-slot-dot" style={{ background: rarityColor }} />}
+              <span style={{ fontSize: '1.3em', opacity: item ? 1 : 0.3 }}>{SLOT_ICONS[slotKey] || '?'}</span>
               {item && (
                 <div className="inv-slot-tip">
-                  <div className="inv-slot-tip-name" style={{ color: rarityColor }}>{item.name}</div>
+                  <div className="inv-slot-tip-name">{item.name}</div>
                   {item.atk_bonus !== 0 && <div className={item.atk_bonus > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{item.atk_bonus > 0 ? '+' : ''}{item.atk_bonus} ATK</div>}
                   {item.hp_bonus  !== 0 && <div className={item.hp_bonus  > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{item.hp_bonus  > 0 ? '+' : ''}{item.hp_bonus} HP</div>}
                   {Number(item.spd_bonus) !== 0 && <div className={Number(item.spd_bonus) > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD</div>}
@@ -105,9 +104,18 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
 
       {/* Mini-stats */}
       <div className="inv-mini-stats">
-        <span className={`inv-mini-stat ${hp_bonus  !== 0 ? 'pos' : 'zero'}`}>❤️ {hp_bonus  > 0 ? '+' : ''}{hp_bonus} HP</span>
-        <span className={`inv-mini-stat ${atk_bonus !== 0 ? 'pos' : 'zero'}`}>⚔️ {atk_bonus > 0 ? '+' : ''}{atk_bonus} ATK</span>
-        <span className={`inv-mini-stat ${Number(spd_bonus) !== 0 ? 'pos' : 'zero'}`}>⚡ {Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)} SPD</span>
+        <div className="inv-mini-stat-row">
+          <span>❤️ HP</span>
+          <span className={`inv-mini-stat-val ${hp_bonus !== 0 ? 'pos' : 'zero'}`}>{hp_bonus > 0 ? '+' : ''}{hp_bonus}</span>
+        </div>
+        <div className="inv-mini-stat-row">
+          <span>⚔️ ATK</span>
+          <span className={`inv-mini-stat-val ${atk_bonus !== 0 ? 'pos' : 'zero'}`}>{atk_bonus > 0 ? '+' : ''}{atk_bonus}</span>
+        </div>
+        <div className="inv-mini-stat-row">
+          <span>⚡ SPD</span>
+          <span className={`inv-mini-stat-val ${Number(spd_bonus) !== 0 ? 'pos' : 'zero'}`}>{Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)}</span>
+        </div>
       </div>
     </div>
   )
@@ -185,53 +193,90 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
   )
 }
 
-function SkinsTab({ catalog, ownedIds, equippedSkins, heroData, onEquipSkin, onUnequipSkin, t }) {
+function SkinsTab({ catalog, ownedIds, equippedSkins, heroData, onEquipSkin, onUnequipSkin, t, toast }) {
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('all')
+
   const ownedSkins = catalog.filter(i => i.type === 'skin' && ownedIds.has(i.id))
+
+  const filtered = ownedSkins.filter(item => {
+    const hero = heroData?.find(h => h.cid === item.hero_cid)
+    const matchSearch = !search ||
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      (item.hero_cid || '').toLowerCase().includes(search.toLowerCase())
+    const matchRole = roleFilter === 'all' || roleCategory(hero?.role) === roleFilter
+    return matchSearch && matchRole
+  })
 
   if (ownedSkins.length === 0) {
     return <div className="inv-empty" style={{ marginTop: 40 }}>{t('inv.noItems')}</div>
   }
 
   return (
-    <div className="inv-cosmetics-grid">
-      {ownedSkins.map(item => {
-        const isEquipped = equippedSkins?.[item.hero_cid]?.skin_id === item.id
-        const hero = heroData?.find(h => h.cid === item.hero_cid)
-        const previewStyle = item.preview
-          ? { backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { background: hero?.bg_gradient || '#1a1a2e' }
+    <div className="inv-skins-wrap">
+      <div className="inv-skin-filter-bar">
+        <input
+          className="inv-skin-search"
+          type="text"
+          placeholder={t('inv.searchHero')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {[['all', t('formation.filterAll')], ['tank', '🛡️'], ['dps', '⚔️'], ['support', '💚']].map(([r, label]) => (
+          <button
+            key={r}
+            type="button"
+            className={`inv-skin-filter-btn${roleFilter === r ? ' active' : ''}`}
+            onClick={() => setRoleFilter(r)}
+          >{label}</button>
+        ))}
+      </div>
+      {filtered.length === 0
+        ? <div className="inv-empty" style={{ marginTop: 40 }}>{t('inv.noItems')}</div>
+        : <div className="inv-skins-grid">
+            {filtered.map(item => {
+              const isEquipped = equippedSkins?.[item.hero_cid]?.skin_id === item.id
+              const hero = heroData?.find(h => h.cid === item.hero_cid)
+              const previewStyle = item.preview
+                ? { backgroundImage: `url(${item.preview})` }
+                : { background: hero?.bg_gradient || '#1a1a2e' }
 
-        return (
-          <div key={item.id} className={`inv-cosm-card${isEquipped ? ' equipped-card' : ''}`}>
-            <div className="inv-cosm-preview" style={previewStyle}>
-              {!item.preview && <span>{hero?.icon || '✨'}</span>}
-            </div>
-            <div className="inv-cosm-body">
-              <div className="inv-cosm-name">{item.name}</div>
-              {item.hero_cid && (
-                <div className="inv-cosm-hero">
-                  {item.hero_cid.charAt(0).toUpperCase() + item.hero_cid.slice(1)}
+              return (
+                <div key={item.id} className={`inv-skin-card${isEquipped ? ' equipped-card' : ''}`}>
+                  <div className="inv-skin-preview" style={previewStyle}>
+                    {!item.preview && <span>{hero?.icon || '✨'}</span>}
+                  </div>
+                  <div className="inv-skin-footer">
+                    <div className="inv-skin-name">{item.name}</div>
+                    {item.hero_cid && (
+                      <div className="inv-skin-hero">
+                        {item.hero_cid.charAt(0).toUpperCase() + item.hero_cid.slice(1)}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className={`inv-skin-btn ${isEquipped ? 'unequip' : 'equip'}`}
+                      onClick={() => {
+                        if (isEquipped) {
+                          toast?.(t('inv.minOneSkin'))
+                          return
+                        }
+                        onEquipSkin?.(item.id)
+                      }}
+                    >
+                      {isEquipped ? t('shop.unequip') : t('shop.equip')}
+                    </button>
+                  </div>
                 </div>
-              )}
-              <div className="inv-cosm-actions">
-                {isEquipped
-                  ? <button type="button" className="inv-cosm-btn unequip" onClick={() => onUnequipSkin?.(item.id)}>
-                      {t('shop.unequip')}
-                    </button>
-                  : <button type="button" className="inv-cosm-btn equip" onClick={() => onEquipSkin?.(item.id)}>
-                      {t('shop.equip')}
-                    </button>
-                }
-              </div>
-            </div>
+              )
+            })}
           </div>
-        )
-      })}
+      }
     </div>
   )
 }
 
-function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg, t }) {
+function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg, t, toast }) {
   const ownedBgs = catalog.filter(i => i.type === 'background' && ownedIds.has(i.id))
   const equippedBgIds = new Set((equippedBgs || []).map(b => b.id))
 
@@ -268,18 +313,26 @@ function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg
                     ? <button
                         type="button"
                         className="inv-cosm-btn unequip"
-                        disabled={(equippedBgs?.length ?? 0) <= 1}
-                        onClick={() => onUnequipBg?.(item.id)}
-                        title={(equippedBgs?.length ?? 0) <= 1 ? t('inv.minOneBg') : undefined}
+                        onClick={() => {
+                          if ((equippedBgs?.length ?? 0) <= 1) {
+                            toast?.(t('inv.minOneBg'))
+                            return
+                          }
+                          onUnequipBg?.(item.id)
+                        }}
                       >
                         {t('shop.remove')}
                       </button>
                     : <button
                         type="button"
                         className="inv-cosm-btn equip"
-                        disabled={(equippedBgs?.length ?? 0) >= 4}
-                        onClick={() => onEquipBg?.(item.id)}
-                        title={(equippedBgs?.length ?? 0) >= 4 ? t('inv.bgsEquipped', { n: 4 }) : undefined}
+                        onClick={() => {
+                          if ((equippedBgs?.length ?? 0) >= 4) {
+                            toast?.(t('inv.bgsLimitReached'))
+                            return
+                          }
+                          onEquipBg?.(item.id)
+                        }}
                       >
                         {t('shop.equip')}
                       </button>
@@ -303,7 +356,7 @@ export default function InventoryView({
   toast,
 }) {
   const { t } = useT()
-  const [activeTab, setActiveTab] = useState('gear')
+  const [activeTab, setActiveTab] = useState('backgrounds')
   const [selectedHero, setSelectedHero] = useState(null)
   const [heroSearch, setHeroSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
@@ -363,9 +416,9 @@ export default function InventoryView({
   )
 
   const TABS = [
+    { key: 'backgrounds', icon: '🌄', label: t('inv.tabBgs') },
+    { key: 'skins',       icon: '✨', label: t('inv.tabSkins') },
     { key: 'gear',        icon: '⚔️', label: t('inv.tabGear') },
-    { key: 'skins',       icon: '🎨', label: t('inv.tabSkins') },
-    { key: 'backgrounds', icon: '🖼️', label: t('inv.tabBgs') },
   ]
 
   return (
@@ -443,13 +496,17 @@ export default function InventoryView({
                           className={`inv-hero-card${isSelected ? ' selected' : ''}`}
                           onClick={() => setSelectedHero(h)}
                         >
-                          {skinUrl
-                            ? <div className="inv-hero-icon" style={{ width: 40, height: 40, borderRadius: 6, backgroundImage: `url('${skinUrl}')`, backgroundSize: 'cover', backgroundPosition: 'center', margin: '0 auto 4px' }} />
-                            : <div className="inv-hero-icon">{h.icon}</div>
-                          }
-                          <div className="inv-hero-name">{h.name}</div>
-                          <div className={`inv-hero-role role-${cat}`}>
-                            {cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')}
+                          <div
+                            className="inv-hero-portrait"
+                            style={skinUrl ? { backgroundImage: `url('${skinUrl}')` } : undefined}
+                          >
+                            {!skinUrl && <span className="inv-hero-icon">{h.icon}</span>}
+                          </div>
+                          <div className="inv-hero-footer">
+                            <div className="inv-hero-name">{h.name}</div>
+                            <div className={`inv-hero-role role-${cat}`}>
+                              {cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')}
+                            </div>
                           </div>
                         </div>
                       )
@@ -503,6 +560,7 @@ export default function InventoryView({
                   onEquipSkin={onEquipSkin}
                   onUnequipSkin={onUnequipSkin}
                   t={t}
+                  toast={toast}
                 />
           )}
           {activeTab === 'backgrounds' && (
@@ -515,6 +573,7 @@ export default function InventoryView({
                   onEquipBg={onEquipBg}
                   onUnequipBg={onUnequipBg}
                   t={t}
+                  toast={toast}
                 />
           )}
         </div>

@@ -462,7 +462,7 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
   const total = filteredHeroes.length
   const visibleHeroes = total === 0
     ? []
-    : Array.from({ length: Math.min(4, total) }, (_, i) => filteredHeroes[(carouselOffset + i) % total])
+    : Array.from({ length: Math.min(5, total) }, (_, i) => filteredHeroes[(carouselOffset + i) % total])
 
   function moveCarousel(dir) {
     if (total === 0) return
@@ -639,13 +639,8 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
                       >i</button>
                     </div>
                     <div className="fvpc-hero-footer">
-                      <div className="fvpc-hero-name">{h.name}</div>
-                      <div className={`fvpc-hero-role role-${roleCategory(h.role)}`}>
-                        {roleCategory(h.role) === 'tank'
-                          ? t('role.tank')
-                          : roleCategory(h.role) === 'support'
-                            ? t('role.support')
-                            : t('role.dps')}
+                      <div className="fvpc-hero-name">
+                        {h.name}{' — '}{roleCategory(h.role) === 'tank' ? t('role.tank') : roleCategory(h.role) === 'support' ? t('role.support') : t('role.dps')}
                       </div>
                     </div>
                   </div>
@@ -673,32 +668,30 @@ function FormationViewPC({ session, formations, setFormations, defaultSlot, setD
 
         {/* UNIT'S DECK */}
         <div className="fvpc-section-deck">
-          <div className="fvpc-deck-controls">
-            <div className="fvpc-section-title">{t('formation.unitsDeck')}</div>
-            <div className="fvpc-deck-actions">
-              <input
-                className="fvpc-deck-name-input"
-                type="text"
-                maxLength={10}
-                value={slideNameVal}
-                onChange={e => {
-                  setSlideNameVal(e.target.value)
-                  setFormations(prev => prev.map((f, i) =>
-                    i === editingSlot ? { ...f, name: e.target.value } : f
-                  ))
-                }}
-              />
-              <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
-              <button
-                type="button"
-                className="fvpc-clear-btn"
-                disabled={!activeForm?.hero_ids.length}
-                onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
-              >{t('formation.clearDeck')}</button>
-              <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
-                {t('formation.done')}
-              </button>
-            </div>
+          <div className="fvpc-section-title">{t('formation.unitsDeck')}</div>
+          <div className="fvpc-deck-actions">
+            <input
+              className="fvpc-deck-name-input"
+              type="text"
+              maxLength={10}
+              value={slideNameVal}
+              onChange={e => {
+                setSlideNameVal(e.target.value)
+                setFormations(prev => prev.map((f, i) =>
+                  i === editingSlot ? { ...f, name: e.target.value } : f
+                ))
+              }}
+            />
+            <span className="fvpc-deck-progress">{activeForm?.hero_ids.length ?? 0}/8</span>
+            <button
+              type="button"
+              className="fvpc-clear-btn"
+              disabled={!activeForm?.hero_ids.length}
+              onClick={() => setFormations(prev => prev.map((f, i) => i === editingSlot ? { ...f, hero_ids: [] } : f))}
+            >{t('formation.clearDeck')}</button>
+            <button type="button" className="fvpc-done-btn" onClick={saveDeck}>
+              {t('formation.done')}
+            </button>
           </div>
 
           <div className="fvpc-slot-row">

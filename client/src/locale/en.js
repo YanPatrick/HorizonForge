@@ -57,8 +57,9 @@ export default {
   'inv.removeFrom':   '↩ Remove from {name}',
   'inv.allEquipped':  'All items are equipped',
   'inv.bgsEquipped':  '{n}/4 backgrounds equipped',
-  'inv.minOneBg':     'At least 1 background must remain equipped.',
-  'inv.minOneSkin':   'At least 1 skin must remain equipped for this hero.',
+  'inv.minOneBg':         'At least 1 background must remain equipped.',
+  'inv.minOneSkin':       'At least 1 skin must remain equipped for this hero.',
+  'inv.bgsLimitReached':  '⚠️ Limit reached: 4/4 backgrounds equipped. Remove one to equip another.',
 
   // ── Rarity labels ─────────────────────────────────────────
   'rarity.common':    'Common',

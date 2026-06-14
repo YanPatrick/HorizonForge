@@ -57,8 +57,9 @@ export default {
   'inv.removeFrom':   '↩ Remover de {name}',
   'inv.allEquipped':  'Todos os itens estão equipados',
   'inv.bgsEquipped':  '{n}/4 cenários equipados',
-  'inv.minOneBg':     'Ao menos 1 cenário deve permanecer equipado.',
-  'inv.minOneSkin':   'Ao menos 1 skin deve permanecer equipada para este herói.',
+  'inv.minOneBg':         'Ao menos 1 cenário deve permanecer equipado.',
+  'inv.minOneSkin':       'Ao menos 1 skin deve permanecer equipada para este herói.',
+  'inv.bgsLimitReached':  '⚠️ Limite atingido: 4/4 cenários equipados. Remova um para equipar outro.',
 
   // ── Rarity labels ─────────────────────────────────────────
   'rarity.common':    'Comum',
