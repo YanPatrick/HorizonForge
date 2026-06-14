@@ -31,6 +31,88 @@ function roleCategory(role) {
   return 'dps'
 }
 
+function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUnequipPending, t }) {
+  if (!hero) return null
+  const heroGear = playerGear?.[hero.cid] ?? { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } }
+  const { atk_bonus, hp_bonus, spd_bonus } = heroGear.totals
+
+  return (
+    <div className="inv-slots-panel">
+      <div className="inv-panel-title">
+        {hero.icon} {hero.name}
+      </div>
+
+      {/* 12-slot grid */}
+      <div className="inv-slots-grid">
+        {SLOT_ORDER.map(slotKey => {
+          const item = heroGear.slots[slotKey]
+          const isStarter = item?.rarity === 'starter'
+          const canUnequip = item && !isStarter && onUnequipItem
+          const isPending = unequipPending?.slotKey === slotKey
+          const rarityColor = item ? (RARITY_COLORS[item.rarity] || '#888') : null
+
+          return (
+            <div
+              key={slotKey}
+              className={[
+                'inv-slot',
+                item ? 'equipped' : '',
+                isPending ? 'unequip-pending' : '',
+              ].filter(Boolean).join(' ')}
+              style={item ? { borderColor: rarityColor + '99' } : undefined}
+              onClick={canUnequip ? () => setUnequipPending(isPending ? null : { slotKey, item }) : undefined}
+              title={!item ? SLOT_LABELS[slotKey] : undefined}
+            >
+              <span>{item ? (SLOT_ICONS[slotKey] || '?') : <span style={{ fontSize: 9, color: '#3a3860' }}>{SLOT_LABELS[slotKey]}</span>}</span>
+              {item && <span className="inv-slot-dot" style={{ background: rarityColor }} />}
+              {item && (
+                <div className="inv-slot-tip">
+                  <div className="inv-slot-tip-name" style={{ color: rarityColor }}>{item.name}</div>
+                  {item.atk_bonus !== 0 && <div className={item.atk_bonus > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{item.atk_bonus > 0 ? '+' : ''}{item.atk_bonus} ATK</div>}
+                  {item.hp_bonus  !== 0 && <div className={item.hp_bonus  > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{item.hp_bonus  > 0 ? '+' : ''}{item.hp_bonus} HP</div>}
+                  {Number(item.spd_bonus) !== 0 && <div className={Number(item.spd_bonus) > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD</div>}
+                  {canUnequip && <div className="inv-slot-tip-hint">Click to remove</div>}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Unequip confirm card */}
+      {unequipPending && (
+        <div className="inv-unequip-confirm">
+          <div className="inv-confirm-name" style={{ color: RARITY_COLORS[unequipPending.item.rarity] || '#ccc' }}>
+            {unequipPending.item.name}
+          </div>
+          <div className="inv-confirm-stats">
+            {unequipPending.item.atk_bonus !== 0 && <span>{unequipPending.item.atk_bonus > 0 ? '+' : ''}{unequipPending.item.atk_bonus} ATK</span>}
+            {unequipPending.item.hp_bonus  !== 0 && <span>{unequipPending.item.hp_bonus  > 0 ? '+' : ''}{unequipPending.item.hp_bonus} HP</span>}
+            {Number(unequipPending.item.spd_bonus) !== 0 && <span>{Number(unequipPending.item.spd_bonus) > 0 ? '+' : ''}{Number(unequipPending.item.spd_bonus).toFixed(2)} SPD</span>}
+          </div>
+          <div className="inv-confirm-actions">
+            <button
+              type="button"
+              className="inv-btn-remove"
+              onClick={() => { onUnequipItem(hero.cid, unequipPending.slotKey); setUnequipPending(null) }}
+            >
+              {t('inv.removeFrom', { name: hero.name })}
+            </button>
+            <button type="button" className="inv-btn-cancel" onClick={() => setUnequipPending(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* Mini-stats */}
+      <div className="inv-mini-stats">
+        <span className={`inv-mini-stat ${hp_bonus  !== 0 ? 'pos' : 'zero'}`}>❤️ {hp_bonus  > 0 ? '+' : ''}{hp_bonus} HP</span>
+        <span className={`inv-mini-stat ${atk_bonus !== 0 ? 'pos' : 'zero'}`}>⚔️ {atk_bonus > 0 ? '+' : ''}{atk_bonus} ATK</span>
+        <span className={`inv-mini-stat ${Number(spd_bonus) !== 0 ? 'pos' : 'zero'}`}>⚡ {Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)} SPD</span>
+      </div>
+    </div>
+  )
+}
+
 export default function InventoryView({
   session, heroData, playerGear, playerItems,
   equippedSkins, equippedBgs,
@@ -45,6 +127,7 @@ export default function InventoryView({
   const [heroSearch, setHeroSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
   const [carouselOffset, setCarouselOffset] = useState(0)
+  const [unequipPending, setUnequipPending] = useState(null)
 
   const filteredHeroes = (heroData || []).filter(h => {
     const matchRole = roleFilter === 'all' || roleCategory(h.role) === roleFilter
@@ -173,9 +256,19 @@ export default function InventoryView({
                 )}
               </div>
 
-              {/* Gear panels placeholder — next task */}
               <div className="inv-panels-row">
-                <p style={{ color: '#5a5080', fontSize: 11 }}>Slots + inventory panels — next task</p>
+                <GearSlotsPanel
+                  hero={currentHero}
+                  playerGear={playerGear}
+                  onUnequipItem={onUnequipItem}
+                  unequipPending={unequipPending}
+                  setUnequipPending={setUnequipPending}
+                  t={t}
+                />
+                {/* Inventory items placeholder — next task */}
+                <div className="inv-items-panel">
+                  <p style={{ color: '#5a5080', fontSize: 11 }}>Items list — next task</p>
+                </div>
               </div>
             </>
           )}
