@@ -1111,8 +1111,10 @@ function startBattle() {
     u._gearApplied = true;
   };
   G.board.forEach(u => _applyGear(u, _gear));
-  // Enemy in bot/campaign: base stats only — player gear must not apply to the opponent
-  G.enemy.forEach(u => _applyGear(u, {}));
+  // Duel (practice) mode mirrors the player — enemy gets the same gear (same CIDs).
+  // Campaign enemies use base stats only.
+  const _enemyGear = window._CAMPAIGN_CFG ? {} : _gear;
+  G.enemy.forEach(u => _applyGear(u, _enemyGear));
   const res = simulate(G.board, G.enemy);
   window.HFBot?.learnFromBattle(res.evs, res.umap);
   playback(res);
@@ -2067,7 +2069,7 @@ function startGame(fmt, pvpMode = false) {
       window.HFBot.initDuel(_deckPool);
     }
     validateGameState();
-    G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true } : null));
+    G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true, _isDuel: true } : null));
   }
   genShop();
   render();
@@ -2136,7 +2138,7 @@ function nextBattle() {
       window.HFBot.nextBattle(G.lastBattleResult === "win" ? "loss" : "win");
       window.HFBot.runTurn();
     }
-    G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true } : null));
+    G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true, _isDuel: true } : null));
   } else {
     // Hide opponent's board during shop phase — only revealed when battle starts.
     G.duelEnemy = Array(9).fill(null);
@@ -2220,7 +2222,7 @@ function nextDuel() {
   } else {
     window.HFBot.initDuel(_deckPool);
   }
-  G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true } : null));
+  G.duelEnemy = window.HFBot.getBoard().map((u) => (u ? { ...u, _isEnemy: true, _isDuel: true } : null));
   G.enemy = Array(9).fill(null);
   genShop();
   document.getElementById("bnext")?.remove();
@@ -2853,7 +2855,8 @@ window.benchInfoHide = function () { window.HFTooltip?.hide(); };
 // Only computes bonuses when maxHp is not yet set (shop/bench phase).
 // During battle, _applyGear already mutated the unit so we pass it through.
 function _gearPreviewUnit(u) {
-  if (u._isEnemy) return u;
+  // Campaign/PvP enemy: base stats only.
+  if (u._isEnemy && !u._isDuel) return u;
   const base = C[u.cid]?.levels?.[u.lv];
   if (!base) return u;
   const gear = window.HF_gear || {};
