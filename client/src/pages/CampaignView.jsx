@@ -8,19 +8,34 @@ const HERO_ICONS = {
   archer: '🏹', assassin: '🗡️', archmage: '✨', healer: '💚',
 }
 
+const RANK_MEDAL = ['🥇', '🥈', '🥉']
+const TOTAL_CHAPTERS = 3
+const CHAPTER_BG = { 1: '/images/campaign/chapter1-bg.jpg' }
+
 export default function CampaignView({ session, formations, defaultSlot, toast }) {
   const { t, lang } = useT()
   const navigate = useNavigate()
   const [stages, setStages] = useState([])
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [leaderboard, setLeaderboard] = useState([])
+  const [chapter, setChapter] = useState(1)
 
   const username = session?.username
   const isGuest = session?.mode === 'guest'
 
   useEffect(() => {
     fetchCampaign()
+    fetch('/api/campaign/leaderboard')
+      .then(r => r.json())
+      .then(d => { if (d.ok) setLeaderboard(d.leaderboard) })
+      .catch(() => {})
   }, [])
+
+  function changeChapter(n) {
+    setChapter(n)
+    setSelected(null)
+  }
 
   async function fetchCampaign() {
     setLoading(true)
@@ -63,39 +78,94 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
     <div className="campaign-wrap">
       <div
         className="campaign-bg"
-        style={{ backgroundImage: 'url(/images/campaign/chapter1-bg.jpg)' }}
+        style={{ backgroundImage: CHAPTER_BG[chapter] ? `url(${CHAPTER_BG[chapter]})` : 'none' }}
       />
 
       <div className="campaign-layout">
         <div className="campaign-stage-list">
-          <div className="campaign-chapter-title">{t('campaign.chapter1')}</div>
-          {loading ? (
-            <div className="campaign-loading">{t('campaign.loading')}</div>
-          ) : (
-            stages.map(s => (
-              <button
-                key={s.stage}
-                className={[
-                  'campaign-stage-item',
-                  s.completed ? 'completed' : '',
-                  !s.unlocked ? 'locked' : '',
-                  selected === s.stage ? 'active' : '',
-                ].filter(Boolean).join(' ')}
-                disabled={!s.unlocked}
-                onClick={() => setSelected(s.stage)}
-                type="button"
-              >
-                <span className="campaign-stage-num">{s.stage}</span>
-                <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
-                <span className="campaign-stage-status">
-                  {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
-                </span>
-              </button>
-            ))
+
+          {/* Chapter navigator */}
+          <div className="campaign-chapter-nav">
+            <button
+              type="button"
+              className="campaign-chapter-arrow"
+              disabled={chapter <= 1}
+              onClick={() => changeChapter(chapter - 1)}
+            >‹</button>
+            <span className="campaign-chapter-title" style={{ cursor: 'default', margin: '0 4px' }}>
+              {lang === 'pt-BR' ? `Capítulo ${chapter}` : `Chapter ${chapter}`}
+            </span>
+            <button
+              type="button"
+              className="campaign-chapter-arrow"
+              disabled={chapter >= TOTAL_CHAPTERS}
+              onClick={() => changeChapter(chapter + 1)}
+            >›</button>
+          </div>
+
+          {/* Chapter 1 — real content */}
+          {chapter === 1 && (
+            loading ? (
+              <div className="campaign-loading">{t('campaign.loading')}</div>
+            ) : (
+              stages.map(s => (
+                <button
+                  key={s.stage}
+                  className={[
+                    'campaign-stage-item',
+                    s.completed ? 'completed' : '',
+                    !s.unlocked ? 'locked' : '',
+                    selected === s.stage ? 'active' : '',
+                  ].filter(Boolean).join(' ')}
+                  disabled={!s.unlocked}
+                  onClick={() => setSelected(s.stage)}
+                  type="button"
+                >
+                  <span className="campaign-stage-num">{s.stage}</span>
+                  <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
+                  <span className="campaign-stage-status">
+                    {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
+                  </span>
+                </button>
+              ))
+            )
+          )}
+
+          {/* Future chapters — coming soon mask */}
+          {chapter > 1 && (
+            <div className="campaign-coming-soon">
+              <span className="campaign-cs-lock">🔒</span>
+              <span className="campaign-cs-label">
+                {lang === 'pt-BR' ? 'Em breve' : 'Coming Soon'}
+              </span>
+              <span className="campaign-cs-sub">
+                {lang === 'pt-BR'
+                  ? 'Este capítulo ainda não foi revelado.'
+                  : 'This chapter has not been revealed yet.'}
+              </span>
+            </div>
+          )}
+
+          {/* Leaderboard */}
+          {leaderboard.length > 0 && (
+            <div className="campaign-leaderboard">
+              <div className="campaign-lb-title">RANKING</div>
+              {leaderboard.map(row => (
+                <div
+                  key={row.player}
+                  className={`campaign-lb-row${row.player === username ? ' campaign-lb-row--me' : ''}`}
+                >
+                  <span className="campaign-lb-rank">{RANK_MEDAL[row.rank - 1] ?? row.rank}</span>
+                  <span className="campaign-lb-name">{row.player}</span>
+                  <span className="campaign-lb-pos">{row.chapter}-{row.stage}</span>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {selectedStage && (
+        {/* Detail panel — only for chapter 1 */}
+        {chapter === 1 && selectedStage && (
           <div className="campaign-detail">
             <div className="campaign-detail-title">{lang === 'pt-BR' ? selectedStage.name : (selectedStage.name_en || selectedStage.name)}</div>
             <div className="campaign-detail-format">
@@ -108,9 +178,7 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
               {selectedStage.enemies.map((e, i) => (
                 <div key={i} className="campaign-enemy-chip">
                   <span className="campaign-enemy-ico">{HERO_ICONS[e.cid] || '⚔️'}</span>
-                  <span className="campaign-enemy-name">
-                    {e.cid.charAt(0).toUpperCase() + e.cid.slice(1)}
-                  </span>
+                  <span className="campaign-enemy-name">{e.cid.charAt(0).toUpperCase() + e.cid.slice(1)}</span>
                   <span className="campaign-enemy-lv">{'★'.repeat(e.level)}</span>
                 </div>
               ))}
@@ -119,11 +187,7 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
             {selectedStage.completed ? (
               <div className="campaign-detail-done">{t('campaign.stageCompleted')}</div>
             ) : (
-              <button
-                className="campaign-battle-btn"
-                type="button"
-                onClick={() => startStage(selectedStage)}
-              >
+              <button className="campaign-battle-btn" type="button" onClick={() => startStage(selectedStage)}>
                 {t('campaign.battleBtn')}
               </button>
             )}

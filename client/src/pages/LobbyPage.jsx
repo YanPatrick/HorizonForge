@@ -362,15 +362,20 @@ function HeroDetail({ hero, onClose, playerGear = null, playerItems = [], onEqui
 }
 
 /* ── MobileHeroPage — slide-in detail for mobile ───────── */
-function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
+function MobileHeroPage({ hero, onClose, equippedSkins = {}, playerGear = null, playerItems = [], onEquipItem = null, onUnequipItem = null }) {
   const { t } = useT()
   const [expanded, setExpanded] = useState(false)
-  useEffect(() => { setExpanded(false) }, [hero])
+  const [activeTab, setActiveTab] = useState('stats')
+  const [equipPending, setEquipPending] = useState(null)
+  const [slotUnequipPending, setSlotUnequipPending] = useState(null)
+  const [rpgExpanded, setRpgExpanded] = useState(false)
+  useEffect(() => { setExpanded(false); setRpgExpanded(false); setActiveTab('stats'); setEquipPending(null); setSlotUnequipPending(null) }, [hero])
 
   const cat = hero ? roleCategory(hero.role) : ''
   const label = cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')
   const lv1 = hero?.levels?.[1] || {}
   const levelKeys = Object.keys(hero?.levels || {}).map(Number).sort((a, b) => a - b)
+  const heroGear = playerGear?.[hero?.cid] ?? { slots: {}, totals: { atk_bonus: 0, hp_bonus: 0, spd_bonus: 0 } }
 
   return createPortal(
     <div className={`hf-mobile-hero-page${hero ? ' active' : ''}`}>
@@ -379,46 +384,165 @@ function MobileHeroPage({ hero, onClose, equippedSkins = {} }) {
         <span className="hf-mhp-title">{hero?.name ?? ''}</span>
       </div>
       {hero && (
-        <div className="hf-mhp-body">
-          <div
-            className="hf-mhp-portrait"
-            style={(equippedSkins[hero.cid]?.preview || hero.url_portrait) ? { '--portrait-url': `url('${equippedSkins[hero.cid]?.preview || hero.url_portrait}')` } : {}}
-          >
-            {!(equippedSkins[hero.cid]?.preview || hero.url_portrait) && <div className="hf-mhp-ico">{hero.icon}</div>}
+        <>
+          <div className="hf-detail-tabs" style={{ margin: '0 0 0 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+            <button className={`hf-tab-item ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>{t('hero.tabInfo')}</button>
+            <button className={`hf-tab-item ${activeTab === 'gear'  ? 'active' : ''}`} onClick={() => setActiveTab('gear')}>{t('hero.tabGear')}</button>
           </div>
-          <div className="hf-mhp-content">
-            <div className="hf-detail-role-wrap">
-              <span className={`gr-hero-role role-${cat}`}>{label}</span>
-            </div>
-            <div className="hf-detail-section-label">{t('hero.sectionSkill')}</div>
-            <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
-            <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
-            <div className="hf-detail-section-label">{t('hero.sectionStats')}</div>
-            <div className="hf-detail-stats">
-              <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}</span></div>
-              <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}</span></div>
-              <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.atk_speed != null ? lv1.atk_speed.toFixed(1) : '—'}</span></div>
-              <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
-            </div>
-            <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
-              <span className="hf-l2-label">{expanded ? t('hero.collapse') : t('hero.viewFullStats')}</span>
-              <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
-            </button>
-            {expanded && (
-              <div className="hf-detail-l2 expanded">
-                <table className="hf-detail-l2-table">
-                  <thead><tr><th>{t('hero.lvlHeader')}</th><th>HP</th><th>ATK</th><th>{t('hero.skillPower')}</th></tr></thead>
-                  <tbody>
-                    {levelKeys.map(lv => {
-                      const s = hero.levels[lv] || {}
-                      return <tr key={lv}><td>{lv}</td><td>{s.max_hp}</td><td>{s.atk}</td><td>{s.skill_power != null ? fmtSP(s.skill_power) : '—'}</td></tr>
-                    })}
-                  </tbody>
-                </table>
+          <div className="hf-mhp-body">
+            {activeTab === 'stats' && (
+              <>
+                <div
+                  className="hf-mhp-portrait"
+                  style={(equippedSkins[hero.cid]?.preview || hero.url_portrait) ? { '--portrait-url': `url('${equippedSkins[hero.cid]?.preview || hero.url_portrait}')` } : {}}
+                >
+                  {!(equippedSkins[hero.cid]?.preview || hero.url_portrait) && <div className="hf-mhp-ico">{hero.icon}</div>}
+                </div>
+                <div className="hf-mhp-content">
+                  <div className="hf-detail-role-wrap">
+                    <span className={`gr-hero-role role-${cat}`}>{label}</span>
+                  </div>
+                  <div className="hf-detail-section-label">{t('hero.sectionSkill')}</div>
+                  <div className="hf-detail-skill-name">✦ {hero.skill?.name ?? '—'}</div>
+                  <div className="hf-detail-skill-desc">{hero.skill?.description ?? ''}</div>
+                  {hero.skill?.lore && (
+                    <div className="hf-detail-skill-lore" style={{ fontStyle: 'italic', opacity: 0.55, fontSize: '0.88em', marginTop: '15px', marginBottom: '20px', color: '#fff', lineHeight: '1.6', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.12)', textAlign: 'center', width: '100%', display: 'block' }}>
+                      "{hero.skill.lore}"
+                    </div>
+                  )}
+                  <div className="hf-detail-section-label">{t('hero.sectionStats')}</div>
+                  <div className="hf-detail-stats">
+                    <div className="hf-detail-stat"><span className="hf-stat-label">❤️ HP</span><span className="hf-stat-value">{lv1.max_hp ?? '—'}{heroGear.totals.hp_bonus  !== 0 && <BonusChip value={heroGear.totals.hp_bonus} />}</span></div>
+                    <div className="hf-detail-stat"><span className="hf-stat-label">⚔️ ATK</span><span className="hf-stat-value">{lv1.atk ?? '—'}{heroGear.totals.atk_bonus !== 0 && <BonusChip value={heroGear.totals.atk_bonus} />}</span></div>
+                    <div className="hf-detail-stat"><span className="hf-stat-label">⚡ SPD</span><span className="hf-stat-value">{lv1.initiative != null ? (lv1.initiative % 1 === 0 ? lv1.initiative : lv1.initiative.toFixed(2)) : '—'}{heroGear.totals.spd_bonus !== 0 && <BonusChip value={heroGear.totals.spd_bonus} />}</span></div>
+                    <div className="hf-detail-stat"><span className="hf-stat-label">✨ SP</span><span className="hf-stat-value">{lv1.skill_power != null ? fmtSP(lv1.skill_power) : '—'}</span></div>
+                  </div>
+                  <button type="button" className="hf-detail-l2-btn" onClick={() => setExpanded(x => !x)}>
+                    <span className="hf-l2-label">{expanded ? t('hero.collapse') : t('hero.viewFullStats')}</span>
+                    <span className={`hf-l2-chevron${expanded ? ' expanded' : ''}`}>▾</span>
+                  </button>
+                  {expanded && (
+                    <div className="hf-detail-l2 expanded">
+                      <table className="hf-detail-l2-table">
+                        <thead><tr><th>{t('hero.lvlHeader')}</th><th>HP</th><th>ATK</th><th>{t('hero.skillPower')}</th></tr></thead>
+                        <tbody>
+                          {levelKeys.map(lv => {
+                            const s = hero.levels[lv] || {}
+                            return <tr key={lv}><td>{lv}</td><td>{s.max_hp}</td><td>{s.atk}</td><td>{s.skill_power != null ? fmtSP(s.skill_power) : '—'}</td></tr>
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <button type="button" className="hf-detail-l2-btn rpg-btn-style" onClick={() => setRpgExpanded(x => !x)}>
+                    <span className="hf-l2-label">{rpgExpanded ? t('hero.hideRpgSheet') : t('hero.viewRpgSheet')}</span>
+                    <span className={`hf-l2-chevron${rpgExpanded ? ' expanded' : ''}`}>▾</span>
+                  </button>
+                  {rpgExpanded && (
+                    <div className="rpg-sheet-container animate-fade-in">
+                      <div className="rpg-grid">
+                        {['str','dex','con','int','wis','cha'].map(key => (
+                          <div key={key} className="rpg-stat-box">
+                            <span className="rpg-stat-name">{key.toUpperCase()}</span>
+                            <span className="rpg-stat-value">{Math.round((hero.attrs || {})[key] ?? 0)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="rpg-note">{t('hero.rpgNote')}</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {activeTab === 'gear' && (
+              <div className="hf-mhp-content" style={{ paddingTop: '12px' }}>
+                <div className="gear-container">
+                  {SLOT_ORDER.map((slotKey) => {
+                    const item = heroGear.slots[slotKey]
+                    const isStarter = item?.rarity === 'starter'
+                    const isUnequipPending = slotUnequipPending?.slotKey === slotKey
+                    const canUnequip = item && !isStarter && onUnequipItem
+                    const rarityClass = item ? (isStarter ? 'gear-slot--starter' : 'gear-slot--equipped') : ''
+                    return (
+                      <div
+                        key={slotKey}
+                        className={`gear-slot ${slotKey} ${rarityClass}${isUnequipPending ? ' gear-slot--unequip-pending' : ''}`}
+                        data-label={SLOT_LABELS[slotKey]}
+                        style={canUnequip ? { cursor: 'pointer' } : undefined}
+                        onClick={canUnequip ? () => setSlotUnequipPending(isUnequipPending ? null : { slotKey, item }) : undefined}
+                      >
+                        <span style={{ fontSize: '1.4em', opacity: item ? 1 : 0.3 }}>{SLOT_ICONS[slotKey]}</span>
+                        {item && (
+                          <div className="gear-slot-tip">
+                            <div className="gst-name">{item.name}</div>
+                            {item.atk_bonus !== 0 && <div className={`gst-stat ${item.atk_bonus > 0 ? 'gst-pos' : 'gst-neg'}`}>{item.atk_bonus > 0 ? '+' : ''}{item.atk_bonus} ATK</div>}
+                            {item.hp_bonus  !== 0 && <div className={`gst-stat ${item.hp_bonus  > 0 ? 'gst-pos' : 'gst-neg'}`}>{item.hp_bonus  > 0 ? '+' : ''}{item.hp_bonus} HP</div>}
+                            {Number(item.spd_bonus) !== 0 && <div className={`gst-stat ${Number(item.spd_bonus) > 0 ? 'gst-pos' : 'gst-neg'}`}>{Number(item.spd_bonus) > 0 ? '+' : ''}{Number(item.spd_bonus).toFixed(2)} SPD</div>}
+                            {canUnequip && <div className="gst-hint">{t('gear.clickToRemove')}</div>}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {slotUnequipPending && (
+                  <div className="inv-equip-confirm" style={{ marginBottom: '10px' }}>
+                    <div className="inv-equip-confirm-name" style={{ color: RARITY_COLORS[slotUnequipPending.item.rarity] || '#ccc' }}>{slotUnequipPending.item.name}</div>
+                    <div className="inv-equip-confirm-stats">
+                      {slotUnequipPending.item.atk_bonus !== 0 && <span>{slotUnequipPending.item.atk_bonus > 0 ? '+' : ''}{slotUnequipPending.item.atk_bonus} ATK</span>}
+                      {slotUnequipPending.item.hp_bonus  !== 0 && <span>{slotUnequipPending.item.hp_bonus  > 0 ? '+' : ''}{slotUnequipPending.item.hp_bonus} HP</span>}
+                      {slotUnequipPending.item.spd_bonus !== 0 && <span>{slotUnequipPending.item.spd_bonus > 0 ? '+' : ''}{Number(slotUnequipPending.item.spd_bonus).toFixed(2)} SPD</span>}
+                    </div>
+                    <div className="inv-equip-confirm-actions">
+                      <button type="button" className="inv-equip-btn-remove" onClick={() => { onUnequipItem(hero.cid, slotUnequipPending.slotKey); setSlotUnequipPending(null) }}>{t('gear.removeFrom', { name: hero.name })}</button>
+                      <button type="button" className="inv-equip-btn-cancel" onClick={() => setSlotUnequipPending(null)}>✕</button>
+                    </div>
+                  </div>
+                )}
+                <StatsPanel hero={hero} lv1={lv1} playerGear={playerGear} />
+                <div className="inventory-preview">
+                  <p style={{ fontSize: '10px', opacity: 0.5, marginBottom: '10px' }}>{t('hero.inventory')}</p>
+                  {(() => {
+                    const unequipped = playerItems.filter(item => !item.equipped_on).sort((a, b) => (RARITY_ORDER[a.rarity] ?? 6) - (RARITY_ORDER[b.rarity] ?? 6))
+                    if (unequipped.length === 0) return (
+                      <p style={{ fontSize: '11px', opacity: 0.35, fontStyle: 'italic', textAlign: 'center', margin: '4px 0 8px' }}>
+                        {playerItems.length === 0 ? t('gear.noItems') : t('gear.allEquipped')}
+                      </p>
+                    )
+                    return (
+                      <div className="inv-grid">
+                        {unequipped.map(item => {
+                          const isPending = equipPending?.id === item.id
+                          return (
+                            <div key={item.id} className={['inv-slot inv-slot--item', isPending ? 'inv-slot--pending' : ''].filter(Boolean).join(' ')} title={`${item.name} (${item.slot_type})`} onClick={() => onEquipItem && setEquipPending(isPending ? null : item)}>
+                              <span className="inv-item-slot-ico">{SLOT_ICONS[item.slot_type] || '📦'}</span>
+                              <span className="inv-item-rarity-bar" style={{ background: RARITY_COLORS[item.rarity] || '#888' }} />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                  {equipPending && onEquipItem && (
+                    <div className="inv-equip-confirm">
+                      <div className="inv-equip-confirm-name" style={{ color: RARITY_COLORS[equipPending.rarity] || '#ccc' }}>{equipPending.name}</div>
+                      <div className="inv-equip-confirm-stats">
+                        {equipPending.atk_bonus !== 0 && <span>{equipPending.atk_bonus > 0 ? '+' : ''}{equipPending.atk_bonus} ATK</span>}
+                        {equipPending.hp_bonus  !== 0 && <span>{equipPending.hp_bonus  > 0 ? '+' : ''}{equipPending.hp_bonus} HP</span>}
+                        {equipPending.spd_bonus !== 0 && <span>{equipPending.spd_bonus > 0 ? '+' : ''}{Number(equipPending.spd_bonus).toFixed(2)} SPD</span>}
+                      </div>
+                      <div className="inv-equip-confirm-actions">
+                        <button type="button" className="inv-equip-btn-confirm" onClick={() => { onEquipItem(equipPending.id, hero.cid, equipPending.slot_type); setEquipPending(null) }}>{t('gear.equipOn', { name: hero.name })}</button>
+                        <button type="button" className="inv-equip-btn-cancel" onClick={() => setEquipPending(null)}>✕</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        </div>
+        </>
       )}
     </div>,
     document.body
@@ -819,7 +943,7 @@ function FormationView({ session, formations, setFormations, defaultSlot, setDef
   return (
     <div id="view-formation" className="lv active">
       {detailHero && <HeroDetail hero={detailHero} onClose={() => setDetailHero(null)} playerGear={playerGear} playerItems={playerItems} onEquipItem={onEquipItem} onUnequipItem={onUnequipItem} />}
-      <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} equippedSkins={equippedSkins} />
+      <MobileHeroPage hero={detailHero} onClose={() => setDetailHero(null)} equippedSkins={equippedSkins} playerGear={playerGear} playerItems={playerItems} onEquipItem={onEquipItem} onUnequipItem={onUnequipItem} />
       <div className="fv-wrap">
         <div className="fv-hero-frame">
           <div className="fv-filter-bar">
@@ -1091,7 +1215,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
@@ -1128,8 +1252,11 @@ export default function LobbyPage() {
   const [pendingChests, setPendingChests] = useState(0)
   const [chestResult, setChestResult] = useState(null)
   const [openingChest, setOpeningChest] = useState(false)
+  const [, setChallengeVer] = useState(0)
 
   const socketRef = useRef(null)
+  const challengesRef = useRef([])  // [{id, username, wager, format, phase: 'enter'|'idle'|'leave'}]
+  const overflowRef = useRef([])    // [{id, username, wager, format}]
   const searchTimerRef = useRef(null)
   const phraseTimerRef = useRef(null)
   const matchDataRef = useRef(null)
@@ -1163,6 +1290,11 @@ export default function LobbyPage() {
     } finally {
       setOpeningChest(false)
     }
+  }
+
+  function handleAcceptChallenge(challenge) {
+    if (!username || isGuest) { showToast('Login required to accept challenges.'); return }
+    socketRef.current?.emit('accept_challenge', { challenger: challenge.id })
   }
 
   function handleSetAvailable() {
@@ -1349,6 +1481,53 @@ export default function LobbyPage() {
     }
     socket.on('chest_meter_update', d => {
       if (d.player === username) { setChestMeterPct(d.pct); setPendingChests(d.pending ?? 0) }
+    })
+
+    const MAX_CHALLENGES = 5
+    const tickChallenges = () => setChallengeVer(v => v + 1)
+
+    socket.on('open_challenge', ({ id, username: challenger, wager, format }) => {
+      if (id === username) return // ignore own broadcast
+      const visible = challengesRef.current.filter(c => c.phase !== 'leave')
+      if (visible.length < MAX_CHALLENGES) {
+        challengesRef.current = [...challengesRef.current, { id, username: challenger, wager, format, phase: 'enter' }]
+        tickChallenges()
+        setTimeout(() => {
+          challengesRef.current = challengesRef.current.map(c => c.id === id && c.phase === 'enter' ? { ...c, phase: 'idle' } : c)
+          tickChallenges()
+        }, 400)
+      } else {
+        overflowRef.current = [...overflowRef.current, { id, username: challenger, wager, format }]
+      }
+    })
+
+    socket.on('challenge_removed', ({ id }) => {
+      const inVisible = challengesRef.current.some(c => c.id === id)
+      if (inVisible) {
+        challengesRef.current = challengesRef.current.map(c => c.id === id ? { ...c, phase: 'leave' } : c)
+        tickChallenges()
+        setTimeout(() => {
+          challengesRef.current = challengesRef.current.filter(c => c.id !== id)
+          if (overflowRef.current.length > 0) {
+            const [next, ...rest] = overflowRef.current
+            overflowRef.current = rest
+            challengesRef.current = [...challengesRef.current, { ...next, phase: 'enter' }]
+            tickChallenges()
+            setTimeout(() => {
+              challengesRef.current = challengesRef.current.map(c => c.id === next.id && c.phase === 'enter' ? { ...c, phase: 'idle' } : c)
+              tickChallenges()
+            }, 400)
+          } else {
+            tickChallenges()
+          }
+        }, 350)
+      } else {
+        overflowRef.current = overflowRef.current.filter(c => c.id !== id)
+      }
+    })
+
+    socket.on('challenge_expired', () => {
+      showToast('That challenge is no longer available.')
     })
 
     // tavern — real-time online players list
@@ -2212,6 +2391,23 @@ export default function LobbyPage() {
       />
       <GuestConversionModal open={!!convCtx} context={convCtx} onClose={() => setConvCtx(null)} />
       {chestResult && <ChestResultModal result={chestResult} onClose={() => setChestResult(null)} />}
+
+      {challengesRef.current.length > 0 && (
+        <div className="open-challenges">
+          {challengesRef.current.map(c => (
+            <div key={c.id} className={`oc-card oc-card--${c.phase}`}>
+              <div className="oc-header">looking for a match</div>
+              <div className="oc-player">{c.username}</div>
+              <div className="oc-details">
+                {c.wager > 0 ? `${c.wager} HIVE` : 'Free'} · BO{c.format}
+              </div>
+              <button className="oc-btn" type="button" onClick={() => handleAcceptChallenge(c)}>
+                Enfrentar
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
       <div
         id="desc-tooltip"
         className={activeInfoTip ? 'visible' : ''}

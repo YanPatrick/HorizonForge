@@ -1626,6 +1626,28 @@ app.get('/api/campaign', async (req, res) => {
 });
 
 /**
+ * GET /api/campaign/leaderboard
+ * Returns the furthest campaign progress per player, sorted best first.
+ */
+app.get('/api/campaign/leaderboard', async (req, res) => {
+  try {
+    const rows = await sql`
+      SELECT DISTINCT ON (player) player, chapter, stage
+      FROM campaign_progress
+      ORDER BY player, chapter DESC, stage DESC
+      LIMIT 30
+    `;
+    const sorted = [...rows].sort((a, b) =>
+      b.chapter !== a.chapter ? b.chapter - a.chapter : b.stage - a.stage
+    );
+    res.json({ ok: true, leaderboard: sorted.map((r, i) => ({ rank: i + 1, player: r.player, chapter: r.chapter, stage: r.stage })) });
+  } catch (err) {
+    console.error('[/api/campaign/leaderboard]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/campaign/complete
  * Body: { stage }
  * Marks stage as completed and grants campaign reward item to player_items.
@@ -2581,52 +2603,19 @@ async function rehydrateMatches() {
   }
 }
 
-// ── Match pairing ─────────────────────────────────────────────────────────────
-function tryMatch() {
-  if (matchQueue.size < 2) return;
-
-  // Find the first two compatible players (not necessarily entries 0 and 1)
-  const entries = [...matchQueue.entries()];
-  let matched = null;
-  outer: for (let i = 0; i < entries.length; i++) {
-    for (let j = i + 1; j < entries.length; j++) {
-      const [u1, e1] = entries[i];
-      const [u2, e2] = entries[j];
-      // Match on wager amount AND format — payout type is each player's own preference
-      if (e1.wager === e2.wager && e1.format === e2.format) {
-        matched = { u1, e1, u2, e2 };
-        break outer;
-      }
-    }
-  }
-  if (!matched) {
-    // Log the comparison so we can diagnose mismatches
-    if (entries.length >= 2) {
-      const [[u1, e1], [u2, e2]] = entries;
-      console.log(
-        `⚠️  tryMatch: no compatible pair found. ` +
-        `${u1}[wager=${e1.wager} fmt=${e1.format}] vs ${u2}[wager=${e2.wager} fmt=${e2.format}]`
-      );
-    }
-    return;
-  }
-
-  const { u1, e1, u2, e2 } = matched;
-
-  matchQueue.delete(u1);
-  matchQueue.delete(u2);
-
+// ── Match creation (shared by tryMatch and accept_challenge) ──────────────────
+function startMatchBetween(u1, s1, u2, s2, wager, format) {
   const matchId = makeMatchId();
-  const fmt = e1.format || 5;
+  const fmt = format || 5;
   const winsNeed = Math.ceil(fmt / 2);
-  const needsPayment = e1.wager > 0 && !!HIVE_GAME_ACCOUNT;
+  const needsPayment = wager > 0 && !!HIVE_GAME_ACCOUNT;
   const initStatus = needsPayment ? 'waiting_payments' : 'waiting_teams';
 
   const matchData = {
     matchId,
     p1: u1, p2: u2,
-    s1: e1.socket, s2: e2.socket,
-    wager: e1.wager,
+    s1, s2,
+    wager,
     format: fmt,
     winsNeeded: winsNeed,
     battleNum: 1,
@@ -2644,15 +2633,15 @@ function tryMatch() {
 
   sql`INSERT INTO matches (id, player1, player2, wager_hive, wager_type, format, status,
                             battle_num, payments, payout_prefs, merges)
-      VALUES (${matchId}, ${u1}, ${u2}, ${e1.wager}, 'HIVE', ${fmt}, ${initStatus},
+      VALUES (${matchId}, ${u1}, ${u2}, ${wager}, 'HIVE', ${fmt}, ${initStatus},
               1,
               ${JSON.stringify(matchData.payments)}::jsonb,
               ${JSON.stringify(matchData.payoutPrefs)}::jsonb,
               ${JSON.stringify(matchData.merges)}::jsonb)`
     .catch(err => console.error('[match DB insert]', err.message));
 
-  e1.socket.join(matchId);
-  e2.socket.join(matchId);
+  s1.join(matchId);
+  s2.join(matchId);
 
   // Atualiza status na Taverna para os dois jogadores
   const matchDetail = `BO${fmt} · round 1`;
@@ -2663,14 +2652,14 @@ function tryMatch() {
     matchId,
     p1: u1, p2: u2,
     opponents: { [u1]: u2, [u2]: u1 },
-    wager: e1.wager,
+    wager,
     format: fmt,
     needsPayment,
     gameAccount: HIVE_GAME_ACCOUNT,
     timeLimitMs: needsPayment ? 60_000 : 3 * 60 * 1000,
   });
 
-  console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${e1.wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
+  console.log(`⚔️  Match ${matchId} | ${u1} vs ${u2} | BO${fmt} | ${wager} HIVE${needsPayment ? ' [payment required]' : ' [free]'}`);
 
   if (needsPayment) {
     // Payment timeout: 60s window. On expiry:
@@ -2763,6 +2752,42 @@ function tryMatch() {
   }
 
   broadcastQueueSize();
+}
+
+// ── Match pairing ─────────────────────────────────────────────────────────────
+function tryMatch() {
+  if (matchQueue.size < 2) return;
+
+  // Find the first two compatible players (not necessarily entries 0 and 1)
+  const entries = [...matchQueue.entries()];
+  let matched = null;
+  outer: for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const [u1, e1] = entries[i];
+      const [u2, e2] = entries[j];
+      if (e1.wager === e2.wager && e1.format === e2.format) {
+        matched = { u1, e1, u2, e2 };
+        break outer;
+      }
+    }
+  }
+  if (!matched) {
+    if (entries.length >= 2) {
+      const [[u1, e1], [u2, e2]] = entries;
+      console.log(
+        `⚠️  tryMatch: no compatible pair found. ` +
+        `${u1}[wager=${e1.wager} fmt=${e1.format}] vs ${u2}[wager=${e2.wager} fmt=${e2.format}]`
+      );
+    }
+    return;
+  }
+
+  const { u1, e1, u2, e2 } = matched;
+  matchQueue.delete(u1);
+  matchQueue.delete(u2);
+  io.emit('challenge_removed', { id: u1 });
+  io.emit('challenge_removed', { id: u2 });
+  startMatchBetween(u1, e1.socket, u2, e2.socket, e1.wager, e1.format);
 }
 
 const ROUND_TIME_MS = 2 * 60 * 1000; // 2 minutes per round
@@ -3094,6 +3119,13 @@ io.on('connection', socket => {
     socket.emit('queued', { queueSize: matchQueue.size });
     console.log(`🔍 ${connectedUser} joined queue | ${wager} ${wagerType} BO${format} | size: ${matchQueue.size}`);
     setTavernStatus(connectedUser, 'searching', `${wager > 0 ? wager + ' HIVE' : 'Free'} · BO${format || 5}`);
+    // Broadcast open challenge to all other connected players
+    socket.broadcast.emit('open_challenge', {
+      id: connectedUser,
+      username: connectedUser,
+      wager,
+      format: format || 5,
+    });
     tryMatch();
     broadcastQueueSize();
   });
@@ -3252,8 +3284,44 @@ io.on('connection', socket => {
       matchQueue.delete(connectedUser);
       console.log(`🚪 ${connectedUser} left queue`);
       setTavernStatus(connectedUser, 'tavern');
+      io.emit('challenge_removed', { id: connectedUser });
       broadcastQueueSize();
     }
+  });
+
+  socket.on('accept_challenge', ({ challenger }) => {
+    if (!connectedUser || socket.data.isGuest) {
+      socket.emit('challenge_expired', { challenger, reason: 'auth' });
+      return;
+    }
+    if (connectedUser === challenger) return;
+
+    // Reject if already in an active match
+    for (const [, m] of activeMatches) {
+      if (m.p1 === connectedUser || m.p2 === connectedUser) {
+        socket.emit('challenge_expired', { challenger, reason: 'in_match' });
+        return;
+      }
+    }
+
+    const entry = matchQueue.get(challenger);
+    if (!entry) {
+      socket.emit('challenge_expired', { challenger });
+      return;
+    }
+
+    // Remove accepter from queue if present
+    if (matchQueue.has(connectedUser)) {
+      matchQueue.delete(connectedUser);
+      io.emit('challenge_removed', { id: connectedUser });
+    }
+
+    // Remove challenger from queue and start match
+    matchQueue.delete(challenger);
+    io.emit('challenge_removed', { id: challenger });
+
+    console.log(`🤝 ${connectedUser} accepted challenge from ${challenger}`);
+    startMatchBetween(challenger, entry.socket, connectedUser, socket, entry.wager, entry.format);
   });
 
   // Manual / AFK status change — ignored during searching or battle
