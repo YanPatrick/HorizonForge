@@ -55,7 +55,7 @@ export default {
   'inv.searchHero':   '🔍 Buscar herói…',
   'inv.noItems':      'Nenhum item no inventário',
   'inv.equipOn':      '✓ Equipar em {name}',
-  'inv.removeFrom':   '↩ Remover de {name}',
+  'inv.removeFrom':   '↩ Remover',
   'inv.allEquipped':  'Todos os itens estão equipados',
   'inv.bgsEquipped':  '{n}/4 cenários equipados',
   'inv.minOneBg':         'Ao menos 1 cenário deve permanecer equipado.',

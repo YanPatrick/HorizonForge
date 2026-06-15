@@ -55,7 +55,7 @@ export default {
   'inv.searchHero':   '🔍 Search hero…',
   'inv.noItems':      'No items in inventory',
   'inv.equipOn':      '✓ Equip on {name}',
-  'inv.removeFrom':   '↩ Remove from {name}',
+  'inv.removeFrom':   '↩ Remove',
   'inv.allEquipped':  'All items are equipped',
   'inv.bgsEquipped':  '{n}/4 backgrounds equipped',
   'inv.minOneBg':         'At least 1 background must remain equipped.',
