@@ -10,7 +10,7 @@
 -- character_stats foi REMOVIDA — stats são calculados em runtime:
 --   max_hp / atk   = base × level_scale.multiplier
 --   atk_speed / crit_chance / crit_rate = fixos (sem escala)
---   skill_power    = (scaled_skill_attr / 2 / 100) + sp_bonus
+--   skill_power    = base.skill_power × level_scale.multiplier
 --
 -- Running this file on a fresh DB gives you the seed data and the static
 -- tables; you ALSO need to hit POST /api/migrate (with x-admin-secret) to
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS characters (
 -- Characters base — um registro por personagem (valores base nível 1)
 -- Stats de combate são calculados via calcStats():
 --   max_hp      = (con × 20) × m          (apenas CON — itens adicionam HP)
---   atk         = (primary_attr × 5) × m + weapon_bonus  (weapon_bonus always 0; bonus via hero_equipment)
+--   atk         = (primary_attr × 5) × m                 (bonus via hero_equipment items only)
 --   initiative  = spd_offset              (bônus fixo somado ao D20 por round)
 --   skill_power = base.skill_power × m    (valor base definido por herói)
 --   evasion     = max(0, floor((DEX_base − 10) / 2)) %  (máx 5% sem itens)
@@ -176,7 +176,7 @@ JOIN (VALUES
   ('knight',    'iron_defense',    'Iron Defense',    'Reduces skill_power% of damage taken each hit. Scales with level.',  'The weight of armor is nothing compared to the weight of duty.',                                                       'Passive'),
   ('mage',      'fireball',        'Fireball',        'Primary target takes full damage. Adjacent targets (+ shape) take skill_power% of that damage. Scales with level.', 'Fire obeys no one; it only accepts invitations.',                       'ATK Modifier'),
   ('archer',    'precise_shot',    'Precise Shot',    'Adds skill_power as a bonus to crit_chance. Scales with level.',    'The wind blows, but my arrow chooses its own path.',                                                                    'Passive'),
-  ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = atk x skill_power. Then attacks nearest enemy. Scales with level.',    'Life is a garden that blooms under the right hands.',                          'Skill'),
+  ('healer',    'healing',         'Healing',         'Heals the ally with lowest HP: heal = target maxHP x skill_power. Then attacks nearest enemy. Scales with level.',    'Life is a garden that blooms under the right hands.',                          'Skill'),
   ('assassin',  'sneak_strike',    'Sneak Strike',    'At battle start, performs one sneak attack on lowest-HP enemy for atk x skill_power damage. Scales with level.',    'Silence is the last thing my enemies hear.',                            'Skill'),
   ('paladin',   'sacred_aura',     'Sacred Aura',     'At battle start, grants adjacent allies a max HP bonus of skill_power%. Buff persists even if Paladin dies. Scales with level.',   'My aura is the shield the gods lent to mortals.',        'Skill'),
   ('archmage',  'chain_lightning', 'Chain Lightning', 'Attack hits primary for 100%. Next enemy takes skill_power%, third takes skill_power/2%. Scales with level.',       'Lightning never strikes the same place twice... unless I want it to.',  'ATK Modifier'),

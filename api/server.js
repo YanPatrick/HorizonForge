@@ -1929,6 +1929,19 @@ async function addToChestMeter(username, wager, payoutPref) {
   }
 }
 
+async function migrateSkillDescriptions() {
+  try {
+    await sql`
+      UPDATE skills SET description = 'Heals the ally with lowest HP: heal = target maxHP x skill_power. Then attacks nearest enemy. Scales with level.'
+      WHERE skill_key = 'healing'
+        AND description LIKE '%heal = atk x skill_power%'
+    `;
+    console.log('   Skill descriptions: ✅ ok');
+  } catch (e) {
+    console.warn('   Skill descriptions: ⚠️', e.message);
+  }
+}
+
 async function migrateSkillPower() {
   try {
     const rows = await sql`
@@ -3631,6 +3644,7 @@ httpServer.listen(PORT, () => {
   restoreSpeedOffsets();
   migrateLevelScale();
   migrateSkillPower();
+  migrateSkillDescriptions();
   seedTreasures();
   migrateCampaign();
   migrateChestMeter();
