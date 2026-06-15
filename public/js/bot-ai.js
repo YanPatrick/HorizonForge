@@ -196,12 +196,14 @@
 
   function botPosition() {
     BOT.board = Array(9).fill(null);
-    const { C } = deps();
+    const { C, getHF } = deps();
+    const fieldMax = getHF().qtd_max_heroes || 5;
     const pool = [...BOT.bench].sort(
       (a, b) => (UNIT_SCORE[b.cid] || 0) - (UNIT_SCORE[a.cid] || 0)
     );
     const used = new Set();
     pool.forEach((u) => {
+      if (BOT.board.filter(Boolean).length >= fieldMax) return;
       const role = C[u.cid]?.role || "Tank";
       const slots = BOT_ROLE_SLOT[role] || FRONT_SLOTS;
       for (const s of slots) {
