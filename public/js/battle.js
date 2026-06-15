@@ -1093,11 +1093,13 @@ function startBattle() {
     for (const item of Object.values(slots)) {
       let fit = 1.0;
       if (item.req_attr && item.req_value) {
-        const heroVal = heroAttrs[item.req_attr] ?? 10;
+        const attrKey = item.req_attr === 'primary_attr' ? heroAttrs.primary : item.req_attr;
+        const heroVal = heroAttrs[attrKey] ?? 10;
         fit *= Math.min(1.0, heroVal / item.req_value);
       }
       if (item.req_attr2 && item.req_value2) {
-        const heroVal2 = heroAttrs[item.req_attr2] ?? 10;
+        const attrKey2 = item.req_attr2 === 'primary_attr' ? heroAttrs.primary : item.req_attr2;
+        const heroVal2 = heroAttrs[attrKey2] ?? 10;
         fit *= Math.min(1.0, heroVal2 / item.req_value2);
       }
       atkBonus += item.atk_bonus * fit;

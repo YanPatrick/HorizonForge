@@ -631,8 +631,8 @@ function calcStats(base, multiplier) {
     // HP: apenas CON × 20 × m  (itens adicionam HP separadamente)
     max_hp: Math.floor(con * 20),
 
-    // ATK: atributo primário × 5 × m  +  bônus de arma base (weapon_bonus)
-    atk: Math.floor(p * 5 + Number(base.weapon_bonus)),
+    // ATK: atributo primário × 5 × m  (bônus vem exclusivamente dos itens equipados)
+    atk: Math.floor(p * 5),
 
     // Bônus de iniciativa — somado ao D20 no início de cada round
     initiative: Number(base.spd_offset),
@@ -1758,12 +1758,12 @@ async function migrateRpgAttrs() {
   // 2. Only populate values on first-time setup (str still at default 10 for knight)
   try {
     const rows = await sql`
-      SELECT cb.str FROM characters_base cb
+      SELECT cb.str, cb.con, cb.weapon_bonus FROM characters_base cb
       JOIN characters c ON c.id = cb.character_id
       WHERE c.cid = 'knight' LIMIT 1
     `;
-    if (rows[0]?.str !== 10) {
-      // Already configured — just clean up any leftover dev-test items
+    if (rows[0]?.str === 16 && rows[0]?.con === 16 && Number(rows[0]?.weapon_bonus) === 0) {
+      // Already at correct values — just clean up any leftover dev-test items
       await sql`DELETE FROM hero_equipment WHERE item_id IN (SELECT id FROM items WHERE description = '[DEV-TEST] Motor of Chaos')`;
       await sql`DELETE FROM items WHERE description = '[DEV-TEST] Motor of Chaos'`;
       console.log('   RPG attrs: ✅ columns ok');
@@ -1771,16 +1771,16 @@ async function migrateRpgAttrs() {
     }
   } catch {}
 
-  // 3. First-time: populate all RPG attribute values
+  // 3. Populate/update all RPG attribute values
   const updates = [
-    { cid: 'knight',    vals: `str=15,dex=10,con=20,int=7, wis=10,cha=10, primary_attr='str',skill_attr='con', weapon_bonus=17,armor_bonus=142,spd_offset=1.0,sp_bonus=0`    },
-    { cid: 'paladin',   vals: `str=13,dex=10,con=19,int=10,wis=10,cha=10, primary_attr='str',skill_attr='cha', weapon_bonus=23,armor_bonus=137,spd_offset=1.0,sp_bonus=0`    },
-    { cid: 'barbarian', vals: `str=20,dex=12,con=15,int=5, wis=8, cha=12, primary_attr='str',skill_attr='str', weapon_bonus=0, armor_bonus=130,spd_offset=1.5,sp_bonus=0`    },
-    { cid: 'assassin',  vals: `str=14,dex=18,con=10,int=10,wis=10,cha=10, primary_attr='dex',skill_attr='dex', weapon_bonus=42,armor_bonus=13, spd_offset=4.0,sp_bonus=0`    },
-    { cid: 'archer',    vals: `str=12,dex=17,con=10,int=10,wis=11,cha=12, primary_attr='dex',skill_attr='dex', weapon_bonus=60,armor_bonus=60, spd_offset=4.0,sp_bonus=0`    },
-    { cid: 'mage',      vals: `str=8, dex=10,con=10,int=20,wis=14,cha=10, primary_attr='int',skill_attr='int', weapon_bonus=70,armor_bonus=30, spd_offset=2.0,sp_bonus=0`    },
-    { cid: 'archmage',  vals: `str=7, dex=10,con=10,int=20,wis=15,cha=10, primary_attr='int',skill_attr='int', weapon_bonus=88,armor_bonus=58, spd_offset=1.0,sp_bonus=0`    },
-    { cid: 'healer',    vals: `str=8, dex=10,con=8, int=18,wis=10,cha=18, primary_attr='wis',skill_attr='wis', weapon_bonus=2, armor_bonus=39, spd_offset=1.0,sp_bonus=1.25` },
+    { cid: 'knight',    vals: `str=16,dex=10,con=16,int=10,wis=10,cha=10, primary_attr='str',skill_attr='con', weapon_bonus=0,armor_bonus=142,spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'paladin',   vals: `str=16,dex=10,con=14,int=10,wis=12,cha=10, primary_attr='str',skill_attr='cha', weapon_bonus=0,armor_bonus=137,spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'barbarian', vals: `str=18,dex=11,con=13,int=10,wis=10,cha=10, primary_attr='str',skill_attr='str', weapon_bonus=0,armor_bonus=130,spd_offset=1.5,sp_bonus=0`    },
+    { cid: 'assassin',  vals: `str=11,dex=18,con=13,int=10,wis=10,cha=10, primary_attr='dex',skill_attr='dex', weapon_bonus=0,armor_bonus=13, spd_offset=4.0,sp_bonus=0`    },
+    { cid: 'archer',    vals: `str=10,dex=18,con=10,int=10,wis=10,cha=14, primary_attr='dex',skill_attr='dex', weapon_bonus=0,armor_bonus=60, spd_offset=4.0,sp_bonus=0`    },
+    { cid: 'mage',      vals: `str=10,dex=12,con=12,int=18,wis=10,cha=10, primary_attr='int',skill_attr='int', weapon_bonus=0,armor_bonus=30, spd_offset=2.0,sp_bonus=0`    },
+    { cid: 'archmage',  vals: `str=10,dex=10,con=10,int=18,wis=12,cha=12, primary_attr='int',skill_attr='int', weapon_bonus=0,armor_bonus=58, spd_offset=1.0,sp_bonus=0`    },
+    { cid: 'healer',    vals: `str=10,dex=10,con=12,int=12,wis=18,cha=10, primary_attr='wis',skill_attr='wis', weapon_bonus=0,armor_bonus=39, spd_offset=1.0,sp_bonus=1.25` },
   ];
   for (const { cid, vals } of updates) {
     try { await sql(`UPDATE characters_base SET ${vals} WHERE character_id=(SELECT id FROM characters WHERE cid='${cid}')`); } catch {}
@@ -1929,6 +1929,54 @@ async function addToChestMeter(username, wager, payoutPref) {
   }
 }
 
+async function migrateSkillPower() {
+  try {
+    const rows = await sql`
+      SELECT cb.skill_power::float FROM characters_base cb
+      JOIN characters c ON c.id = cb.character_id
+      WHERE c.cid = 'assassin' LIMIT 1
+    `;
+    if (Number(rows[0]?.skill_power) === 0.70) {
+      console.log('   Skill power: ✅ ok');
+      return;
+    }
+    const vals = [
+      { cid: 'knight',    sp: 0.08 },
+      { cid: 'paladin',   sp: 0.12 },
+      { cid: 'barbarian', sp: 0.20 },
+      { cid: 'assassin',  sp: 0.70 },
+      { cid: 'archer',    sp: 0.10 },
+      { cid: 'mage',      sp: 0.35 },
+      { cid: 'archmage',  sp: 0.30 },
+      { cid: 'healer',    sp: 0.60 },
+    ];
+    for (const { cid, sp } of vals) {
+      await sql`UPDATE characters_base SET skill_power = ${sp} WHERE character_id = (SELECT id FROM characters WHERE cid = ${cid})`;
+    }
+    console.log('   Skill power: ✅ migrated');
+  } catch (e) {
+    console.warn('   Skill power: ⚠️', e.message);
+  }
+}
+
+async function migrateLevelScale() {
+  try {
+    const rows = await sql`SELECT multiplier::float FROM level_scale WHERE level = 2 LIMIT 1`;
+    if (Number(rows[0]?.multiplier) === 1.15) {
+      console.log('   Level scale: ✅ linear ok');
+      return;
+    }
+    await sql`UPDATE level_scale SET multiplier=1.00, skill_power_multiplier=1.00 WHERE level=1`;
+    await sql`UPDATE level_scale SET multiplier=1.15, skill_power_multiplier=1.15 WHERE level=2`;
+    await sql`UPDATE level_scale SET multiplier=1.30, skill_power_multiplier=1.30 WHERE level=3`;
+    await sql`UPDATE level_scale SET multiplier=1.45, skill_power_multiplier=1.45 WHERE level=4`;
+    await sql`UPDATE level_scale SET multiplier=1.60, skill_power_multiplier=1.60 WHERE level=5`;
+    console.log('   Level scale: ✅ updated to linear (+15%/level)');
+  } catch (e) {
+    console.warn('   Level scale: ⚠️', e.message);
+  }
+}
+
 async function migrateCampaign() {
   try {
     // Add slug + source columns to items (idempotent)
@@ -1937,9 +1985,11 @@ async function migrateCampaign() {
     try { await sql(`CREATE UNIQUE INDEX IF NOT EXISTS items_slug_uidx ON items(slug)`); } catch {}
     // Chaos Chest columns
     try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS d20_roll    SMALLINT`); } catch {}
-    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr    VARCHAR(4)`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr    VARCHAR(20)`); } catch {}
+    try { await sql(`ALTER TABLE items ALTER COLUMN req_attr TYPE VARCHAR(20)`); } catch {}
     try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_value   SMALLINT`); } catch {}
-    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr2   VARCHAR(4)`); } catch {}
+    try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_attr2   VARCHAR(20)`); } catch {}
+    try { await sql(`ALTER TABLE items ALTER COLUMN req_attr2 TYPE VARCHAR(20)`); } catch {}
     try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS req_value2  SMALLINT`); } catch {}
     try { await sql(`ALTER TABLE items ADD COLUMN IF NOT EXISTS flavor_text TEXT`); } catch {}
 
@@ -1969,23 +2019,28 @@ async function migrateCampaign() {
     // SPD values nerfed intentionally: uncommon=0.3, rare=0.8, legendary=1.0.
     const desc    = 'Campaign item — cannot be traded.';
     const rewards = [
-      { slug: 'campaign_ch1_s1', name: "Bastion's Belt",          rarity: 'common',    slot_type: 'belt',    atk: 0,  hp: 65,  spd: 0   },
-      { slug: 'campaign_ch1_s2', name: 'Forest Gauntlets',        rarity: 'uncommon',  slot_type: 'gloves',  atk: 12, hp: 0,   spd: 0.3 },
-      { slug: 'campaign_ch1_s3', name: "Guardians' Greaves",      rarity: 'rare',      slot_type: 'legs',    atk: 0,  hp: 200, spd: 0.8 },
-      { slug: 'campaign_ch1_s4', name: 'Crystal Tower Ring',      rarity: 'epic',      slot_type: 'ring2',   atk: 30, hp: 260, spd: 0   },
-      { slug: 'campaign_ch1_s5', name: 'Relic of the Great Council', rarity: 'legendary', slot_type: 'special', atk: 42, hp: 420, spd: 1.0 },
+      { slug: 'campaign_ch1_s1', name: "Bastion's Belt",             rarity: 'common',    slot_type: 'belt',    atk: 0,  hp: 55,  spd: 0,   req_attr: null,           req_value: null, req_attr2: null,  req_value2: null },
+      { slug: 'campaign_ch1_s2', name: 'Forest Gauntlets',           rarity: 'uncommon',  slot_type: 'gloves',  atk: 10, hp: 0,   spd: 0.3, req_attr: 'primary_attr',  req_value: 10,   req_attr2: null,  req_value2: null },
+      { slug: 'campaign_ch1_s3', name: "Guardians' Greaves",         rarity: 'rare',      slot_type: 'legs',    atk: 0,  hp: 160, spd: 0.8, req_attr: 'con',            req_value: 14,   req_attr2: null,  req_value2: null },
+      { slug: 'campaign_ch1_s4', name: 'Crystal Tower Ring',         rarity: 'epic',      slot_type: 'ring2',   atk: 22, hp: 210, spd: 0,   req_attr: 'primary_attr',  req_value: 16,   req_attr2: 'con', req_value2: 16   },
+      { slug: 'campaign_ch1_s5', name: 'Relic of the Great Council', rarity: 'legendary', slot_type: 'special', atk: 32, hp: 330, spd: 1.0, req_attr: 'primary_attr',  req_value: 20,   req_attr2: 'con', req_value2: 20   },
     ];
     for (const r of rewards) {
       await sql`
-        INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source)
-        VALUES (${r.name}, ${desc}, ${r.rarity}, ${r.slot_type}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'campaign')
+        INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source, req_attr, req_value, req_attr2, req_value2)
+        VALUES (${r.name}, ${desc}, ${r.rarity}, ${r.slot_type}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'campaign',
+                ${r.req_attr}, ${r.req_value}, ${r.req_attr2}, ${r.req_value2})
         ON CONFLICT (slug) DO UPDATE
-          SET name      = EXCLUDED.name,
-              rarity    = EXCLUDED.rarity,
-              slot_type = EXCLUDED.slot_type,
-              atk_bonus = EXCLUDED.atk_bonus,
-              hp_bonus  = EXCLUDED.hp_bonus,
-              spd_bonus = EXCLUDED.spd_bonus
+          SET name       = EXCLUDED.name,
+              rarity     = EXCLUDED.rarity,
+              slot_type  = EXCLUDED.slot_type,
+              atk_bonus  = EXCLUDED.atk_bonus,
+              hp_bonus   = EXCLUDED.hp_bonus,
+              spd_bonus  = EXCLUDED.spd_bonus,
+              req_attr   = EXCLUDED.req_attr,
+              req_value  = EXCLUDED.req_value,
+              req_attr2  = EXCLUDED.req_attr2,
+              req_value2 = EXCLUDED.req_value2
       `;
     }
     console.log('   Campaign: ✅ tables and items ready');
@@ -3574,6 +3629,8 @@ httpServer.listen(PORT, () => {
   refreshMaxUnitsCap();
   migrateRpgAttrs();
   restoreSpeedOffsets();
+  migrateLevelScale();
+  migrateSkillPower();
   seedTreasures();
   migrateCampaign();
   migrateChestMeter();

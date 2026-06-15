@@ -1619,10 +1619,9 @@ export default function LobbyPage() {
 
   /* ── load player gear ────────────────────────────────── */
   useEffect(() => {
-    if (!session?.token || !session?.username) return
-    fetch(`/api/gear?player=${encodeURIComponent(session.username)}`, {
-      headers: { Authorization: `Bearer ${session.token}` },
-    })
+    if (!session?.username) return
+    const headers = session.token ? { Authorization: `Bearer ${session.token}` } : {}
+    fetch(`/api/gear?player=${encodeURIComponent(session.username)}`, { headers })
       .then(r => r.json())
       .then(d => { if (d.ok) setPlayerGear(d.gear) })
       .catch(() => {})
