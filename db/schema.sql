@@ -89,11 +89,11 @@ CREATE TABLE IF NOT EXISTS skills (
 -- ============================================================
 
 INSERT INTO level_scale (level, multiplier, label, skill_power_multiplier) VALUES
-  (1, 1.0, '★',     1.1),
-  (2, 1.3, '★★',    1.2),
-  (3, 1.6, '★★★',   1.3),
-  (4, 1.9, '★★★★',  1.4),
-  (5, 2.2, '★★★★★', 1.5)
+  (1, 1.00, '★',     1.00),
+  (2, 1.15, '★★',    1.15),
+  (3, 1.30, '★★★',   1.30),
+  (4, 1.45, '★★★★',  1.45),
+  (5, 1.60, '★★★★★', 1.60)
 ON CONFLICT (level) DO UPDATE SET
   multiplier              = EXCLUDED.multiplier,
   label                   = EXCLUDED.label,
@@ -156,14 +156,15 @@ FROM characters c
 JOIN (VALUES
   --            cid        str dex con int wis cha  prim   wpn  spd_offset
   -- weapon_bonus is always 0; ATK bonus comes from hero_equipment items
-  ('knight',    16, 10, 16, 10, 10, 10, 'str',   0,  0.00),
-  ('paladin',   14, 10, 14, 10, 14, 10, 'str',   0,  0.00),
-  ('barbarian', 18, 12, 16,  8, 10,  8, 'str',   0,  0.00),
-  ('assassin',   8, 20, 10, 16, 10,  8, 'dex',   0,  0.00),
-  ('archer',    10, 18, 14, 10, 10, 10, 'dex',   0, -1.00),
-  ('mage',       8, 10,  8, 18, 14, 14, 'int',   0, -2.10),
-  ('archmage',   8, 10, 10, 20, 16,  8, 'int',   0, -2.10),
-  ('healer',     8, 10, 10, 14, 20, 10, 'wis',   0, -1.00)
+  -- spd_offset values match migrateSpeedOffsets() in server.js
+  ('knight',    16, 10, 16, 10, 10, 10, 'str',   0,  1.00),
+  ('paladin',   16, 10, 14, 10, 12, 10, 'str',   0,  1.00),
+  ('barbarian', 18, 11, 13, 10, 10, 10, 'str',   0,  1.50),
+  ('assassin',  11, 18, 13, 10, 10, 10, 'dex',   0,  4.00),
+  ('archer',    10, 18, 10, 10, 10, 14, 'dex',   0,  4.00),
+  ('mage',      10, 12, 12, 18, 10, 10, 'int',   0,  2.00),
+  ('archmage',  10, 10, 10, 18, 12, 12, 'int',   0,  1.00),
+  ('healer',    10, 10, 12, 12, 18, 10, 'wis',   0,  1.00)
 ) AS v(cid, str, dex, con, int_val, wis, cha, primary_attr, weapon_bonus, spd_offset)
   ON c.cid = v.cid
 WHERE cb.character_id = c.id;
