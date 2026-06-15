@@ -168,16 +168,18 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
       }
 
       {equipPending && hero && onEquipItem && (
-        <div className="inv-equip-confirm">
-          <div className="inv-equip-confirm-name" style={{ color: RARITY_COLORS[equipPending.rarity] || '#ccc' }}>
-            {equipPending.name}
+        <div className="inv-equip-bar">
+          <div className="inv-equip-bar-info">
+            <span className="inv-equip-bar-name" style={{ color: RARITY_COLORS[equipPending.rarity] || '#ccc' }}>
+              {equipPending.name}
+            </span>
+            <span className="inv-equip-bar-stats">
+              {equipPending.atk_bonus !== 0 && <span className={equipPending.atk_bonus > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{equipPending.atk_bonus > 0 ? '+' : ''}{equipPending.atk_bonus} ATK</span>}
+              {equipPending.hp_bonus  !== 0 && <span className={equipPending.hp_bonus  > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{equipPending.hp_bonus  > 0 ? '+' : ''}{equipPending.hp_bonus} HP</span>}
+              {Number(equipPending.spd_bonus) !== 0 && <span className={Number(equipPending.spd_bonus) > 0 ? 'inv-slot-tip-stat' : 'inv-slot-tip-neg'}>{Number(equipPending.spd_bonus) > 0 ? '+' : ''}{Number(equipPending.spd_bonus).toFixed(2)} SPD</span>}
+            </span>
           </div>
-          <div className="inv-equip-confirm-stats">
-            {equipPending.atk_bonus !== 0 && <span>{equipPending.atk_bonus > 0 ? '+' : ''}{equipPending.atk_bonus} ATK</span>}
-            {equipPending.hp_bonus  !== 0 && <span>{equipPending.hp_bonus  > 0 ? '+' : ''}{equipPending.hp_bonus} HP</span>}
-            {Number(equipPending.spd_bonus) !== 0 && <span>{Number(equipPending.spd_bonus) > 0 ? '+' : ''}{Number(equipPending.spd_bonus).toFixed(2)} SPD</span>}
-          </div>
-          <div className="inv-equip-confirm-actions">
+          <div className="inv-equip-bar-actions">
             <button
               type="button"
               className="inv-btn-equip"
@@ -277,8 +279,13 @@ function SkinsTab({ catalog, ownedIds, equippedSkins, heroData, onEquipSkin, onU
 }
 
 function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg, t, toast }) {
+  const [search, setSearch] = useState('')
   const ownedBgs = catalog.filter(i => i.type === 'background' && ownedIds.has(i.id))
   const equippedBgIds = new Set((equippedBgs || []).map(b => b.id))
+
+  const filtered = search
+    ? ownedBgs.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
+    : ownedBgs
 
   if (ownedBgs.length === 0) {
     return <div className="inv-empty" style={{ marginTop: 40 }}>{t('inv.noItems')}</div>
@@ -291,13 +298,24 @@ function BackgroundsTab({ catalog, ownedIds, equippedBgs, onEquipBg, onUnequipBg
         {[0, 1, 2, 3].map(i => (
           <span key={i} className={`inv-bg-dot${i < (equippedBgs?.length ?? 0) ? ' filled' : ''}`} />
         ))}
-        <span style={{ fontSize: 10, color: '#7a70a0', marginLeft: 6 }}>
+        <span className="inv-bg-dots-label">
           {t('inv.bgsEquipped', { n: equippedBgs?.length ?? 0 })}
         </span>
       </div>
 
+      {/* Search bar */}
+      <div className="inv-bg-search-wrap">
+        <input
+          className="inv-bg-search"
+          type="text"
+          placeholder={t('shop.searchBg')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <div className="inv-cosmetics-grid">
-        {ownedBgs.map(item => {
+        {filtered.map(item => {
           const isEquipped = equippedBgIds.has(item.id)
           const previewStyle = item.preview
             ? { backgroundImage: `url(${item.preview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -503,9 +521,8 @@ export default function InventoryView({
                             {!skinUrl && <span className="inv-hero-icon">{h.icon}</span>}
                           </div>
                           <div className="inv-hero-footer">
-                            <div className="inv-hero-name">{h.name}</div>
-                            <div className={`inv-hero-role role-${cat}`}>
-                              {cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')}
+                            <div className="inv-hero-name">
+                              {h.name}{' — '}{cat === 'tank' ? t('role.tank') : cat === 'support' ? t('role.support') : t('role.dps')}
                             </div>
                           </div>
                         </div>
@@ -520,11 +537,6 @@ export default function InventoryView({
                     onClick={() => moveCarousel(1)}
                   >›</button>
                 </div>
-                {total > VISIBLE && (
-                  <div className="inv-carousel-hint">
-                    {carouselOffset + 1}–{Math.min(carouselOffset + VISIBLE, total)} / {total}
-                  </div>
-                )}
               </div>
 
               <div className="inv-panels-row">
