@@ -1635,6 +1635,7 @@ app.get('/api/campaign/leaderboard', async (req, res) => {
       SELECT DISTINCT ON (player) player, chapter, stage
       FROM campaign_progress
       ORDER BY player, chapter DESC, stage DESC
+      LIMIT 30
     `;
     const sorted = [...rows].sort((a, b) =>
       b.chapter !== a.chapter ? b.chapter - a.chapter : b.stage - a.stage

@@ -1104,10 +1104,11 @@ function startBattle() {
       hpBonus  += item.hp_bonus  * fit;
       spdBonus += item.spd_bonus * fit;
     }
-    u.atk        = Math.max(1, Math.floor(base.atk) + Math.round(atkBonus));
-    u.maxHp      = Math.max(1, base.max_hp + Math.round(hpBonus));
-    u.hp         = u.maxHp;
-    u.initiative = (base.initiative || 0) + parseFloat(spdBonus.toFixed(2));
+    u.atk          = Math.max(1, Math.floor(base.atk) + Math.round(atkBonus));
+    u.maxHp        = Math.max(1, base.max_hp + Math.round(hpBonus));
+    u.hp           = u.maxHp;
+    u.initiative   = (base.initiative || 0) + parseFloat(spdBonus.toFixed(2));
+    u._gearApplied = true;
   };
   G.board.forEach(u => _applyGear(u, _gear));
   // Enemy in bot/campaign: base stats only — player gear must not apply to the opponent
@@ -2848,8 +2849,39 @@ window.benchInfoShow = function (cid, anchorEl) {
 };
 window.benchInfoHide = function () { window.HFTooltip?.hide(); };
 
+// Returns a shallow copy of the unit with gear bonuses applied for display.
+// Only computes bonuses when maxHp is not yet set (shop/bench phase).
+// During battle, _applyGear already mutated the unit so we pass it through.
+function _gearPreviewUnit(u) {
+  if (u._gearApplied) return u;
+  const base = C[u.cid]?.levels?.[u.lv];
+  if (!base) return u;
+  const gear = window.HF_gear || {};
+  const heroAttrs = C[u.cid]?.attrs || {};
+  const slots = gear[u.cid]?.slots || {};
+  let atkBonus = 0, hpBonus = 0, spdBonus = 0;
+  for (const item of Object.values(slots)) {
+    let fit = 1.0;
+    if (item.req_attr && item.req_value)
+      fit *= Math.min(1.0, (heroAttrs[item.req_attr] ?? 10) / item.req_value);
+    if (item.req_attr2 && item.req_value2)
+      fit *= Math.min(1.0, (heroAttrs[item.req_attr2] ?? 10) / item.req_value2);
+    atkBonus += item.atk_bonus * fit;
+    hpBonus  += item.hp_bonus  * fit;
+    spdBonus += item.spd_bonus * fit;
+  }
+  const newHp = Math.max(1, base.max_hp + Math.round(hpBonus));
+  return {
+    ...u,
+    atk:        Math.max(1, Math.floor(base.atk) + Math.round(atkBonus)),
+    maxHp:      newHp,
+    hp:         newHp,
+    initiative: (base.initiative || 0) + parseFloat(spdBonus.toFixed(2)),
+  };
+}
+
 function showHeroInfo(anchorEl, unit) {
-  const html = window.HFTooltip?.heroInfoHtml?.(unit);
+  const html = window.HFTooltip?.heroInfoHtml?.(_gearPreviewUnit(unit));
   if (!html) return;
   const sticky = window.matchMedia?.("(pointer: coarse)")?.matches;
   if (sticky && typeof window.HFTooltip?.showSticky === "function") {

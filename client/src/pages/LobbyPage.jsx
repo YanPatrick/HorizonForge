@@ -1215,7 +1215,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
