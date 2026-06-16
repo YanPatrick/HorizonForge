@@ -1086,7 +1086,7 @@ app.post('/api/chest-meter/open', async (req, res) => {
     const chestType = CHEST_TYPE_MAP[chestKey] || 'treasure_chest';
     const chestName = CHEST_DISPLAY_NAMES[chestKey] || 'Veteran Chest';
     await sql`UPDATE player_init SET pending_chests_queue = ${JSON.stringify(newQueue)} WHERE player = ${authedUser}`;
-    const item = await openChest(authedUser, chestType);
+    const item = await openChest(authedUser, chestType, 'pvp');
     res.json({ ok: true, item, chestName, pending: newQueue.length });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
@@ -1366,10 +1366,11 @@ const VETERAN_REQ_VALUE = { uncommon: 10, rare: 13, epic: 16, legendary: 20 };
 const CHEST_PREFIXES   = ['Ancient','Cursed','Divine','Shadow','Burning','Frozen','Runed','Spectral','Wicked','Sacred'];
 const CHEST_SUFFIXES   = ['of Ruin','of the Fallen','of Chaos','of Dawn','of Shadows','of the Void','of Eternity','of Power'];
 const CHEST_SLOT_WORDS = {
-  amulet:'Amulet', helm:'Helm', weapon:'Blade', chest:'Cuirass',
+  amulet:'Amulet', helm:'Helm', chest:'Cuirass',
   offhand:'Shield', belt:'Belt', legs:'Greaves', gloves:'Gauntlets',
   ring1:'Ring', ring2:'Ring', boots:'Boots', special:'Relic',
 };
+const WEAPON_TYPES = ['Blade', 'Axe', 'Shortsword', 'Dagger', 'Bow', 'Staff', 'Mace', 'Spear'];
 const CHAOS_FLAVOR_TEXTS = [
   'Forjada às 3 da manhã por um ferreiro bêbado.',
   'Pertenceu a três generais diferentes. Todos pediram demissão.',
@@ -1386,7 +1387,7 @@ const CHAOS_ATTR_POOL = ['str','dex','con','int','wis','cha'];
 
 function _rollRarity(table = CHEST_RARITY_ROLL) {
   const r = Math.random() * 100;
-  return table.find(x => r < x.max).rarity;
+  return { rarity: table.find(x => r < x.max).rarity, rarityRoll: parseFloat(r.toFixed(2)) };
 }
 
 // Rolls a single stat value scaled by D20 (rolls 2-20).
@@ -1449,9 +1450,12 @@ function _pickReqs(rarity, d20, chestType) {
 }
 
 function _rollName(slot) {
-  const p = CHEST_PREFIXES[Math.floor(Math.random() * CHEST_PREFIXES.length)];
-  const s = CHEST_SUFFIXES[Math.floor(Math.random() * CHEST_SUFFIXES.length)];
-  return `${p} ${CHEST_SLOT_WORDS[slot] || 'Item'} ${s}`;
+  const p        = CHEST_PREFIXES[Math.floor(Math.random() * CHEST_PREFIXES.length)];
+  const s        = CHEST_SUFFIXES[Math.floor(Math.random() * CHEST_SUFFIXES.length)];
+  const slotWord = slot === 'weapon'
+    ? WEAPON_TYPES[Math.floor(Math.random() * WEAPON_TYPES.length)]
+    : (CHEST_SLOT_WORDS[slot] || 'Item');
+  return `${p} ${slotWord} ${s}`;
 }
 
 function _randomSlot() {
@@ -1462,7 +1466,7 @@ function _randomSlot() {
 // Returns { item_data, d20, flavor_text } ready to INSERT into items table.
 function _generateChestItem(chestType) {
   const rarityTable = chestType === 'basic_chest' ? BASIC_CHEST_RARITY_ROLL : CHEST_RARITY_ROLL;
-  const rarity  = _rollRarity(rarityTable);
+  const { rarity, rarityRoll } = _rollRarity(rarityTable);
   const slot    = _randomSlot();
   const name    = _rollName(slot);
   const d20     = Math.floor(Math.random() * 20) + 1;
@@ -1484,7 +1488,7 @@ function _generateChestItem(chestType) {
 
   const { reqAttr, reqValue, reqAttr2, reqValue2 } = _pickReqs(rarity, d20, chestType);
 
-  return { name, desc, rarity, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText };
+  return { name, desc, rarity, rarityRoll, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText };
 }
 
 /**
@@ -1494,19 +1498,23 @@ function _generateChestItem(chestType) {
  * rolling an item and adding it to player_items.
  * Called internally from verify-purchase — not a public standalone endpoint.
  */
-async function openChest(username, chestType) {
-  const { name, desc, rarity, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText } = _generateChestItem(chestType);
+const CHEST_TYPE_LABEL = { treasure_chest: 'veteran', chaos_chest: 'chaos', basic_chest: 'basic' };
+
+async function openChest(username, chestType, origin = 'shop') {
+  const typeLabel  = CHEST_TYPE_LABEL[chestType] || 'veteran';
+  const itemSource = `chest_${typeLabel}_${origin}`;
+  const { name, desc, rarity, rarityRoll, slot, d20, stats, reqAttr, reqValue, reqAttr2, reqValue2, flavorText } = _generateChestItem(chestType);
   const [item] = await sql`
     INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus,
-                       source, d20_roll, req_attr, req_value, req_attr2, req_value2, flavor_text)
+                       source, d20_roll, rarity_roll, req_attr, req_value, req_attr2, req_value2, flavor_text)
     VALUES (${name}, ${desc}, ${rarity}, ${slot},
             ${stats.atk_bonus}, ${stats.hp_bonus}, ${stats.spd_bonus},
-            ${'chest'}, ${d20}, ${reqAttr}, ${reqValue}, ${reqAttr2}, ${reqValue2}, ${flavorText})
+            ${itemSource}, ${d20}, ${rarityRoll}, ${reqAttr}, ${reqValue}, ${reqAttr2}, ${reqValue2}, ${flavorText})
     RETURNING *
   `;
   await sql`
     INSERT INTO player_items (player, item_id, source)
-    VALUES (${username}, ${item.id}, ${'chest'})
+    VALUES (${username}, ${item.id}, ${itemSource})
     ON CONFLICT DO NOTHING
   `;
   const reqLog = [reqAttr && `${reqAttr}>=${reqValue}`, reqAttr2 && `${reqAttr2}>=${reqValue2}`].filter(Boolean).join(' ');
@@ -1855,6 +1863,7 @@ async function migrateChestMeter() {
     await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS chest_meter            NUMERIC(10,3) NOT NULL DEFAULT 0`;
     await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS pending_chests_queue   JSONB         NOT NULL DEFAULT '[]'`;
     await sql`ALTER TABLE player_init ADD COLUMN IF NOT EXISTS last_basic_chest_at    DATE`;
+    await sql`ALTER TABLE items ADD COLUMN IF NOT EXISTS rarity_roll NUMERIC(5,2)`;
     console.log('   chest_meter columns: ✅');
   } catch (e) {
     console.error('   chest_meter migration: ❌', e.message);
@@ -2168,7 +2177,7 @@ app.post('/api/shop/verify-purchase', async (req, res) => {
           return res.status(402).json({ ok: false, error: 'Payment not found or timed out' });
         }
       }
-      const rolledItem = await openChest(username, item_id);
+      const rolledItem = await openChest(username, item_id, 'shop');
       console.log(`💰 Chest purchased: ${username} → ${item_id} (${price} HIVE)`);
       return res.json({ ok: true, item: rolledItem });
     }

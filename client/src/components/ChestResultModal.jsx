@@ -57,11 +57,8 @@ export default function ChestResultModal({ result, onClose }) {
         <div className="cr-inner">
           <div className="cr-badge">✦ {chestName?.toUpperCase?.() || ''}</div>
 
-          {isCritHit  && <div className="cr-crit cr-crit--hit">⚡ CRITICAL HIT · D20 = 20</div>}
-          {isCritFail && <div className="cr-crit cr-crit--fail">💀 CRITICAL FAIL · D20 = 1</div>}
-          {!isCritHit && !isCritFail && item.d20_roll != null && (
-            <div className="cr-d20">🎲 D20 = <strong>{item.d20_roll}</strong></div>
-          )}
+          {isCritHit  && <div className="cr-crit cr-crit--hit">⚡ THE FORGE GODS BLESS YOU! PERFECT ROLL!</div>}
+          {isCritFail && <div className="cr-crit cr-crit--fail">💀 THE CHAOS CORRUPTS IT... A CURSED ARTIFACT.</div>}
 
           <div
             className="cr-ring"
