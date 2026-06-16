@@ -23,6 +23,93 @@ const SLOT_ICONS = {
   gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
 }
 
+// Image-based icons for slots (generic — used for any hero).
+const SLOT_IMAGES = {
+  amulet:  '/images/slots/amulet-slot.png',
+  helm:    '/images/slots/helm-slot.png',
+  chest:   '/images/slots/chest-armor-slot.png',
+  special: '/images/slots/special-slot.png',
+  belt:    '/images/slots/belt-slot.png',
+  legs:    '/images/slots/legs-slot.png',
+  gloves:  '/images/slots/gloves-slot.png',
+  ring1:   '/images/slots/ring-slot.png',
+  ring2:   '/images/slots/ring-slot.png',
+  boots:   '/images/slots/boots-slot.png',
+}
+
+// Equipped weapon images — key matches lowercase word in item name
+const WEAPON_IMAGES = {
+  blade:      '/images/slots/weapon-blade.png',
+  axe:        '/images/slots/weapon-axe.png',
+  shortsword: '/images/slots/weapon-shortsword.png',
+  // sword:   '/images/slots/weapon-sword.png',
+  // dagger:  '/images/slots/weapon-dagger.png',
+  // bow:     '/images/slots/weapon-bow.png',
+  // staff:   '/images/slots/weapon-staff.png',
+  // mace:    '/images/slots/weapon-mace.png',
+  // spear:   '/images/slots/weapon-spear.png',
+}
+
+// Empty / starter slot placeholder per slot type — can vary by hero style
+const SLOT_PLACEHOLDERS = {
+  weapon: {
+    melee:  '/images/slots/weapon-sword-slot.png',
+    ranged: '/images/slots/weapon-bow-slot.png',
+    magic:  '/images/slots/weapon-staff-slot.png',
+  },
+  offhand: {
+    melee:  '/images/slots/offhand-shield-slot.png',
+    ranged: '/images/slots/offhand-quiver-slot.png',
+    magic:  '/images/slots/offhand-grimoire-slot.png',
+  },
+}
+
+// Maps hero CID to weapon style for placeholder selection
+const HERO_WEAPON_STYLE = {
+  knight:    'melee',
+  paladin:   'melee',
+  barbarian: 'melee',
+  assassin:  'melee',
+  archer:    'ranged',
+  mage:      'magic',
+  archmage:  'magic',
+  healer:    'magic',
+}
+
+function getSlotIcon(slotKey, itemName, heroCid) {
+  const hasItem = !!itemName
+
+  if (slotKey === 'weapon') {
+    if (hasItem) {
+      const nameLC = itemName.toLowerCase()
+      const match  = Object.keys(WEAPON_IMAGES).find(k => nameLC.includes(k))
+      if (match) return { type: 'img', src: WEAPON_IMAGES[match] }
+    } else {
+      const style = HERO_WEAPON_STYLE[heroCid]
+      const src   = style && SLOT_PLACEHOLDERS.weapon[style]
+      if (src) return { type: 'img', src }
+    }
+    return { type: 'emoji', value: SLOT_ICONS.weapon }
+  }
+
+  if (!hasItem && SLOT_PLACEHOLDERS[slotKey]) {
+    const style = HERO_WEAPON_STYLE[heroCid]
+    const src   = style && SLOT_PLACEHOLDERS[slotKey][style]
+    if (src) return { type: 'img', src }
+  }
+
+  const src = SLOT_IMAGES[slotKey]
+  if (src) return { type: 'img', src }
+  return { type: 'emoji', value: SLOT_ICONS[slotKey] || '?' }
+}
+
+function SlotIcon({ slotKey, itemName, heroCid, style }) {
+  const icon = getSlotIcon(slotKey, itemName, heroCid)
+  if (icon.type === 'img')
+    return <img src={icon.src} alt={slotKey} style={{ width: '1.3em', height: '1.3em', objectFit: 'contain', ...style }} />
+  return <span style={{ fontSize: '1.3em', ...style }}>{icon.value}</span>
+}
+
 function roleCategory(role) {
   if (!role) return 'dps'
   const r = role.toLowerCase()
@@ -63,7 +150,7 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
               data-label={SLOT_LABELS[slotKey]}
               onClick={canUnequip ? () => setUnequipPending(isPending ? null : { slotKey, item }) : undefined}
             >
-              <span style={{ fontSize: '1.3em', opacity: item ? 1 : 0.3 }}>{SLOT_ICONS[slotKey] || '?'}</span>
+              <SlotIcon slotKey={slotKey} itemName={item?.name} heroCid={hero.cid} style={{ opacity: item ? 1 : 0.3 }} />
               {item && (
                 <div className="inv-slot-tip">
                   <div className="inv-slot-tip-name">{item.name}</div>
@@ -158,7 +245,7 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
                   title={`${item.name} (${item.slot_type})`}
                   onClick={() => setEquipPending(isPending ? null : item)}
                 >
-                  <span>{SLOT_ICONS[item.slot_type] || '📦'}</span>
+                  <SlotIcon slotKey={item.slot_type} itemName={item.name} />
                   <span className="inv-item-rarity-bar" style={{ background: color }} />
                 </div>
               )
