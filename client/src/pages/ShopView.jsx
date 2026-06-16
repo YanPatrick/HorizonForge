@@ -16,7 +16,7 @@ function sortItems(items, sortBy, owned) {
   }
 }
 
-export default function ShopView({ session, toast, heroData }) {
+export default function ShopView({ session, toast, heroData, onItemAcquired }) {
   const { t } = useT()
 
   const FILTERS = [
@@ -124,8 +124,19 @@ export default function ShopView({ session, toast, heroData }) {
           }).then(r => r.json())
           if (res.ok) {
             if (res.item) {
-              // Chest purchase: show rolled item result
               setChestResult({ chestName: modal.name, item: res.item })
+              onItemAcquired?.({
+                id:          res.item.id,
+                name:        res.item.name,
+                description: '',
+                rarity:      res.item.rarity,
+                slot_type:   res.item.slot_type,
+                atk_bonus:   res.item.atk_bonus,
+                hp_bonus:    res.item.hp_bonus,
+                spd_bonus:   res.item.spd_bonus,
+                source:      'chest',
+                equipped_on: null,
+              })
             } else {
               setOwned(prev => new Set([...prev, modal.id]))
               toast?.(`${modal.name} acquired!`)

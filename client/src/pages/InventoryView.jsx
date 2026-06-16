@@ -121,7 +121,7 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
   )
 }
 
-function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, setEquipPending, onEquipItem, t }) {
+function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, setEquipPending, onEquipItem, t, onRefresh, refreshing }) {
   const SORT_OPTS = [
     { value: 'rarity',      label: t('inv.sortRarity') },
     { value: 'name',        label: t('inv.sortName') },
@@ -134,13 +134,27 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
         <div className="inv-panel-title">
           {t('hero.inventory')} ({items.length})
         </div>
-        <select
-          className="inv-sort-select"
-          value={sortBy}
-          onChange={e => setSortBy(e.target.value)}
-        >
-          {SORT_OPTS.map(o => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {onRefresh && (
+            <button
+              type="button"
+              className="inv-sort-select"
+              style={{ cursor: 'pointer', padding: '2px 8px', fontSize: '0.8em' }}
+              onClick={onRefresh}
+              disabled={refreshing}
+              title={t('inv.refresh') || 'Refresh inventory'}
+            >
+              {refreshing ? '⌛' : '↺'}
+            </button>
+          )}
+          <select
+            className="inv-sort-select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
+            {SORT_OPTS.map(o => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {items.length === 0
@@ -371,6 +385,7 @@ export default function InventoryView({
   onEquipItem, onUnequipItem,
   onEquipSkin, onUnequipSkin,
   onEquipBg, onUnequipBg,
+  onRefreshItems,
   toast,
 }) {
   const { t } = useT()
@@ -386,6 +401,7 @@ export default function InventoryView({
   const [catalog, setCatalog] = useState([])
   const [ownedIds, setOwnedIds] = useState(new Set())
   const [cosmeticsLoading, setCosmeticsLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (!session?.token) { setCosmeticsLoading(false); return }
@@ -557,6 +573,8 @@ export default function InventoryView({
                   setEquipPending={setEquipPending}
                   onEquipItem={onEquipItem}
                   t={t}
+                  onRefresh={onRefreshItems ? async () => { setRefreshing(true); await onRefreshItems(); setRefreshing(false) } : undefined}
+                  refreshing={refreshing}
                 />
               </div>
             </>
