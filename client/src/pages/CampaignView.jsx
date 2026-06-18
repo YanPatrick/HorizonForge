@@ -9,7 +9,7 @@ const HERO_ICONS = {
 }
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉']
-const TOTAL_CHAPTERS = 3
+const TOTAL_CHAPTERS = 2
 const CHAPTER_BG = { 1: '/images/campaign/chapter1-bg.jpg', 2: '/images/campaign/chapter2-bg.jpg' }
 
 export default function CampaignView({ session, formations, defaultSlot, toast }) {

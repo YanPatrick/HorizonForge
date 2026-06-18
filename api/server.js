@@ -1719,7 +1719,7 @@ const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin
 app.get('/api/campaign', async (req, res) => {
   const { player, chapter: chapterParam } = req.query;
   const chapter = Number(chapterParam) || 1;
-  const chapterStages = CAMPAIGN_CHAPTERS[chapter] || CAMPAIGN_STAGES;
+  const chapterStages = CAMPAIGN_CHAPTERS[chapter] || [];
   try {
     const completed = player
       ? (await sql`SELECT stage FROM campaign_progress WHERE player = ${player} AND chapter = ${chapter}`).map(r => r.stage)
