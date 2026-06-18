@@ -144,6 +144,7 @@ export default function BattlePage() {
     isPvP: false,
     isCampaign: false,
     campaignStage: null,
+    campaignChapter: null,
     campaignReward: null, // set async when POST /api/campaign/complete resolves
     wager: 0,
     submitting: null, // null | { state: 'pending' | 'done' }
@@ -235,7 +236,7 @@ export default function BattlePage() {
         fetch('/api/campaign/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${sessionForBadge.token}` },
-          body: JSON.stringify({ stage: data.campaignStage }),
+          body: JSON.stringify({ stage: data.campaignStage, chapter: data.campaignChapter ?? 1 }),
         })
           .then(r => r.json())
           .then(d => {
@@ -263,6 +264,7 @@ export default function BattlePage() {
       isPvP: !!data?.isPvP,
       isCampaign: !!data?.isCampaign,
       campaignStage: data?.campaignStage ?? null,
+      campaignChapter: data?.campaignChapter ?? null,
       campaignReward: null,
       wager: data?.wager ?? 0,
       submitting: data?.isPvP ? { state: 'pending' } : null,

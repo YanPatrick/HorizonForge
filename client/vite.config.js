@@ -23,6 +23,7 @@ export default defineConfig({
       '/shared': { target: 'http://localhost:3000', changeOrigin: true },
       '/images': { target: 'http://localhost:3000', changeOrigin: true },
       '/heroes': { target: 'http://localhost:3000', changeOrigin: true },
+      '/enemies': { target: 'http://localhost:3000', changeOrigin: true },
       '/css': { target: 'http://localhost:3000', changeOrigin: true },
       '/js': { target: 'http://localhost:3000', changeOrigin: true },
       '/mobile.css': { target: 'http://localhost:3000', changeOrigin: true },

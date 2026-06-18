@@ -108,12 +108,14 @@ function simulate(pb, eb) {
   // Deep-clone boards and attach metadata
   const ps = pb
     .map((u, i) =>
-      u ? { ...u, slot: i, side: "p", alive: true, enraged: false } : null,
+      u ? { ...u, slot: i, side: "p", alive: true, enraged: false,
+            shamansRevived: false, snared: false, poisoned: 0, bloodFrenzyActive: false } : null,
     )
     .filter(Boolean);
   const es = eb
     .map((u, i) =>
-      u ? { ...u, slot: i, side: "e", alive: true, enraged: false } : null,
+      u ? { ...u, slot: i, side: "e", alive: true, enraged: false,
+            shamansRevived: false, snared: false, poisoned: 0, bloodFrenzyActive: false } : null,
     )
     .filter(Boolean);
 
@@ -133,6 +135,16 @@ function simulate(pb, eb) {
     if (tgt.cid === "knight") dmg = Math.floor(dmg * Math.max(0, 1 - tgt.skillPower));
     tgt.hp = Math.max(0, tgt.hp - dmg);
     if (tgt.hp <= 0) {
+      // Goblin Shaman — Last Rite: revive once with full HP on death
+      if (tgt.cid === "goblinshaman" && !tgt.shamansRevived) {
+        tgt.shamansRevived = true;
+        evs.push({ type: "atk", uid: atk.id, tid: tgt.id, amt: dmg, isCrit, ...extra, tick });
+        tgt.hp = tgt.maxHp;
+        tgt.alive = true;
+        evs.push({ type: "ability", uid: tgt.id, abilName: "Last Rite", tick });
+        evs.push({ type: "heal", uid: tgt.id, tid: tgt.id, amt: tgt.maxHp, tick });
+        return;
+      }
       tgt.alive = false;
       evs.push({
         type: "kill",
@@ -153,6 +165,19 @@ function simulate(pb, eb) {
         ...extra,
         tick,
       });
+      // Goblin Overseer — Retaliation: 5% chance to counter-attack when hit
+      if (tgt.cid === "goblinoverseer" && tgt.alive && atk.alive && Math.random() < 0.05) {
+        let ctrDmg = tgt.atk;
+        if (atk.cid === "knight") ctrDmg = Math.floor(ctrDmg * Math.max(0, 1 - atk.skillPower));
+        atk.hp = Math.max(0, atk.hp - ctrDmg);
+        if (atk.hp <= 0) {
+          atk.alive = false;
+          evs.push({ type: "kill", uid: tgt.id, tid: atk.id, amt: ctrDmg, isCrit: false, tick });
+        } else {
+          evs.push({ type: "atk", uid: tgt.id, tid: atk.id, amt: ctrDmg, isCrit: false, tick });
+        }
+        evs.push({ type: "ability", uid: tgt.id, abilName: "Retaliation", tick, silent: true });
+      }
     }
   }
 
@@ -223,6 +248,16 @@ function simulate(pb, eb) {
   applyAura(ps);
   applyAura(es);
   applySneakStrikesFairly(ps, es);
+
+  // Goblin Alchemist — Poison Field: pre-battle, poisons all enemy units for 10 dmg/round
+  function applyAlchemistPoison(casters, targets) {
+    casters.filter((u) => u.cid === "goblinalchemist").forEach((alch) => {
+      targets.forEach((tgt) => { tgt.poisoned += 10; });
+      evs.push({ type: "ability", uid: alch.id, abilName: "Poison Field", tick: -1 });
+    });
+  }
+  applyAlchemistPoison(es, ps);
+  applyAlchemistPoison(ps, es);
 
   // ── Target selection ─────────────────────────────────────────────────────────
   function pickTarget(unit) {
@@ -301,12 +336,34 @@ function simulate(pb, eb) {
 
     evs.push({ type: "round_start", round, tick });
 
+    // Poison ticks — Goblin Alchemist Poison Field
+    [...ps, ...es].filter((u) => u.alive && u.poisoned > 0).forEach((u) => {
+      u.hp = Math.max(0, u.hp - u.poisoned);
+      evs.push({ type: "dot", tid: u.id, amt: u.poisoned, tick });
+      if (u.hp <= 0) {
+        u.alive = false;
+        evs.push({ type: "kill", uid: "dot", tid: u.id, amt: u.poisoned, isCrit: false, tick });
+      }
+    });
+
     // Rola iniciativa para este round
     const roundQueue = buildInitiativeQueue();
 
     for (let qi = 0; qi < roundQueue.length; qi++) {
       const unit = roundQueue[qi];
       if (!unit.alive) continue;
+
+      // Goblin Trapper — Web Snare: snared units have 50% chance to skip their turn
+      if (unit.snared) {
+        const trapperAlive = (unit.side === "p" ? es : ps).some((f) => f.cid === "goblintrapper" && f.alive);
+        if (!trapperAlive) {
+          unit.snared = false;
+        } else if (Math.random() < 0.5) {
+          evs.push({ type: "ability", uid: unit.id, abilName: "Snared", tick, silent: true });
+          tick++;
+          continue;
+        }
+      }
 
       // Se um lado foi eliminado durante este round, para imediatamente.
       // Sem este check, os heróis sobreviventes continuariam emitindo "queue"
@@ -327,6 +384,13 @@ function simulate(pb, eb) {
         unit.enraged = true;
         unit.atk = Math.floor(unit.atk * (1 + unit.skillPower));
         evs.push({ type: "ability", uid: unit.id, abilName: "Fury", tick });
+      }
+
+      // Goblin Overlord — Warlord's Rage: below 50% HP, ATK increases to 150
+      if (unit.cid === "goblinoverlord" && !unit.enraged && unit.hp < unit.maxHp * 0.5) {
+        unit.enraged = true;
+        unit.atk = 150;
+        evs.push({ type: "ability", uid: unit.id, abilName: "Warlord's Rage", tick });
       }
 
       if (unit.cid === "healer") {
@@ -383,6 +447,27 @@ function simulate(pb, eb) {
 
           if (unit.cid === "archer" && isCrit) {
             evs.push({ type: "ability", uid: unit.id, abilName: "Precise Shot", tick, silent: true });
+          }
+
+          // Goblin Berserker — Blood Frenzy: below 50% HP, attacks twice per round
+          if (unit.cid === "goblinberserker" && unit.hp < unit.maxHp * 0.5) {
+            if (!unit.bloodFrenzyActive) {
+              unit.bloodFrenzyActive = true;
+              evs.push({ type: "ability", uid: unit.id, abilName: "Blood Frenzy", tick });
+            }
+            const t2 = pickTarget(unit);
+            if (t2 && t2.alive) {
+              const res2 = resolvePhysicalAttack(unit, t2, unit.atk);
+              if (!res2.hit && !res2.evaded) evs.push({ type: "miss", uid: unit.id, tid: t2.id, tick });
+              if (res2.evaded) evs.push({ type: "evade", uid: unit.id, tid: t2.id, tick });
+              if (res2.damage > 0) dealDmg(unit, t2, res2.damage, res2.crit, { armorAbs: res2.armorAbs || 0 });
+            }
+          }
+
+          // Goblin Trapper — Web Snare: 30% chance on damage to snare target (50% chance skip turn)
+          if (unit.cid === "goblintrapper" && finalDmg > 0 && t.alive && !t.snared && Math.random() < 0.3) {
+            t.snared = true;
+            evs.push({ type: "ability", uid: unit.id, targetId: t.id, abilName: "Web Snare", tick });
           }
 
           // Fireball (Mage) — splash mágico em alvos adjacentes (+shape)

@@ -23,7 +23,7 @@ const SLOT_ICONS = {
   gloves: '🧤', ring1: '💍', boots: '🥾', ring2: '💍',
 }
 
-// Image-based icons for slots (generic — used for any hero).
+// Slot placeholder images — shown when slot is empty or has a starter item.
 const SLOT_IMAGES = {
   amulet:  '/images/slots/amulet-slot.png',
   helm:    '/images/slots/helm-slot.png',
@@ -35,6 +35,13 @@ const SLOT_IMAGES = {
   ring1:   '/images/slots/ring-slot.png',
   ring2:   '/images/slots/ring-slot.png',
   boots:   '/images/slots/boots-slot.png',
+}
+
+// Images shown when a non-weapon slot has an item equipped.
+const EQUIPPED_IMAGES = {
+  special: '/images/slots/special-1.png',
+  // helm:    '/images/slots/helm-1.png',
+  // chest:   '/images/slots/chest-1.png',
 }
 
 // Equipped weapon images — key matches lowercase word in item name
@@ -92,7 +99,13 @@ function getSlotIcon(slotKey, itemName, heroCid) {
     return { type: 'emoji', value: SLOT_ICONS.weapon }
   }
 
-  if (!hasItem && SLOT_PLACEHOLDERS[slotKey]) {
+  if (hasItem) {
+    const src = EQUIPPED_IMAGES[slotKey]
+    if (src) return { type: 'img', src }
+    return { type: 'emoji', value: SLOT_ICONS[slotKey] || '?' }
+  }
+
+  if (SLOT_PLACEHOLDERS[slotKey]) {
     const style = HERO_WEAPON_STYLE[heroCid]
     const src   = style && SLOT_PLACEHOLDERS[slotKey][style]
     if (src) return { type: 'img', src }

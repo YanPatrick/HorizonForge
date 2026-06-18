@@ -10,7 +10,7 @@ const HERO_ICONS = {
 
 const RANK_MEDAL = ['🥇', '🥈', '🥉']
 const TOTAL_CHAPTERS = 3
-const CHAPTER_BG = { 1: '/images/campaign/chapter1-bg.jpg' }
+const CHAPTER_BG = { 1: '/images/campaign/chapter1-bg.jpg', 2: '/images/campaign/chapter2-bg.jpg' }
 
 export default function CampaignView({ session, formations, defaultSlot, toast }) {
   const { t, lang } = useT()
@@ -20,12 +20,14 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
   const [loading, setLoading] = useState(true)
   const [leaderboard, setLeaderboard] = useState([])
   const [chapter, setChapter] = useState(1)
+  const [enemyDefs, setEnemyDefs] = useState({})
+  const [chapterPlayable, setChapterPlayable] = useState(true)
 
   const username = session?.username
   const isGuest = session?.mode === 'guest'
 
   useEffect(() => {
-    fetchCampaign()
+    fetchCampaign(1)
     fetch('/api/campaign/leaderboard')
       .then(r => r.json())
       .then(d => { if (d.ok) setLeaderboard(d.leaderboard) })
@@ -35,16 +37,20 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
   function changeChapter(n) {
     setChapter(n)
     setSelected(null)
+    fetchCampaign(n)
   }
 
-  async function fetchCampaign() {
+  async function fetchCampaign(ch = chapter) {
     setLoading(true)
     try {
-      const url = username ? `/api/campaign?player=${encodeURIComponent(username)}` : '/api/campaign'
+      const base = `/api/campaign?chapter=${ch}`
+      const url = username ? `${base}&player=${encodeURIComponent(username)}` : base
       const res = await fetch(url)
       const d = await res.json()
       if (d.ok) {
         setStages(d.stages)
+        setChapterPlayable(d.playable !== false)
+        if (d.enemyDefs) setEnemyDefs(prev => ({ ...prev, ...d.enemyDefs }))
         setLoading(false)
         return d.stages
       }
@@ -65,9 +71,11 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
     sessionStorage.setItem('hf_battle_cfg', JSON.stringify({
       mode: 'campaign',
       stage: stageDef.stage,
+      chapter,
       format: stageDef.format,
       formationHeroIds,
       campaignEnemies: stageDef.enemies,
+      enemyDefs,
     }))
     navigate('/battle')
   }
@@ -104,35 +112,30 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
           </div>
 
           {/* Chapter 1 — real content */}
-          {chapter === 1 && (
-            loading ? (
-              <div className="campaign-loading">{t('campaign.loading')}</div>
-            ) : (
-              stages.map(s => (
-                <button
-                  key={s.stage}
-                  className={[
-                    'campaign-stage-item',
-                    s.completed ? 'completed' : '',
-                    !s.unlocked ? 'locked' : '',
-                    selected === s.stage ? 'active' : '',
-                  ].filter(Boolean).join(' ')}
-                  disabled={!s.unlocked}
-                  onClick={() => setSelected(s.stage)}
-                  type="button"
-                >
-                  <span className="campaign-stage-num">{s.stage}</span>
-                  <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
-                  <span className="campaign-stage-status">
-                    {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
-                  </span>
-                </button>
-              ))
-            )
-          )}
-
-          {/* Future chapters — coming soon mask */}
-          {chapter > 1 && (
+          {loading ? (
+            <div className="campaign-loading">{t('campaign.loading')}</div>
+          ) : stages.length > 0 ? (
+            stages.map(s => (
+              <button
+                key={s.stage}
+                className={[
+                  'campaign-stage-item',
+                  s.completed ? 'completed' : '',
+                  !s.unlocked ? 'locked' : '',
+                  selected === s.stage ? 'active' : '',
+                ].filter(Boolean).join(' ')}
+                disabled={!s.unlocked}
+                onClick={() => setSelected(s.stage)}
+                type="button"
+              >
+                <span className="campaign-stage-num">{s.stage}</span>
+                <span className="campaign-stage-name">{lang === 'pt-BR' ? s.name : (s.name_en || s.name)}</span>
+                <span className="campaign-stage-status">
+                  {s.completed ? '✅' : s.unlocked ? '▶' : '🔒'}
+                </span>
+              </button>
+            ))
+          ) : (
             <div className="campaign-coming-soon">
               <span className="campaign-cs-lock">🔒</span>
               <span className="campaign-cs-label">
@@ -164,8 +167,8 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
           )}
         </div>
 
-        {/* Detail panel — only for chapter 1 */}
-        {chapter === 1 && selectedStage && (
+        {/* Detail panel */}
+        {selectedStage && (
           <div className="campaign-detail">
             <div className="campaign-detail-title">{lang === 'pt-BR' ? selectedStage.name : (selectedStage.name_en || selectedStage.name)}</div>
             <div className="campaign-detail-format">
@@ -178,13 +181,21 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
               {selectedStage.enemies.map((e, i) => (
                 <div key={i} className="campaign-enemy-chip">
                   <span className="campaign-enemy-ico">{HERO_ICONS[e.cid] || '⚔️'}</span>
-                  <span className="campaign-enemy-name">{e.cid.charAt(0).toUpperCase() + e.cid.slice(1)}</span>
-                  <span className="campaign-enemy-lv">{'★'.repeat(e.level)}</span>
+                  <span className="campaign-enemy-name">{enemyDefs[e.cid]?.name || (e.cid.charAt(0).toUpperCase() + e.cid.slice(1))}</span>
+                  <span className="campaign-enemy-lv">{e.level ? '★'.repeat(e.level) : ''}</span>
                 </div>
               ))}
             </div>
 
-            {selectedStage.completed ? (
+            {!chapterPlayable ? (
+              <div className="campaign-detail-done" style={{ opacity: 0.7 }}>
+                🔒 {lang === 'pt-BR' ? 'Em breve — este capítulo ainda não está disponível para batalha.' : 'Coming soon — this chapter is not available for battle yet.'}
+              </div>
+            ) : !selectedStage.unlocked ? (
+              <div className="campaign-detail-done" style={{ opacity: 0.7 }}>
+                ⚔️ {lang === 'pt-BR' ? 'Vença o desafio anterior para enfrentar esse novo oponente.' : 'Defeat the previous challenge to face this new opponent.'}
+              </div>
+            ) : selectedStage.completed ? (
               <div className="campaign-detail-done">{t('campaign.stageCompleted')}</div>
             ) : (
               <button className="campaign-battle-btn" type="button" onClick={() => startStage(selectedStage)}>
