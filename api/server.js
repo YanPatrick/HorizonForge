@@ -318,6 +318,7 @@ if (!isDev) {
 // Em vez disso, só sirva o necessário:
 app.use('/images', express.static(join(__dirname, '../public/images'), noCacheOpts));
 app.use('/heroes', express.static(join(__dirname, '../public/heroes'), noCacheOpts));
+app.use('/enemies', express.static(join(__dirname, '../public/enemies'), noCacheOpts));
 // Shared (se necessário)
 app.use('/shared', express.static(join(__dirname, '../shared'), noCacheOpts));
 app.use('/js', express.static(join(__dirname, '../public/js'), noCacheOpts));
@@ -431,6 +432,52 @@ async function refreshMaxUnitsCap() {
   }
 }
 
+// ── Campaign: Enemy definitions (non-hero units) ──────────────────────────────
+const CAMPAIGN_ENEMIES = {
+  goblinscavenger: {
+    cid: 'goblinscavenger', name: 'Goblin Scavenger', icon: '👺',
+    portrait: '/enemies/goblinscavenger.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 100, atk: 20, spd: 1.0,
+  },
+  goblinshaman: {
+    cid: 'goblinshaman', name: 'Goblin Shaman', icon: '🧙',
+    portrait: '/enemies/goblinshaman.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 50, atk: 30, spd: 1.0,
+  },
+  goblinberserker: {
+    cid: 'goblinberserker', name: 'Goblin Berserker', icon: '💢',
+    portrait: '/enemies/goblinberserker.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 150, atk: 80, spd: 1.0,
+  },
+  goblintrapper: {
+    cid: 'goblintrapper', name: 'Goblin Trapper', icon: '🕸️',
+    portrait: '/enemies/goblintrapper.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 40, atk: 20, spd: 3.0,
+  },
+  goblinoverseer: {
+    cid: 'goblinoverseer', name: 'Goblin Overseer', icon: '👁️',
+    portrait: '/enemies/goblinoverseer.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 200, atk: 50, spd: 1.0,
+  },
+  goblinalchemist: {
+    cid: 'goblinalchemist', name: 'Goblin Alchemist', icon: '⚗️',
+    portrait: '/enemies/goblinalchemist.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 80, atk: 50, spd: 2.0,
+  },
+  goblinoverlord: {
+    cid: 'goblinoverlord', name: 'Goblin Overlord', icon: '👑',
+    portrait: '/enemies/goblinoverlord.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 150, atk: 100, spd: 1.0,
+  },
+};
+
 // ── Campaign: Chapter 1 stage definitions ─────────────────────────────────────
 const CAMPAIGN_STAGES = [
   {
@@ -479,6 +526,63 @@ const CAMPAIGN_STAGES = [
     reward_slug: 'campaign_ch1_s5',
   },
 ];
+
+// ── Campaign: Chapter 2 stage definitions ─────────────────────────────────────
+const CAMPAIGN_STAGES_CH2 = [
+  {
+    stage: 1, name: 'A Floresta dos Goblins', name_en: 'The Goblin Forest', format: 3,
+    lore_pre:    'Ao adentrar o território do Capítulo 2, o caminho é bloqueado por goblins famintos. Pequenos, mas perigosos em grupo.',
+    lore_pre_en: 'As you enter Chapter 2 territory, the path is blocked by hungry goblins. Small, but dangerous in numbers.',
+    lore_post:    'Os goblins dispersam entre as árvores. O caminho está livre — por enquanto.',
+    lore_post_en: 'The goblins scatter into the trees. The path is clear — for now.',
+    enemies: [{ cid: 'goblinscavenger', enemy: true }, { cid: 'goblinscavenger', enemy: true }],
+    reward_slug: null,
+  },
+  {
+    stage: 2, name: 'A Armadilha do Caçador', name_en: "The Hunter's Trap", format: 3,
+    lore_pre:    'Um Trapper goblin espalhou redes por todo o caminho. Ao seu lado, um Shaman murmura encantamentos sombrios. Algo sobre eles sugere que a morte aqui não é permanente.',
+    lore_pre_en: 'A goblin Trapper has spread nets across the path. Beside him, a Shaman mutters dark chants. Something about them suggests death here is not permanent.',
+    lore_post:    'As redes se dissolvem. O Shaman cai pela segunda vez, e desta vez não se levanta. Avante.',
+    lore_post_en: 'The nets dissolve. The Shaman falls a second time, and this time does not rise. Forward.',
+    enemies: [{ cid: 'goblintrapper', enemy: true }, { cid: 'goblinshaman', enemy: true }],
+    reward_slug: null,
+  },
+  {
+    stage: 3, name: 'A Fúria do Berserk', name_en: 'The Berserker Frenzy', format: 5,
+    lore_pre:    'Dois Berserkers goblins bloqueiam a passagem, feridas abertas e olhos injetados de sangue. Quanto mais você os fere, mais perigosos se tornam.',
+    lore_pre_en: 'Two goblin Berserkers block the passage, open wounds and bloodshot eyes. The more you hurt them, the more dangerous they become.',
+    lore_post:    'Os Berserkers tombam, exaustos demais para continuar. A raiva os consumiu junto com a derrota.',
+    lore_post_en: 'The Berserkers fall, too exhausted to continue. Their rage consumed them along with their defeat.',
+    enemies: [{ cid: 'goblinberserker', enemy: true }, { cid: 'goblinberserker', enemy: true }],
+    reward_slug: null,
+  },
+  {
+    stage: 4, name: 'O Acampamento Venenoso', name_en: 'The Poisoned Camp', format: 5,
+    lore_pre:    'O Alquimista goblin preparou seu veneno antes mesmo de você chegar. O chão ao seu redor borbulha com substâncias corrosivas. Um Scavenger e um Overseer guardam o perímetro.',
+    lore_pre_en: 'The goblin Alchemist prepared his poison before you even arrived. The ground around him bubbles with corrosive substances. A Scavenger and an Overseer guard the perimeter.',
+    lore_post:    'O veneno se dissipa com a derrota do Alquimista. O Overseer recuou — pela última vez.',
+    lore_post_en: "The poison fades with the Alchemist's defeat. The Overseer retreated — for the last time.",
+    enemies: [{ cid: 'goblinalchemist', enemy: true }, { cid: 'goblinoverseer', enemy: true }, { cid: 'goblinscavenger', enemy: true }],
+    reward_slug: null,
+  },
+  {
+    stage: 5, name: 'O Senhor dos Goblins', name_en: 'The Goblin Overlord', format: 7,
+    lore_pre:    'No centro do acampamento, o Overlord goblin aguarda entronizado em uma pilha de sucata. Ao seu redor: um Shaman, um Trapper e um Berserker. Ele não negocia. Ele não recua. Quanto mais sangrar, mais letal se torna.',
+    lore_pre_en: "At the center of the camp, the goblin Overlord waits enthroned on a pile of scrap. Around him: a Shaman, a Trapper, and a Berserker. He doesn't negotiate. He doesn't retreat. The more he bleeds, the more lethal he becomes.",
+    lore_post:    'O Overlord cai de seu trono improvisado. Os goblins remanescentes fogem para as sombras da floresta. O Capítulo 2 chegou ao fim — mas algo mais aguarda além das árvores.',
+    lore_post_en: 'The Overlord falls from his makeshift throne. The remaining goblins flee into the forest shadows. Chapter 2 has ended — but something greater awaits beyond the trees.',
+    enemies: [{ cid: 'goblinoverlord', enemy: true }, { cid: 'goblinshaman', enemy: true }, { cid: 'goblintrapper', enemy: true }, { cid: 'goblinberserker', enemy: true }],
+    reward_slug: null,
+  },
+];
+
+const CAMPAIGN_CHAPTERS = { 1: CAMPAIGN_STAGES, 2: CAMPAIGN_STAGES_CH2 };
+
+// playable: false = chapter is visible but battles are locked (rewards not defined yet)
+const CAMPAIGN_CHAPTER_META = {
+  1: { playable: true },
+  2: { playable: false },
+};
 
 function validateClientBoard(board) {
   if (!Array.isArray(board) || board.length !== 9) throw new Error('Board must have 9 slots');
@@ -1613,20 +1717,30 @@ const DEFAULT_SKIN_IDS = ['skin_archer', 'skin_archmage', 'skin_assassin', 'skin
  * Returns the 5 campaign stages with the player's completed stages.
  */
 app.get('/api/campaign', async (req, res) => {
-  const { player } = req.query;
+  const { player, chapter: chapterParam } = req.query;
+  const chapter = Number(chapterParam) || 1;
+  const chapterStages = CAMPAIGN_CHAPTERS[chapter] || CAMPAIGN_STAGES;
   try {
     const completed = player
-      ? (await sql`SELECT stage FROM campaign_progress WHERE player = ${player} AND chapter = 1`).map(r => r.stage)
+      ? (await sql`SELECT stage FROM campaign_progress WHERE player = ${player} AND chapter = ${chapter}`).map(r => r.stage)
       : [];
-    const stages = CAMPAIGN_STAGES.map(s => ({
+    const chapterMeta = CAMPAIGN_CHAPTER_META[chapter] || { playable: true };
+    const stages = chapterStages.map(s => ({
       stage: s.stage, name: s.name, name_en: s.name_en, format: s.format,
       lore_pre: s.lore_pre, lore_pre_en: s.lore_pre_en,
       lore_post: s.lore_post, lore_post_en: s.lore_post_en,
       enemies: s.enemies, reward_slug: s.reward_slug,
       completed: completed.includes(s.stage),
-      unlocked: s.stage === 1 || completed.includes(s.stage - 1),
+      // In preview chapters, all stages are selectable so players can read lore/enemies
+      unlocked: !chapterMeta.playable ? true : (s.stage === 1 || completed.includes(s.stage - 1)),
     }));
-    res.json({ ok: true, stages, completed });
+    const enemyDefs = {};
+    for (const s of chapterStages) {
+      for (const e of s.enemies) {
+        if (e.enemy && CAMPAIGN_ENEMIES[e.cid]) enemyDefs[e.cid] = CAMPAIGN_ENEMIES[e.cid];
+      }
+    }
+    res.json({ ok: true, stages, completed, enemyDefs, playable: chapterMeta.playable });
   } catch (err) {
     console.error('[/api/campaign GET]', err.message);
     res.status(500).json({ ok: false, error: err.message });
@@ -1663,27 +1777,35 @@ app.get('/api/campaign/leaderboard', async (req, res) => {
 app.post('/api/campaign/complete', async (req, res) => {
   const username = authFromRequest(req);
   if (!username) return res.status(401).json({ ok: false, error: 'Unauthorized' });
-  const stage = Number(req.body?.stage);
-  if (!stage || stage < 1 || stage > 5) return res.status(400).json({ ok: false, error: 'Invalid stage' });
+  const stage   = Number(req.body?.stage);
+  const chapter = Number(req.body?.chapter) || 1;
+  if (!stage || stage < 1) return res.status(400).json({ ok: false, error: 'Invalid stage' });
+
+  const chapterStages = CAMPAIGN_CHAPTERS[chapter];
+  if (!chapterStages) return res.status(400).json({ ok: false, error: 'Invalid chapter' });
+  const stageDef = chapterStages.find(s => s.stage === stage);
+  if (!stageDef) return res.status(400).json({ ok: false, error: 'Stage not found' });
 
   try {
-    // Idempotent — if already completed, return success with reward info
     const [existing] = await sql`
-      SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = 1 AND stage = ${stage}
+      SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = ${chapter} AND stage = ${stage}
     `;
-    const stageDef = CAMPAIGN_STAGES.find(s => s.stage === stage);
-    const [rewardItem] = await sql`SELECT id, name, rarity, slug, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE slug = ${stageDef.reward_slug}`;
+
+    // Only look up reward if this chapter/stage has one defined
+    let rewardItem = null;
+    if (stageDef.reward_slug) {
+      [rewardItem] = await sql`SELECT id, name, rarity, slug, slot_type, atk_bonus, hp_bonus, spd_bonus FROM items WHERE slug = ${stageDef.reward_slug}`;
+    }
 
     if (!existing) {
-      // Validate previous stage completed (unless stage 1)
       if (stage > 1) {
         const [prev] = await sql`
-          SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = 1 AND stage = ${stage - 1}
+          SELECT 1 FROM campaign_progress WHERE player = ${username} AND chapter = ${chapter} AND stage = ${stage - 1}
         `;
         if (!prev) return res.status(403).json({ ok: false, error: 'Previous stage not completed' });
       }
       await sql`
-        INSERT INTO campaign_progress (player, chapter, stage) VALUES (${username}, 1, ${stage})
+        INSERT INTO campaign_progress (player, chapter, stage) VALUES (${username}, ${chapter}, ${stage})
         ON CONFLICT DO NOTHING
       `;
       if (rewardItem) {
@@ -1692,7 +1814,7 @@ app.post('/api/campaign/complete', async (req, res) => {
           ON CONFLICT DO NOTHING
         `;
       }
-      console.log(`🏆 Campaign: ${username} completed Chapter 1 Stage ${stage}`);
+      console.log(`🏆 Campaign: ${username} completed Chapter ${chapter} Stage ${stage}`);
     }
 
     const reward = rewardItem ? {

@@ -1123,7 +1123,8 @@ function SettingsView({ session, payoutPct }) {
             <div className="stg-section-title">{t('settings.about')}</div>
             <div className="stg-about">
               <div className="stg-about-row"><span>Horizon Forge</span><span className="stg-version">v{__APP_VERSION__}</span></div>
-              <div className="stg-about-row"><span>{t('settings.developer')}</span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a></div>
+              <div className="stg-about-row"><span>Development &amp; Design</span><span><a href="https://peakd.com/@shiftrox/posts" target="_blank" rel="noreferrer">@shiftrox</a>, <a href="https://peakd.com/@vempromundo/posts" target="_blank" rel="noreferrer">@vempromundo</a></span></div>
+              <div className="stg-about-row"><span>Special Thanks</span><a href="https://peakd.com/@brunorns/posts" target="_blank" rel="noreferrer">@brunorns</a></div>
               <div className="stg-about-row"><span>{t('settings.discord')}</span><a href="https://discord.gg/w6QFKapJ3Q" target="_blank" rel="noreferrer">{t('settings.joinServer')}</a></div>
             </div>
           </div>
@@ -2110,7 +2111,7 @@ export default function LobbyPage() {
           onChatClose={handleChatClose}
         />
         {view === 'home' && (
-          <div id="view-home" className="lv active">
+          <div id="view-home" className="lv active view-home-tavern">
             <div className="view-scroll">
               <div className="view-col">
                 <p className="duel-title">{t('home.battleMode')}</p>

@@ -290,6 +290,30 @@ async function initGame() {
         Array.isArray(_fids) && _fids.length ? [..._fids] : null;
       if (_cfg.mode === "campaign") {
         window._CAMPAIGN_CFG = _cfg;
+        // Inject custom enemy definitions into C so mkUnit can find them
+        if (_cfg.enemyDefs) {
+          for (const def of Object.values(_cfg.enemyDefs)) {
+            C[def.cid] = {
+              id: def.cid,
+              name: def.name,
+              ico: def.icon,
+              portrait: def.portrait,
+              col: '#4a2',
+              bg: 'linear-gradient(160deg,#1a2a0a,#0a1a04)',
+              role: def.role || 'DPS',
+              tp: def.target_type || 'nearest',
+              enemy: true,
+              levels: {
+                1: {
+                  max_hp: def.hp, atk: def.atk, initiative: def.spd || 1,
+                  evasion: 0, crit_chance: 0, crit_rate: 1.5,
+                  skill_power: 0, dex: 5, wis: 5, armor: 0,
+                }
+              },
+              abi: { ico: '⚔️', name: '-', desc: '-', lore: '', type: 'passive', key: 'none' },
+            };
+          }
+        }
       }
       if (_cfg.mode === "pvp") {
         pvpInit(_cfg);
@@ -1744,7 +1768,8 @@ function _dispatchDuelResult(pw) {
     teamE: summarizeUnits(G.lastEnemySnap || G.duelEnemy),
     isPvP,
     isCampaign,
-    campaignStage: isCampaign ? window._CAMPAIGN_CFG.stage : null,
+    campaignStage:   isCampaign ? window._CAMPAIGN_CFG.stage   : null,
+    campaignChapter: isCampaign ? (window._CAMPAIGN_CFG.chapter || 1) : null,
     wager: isPvP ? (window._PVP.wager || 0) : 0,
   });
 }

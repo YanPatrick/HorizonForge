@@ -522,6 +522,33 @@
         );
       }
 
+
+      /* Campaign banner theme */
+      .banner-campaign {
+        background: linear-gradient(
+          160deg,
+          rgba(10, 6, 30, 0.96),
+          rgba(18, 8, 40, 0.95),
+          rgba(6, 4, 20, 0.98)
+        );
+        border-color: rgba(160, 100, 255, 0.28);
+      }
+      .banner-campaign::before {
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(160, 100, 255, 0.65),
+          transparent
+        );
+      }
+      .banner-campaign:hover {
+        border-color: rgba(160, 100, 255, 0.9);
+        box-shadow:
+          0 0 70px rgba(120, 60, 220, 0.42),
+          0 0 26px rgba(120, 60, 220, 0.22),
+          0 24px 68px rgba(0, 0, 0, 0.65);
+        transform: translateY(-5px);
+      }
       /* ── Banner image art ── */
       .banner-img {
         width: 100%;
@@ -1955,6 +1982,25 @@
         align-items: center;
         min-height: 100vh;
         padding: 80px 24px 40px;
+      }
+
+      .view-home-tavern {
+        position: relative;
+        background-image: url("/images/background/tavern.png");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      .view-home-tavern::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 0;
+      }
+      .view-home-tavern > * {
+        position: relative;
+        z-index: 1;
       }
 
       #view-grimoire {
