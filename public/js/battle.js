@@ -1263,7 +1263,7 @@ function playback({ evs, winner, umap, stats }) {
     );
   }
 
-  function spawnProjectile(attackerEl, targetEl) {
+  function spawnProjectile(attackerEl, targetEl, cid) {
     const a = getCenter(attackerEl);
     const t = getCenter(targetEl);
     const dx = t.x - a.x;
@@ -1272,7 +1272,7 @@ function playback({ evs, winner, umap, stats }) {
     const rot = Math.atan2(dy, dx) * (180 / Math.PI);
 
     const p = document.createElement("span");
-    p.className = "projectile ranged";
+    p.className = `projectile ranged${cid ? ` proj-${cid}` : ''}`;
     p.style.left = a.x + "px";
     p.style.top = a.y + "px";
     p.style.setProperty("--dx", `${dx}px`);
@@ -1287,8 +1287,10 @@ function playback({ evs, winner, umap, stats }) {
   function animateAttack(attackerEl, targetEl, attackerUnit) {
     if (!attackerEl || !targetEl || !attackerUnit) return;
 
+    flashUnit(attackerEl, "vfx-attacking");
+
     if (attackerUnit.tp === "ranged") {
-      spawnProjectile(attackerEl, targetEl);
+      spawnProjectile(attackerEl, targetEl, attackerUnit.cid);
     } else {
       animateMeleeAttack(attackerEl, targetEl);
     }

@@ -165,6 +165,10 @@
 .cportrait.portrait-mid { background-position: center 18%; }
 .cportrait.portrait-low { background-position: center 30%; }
 .cportrait.portrait-zoom { background-size: 116%; }
+.cportrait.portrait-fullbody {
+  background-size: contain;
+  background-position: center bottom;
+}
 
 /* ══════════════════════════════════════════
    #2 — RARIDADE L4/L5 — Aura pulsante
@@ -238,6 +242,52 @@
 @keyframes card-shimmer {
   from { background-position: -100% 0; }
   to   { background-position: 200% 0; }
+}
+
+/* ── Full-body field unit: sem frame, só o PNG do herói ── */
+.unit.unit-fullbody {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.unit.unit-fullbody::before {
+  display: none !important;
+}
+.unit.unit-fullbody .cportrait {
+  position: absolute;
+  inset: 0;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-size: contain;
+  background-position: center bottom;
+  margin: 0 !important;
+}
+.unit.unit-fullbody .cportrait::after {
+  display: none;
+}
+.unit.unit-fullbody .uhb {
+  position: absolute;
+  bottom: calc(2px * var(--s));
+  left: 5%;
+  width: 90%;
+  margin-top: 0;
+  z-index: 5;
+}
+.unit.unit-fullbody .uprog {
+  position: absolute;
+  bottom: calc(12px * var(--s));
+  z-index: 5;
+}
+.unit.unit-fullbody .ulvl {
+  position: relative;
+  z-index: 5;
+}
+.unit.unit-fullbody.vfx-attacking .cportrait {
+  background-image: var(--portrait-attack-url);
 }
 
 /* Mobile: keep portraits readable but avoid cards becoming too tall */

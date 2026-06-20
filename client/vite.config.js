@@ -24,6 +24,8 @@ export default defineConfig({
       '/images': { target: 'http://localhost:3000', changeOrigin: true },
       '/heroes': { target: 'http://localhost:3000', changeOrigin: true },
       '/enemies': { target: 'http://localhost:3000', changeOrigin: true },
+      '/scenes': { target: 'http://localhost:3000', changeOrigin: true },
+      '/npcs': { target: 'http://localhost:3000', changeOrigin: true },
       '/css': { target: 'http://localhost:3000', changeOrigin: true },
       '/js': { target: 'http://localhost:3000', changeOrigin: true },
       '/mobile.css': { target: 'http://localhost:3000', changeOrigin: true },
