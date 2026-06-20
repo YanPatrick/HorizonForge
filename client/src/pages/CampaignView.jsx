@@ -76,6 +76,9 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
       formationHeroIds,
       campaignEnemies: stageDef.enemies,
       enemyDefs,
+      lore_post: stageDef.lore_post ?? null,
+      lore_post_en: stageDef.lore_post_en ?? null,
+      wasCompleted: stageDef.completed ?? false,
     }))
     navigate('/battle')
   }
@@ -196,7 +199,17 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
                 ⚔️ {lang === 'pt-BR' ? 'Vença o desafio anterior para enfrentar esse novo oponente.' : 'Defeat the previous challenge to face this new opponent.'}
               </div>
             ) : selectedStage.completed ? (
-              <div className="campaign-detail-done">{t('campaign.stageCompleted')}</div>
+              <>
+                <div className="campaign-detail-done">{t('campaign.stageCompleted')}</div>
+                <button
+                  className="campaign-battle-btn"
+                  type="button"
+                  style={{ opacity: 0.65, marginTop: 8 }}
+                  onClick={() => startStage(selectedStage)}
+                >
+                  {lang === 'pt-BR' ? '⟳ Jogar Novamente' : '⟳ Play Again'}
+                </button>
+              </>
             ) : (
               <button className="campaign-battle-btn" type="button" onClick={() => startStage(selectedStage)}>
                 {t('campaign.battleBtn')}

@@ -476,6 +476,12 @@ const CAMPAIGN_ENEMIES = {
     role: 'DPS', target_type: 'nearest',
     hp: 150, atk: 100, spd: 1.0,
   },
+  goblinassassin: {
+    cid: 'goblinassassin', name: 'Goblin Assassin', icon: '🥷',
+    portrait: '/enemies/goblinassassin.png',
+    role: 'DPS', target_type: 'nearest',
+    hp: 338, atk: 117, spd: 4.0,
+  },
 };
 
 // ── Campaign: Chapter 1 stage definitions ─────────────────────────────────────
@@ -520,8 +526,39 @@ const CAMPAIGN_STAGES = [
     stage: 5, name: 'O Trono do Conselho', name_en: "The Council's Throne", format: 7,
     lore_pre:    'Quatro membros do Grande Conselho aguardam no salão dourado. Não como árbitros — como adversários. "Você subiu longe demais", declara a Voz do Conselho. "Esta batalha decide se você entra para a história... ou desaparece dela."',
     lore_pre_en: 'Four members of the Grand Council await in the golden hall. Not as arbiters — as adversaries. "You\'ve climbed too far," the Voice of the Council declares. "This battle decides whether you enter history... or vanish from it."',
-    lore_post:    'Silêncio no salão. O Conselho, pela primeira vez em gerações, se levanta e inclina a cabeça. "Bem-vindo à Forja", diz a Voz. Seu nome será gravado no Grimório do Bastião. O Capítulo 1 termina — mas o verdadeiro jogo mal começou.',
-    lore_post_en: 'Silence in the hall. The Council, for the first time in generations, rises and bows their heads. "Welcome to the Forge," says the Voice. Your name will be inscribed in the Bastion\'s Grimoire. Chapter 1 ends — but the true game has barely begun.',
+    lore_post: [
+      {
+        scene: '/images/arenas/arena-castle.jpg',
+        speaker: null, portrait: null,
+        text: 'Silêncio no salão dourado. Até o barulho distante das forjas cessou.',
+        text_en: 'Silence in the golden hall. Even the distant sound of the forges fell quiet.',
+      },
+      {
+        scene: '/images/arenas/arena-castle.jpg',
+        speaker: 'A Voz do Conselho', speaker_en: 'The Voice of the Council', portrait: null,
+        text: '"Você subiu longe demais para ser ignorado... e longe demais para ser eliminado sem consequências."',
+        text_en: '"You have climbed too far to be ignored... and too far to be eliminated without consequences."',
+      },
+      {
+        scene: '/images/arenas/arena-snow.jpg',
+        speaker: null, portrait: null,
+        text: 'O Conselho, pela primeira vez em gerações, se levanta e inclina a cabeça.',
+        text_en: 'The Council, for the first time in generations, rises and bows their heads.',
+      },
+      {
+        scene: '/images/arenas/arena-castle.jpg',
+        speaker: 'A Voz do Conselho', speaker_en: 'The Voice of the Council', portrait: null,
+        text: '"Bem-vindo à Forja, Comandante. Seu nome será gravado no Grimório do Bastião."',
+        text_en: '"Welcome to the Forge, Commander. Your name will be inscribed in the Bastion\'s Grimoire."',
+      },
+      {
+        scene: '/images/arenas/arena-florest.jpg',
+        speaker: null, portrait: null,
+        text: 'O Capítulo 1 termina — mas o verdadeiro jogo mal começou.',
+        text_en: 'Chapter 1 ends — but the true game has barely begun.',
+      },
+    ],
+    lore_post_en: null,
     enemies: [{ cid: 'knight', level: 3 }, { cid: 'paladin', level: 2 }, { cid: 'archer', level: 2 }, { cid: 'mage', level: 2 }],
     reward_slug: 'campaign_ch1_s5',
   },
@@ -567,11 +604,27 @@ const CAMPAIGN_STAGES_CH2 = [
   },
   {
     stage: 5, name: 'O Senhor dos Goblins', name_en: 'The Goblin Overlord', format: 7,
-    lore_pre:    'No centro do acampamento, o Overlord goblin aguarda entronizado em uma pilha de sucata. Ao seu redor: um Shaman, um Trapper e um Berserker. Ele não negocia. Ele não recua. Quanto mais sangrar, mais letal se torna.',
-    lore_pre_en: "At the center of the camp, the goblin Overlord waits enthroned on a pile of scrap. Around him: a Shaman, a Trapper, and a Berserker. He doesn't negotiate. He doesn't retreat. The more he bleeds, the more lethal he becomes.",
-    lore_post:    'O Overlord cai de seu trono improvisado. Os goblins remanescentes fogem para as sombras da floresta. O Capítulo 2 chegou ao fim — mas algo mais aguarda além das árvores.',
-    lore_post_en: 'The Overlord falls from his makeshift throne. The remaining goblins flee into the forest shadows. Chapter 2 has ended — but something greater awaits beyond the trees.',
-    enemies: [{ cid: 'goblinoverlord', enemy: true }, { cid: 'goblinshaman', enemy: true }, { cid: 'goblintrapper', enemy: true }, { cid: 'goblinberserker', enemy: true }],
+    lore_pre:    'No centro do acampamento, o Overlord goblin aguarda entronizado em uma pilha de sucata. Ao seu redor: um Shaman, um Trapper e um Berserker. Mas algo diferente patrulha sua direita — um assassino humano surpreendido dormindo por batedores goblins. O Alquimista enfiou uma poção goela abaixo. Agora ele obedece. Os olhos vazios, os reflexos intactos. Ele não escolheu estar aqui.',
+    lore_pre_en: "At the center of the camp, the goblin Overlord waits enthroned on a pile of scrap. Around him: a Shaman, a Trapper, and a Berserker. But something different patrols his right — a human assassin ambushed in his sleep by goblin scouts. The Alchemist poured a potion down his throat. Now he obeys. Eyes vacant, reflexes intact. He didn't choose to be here.",
+    lore_post: [
+      {
+        speaker: null, portrait: null,
+        text: 'O Overlord cai de seu trono improvisado. O impacto ecoa por toda a floresta.',
+        text_en: 'The Overlord falls from his makeshift throne. The impact echoes through the entire forest.',
+      },
+      {
+        speaker: 'Goblin Overlord', speaker_en: 'Goblin Overlord', speaker_side: 'right', portrait: '/enemies/goblinoverlord.png',
+        text: '"Grrk... impossível... nenhum humano jamais chegou tão longe..."',
+        text_en: '"Grrk... impossible... no human has ever made it this far..."',
+      },
+      {
+        speaker: null, portrait: null,
+        text: 'Os goblins remanescentes fogem para as sombras da floresta. O Capítulo 2 chegou ao fim — mas algo maior aguarda além das árvores.',
+        text_en: 'The remaining goblins flee into the forest shadows. Chapter 2 has ended — but something greater awaits beyond the trees.',
+      },
+    ],
+    lore_post_en: null,
+    enemies: [{ cid: 'goblinoverlord', enemy: true }, { cid: 'goblinshaman', enemy: true }, { cid: 'goblintrapper', enemy: true }, { cid: 'goblinberserker', enemy: true }, { cid: 'goblinassassin', enemy: true }],
     reward_slug: null,
   },
 ];
