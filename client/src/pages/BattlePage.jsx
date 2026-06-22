@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/session'
 import GuestConversionModal from '../components/GuestConversionModal'
-import DialogScene from '../components/DialogScene'
 import { useT } from '../context/LanguageContext'
 
 const DR_RARITY_COLORS = {
@@ -151,11 +150,6 @@ export default function BattlePage() {
     submitting: null, // null | { state: 'pending' | 'done' }
   })
 
-  // ── Dialog scene (visual novel, campaign-only, shown before duel result) ──
-  const [dialogScene, setDialogScene] = useState({ open: false, lore_post: null, lore_post_en: null })
-  const pendingDuelResultRef = useRef(null)
-  const pendingSceneMetaRef = useRef(null) // { chapter, stage } — set when dialog opens, cleared on complete
-
   // Abre o painel de resultado propriamente dito — usado diretamente (não-campanha)
   // e também após o dialog scene terminar (campanha com lore_post).
   const openDuelResult = useCallback((data) => {
@@ -197,18 +191,6 @@ export default function BattlePage() {
       submitting: data?.isPvP ? { state: 'pending' } : null,
     })
   }, [sessionForBadge]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleDialogComplete = useCallback(() => {
-    const meta = pendingSceneMetaRef.current
-    if (meta?.chapter && meta?.stage) {
-      localStorage.setItem(`hf_scene_seen_${meta.chapter}_${meta.stage}`, '1')
-    }
-    pendingSceneMetaRef.current = null
-    setDialogScene({ open: false, lore_post: null, lore_post_en: null })
-    const data = pendingDuelResultRef.current
-    pendingDuelResultRef.current = null
-    if (data) openDuelResult(data)
-  }, [openDuelResult])
 
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
@@ -282,19 +264,8 @@ export default function BattlePage() {
     window.setMobileView = (view) => setMobileView(view ?? null)
     window.setFullscreenBtnText = (txt) => setFsBtnText(txt || 'Enter Fullscreen')
     // Duel-result overlay — full render shape from battle.js's showDuelResult().
-    // In campaign mode with lore_post configured, we intercept to show the dialog
-    // scene first; openDuelResult() is called when the dialog completes.
     // closeDuelResult flips just `open` so the ✕ View Field button doesn't disturb the rest of the data.
     window.showDuelResult = (data) => {
-      const cfg = window._CAMPAIGN_CFG
-      const sceneKey = cfg ? `hf_scene_seen_${cfg.chapter}_${cfg.stage}` : null
-      const hasSeenScene = sceneKey ? localStorage.getItem(sceneKey) : true
-      if (data?.isCampaign && data?.pw && cfg?.lore_post && !hasSeenScene) {
-        pendingDuelResultRef.current = data
-        pendingSceneMetaRef.current = { chapter: cfg.chapter, stage: cfg.stage }
-        setDialogScene({ open: true, lore_post: cfg.lore_post, lore_post_en: cfg.lore_post_en ?? null })
-        return
-      }
       openDuelResult(data)
     }
     window.closeDuelResult = () => setDuelResult((prev) => ({ ...prev, open: false }))
@@ -973,16 +944,6 @@ export default function BattlePage() {
           ⚙️<span>{t('battle.menu')}</span>
         </button>
       </div>
-
-      {/* ══ DIALOG SCENE (visual novel, campaign-only) ══ */}
-      {dialogScene.open && (
-        <DialogScene
-          lore_post={dialogScene.lore_post}
-          lore_post_en={dialogScene.lore_post_en}
-          lang={lang}
-          onComplete={handleDialogComplete}
-        />
-      )}
 
       {/* ══ DUEL RESULT ══ */}
       <div id="duel-result" className={duelResult.open ? 'open' : ''}>
