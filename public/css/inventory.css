@@ -346,6 +346,7 @@
 
 .inv-mini-stat-val { font-weight: 700; }
 .inv-mini-stat-val.pos { color: #4cff91; }
+.inv-mini-stat-val.neg { color: #ff4d4d; }
 .inv-mini-stat-val.zero { color: #5a5080; }
 
 /* Unequip confirm */

@@ -206,15 +206,15 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
       <div className="inv-mini-stats">
         <div className="inv-mini-stat-row">
           <span>❤️ HP</span>
-          <span className={`inv-mini-stat-val ${hp_bonus !== 0 ? 'pos' : 'zero'}`}>{hp_bonus > 0 ? '+' : ''}{hp_bonus}</span>
+          <span className={`inv-mini-stat-val ${hp_bonus > 0 ? 'pos' : hp_bonus < 0 ? 'neg' : 'zero'}`}>{hp_bonus > 0 ? '+' : ''}{hp_bonus}</span>
         </div>
         <div className="inv-mini-stat-row">
           <span>⚔️ ATK</span>
-          <span className={`inv-mini-stat-val ${atk_bonus !== 0 ? 'pos' : 'zero'}`}>{atk_bonus > 0 ? '+' : ''}{atk_bonus}</span>
+          <span className={`inv-mini-stat-val ${atk_bonus > 0 ? 'pos' : atk_bonus < 0 ? 'neg' : 'zero'}`}>{atk_bonus > 0 ? '+' : ''}{atk_bonus}</span>
         </div>
         <div className="inv-mini-stat-row">
           <span>⚡ SPD</span>
-          <span className={`inv-mini-stat-val ${Number(spd_bonus) !== 0 ? 'pos' : 'zero'}`}>{Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)}</span>
+          <span className={`inv-mini-stat-val ${Number(spd_bonus) > 0 ? 'pos' : Number(spd_bonus) < 0 ? 'neg' : 'zero'}`}>{Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)}</span>
         </div>
       </div>
     </div>
