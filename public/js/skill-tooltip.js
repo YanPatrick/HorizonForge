@@ -50,9 +50,8 @@
       name: "Healing",
       desc: "Heals the ally with lowest HP.",
       lore: "Life is a garden that blooms under the right hands.",
-      format: function (skillPower, _level, _atk, maxHp) {
-        var healAmount = Math.floor(maxHp * skillPower);
-        return "Heals the most injured ally for " + healAmount + " HP (" + Math.floor(skillPower * 100) + "% of target max HP)";
+      format: function (_skillPower, _level, atk, _maxHp) {
+        return "Heals the most injured ally for " + atk + "+ 10% of target max HP";
       },
     },
     sneak_strike: {

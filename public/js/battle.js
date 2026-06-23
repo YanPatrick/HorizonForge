@@ -377,6 +377,30 @@ function skillIcon(key) {
   return m[key] || "✨";
 }
 
+// Aptidão per item: if item has req_attr + req_value, scale bonus
+// proportionally to how much of the requirement the hero meets.
+// aptidão = min(1, hero_attr / req_value)  →  bonus × aptidão
+function computeGearBonus(cid, gear) {
+  const heroAttrs = C[cid]?.attrs || {};
+  const slots     = gear[cid]?.slots || {};
+  let atkBonus = 0, hpBonus = 0, spdBonus = 0;
+  for (const item of Object.values(slots)) {
+    let fit = 1.0;
+    if (item.req_attr && item.req_value) {
+      const attrKey = item.req_attr === 'primary_attr' ? heroAttrs.primary : item.req_attr;
+      fit *= Math.min(1.0, (heroAttrs[attrKey] ?? 10) / item.req_value);
+    }
+    if (item.req_attr2 && item.req_value2) {
+      const attrKey2 = item.req_attr2 === 'primary_attr' ? heroAttrs.primary : item.req_attr2;
+      fit *= Math.min(1.0, (heroAttrs[attrKey2] ?? 10) / item.req_value2);
+    }
+    atkBonus += item.atk_bonus * fit;
+    hpBonus  += item.hp_bonus  * fit;
+    spdBonus += item.spd_bonus * fit;
+  }
+  return { atkBonus, hpBonus, spdBonus };
+}
+
 // ═══════════════════════════════════════════════════
 //  UNIT FACTORY
 // ═══════════════════════════════════════════════════
@@ -420,6 +444,10 @@ function upgradeUnit(u) {
   u.wis = st.wis;
   u.armor = st.armor;
   u.id = "u" + ++_uid;
+  // Level-up just overwrote atk/maxHp with base (gear-less) stats — clear
+  // the stale flag so the next _gearPreviewUnit() call recomputes with gear
+  // instead of passing through these now-incorrect numbers.
+  u._gearApplied = false;
   return u;
 }
 
@@ -844,10 +872,16 @@ function swapFieldBench(fieldSlot, benchCid) {
 }
 
 function restoreFieldHp() {
+  // Resets maxHp to base+gear (stripping any in-battle-only bonus like Sacred
+  // Aura) without losing the permanent equipment bonus — see _applyGear.
+  const gear = window.HF_gear || {};
   G.board.forEach((u) => {
     if (!u) return;
     const st = C[u.cid]?.levels[u.lv];
-    if (st) u.hp = u.maxHp = st.max_hp;
+    if (!st) return;
+    const { hpBonus } = computeGearBonus(u.cid, gear);
+    u.maxHp = Math.max(1, st.max_hp + Math.round(hpBonus));
+    u.hp = u.maxHp;
   });
 }
 
@@ -1108,28 +1142,7 @@ function startBattle() {
       console.warn(`[startBattle] Missing level data for cid="${u.cid}" lv=${u.lv} — unit stats not updated.`);
       return;
     }
-    // Calculate aptidão per item: if item has req_attr + req_value, scale bonus
-    // proportionally to how much of the requirement the hero meets.
-    // aptidão = min(1, hero_attr / req_value)  →  bonus × aptidão
-    const heroAttrs = C[u.cid]?.attrs || {};
-    const slots     = gear[u.cid]?.slots || {};
-    let atkBonus = 0, hpBonus = 0, spdBonus = 0;
-    for (const item of Object.values(slots)) {
-      let fit = 1.0;
-      if (item.req_attr && item.req_value) {
-        const attrKey = item.req_attr === 'primary_attr' ? heroAttrs.primary : item.req_attr;
-        const heroVal = heroAttrs[attrKey] ?? 10;
-        fit *= Math.min(1.0, heroVal / item.req_value);
-      }
-      if (item.req_attr2 && item.req_value2) {
-        const attrKey2 = item.req_attr2 === 'primary_attr' ? heroAttrs.primary : item.req_attr2;
-        const heroVal2 = heroAttrs[attrKey2] ?? 10;
-        fit *= Math.min(1.0, heroVal2 / item.req_value2);
-      }
-      atkBonus += item.atk_bonus * fit;
-      hpBonus  += item.hp_bonus  * fit;
-      spdBonus += item.spd_bonus * fit;
-    }
+    const { atkBonus, hpBonus, spdBonus } = computeGearBonus(u.cid, gear);
     u.atk          = Math.max(1, Math.floor(base.atk) + Math.round(atkBonus));
     u.maxHp        = Math.max(1, base.max_hp + Math.round(hpBonus));
     u.hp           = u.maxHp;
@@ -2886,22 +2899,13 @@ window.benchInfoHide = function () { window.HFTooltip?.hide(); };
 function _gearPreviewUnit(u) {
   // Campaign/PvP enemy: base stats only.
   if (u._isEnemy && !u._isDuel) return u;
+  // During battle, _applyGear already mutated the unit's atk/maxHp — pass
+  // through instead of recomputing from the (possibly stale) gear cache.
+  if (u._gearApplied) return u;
   const base = C[u.cid]?.levels?.[u.lv];
   if (!base) return u;
   const gear = window.HF_gear || {};
-  const heroAttrs = C[u.cid]?.attrs || {};
-  const slots = gear[u.cid]?.slots || {};
-  let atkBonus = 0, hpBonus = 0, spdBonus = 0;
-  for (const item of Object.values(slots)) {
-    let fit = 1.0;
-    if (item.req_attr && item.req_value)
-      fit *= Math.min(1.0, (heroAttrs[item.req_attr] ?? 10) / item.req_value);
-    if (item.req_attr2 && item.req_value2)
-      fit *= Math.min(1.0, (heroAttrs[item.req_attr2] ?? 10) / item.req_value2);
-    atkBonus += item.atk_bonus * fit;
-    hpBonus  += item.hp_bonus  * fit;
-    spdBonus += item.spd_bonus * fit;
-  }
+  const { atkBonus, hpBonus, spdBonus } = computeGearBonus(u.cid, gear);
   const newHp = Math.max(1, base.max_hp + Math.round(hpBonus));
   return {
     ...u,
