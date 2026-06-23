@@ -2120,6 +2120,11 @@ async function migrateSkillDescriptions() {
       WHERE skill_key = 'healing'
         AND description LIKE '%heal = atk x skill_power%'
     `;
+    await sql`
+      UPDATE skills SET description = 'Heals the ally with lowest HP: heal = ATK + 10% of target maxHP. Then attacks nearest enemy. Scales with level.'
+      WHERE skill_key = 'healing'
+        AND description LIKE '%heal = target maxHP x skill_power%'
+    `;
     console.log('   Skill descriptions: ✅ ok');
   } catch (e) {
     console.warn('   Skill descriptions: ⚠️', e.message);
