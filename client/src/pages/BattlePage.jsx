@@ -2,7 +2,32 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getSession } from '../lib/session'
 import GuestConversionModal from '../components/GuestConversionModal'
+import DialogScene from '../components/DialogScene'
 import { useT } from '../context/LanguageContext'
+
+// Global on/off preference, toggled in CampaignView — when off, campaign
+// cutscenes (intro and outro) never play; when on, they play every time,
+// including replays.
+function cutscenesEnabled() {
+  try {
+    return localStorage.getItem('hf_cutscenes_enabled') !== '0'
+  } catch {
+    return true
+  }
+}
+
+// Peeks at the pending battle config without consuming it — battle.js itself
+// reads + removes the same sessionStorage key once its script evaluates.
+function peekCampaignIntro() {
+  try {
+    if (!cutscenesEnabled()) return null
+    const cfg = JSON.parse(sessionStorage.getItem('hf_battle_cfg') || 'null')
+    if (!cfg || cfg.mode !== 'campaign' || !cfg.lore_pre) return null
+    return { lore_pre: cfg.lore_pre, lore_pre_en: cfg.lore_pre_en ?? null }
+  } catch {
+    return null
+  }
+}
 
 const DR_RARITY_COLORS = {
   common: '#c0bdb5', uncommon: '#4caf50', rare: '#42a5f5',
@@ -14,6 +39,19 @@ export default function BattlePage() {
   const navigate = useNavigate()
   const initialized = useRef(false)
   const [cssReady, setCssReady] = useState(false)
+
+  // Campaign intro cutscene (lore_pre) — shown before the player can interact
+  // with shop/bench, gated by the "Cutscenes" toggle in CampaignView. Read
+  // synchronously on first render so it wins the race against battle.js
+  // consuming the same sessionStorage key.
+  const [introScene, setIntroScene] = useState(peekCampaignIntro)
+  const dismissIntro = useCallback(() => setIntroScene(null), [])
+
+  // Campaign outro cutscene (lore_post) — shown after winning, before the
+  // duel-result panel. battle.js dispatches via window.showDuelResult; we
+  // intercept it when the Cutscenes toggle is on and the stage has a lore_post.
+  const [dialogScene, setDialogScene] = useState({ open: false, lore_post: null, lore_post_en: null })
+  const pendingDuelResultRef = useRef(null)
   // Tracks whether the imperative scripts (battle.js + bot-ai.js + simulate.js
   // + socket.io + mobile.js) have all loaded. Buttons in this page dispatch
   // through globals those scripts register (window.startBattle, openQuitModal,
@@ -192,6 +230,13 @@ export default function BattlePage() {
     })
   }, [sessionForBadge]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleDialogComplete = useCallback(() => {
+    setDialogScene({ open: false, lore_post: null, lore_post_en: null })
+    const data = pendingDuelResultRef.current
+    pendingDuelResultRef.current = null
+    if (data) openDuelResult(data)
+  }, [openDuelResult])
+
   const closeQuit = useCallback(() => setQuitOpen(false), [])
   const confirmQuit = useCallback(() => {
     setQuitOpen(false)
@@ -266,6 +311,12 @@ export default function BattlePage() {
     // Duel-result overlay — full render shape from battle.js's showDuelResult().
     // closeDuelResult flips just `open` so the ✕ View Field button doesn't disturb the rest of the data.
     window.showDuelResult = (data) => {
+      const cfg = window._CAMPAIGN_CFG
+      if (data?.isCampaign && data?.pw && cfg?.lore_post && cutscenesEnabled()) {
+        pendingDuelResultRef.current = data
+        setDialogScene({ open: true, lore_post: cfg.lore_post, lore_post_en: cfg.lore_post_en ?? null })
+        return
+      }
       openDuelResult(data)
     }
     window.closeDuelResult = () => setDuelResult((prev) => ({ ...prev, open: false }))
@@ -609,6 +660,26 @@ export default function BattlePage() {
   const ready = cssReady && scriptsReady
   return (
     <div style={ready ? { width: '100%', height: '100%', display: 'flex', flexDirection: 'column' } : { visibility: 'hidden', position: 'absolute' }}>
+      {/* ══ CAMPAIGN INTRO CUTSCENE (lore_pre) ══ */}
+      {introScene && (
+        <DialogScene
+          lore_post={introScene.lore_pre}
+          lore_post_en={introScene.lore_pre_en}
+          lang={lang}
+          onComplete={dismissIntro}
+        />
+      )}
+
+      {/* ══ CAMPAIGN OUTRO CUTSCENE (lore_post) ══ */}
+      {dialogScene.open && (
+        <DialogScene
+          lore_post={dialogScene.lore_post}
+          lore_post_en={dialogScene.lore_post_en}
+          lang={lang}
+          onComplete={handleDialogComplete}
+        />
+      )}
+
       {/* ══ QUIT MODAL ══ */}
       <div id="quit-overlay" className={quitOpen ? 'open' : ''}
         onClick={e => e.target === e.currentTarget && closeQuit()}>

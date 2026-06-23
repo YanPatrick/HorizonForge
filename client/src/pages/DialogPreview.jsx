@@ -18,11 +18,14 @@ export default function DialogPreview() {
       .catch(() => {})
   }, [chapter])
 
-  const scenicStages = stages.filter(s => s.lore_post)
+  const scenes = stages.flatMap(s => [
+    s.lore_pre && { stage: s.stage, name: s.name, name_en: s.name_en, phase: 'pre', lore_post: s.lore_pre, lore_post_en: s.lore_pre_en },
+    s.lore_post && { stage: s.stage, name: s.name, name_en: s.name_en, phase: 'post', lore_post: s.lore_post, lore_post_en: s.lore_post_en },
+  ].filter(Boolean))
 
-  function play(stage) {
+  function play(scene) {
     setDone(false)
-    setPlaying({ lore_post: stage.lore_post, lore_post_en: stage.lore_post_en, label: stage.name })
+    setPlaying({ lore_post: scene.lore_post, lore_post_en: scene.lore_post_en, label: scene.name })
   }
 
   function handleComplete() {
@@ -90,14 +93,14 @@ export default function DialogPreview() {
             ))}
           </div>
 
-          {/* Stage list */}
-          {scenicStages.length === 0 ? (
+          {/* Scene list */}
+          {scenes.length === 0 ? (
             <div style={{ fontSize: 13, color: 'rgba(200,185,230,0.35)', padding: '20px 0' }}>
               Nenhuma cena configurada neste capítulo.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {scenicStages.map(s => {
+              {scenes.map(s => {
                 const hasArray = Array.isArray(s.lore_post)
                 const lines = hasArray ? s.lore_post.length : 1
                 const hasSpeaker = hasArray && s.lore_post.some(l => l.speaker)
@@ -106,7 +109,7 @@ export default function DialogPreview() {
 
                 return (
                   <div
-                    key={s.stage}
+                    key={`${s.stage}-${s.phase}`}
                     style={{
                       background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.09)',
@@ -130,6 +133,9 @@ export default function DialogPreview() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#f0eaff', marginBottom: 4 }}>
                         {lang === 'pt-BR' ? s.name : (s.name_en || s.name)}
+                        <span style={{ color: 'rgba(255,200,90,0.6)', fontWeight: 400, marginLeft: 6, fontSize: 12 }}>
+                          {s.phase === 'pre' ? '(antes)' : '(depois)'}
+                        </span>
                       </div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         <Tag>{lines} {lines === 1 ? 'linha' : 'linhas'}</Tag>

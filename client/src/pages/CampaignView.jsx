@@ -12,6 +12,16 @@ const RANK_MEDAL = ['🥇', '🥈', '🥉']
 const TOTAL_CHAPTERS = 2
 const CHAPTER_BG = { 1: '/images/campaign/chapter1-bg.jpg', 2: '/images/campaign/chapter2-bg.jpg' }
 
+// lore_pre/lore_post can be a plain string (legacy) or an array of dialogue
+// lines (scene/speaker/text per line) — this flattens either shape into a
+// single preview string for the campaign detail panel.
+function loreToPreview(lore, loreEn, lang) {
+  if (Array.isArray(lore)) {
+    return lore.map(l => (lang === 'pt-BR' ? l.text : (l.text_en || l.text))).join(' ')
+  }
+  return lang === 'pt-BR' ? lore : (loreEn || lore)
+}
+
 export default function CampaignView({ session, formations, defaultSlot, toast }) {
   const { t, lang } = useT()
   const navigate = useNavigate()
@@ -22,9 +32,18 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
   const [chapter, setChapter] = useState(1)
   const [enemyDefs, setEnemyDefs] = useState({})
   const [chapterPlayable, setChapterPlayable] = useState(true)
+  const [cutscenesOn, setCutscenesOn] = useState(() => {
+    try { return localStorage.getItem('hf_cutscenes_enabled') !== '0' } catch { return true }
+  })
 
   const username = session?.username
   const isGuest = session?.mode === 'guest'
+
+  function toggleCutscenes() {
+    const next = !cutscenesOn
+    setCutscenesOn(next)
+    try { localStorage.setItem('hf_cutscenes_enabled', next ? '1' : '0') } catch {}
+  }
 
   useEffect(() => {
     fetchCampaign(1)
@@ -76,6 +95,8 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
       formationHeroIds,
       campaignEnemies: stageDef.enemies,
       enemyDefs,
+      lore_pre: stageDef.lore_pre ?? null,
+      lore_pre_en: stageDef.lore_pre_en ?? null,
       lore_post: stageDef.lore_post ?? null,
       lore_post_en: stageDef.lore_post_en ?? null,
       wasCompleted: stageDef.completed ?? false,
@@ -113,6 +134,27 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
               onClick={() => changeChapter(chapter + 1)}
             >›</button>
           </div>
+
+          {/* Cutscenes on/off */}
+          <button
+            type="button"
+            className="campaign-cutscenes-toggle"
+            onClick={toggleCutscenes}
+            title={lang === 'pt-BR'
+              ? 'Liga/desliga as cenas de diálogo antes e depois das batalhas'
+              : 'Toggles dialogue scenes before and after battles'}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              width: '100%', margin: '6px 0 10px', padding: '6px 10px',
+              borderRadius: 6, border: '1px solid rgba(255,255,255,0.15)',
+              background: cutscenesOn ? 'rgba(255,200,90,0.1)' : 'rgba(255,255,255,0.04)',
+              color: cutscenesOn ? '#ffc85a' : 'rgba(200,185,230,0.55)',
+              cursor: 'pointer', fontSize: 12, fontWeight: 600,
+            }}
+          >
+            <span>🎬 {lang === 'pt-BR' ? 'Cenas' : 'Cutscenes'}</span>
+            <span>{cutscenesOn ? (lang === 'pt-BR' ? 'Ativadas' : 'ON') : (lang === 'pt-BR' ? 'Desativadas' : 'OFF')}</span>
+          </button>
 
           {/* Chapter 1 — real content */}
           {loading ? (
@@ -177,7 +219,7 @@ export default function CampaignView({ session, formations, defaultSlot, toast }
             <div className="campaign-detail-format">
               {selectedStage.format === 3 ? 'BO3' : selectedStage.format === 5 ? 'BO5' : 'BO7'}
             </div>
-            <p className="campaign-detail-lore">{lang === 'pt-BR' ? selectedStage.lore_pre : (selectedStage.lore_pre_en || selectedStage.lore_pre)}</p>
+            <p className="campaign-detail-lore">{loreToPreview(selectedStage.lore_pre, selectedStage.lore_pre_en, lang)}</p>
 
             <div className="campaign-detail-enemies-label">{t('campaign.enemies')}</div>
             <div className="campaign-detail-enemies">

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import LobbyPage from './pages/LobbyPage'
 import BattlePage from './pages/BattlePage'
+import DialogPreview from './pages/DialogPreview'
 import { getSession } from './lib/session'
 import { LanguageProvider } from './context/LanguageContext'
 
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/" element={<LoginPage />} />
           <Route path="/lobby" element={<RequireAuth><LobbyPage /></RequireAuth>} />
           <Route path="/battle" element={<RequireAuth><BattlePage /></RequireAuth>} />
+          <Route path="/dialog-preview" element={<RequireAuth><DialogPreview /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
