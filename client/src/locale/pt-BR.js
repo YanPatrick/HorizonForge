@@ -234,6 +234,7 @@ export default {
   'shop.typeBackground':  'Fundo',
   'shop.typeTreasure':    'Tesouro',
   'shop.typeSkin':        'Skin',
+  'shop.lockedCaptionDruid': 'Derrote o boss do Capítulo 10',
 
   // Sort options
   'sort.new':      'Recentes',
