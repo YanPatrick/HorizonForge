@@ -1199,6 +1199,8 @@ app.post('/api/migrate', async (req, res) => {
     }
     await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`;
     await sql`ALTER TABLE cosmetics DROP COLUMN IF EXISTS sort_order`;
+    await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE cosmetics ADD COLUMN IF NOT EXISTS locked_caption TEXT`;
     await sql`
       UPDATE cosmetics
       SET preview = REPLACE(preview, '/heroes/', '/heroes/shop/')
@@ -1235,6 +1237,12 @@ app.post('/api/migrate', async (req, res) => {
         ('skin_archmage',  'skin', 'Archmage',  '/heroes/shop/archmage.webp',  0, 'archmage'),
         ('skin_barbarian', 'skin', 'Barbarian', '/heroes/shop/barbarian.webp', 0, 'barbarian')
       ON CONFLICT (id) DO UPDATE SET preview = EXCLUDED.preview
+    `;
+
+    await sql`
+      INSERT INTO cosmetics (id, type, name, preview, price_hive, hero_cid, locked, locked_caption) VALUES
+        ('skin_druid_mystery', 'skin', '???', '/heroes/shop/silhueta.png', 99.000, NULL, true, 'shop.lockedCaptionDruid')
+      ON CONFLICT (id) DO UPDATE SET preview = EXCLUDED.preview, locked = EXCLUDED.locked, locked_caption = EXCLUDED.locked_caption
     `;
 
     await sql`
@@ -1826,7 +1834,7 @@ app.get('/api/shop', async (_req, res) => {
     const items = await sql`
       SELECT id, type, name, preview,
              price_hive::float AS price_hive,
-             hero_cid,
+             hero_cid, locked, locked_caption,
              EXTRACT(EPOCH FROM created_at) * 1000 AS created_ms
       FROM cosmetics
       ORDER BY created_at ASC

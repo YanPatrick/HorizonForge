@@ -348,7 +348,9 @@ function ShopItemCard({ item, isOwned, isHive, isClaiming, onBuy, heroData }) {
           <div className="shop-card-desc">{item.description}</div>
         )}
         <div className="shop-card-actions">
-          {item.type === 'treasure'
+          {item.locked
+            ? <div className="shop-card-locked-caption">{t(item.locked_caption)}</div>
+            : item.type === 'treasure'
             ? <button
                 className="shop-card-btn buy"
                 disabled={isClaiming || !isHive}
@@ -391,29 +393,34 @@ function ShopListRow({ item, isOwned, isHive, isClaiming, onBuy, heroData }) {
         </div>
       </div>
       <div className="shop-row-right">
-        {isOwned
-          ? <div className="shop-row-state">{t('shop.owned')}</div>
-          : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? t('shop.free') : `${item.price_hive.toFixed(3)} HIVE`}</div>
-        }
-        {item.type === 'treasure'
-          ? <button
-              className="shop-row-btn buy"
-              disabled={isClaiming || !isHive}
-              onClick={onBuy}
-              title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
-            >
-              {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
-            </button>
-          : !isOwned
-            ? <button
-                className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
-                disabled={isClaiming || !isHive}
-                onClick={onBuy}
-                title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
-              >
-                {isClaiming ? '⌛' : isFree ? t('shop.getFree') : t('shop.buy')}
-              </button>
-            : null
+        {item.locked
+          ? <div className="shop-row-locked-caption">{t(item.locked_caption)}</div>
+          : <>
+              {isOwned
+                ? <div className="shop-row-state">{t('shop.owned')}</div>
+                : item.type !== 'treasure' && <div className="shop-row-price">{isFree ? t('shop.free') : `${item.price_hive.toFixed(3)} HIVE`}</div>
+              }
+              {item.type === 'treasure'
+                ? <button
+                    className="shop-row-btn buy"
+                    disabled={isClaiming || !isHive}
+                    onClick={onBuy}
+                    title={!isHive ? 'Log in with Hive Keychain to purchase.' : undefined}
+                  >
+                    {isClaiming ? '⌛' : `${item.price_hive.toFixed(3)} HIVE`}
+                  </button>
+                : !isOwned
+                  ? <button
+                      className={`shop-row-btn${isFree ? ' free' : ' buy'}`}
+                      disabled={isClaiming || !isHive}
+                      onClick={onBuy}
+                      title={!isHive ? 'Log in with Hive Keychain to obtain cosmetics.' : undefined}
+                    >
+                      {isClaiming ? '⌛' : isFree ? t('shop.getFree') : t('shop.buy')}
+                    </button>
+                  : null
+              }
+            </>
         }
       </div>
     </div>

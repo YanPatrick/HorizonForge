@@ -234,6 +234,7 @@ export default {
   'shop.typeBackground':  'Background',
   'shop.typeTreasure':    'Treasure',
   'shop.typeSkin':        'Skin',
+  'shop.lockedCaptionDruid': 'Defeat the Chapter 10 boss',
 
   // Sort options
   'sort.new':      'New',
