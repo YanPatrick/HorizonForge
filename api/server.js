@@ -1934,7 +1934,7 @@ app.post('/api/idle/start', async (req, res) => {
     const maxHp = 100 + powerScore; // baseline idle-run HP pool, scales with formation power
     await sql`
       UPDATE idle_state
-      SET status = 'running', hp = ${maxHp}, max_hp = ${maxHp},
+      SET status = 'running', hp = ${maxHp}, max_hp = ${maxHp}, potion_ms_used = 0, kill_ms_remainder = 0,
           last_tick_at = now(), last_heartbeat_at = now(), updated_at = now()
       WHERE player = ${player}
     `;
@@ -1959,13 +1959,22 @@ async function resolveIdleTicks(player) {
   const powerScore = await computeIdlePowerScore(player, state.formation_slot);
   const interval = killIntervalMs(powerScore);
 
-  // Potions cap how long this segment can run.
-  const maxSustainableMs = state.potions * IDLE_CONFIG.POTION_COVERAGE_MS;
+  // Potions cap how long this segment can run. Remaining runway = whole
+  // potions in inventory plus whatever's left of the potion "in progress"
+  // (potion_ms_used tracks partial consumption so frequent short resolves
+  // don't each round up to spending a whole potion).
+  const potionMsUsed = state.potion_ms_used ?? 0;
+  const maxSustainableMs = (state.potions * IDLE_CONFIG.POTION_COVERAGE_MS) - potionMsUsed;
   const cappedMs = Math.min(elapsedMs, maxSustainableMs);
   const ranOutOfPotions = cappedMs < elapsedMs;
 
-  const kills = Math.floor(cappedMs / interval);
-  const potionsConsumed = Math.min(state.potions, Math.ceil(cappedMs / IDLE_CONFIG.POTION_COVERAGE_MS));
+  const killMsRemainder = state.kill_ms_remainder ?? 0;
+  const totalKillMs = killMsRemainder + Math.max(0, cappedMs);
+  const kills = Math.floor(totalKillMs / interval);
+  const newKillMsRemainder = totalKillMs % interval;
+  const totalMsUsed = potionMsUsed + Math.max(0, cappedMs);
+  const potionsConsumed = Math.min(state.potions, Math.floor(totalMsUsed / IDLE_CONFIG.POTION_COVERAGE_MS));
+  const newPotionMsUsed = ranOutOfPotions ? 0 : totalMsUsed % IDLE_CONFIG.POTION_COVERAGE_MS;
 
   let coinsGained = 0, diamondsGained = 0, xpGained = 0;
   const fragmentsGained = {};
@@ -1981,8 +1990,49 @@ async function resolveIdleTicks(player) {
   const newStatus = ranOutOfPotions ? 'stopped' : 'running';
   const hpLeft = ranOutOfPotions ? 0 : state.hp;
 
+  // Atomically claim this tick window before crediting anything: the WHERE
+  // clause only matches if resolve_version hasn't moved since we read it
+  // above (an integer counter, not last_tick_at — TIMESTAMPTZ round-trips
+  // through the JS driver at millisecond precision while Postgres stores
+  // microseconds, so a timestamp-equality guard silently never matches).
+  // A concurrent resolveIdleTicks call for the same player (e.g. overlapping
+  // polls) that loses this race gets 0 rows back and must not credit the
+  // window a second time — this is what stops duplicate coins/xp/fragments.
+  let claimed;
   if (isOnline) {
-    // Online: credit directly, no pending pool.
+    [claimed] = await sql`
+      UPDATE idle_state
+      SET idle_xp = idle_xp + ${xpGained}, tier = ${newTier}, status = ${newStatus},
+          hp = ${hpLeft}, potions = potions - ${potionsConsumed}, potion_ms_used = ${newPotionMsUsed}, kill_ms_remainder = ${newKillMsRemainder},
+          last_tick_at = now(), resolve_version = resolve_version + 1, updated_at = now()
+      WHERE player = ${player} AND resolve_version = ${state.resolve_version}
+      RETURNING *
+    `;
+  } else {
+    const mergedFragments = { ...(state.pending_fragments ?? {}) };
+    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
+      mergedFragments[slotType] = (mergedFragments[slotType] ?? 0) + qty;
+    }
+    [claimed] = await sql`
+      UPDATE idle_state
+      SET pending_coins = pending_coins + ${coinsGained},
+          pending_diamonds = pending_diamonds + ${diamondsGained},
+          pending_xp = pending_xp + ${xpGained},
+          pending_fragments = ${JSON.stringify(mergedFragments)}::jsonb,
+          status = ${newStatus}, hp = ${hpLeft}, potions = potions - ${potionsConsumed}, potion_ms_used = ${newPotionMsUsed}, kill_ms_remainder = ${newKillMsRemainder},
+          last_tick_at = now(), resolve_version = resolve_version + 1, updated_at = now()
+      WHERE player = ${player} AND resolve_version = ${state.resolve_version}
+      RETURNING *
+    `;
+  }
+
+  if (!claimed) {
+    // Lost the race — another call already resolved this exact window.
+    const [refreshed] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
+    return refreshed;
+  }
+
+  if (isOnline) {
     await sql`UPDATE idle_wallet SET coins = coins + ${coinsGained}, diamonds = diamonds + ${diamondsGained} WHERE player = ${player}`;
     for (const [slotType, qty] of Object.entries(fragmentsGained)) {
       await sql`
@@ -1990,33 +2040,9 @@ async function resolveIdleTicks(player) {
         ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${qty}
       `;
     }
-    await sql`
-      UPDATE idle_state
-      SET idle_xp = idle_xp + ${xpGained}, tier = ${newTier}, status = ${newStatus},
-          hp = ${hpLeft}, potions = potions - ${potionsConsumed},
-          last_tick_at = now(), updated_at = now()
-      WHERE player = ${player}
-    `;
-  } else {
-    // Offline: accrue into the pending pool, awaiting player collection choice.
-    const mergedFragments = { ...(state.pending_fragments ?? {}) };
-    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
-      mergedFragments[slotType] = (mergedFragments[slotType] ?? 0) + qty;
-    }
-    await sql`
-      UPDATE idle_state
-      SET pending_coins = pending_coins + ${coinsGained},
-          pending_diamonds = pending_diamonds + ${diamondsGained},
-          pending_xp = pending_xp + ${xpGained},
-          pending_fragments = ${JSON.stringify(mergedFragments)}::jsonb,
-          status = ${newStatus}, hp = ${hpLeft}, potions = potions - ${potionsConsumed},
-          last_tick_at = now(), updated_at = now()
-      WHERE player = ${player}
-    `;
   }
 
-  const [refreshed] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
-  return refreshed;
+  return claimed;
 }
 
 /**
@@ -2074,41 +2100,77 @@ app.post('/api/idle/collect', async (req, res) => {
   }
   try {
     await resolveIdleTicks(player);
-    const [state] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
-    if (!state) return res.status(404).json({ ok: false, error: 'No idle state' });
-
     const ratio = mode === 'full' ? 1.0 : IDLE_CONFIG.OFFLINE_REWARD_RATIO;
+
     if (mode === 'full') {
-      const [wallet] = await sql`SELECT diamonds FROM idle_wallet WHERE player = ${player}`;
-      if ((wallet?.diamonds ?? 0) < IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST) {
+      // Deduct with the balance check embedded in the WHERE clause — avoids a
+      // separate SELECT-then-UPDATE that a concurrent request could race
+      // (checking the balance and spending it must be one atomic statement).
+      const [charged] = await sql`
+        UPDATE idle_wallet
+        SET diamonds = diamonds - ${IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST}
+        WHERE player = ${player} AND diamonds >= ${IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST}
+        RETURNING diamonds
+      `;
+      if (!charged) {
         return res.status(400).json({ ok: false, error: 'Not enough diamonds' });
       }
-      await sql`UPDATE idle_wallet SET diamonds = diamonds - ${IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST} WHERE player = ${player}`;
     }
 
-    const coinsToGrant = Math.floor(state.pending_coins * ratio);
-    const diamondsToGrant = Math.floor(state.pending_diamonds * ratio);
-    const xpToGrant = Math.floor(state.pending_xp * ratio);
-    const pendingFragments = state.pending_fragments ?? {};
+    // Atomically zero the pending pool and read back what it held *before*
+    // zeroing. RETURNING alone reflects the row's post-UPDATE state, so a
+    // plain "SET pending_coins = 0 ... RETURNING pending_coins" always
+    // returns 0 — the CTE below locks and captures the old values first, in
+    // the same statement, before the UPDATE clears them. A concurrent
+    // /collect call that loses this race matches zero rows (nothing left
+    // pending) and must grant nothing — this is what stops the same pending
+    // pool from being paid out twice.
+    const [claimed] = await sql`
+      WITH old AS (
+        SELECT pending_coins, pending_diamonds, pending_xp, pending_fragments, idle_xp
+        FROM idle_state
+        WHERE player = ${player}
+          AND (pending_coins > 0 OR pending_diamonds > 0 OR pending_xp > 0 OR pending_fragments <> '{}'::jsonb)
+        FOR UPDATE
+      )
+      UPDATE idle_state
+      SET pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
+          updated_at = now()
+      FROM old
+      WHERE idle_state.player = ${player}
+      RETURNING old.pending_coins, old.pending_diamonds, old.pending_xp, old.pending_fragments, old.idle_xp
+    `;
+
+    if (!claimed) {
+      if (mode === 'full') {
+        // Refund — we charged diamonds above but there was nothing left to collect.
+        await sql`UPDATE idle_wallet SET diamonds = diamonds + ${IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST} WHERE player = ${player}`;
+      }
+      return res.json({ ok: true, collected: { coins: 0, diamonds: 0, xp: 0, fragments: {}, ratio } });
+    }
+
+    const coinsToGrant = Math.floor(claimed.pending_coins * ratio);
+    const diamondsToGrant = Math.floor(claimed.pending_diamonds * ratio);
+    const xpToGrant = Math.floor(claimed.pending_xp * ratio);
+    const pendingFragments = claimed.pending_fragments ?? {};
+    const grantedFragments = {};
 
     await sql`UPDATE idle_wallet SET coins = coins + ${coinsToGrant}, diamonds = diamonds + ${diamondsToGrant} WHERE player = ${player}`;
     for (const [slotType, qty] of Object.entries(pendingFragments)) {
       const grantQty = Math.floor(Number(qty) * ratio);
       if (grantQty <= 0) continue;
+      grantedFragments[slotType] = grantQty;
       await sql`
         INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slotType}, ${grantQty})
         ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${grantQty}
       `;
     }
-    const newTier = idleTierForXp(state.idle_xp + xpToGrant);
+    const newTier = idleTierForXp(claimed.idle_xp + xpToGrant);
     await sql`
-      UPDATE idle_state
-      SET idle_xp = idle_xp + ${xpToGrant}, tier = ${newTier},
-          pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
-          updated_at = now()
+      UPDATE idle_state SET idle_xp = idle_xp + ${xpToGrant}, tier = ${newTier}, updated_at = now()
       WHERE player = ${player}
     `;
-    res.json({ ok: true, collected: { coins: coinsToGrant, diamonds: diamondsToGrant, xp: xpToGrant, fragments: pendingFragments, ratio } });
+    res.json({ ok: true, collected: { coins: coinsToGrant, diamonds: diamondsToGrant, xp: xpToGrant, fragments: grantedFragments, ratio } });
   } catch (err) {
     console.error('[POST /api/idle/collect]', err.message);
     res.status(500).json({ ok: false, error: err.message });
@@ -2135,6 +2197,45 @@ app.post('/api/idle/leave', async (req, res) => {
     res.json({ ok: true, status: 'stopped' });
   } catch (err) {
     console.error('[POST /api/idle/leave]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/idle/buy-potions
+ * Body: { player, qty }
+ * Spends coins to buy potions (IDLE_CONFIG.POTION_COIN_COST each).
+ */
+app.post('/api/idle/buy-potions', async (req, res) => {
+  const { player, qty } = req.body;
+  const n = Number(qty);
+  if (!player || !Number.isInteger(n) || n <= 0) {
+    return res.status(400).json({ ok: false, error: 'player, positive integer qty required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    const cost = n * IDLE_CONFIG.POTION_COIN_COST;
+    // Balance check embedded in the WHERE clause — a plain SELECT-then-UPDATE
+    // would let two concurrent buy calls both pass the check before either
+    // deducts, letting a player buy more potions than their coins cover.
+    const [charged] = await sql`
+      UPDATE idle_wallet SET coins = coins - ${cost}
+      WHERE player = ${player} AND coins >= ${cost}
+      RETURNING coins
+    `;
+    if (!charged) {
+      return res.status(400).json({ ok: false, error: 'Not enough coins' });
+    }
+    await sql`
+      INSERT INTO idle_state (player, potions) VALUES (${player}, ${n})
+      ON CONFLICT (player) DO UPDATE SET potions = idle_state.potions + ${n}
+    `;
+    res.json({ ok: true, bought: n, cost });
+  } catch (err) {
+    console.error('[POST /api/idle/buy-potions]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -2421,9 +2522,26 @@ async function migrateIdleDungeon() {
         pending_diamonds  INT          NOT NULL DEFAULT 0,
         pending_xp        INT          NOT NULL DEFAULT 0,
         pending_fragments JSONB        NOT NULL DEFAULT '{}',
+        resolve_version   INT          NOT NULL DEFAULT 0,
         updated_at        TIMESTAMPTZ  NOT NULL DEFAULT now()
       )
     `;
+    // idle_state may already exist from an earlier deploy without this column —
+    // integer optimistic-lock counter used by resolveIdleTicks() instead of
+    // comparing last_tick_at, since TIMESTAMPTZ round-trips through the JS
+    // driver at millisecond precision while Postgres stores microseconds,
+    // so a timestamp-equality guard would never match.
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS resolve_version INT NOT NULL DEFAULT 0`; } catch {}
+    // Tracks ms consumed of the potion currently "in progress" so short,
+    // frequent resolves (e.g. a 15s frontend poll) don't each round up to a
+    // whole potion — only potion_ms_used crossing POTION_COVERAGE_MS spends
+    // a whole potion from the integer `potions` count.
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS potion_ms_used INT NOT NULL DEFAULT 0`; } catch {}
+    // Tracks leftover ms toward the next kill so short, frequent resolves
+    // don't each floor-discard the sub-interval remainder (e.g. a 15s poll
+    // against a 4s kill interval would otherwise lose ~3s of progress per
+    // poll instead of carrying it into the next resolve).
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS kill_ms_remainder INT NOT NULL DEFAULT 0`; } catch {}
     await sql`
       CREATE TABLE IF NOT EXISTS idle_wallet (
         player   TEXT PRIMARY KEY,
