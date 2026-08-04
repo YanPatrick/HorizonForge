@@ -2059,6 +2059,87 @@ app.get('/api/idle/state', async (req, res) => {
 });
 
 /**
+ * POST /api/idle/collect
+ * Body: { player, mode }  mode: 'half' | 'full'
+ * Resolves pending offline rewards into the wallet/fragments, at 50% (free) or 100% (costs diamonds).
+ */
+app.post('/api/idle/collect', async (req, res) => {
+  const { player, mode } = req.body;
+  if (!player || !['half', 'full'].includes(mode)) {
+    return res.status(400).json({ ok: false, error: 'player, mode ("half"|"full") required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await resolveIdleTicks(player);
+    const [state] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
+    if (!state) return res.status(404).json({ ok: false, error: 'No idle state' });
+
+    const ratio = mode === 'full' ? 1.0 : IDLE_CONFIG.OFFLINE_REWARD_RATIO;
+    if (mode === 'full') {
+      const [wallet] = await sql`SELECT diamonds FROM idle_wallet WHERE player = ${player}`;
+      if ((wallet?.diamonds ?? 0) < IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST) {
+        return res.status(400).json({ ok: false, error: 'Not enough diamonds' });
+      }
+      await sql`UPDATE idle_wallet SET diamonds = diamonds - ${IDLE_CONFIG.OFFLINE_FULL_DIAMOND_COST} WHERE player = ${player}`;
+    }
+
+    const coinsToGrant = Math.floor(state.pending_coins * ratio);
+    const diamondsToGrant = Math.floor(state.pending_diamonds * ratio);
+    const xpToGrant = Math.floor(state.pending_xp * ratio);
+    const pendingFragments = state.pending_fragments ?? {};
+
+    await sql`UPDATE idle_wallet SET coins = coins + ${coinsToGrant}, diamonds = diamonds + ${diamondsToGrant} WHERE player = ${player}`;
+    for (const [slotType, qty] of Object.entries(pendingFragments)) {
+      const grantQty = Math.floor(Number(qty) * ratio);
+      if (grantQty <= 0) continue;
+      await sql`
+        INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slotType}, ${grantQty})
+        ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${grantQty}
+      `;
+    }
+    const newTier = idleTierForXp(state.idle_xp + xpToGrant);
+    await sql`
+      UPDATE idle_state
+      SET idle_xp = idle_xp + ${xpToGrant}, tier = ${newTier},
+          pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
+          updated_at = now()
+      WHERE player = ${player}
+    `;
+    res.json({ ok: true, collected: { coins: coinsToGrant, diamonds: diamondsToGrant, xp: xpToGrant, fragments: pendingFragments, ratio } });
+  } catch (err) {
+    console.error('[POST /api/idle/collect]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/idle/leave
+ * Body: { player }
+ * Manually ends the current run: resolves any elapsed time (full credit, since the player is here now),
+ * then sets status='stopped' with no penalty.
+ */
+app.post('/api/idle/leave', async (req, res) => {
+  const { player } = req.body;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await sql`UPDATE idle_state SET last_heartbeat_at = now() WHERE player = ${player}`;
+    await resolveIdleTicks(player);
+    await sql`UPDATE idle_state SET status = 'stopped', updated_at = now() WHERE player = ${player}`;
+    res.json({ ok: true, status: 'stopped' });
+  } catch (err) {
+    console.error('[POST /api/idle/leave]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
  * Includes gameAccount for the frontend to use in requestTransfer.
