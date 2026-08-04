@@ -2055,6 +2055,48 @@ async function migrateRpgAttrs() {
   console.log('   RPG attrs: ✅ migrated');
 }
 
+async function migrateIdleDungeon() {
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS idle_state (
+        player            TEXT         PRIMARY KEY,
+        formation_slot    SMALLINT     NOT NULL DEFAULT 1,
+        tier              SMALLINT     NOT NULL DEFAULT 1,
+        idle_xp           INT          NOT NULL DEFAULT 0,
+        status            VARCHAR(10)  NOT NULL DEFAULT 'stopped', -- 'running' | 'stopped'
+        hp                NUMERIC(10,2) NOT NULL DEFAULT 0,
+        max_hp            NUMERIC(10,2) NOT NULL DEFAULT 0,
+        potions           INT          NOT NULL DEFAULT 0,
+        last_tick_at      TIMESTAMPTZ,
+        last_heartbeat_at TIMESTAMPTZ,
+        pending_coins     INT          NOT NULL DEFAULT 0,
+        pending_diamonds  INT          NOT NULL DEFAULT 0,
+        pending_xp        INT          NOT NULL DEFAULT 0,
+        pending_fragments JSONB        NOT NULL DEFAULT '{}',
+        updated_at        TIMESTAMPTZ  NOT NULL DEFAULT now()
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS idle_wallet (
+        player   TEXT PRIMARY KEY,
+        coins    INT NOT NULL DEFAULT 0,
+        diamonds INT NOT NULL DEFAULT 0
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS idle_fragments (
+        player    TEXT NOT NULL,
+        slot_type TEXT NOT NULL,
+        qty       INT  NOT NULL DEFAULT 0,
+        PRIMARY KEY (player, slot_type)
+      )
+    `;
+    console.log('   Idle Dungeon: ✅ tables ready');
+  } catch (e) {
+    console.error('   Idle Dungeon: ❌', e.message);
+  }
+}
+
 async function seedTreasures() {
   try {
     // pg_get_constraintdef normalizes IN(...) to = ANY(ARRAY[...]), so search by 'background'
@@ -3914,6 +3956,7 @@ httpServer.listen(PORT, () => {
   // submit_team. Falls back to 5 if the table or row is missing.
   refreshMaxUnitsCap();
   migrateRpgAttrs();
+  migrateIdleDungeon();
   restoreSpeedOffsets();
   migrateLevelScale();
   migrateSkillPower();
