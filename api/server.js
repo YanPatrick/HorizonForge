@@ -1869,6 +1869,82 @@ app.put('/api/formations', async (req, res) => {
   }
 });
 
+async function computeIdlePowerScore(player, formationSlot) {
+  const [formation] = await sql`
+    SELECT hero_ids FROM formations WHERE player = ${player} AND slot = ${formationSlot}
+  `;
+  const heroIds = formation?.hero_ids ?? [];
+  if (heroIds.length === 0) return 0;
+
+  const bases = await sql`
+    SELECT c.cid, cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.primary_attr, cb.skill_power, cb.spd_offset
+    FROM characters_base cb
+    JOIN characters c ON c.id = cb.character_id
+    WHERE c.cid = ANY(${heroIds})
+  `;
+  const gearRows = await sql`
+    SELECT he.character_cid, i.atk_bonus, i.hp_bonus
+    FROM hero_equipment he
+    JOIN items i ON i.id = he.item_id
+    WHERE he.player = ${player} AND he.character_cid = ANY(${heroIds})
+  `;
+  const gearByHero = {};
+  for (const g of gearRows) {
+    const acc = gearByHero[g.character_cid] ?? { atk: 0, hp: 0 };
+    acc.atk += Number(g.atk_bonus) || 0;
+    acc.hp  += Number(g.hp_bonus) || 0;
+    gearByHero[g.character_cid] = acc;
+  }
+
+  let score = 0;
+  for (const base of bases) {
+    const stats = calcStats(base, 1.0);
+    const gear = gearByHero[base.cid] ?? { atk: 0, hp: 0 };
+    score += (stats.atk + gear.atk) + ((stats.max_hp + gear.hp) / 10);
+  }
+  return Math.round(score);
+}
+
+/**
+ * POST /api/idle/start
+ * Body: { player, formation_slot }
+ * Starts (or resumes) an idle run: requires potions > 0, resets hp to max, sets status='running'.
+ */
+app.post('/api/idle/start', async (req, res) => {
+  const { player, formation_slot } = req.body;
+  if (!player || !formation_slot) {
+    return res.status(400).json({ ok: false, error: 'player, formation_slot required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await sql`INSERT INTO idle_wallet (player) VALUES (${player}) ON CONFLICT (player) DO NOTHING`;
+    const [state] = await sql`
+      INSERT INTO idle_state (player, formation_slot)
+      VALUES (${player}, ${formation_slot})
+      ON CONFLICT (player) DO UPDATE SET formation_slot = ${formation_slot}
+      RETURNING potions, tier
+    `;
+    if (state.potions <= 0) {
+      return res.status(400).json({ ok: false, error: 'No potions available' });
+    }
+    const powerScore = await computeIdlePowerScore(player, formation_slot);
+    const maxHp = 100 + powerScore; // baseline idle-run HP pool, scales with formation power
+    await sql`
+      UPDATE idle_state
+      SET status = 'running', hp = ${maxHp}, max_hp = ${maxHp},
+          last_tick_at = now(), last_heartbeat_at = now(), updated_at = now()
+      WHERE player = ${player}
+    `;
+    res.json({ ok: true, status: 'running', power_score: powerScore, max_hp: maxHp, tier: state.tier });
+  } catch (err) {
+    console.error('[POST /api/idle/start]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 /**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
