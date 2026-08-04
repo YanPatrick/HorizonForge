@@ -902,7 +902,7 @@ const IDLE_CONFIG = {
   DROP_CHANCE_FRAGMENT:   0.099,
   DROP_CHANCE_DIAMOND:    0.001,
   // Each idle tier is associated with one equipment slot's fragments.
-  TIER_SLOTS: ['weapon', 'head', 'legs', 'boots', 'gloves', 'ring1'],
+  TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
 };
 
 function idleTierForXp(xp) {
@@ -2100,6 +2100,39 @@ async function migrateRpgAttrs() {
   console.log('   RPG attrs: ✅ migrated');
 }
 
+const IDLE_RECIPES = {
+  weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 18, hp: 0,   spd: 0   },
+  helm:   { slug: 'idle_helm_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 90,  spd: 0   },
+  legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 120, spd: 0.4 },
+  boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 40,  spd: 0.8 },
+  gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 14, hp: 20,  spd: 0   },
+  ring1:  { slug: 'idle_ring1_forged',  name: 'Band of the Unyielding Delver',fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 8,  hp: 60,  spd: 0   },
+};
+
+// Reverse lookup used by the Market sell endpoint to price an idle item by
+// its items.slug without a second recipe table in Postgres.
+const IDLE_RECIPE_BY_SLUG = Object.fromEntries(Object.values(IDLE_RECIPES).map(r => [r.slug, r]));
+
+async function seedIdleRecipes() {
+  const desc = 'Idle Dungeon craft — fixed stats, forged from fragments.';
+  // 'rarity' is constrained to starter/common/uncommon/rare/epic/legendary (items_rarity_check) —
+  // 'rare' is a placeholder tier for idle-crafted gear, tunable later.
+  try {
+    for (const [slotType, r] of Object.entries(IDLE_RECIPES)) {
+      await sql`
+        INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source)
+        VALUES (${r.name}, ${desc}, 'rare', ${slotType}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'idle_dungeon')
+        ON CONFLICT (slug) DO UPDATE
+          SET name = EXCLUDED.name, atk_bonus = EXCLUDED.atk_bonus,
+              hp_bonus = EXCLUDED.hp_bonus, spd_bonus = EXCLUDED.spd_bonus
+      `;
+    }
+    console.log('   Idle Dungeon: ✅ recipes seeded');
+  } catch (e) {
+    console.error('   Idle Dungeon: ❌ seedIdleRecipes', e.message);
+  }
+}
+
 async function migrateIdleDungeon() {
   try {
     await sql`
@@ -2137,6 +2170,7 @@ async function migrateIdleDungeon() {
       )
     `;
     console.log('   Idle Dungeon: ✅ tables ready');
+    await seedIdleRecipes();
   } catch (e) {
     console.error('   Idle Dungeon: ❌', e.message);
   }

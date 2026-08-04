@@ -13,7 +13,7 @@ const IDLE_CONFIG = {
   DROP_CHANCE_COIN: 0.30,
   DROP_CHANCE_FRAGMENT: 0.099,
   DROP_CHANCE_DIAMOND: 0.001,
-  TIER_SLOTS: ['weapon', 'head', 'legs', 'boots', 'gloves', 'ring1'],
+  TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
 };
 
 function idleTierForXp(xp) {
@@ -65,8 +65,8 @@ check('killIntervalMs(100) === 3800', killIntervalMs(100) === 3800);
 }
 
 const single = rollIdleDrop(2, Math.random);
-check('rollIdleDrop tier=2 fragment slotType is head when it rolls fragment', true); // slotType assignment is deterministic per tier, spot-checked below
-check('TIER_SLOTS[1] === "head"', IDLE_CONFIG.TIER_SLOTS[1] === 'head');
+check('rollIdleDrop tier=2 fragment slotType is helm when it rolls fragment', true); // slotType assignment is deterministic per tier, spot-checked below
+check('TIER_SLOTS[1] === "helm"', IDLE_CONFIG.TIER_SLOTS[1] === 'helm');
 void single;
 
 console.log(`\n${passed} passed, ${failed} failed`);

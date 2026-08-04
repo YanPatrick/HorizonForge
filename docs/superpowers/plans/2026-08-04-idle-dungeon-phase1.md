@@ -136,7 +136,7 @@ const IDLE_CONFIG = {
   DROP_CHANCE_FRAGMENT:   0.099,
   DROP_CHANCE_DIAMOND:    0.001,
   // Each idle tier is associated with one equipment slot's fragments.
-  TIER_SLOTS: ['weapon', 'head', 'legs', 'boots', 'gloves', 'ring1'],
+  TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
 };
 
 function idleTierForXp(xp) {
@@ -182,7 +182,7 @@ const IDLE_CONFIG = {
   DROP_CHANCE_COIN: 0.30,
   DROP_CHANCE_FRAGMENT: 0.099,
   DROP_CHANCE_DIAMOND: 0.001,
-  TIER_SLOTS: ['weapon', 'head', 'legs', 'boots', 'gloves', 'ring1'],
+  TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
 };
 
 function idleTierForXp(xp) {
@@ -234,8 +234,8 @@ check('killIntervalMs(100) === 3800', killIntervalMs(100) === 3800);
 }
 
 const single = rollIdleDrop(2, Math.random);
-check('rollIdleDrop tier=2 fragment slotType is head when it rolls fragment', true); // slotType assignment is deterministic per tier, spot-checked below
-check('TIER_SLOTS[1] === "head"', IDLE_CONFIG.TIER_SLOTS[1] === 'head');
+check('rollIdleDrop tier=2 fragment slotType is helm when it rolls fragment', true); // slotType assignment is deterministic per tier, spot-checked below
+check('TIER_SLOTS[1] === "helm"', IDLE_CONFIG.TIER_SLOTS[1] === 'helm');
 void single;
 
 console.log(`\n${passed} passed, ${failed} failed`);
@@ -270,7 +270,7 @@ git commit -m "feat(idle): add power score, kill rate and drop roll formulas"
 ```js
 const IDLE_RECIPES = {
   weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 18, hp: 0,   spd: 0   },
-  head:   { slug: 'idle_head_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 90,  spd: 0   },
+  helm:   { slug: 'idle_helm_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 90,  spd: 0   },
   legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 120, spd: 0.4 },
   boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 40,  spd: 0.8 },
   gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 14, hp: 20,  spd: 0   },
@@ -287,7 +287,7 @@ async function seedIdleRecipes() {
     for (const [slotType, r] of Object.entries(IDLE_RECIPES)) {
       await sql`
         INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source)
-        VALUES (${r.name}, ${desc}, 'idle', ${slotType}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'idle_dungeon')
+        VALUES (${r.name}, ${desc}, 'rare', ${slotType}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'idle_dungeon')
         ON CONFLICT (slug) DO UPDATE
           SET name = EXCLUDED.name, atk_bonus = EXCLUDED.atk_bonus,
               hp_bonus = EXCLUDED.hp_bonus, spd_bonus = EXCLUDED.spd_bonus
@@ -1513,7 +1513,7 @@ import '@styles/market.css'
 import { useT } from '../context/LanguageContext'
 
 const SLOT_ICONS = {
-  weapon: '⚔️', head: '⛑️', legs: '🥾', boots: '👢', gloves: '🧤',
+  weapon: '⚔️', helm: '⛑️', legs: '🥾', boots: '👢', gloves: '🧤',
   ring1: '💍', ring2: '💍', belt: '🎗️', special: '✨',
 }
 
