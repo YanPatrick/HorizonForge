@@ -1945,6 +1945,119 @@ app.post('/api/idle/start', async (req, res) => {
   }
 });
 
+async function resolveIdleTicks(player) {
+  const [state] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
+  if (!state || state.status !== 'running') return state;
+
+  const now = Date.now();
+  const lastTick = new Date(state.last_tick_at).getTime();
+  const lastHeartbeat = new Date(state.last_heartbeat_at).getTime();
+  let elapsedMs = now - lastTick;
+  if (elapsedMs <= 0) return state;
+
+  const isOnline = (now - lastHeartbeat) <= IDLE_CONFIG.ONLINE_GRACE_MS;
+  const powerScore = await computeIdlePowerScore(player, state.formation_slot);
+  const interval = killIntervalMs(powerScore);
+
+  // Potions cap how long this segment can run.
+  const maxSustainableMs = state.potions * IDLE_CONFIG.POTION_COVERAGE_MS;
+  const cappedMs = Math.min(elapsedMs, maxSustainableMs);
+  const ranOutOfPotions = cappedMs < elapsedMs;
+
+  const kills = Math.floor(cappedMs / interval);
+  const potionsConsumed = Math.min(state.potions, Math.ceil(cappedMs / IDLE_CONFIG.POTION_COVERAGE_MS));
+
+  let coinsGained = 0, diamondsGained = 0, xpGained = 0;
+  const fragmentsGained = {};
+  for (let i = 0; i < kills; i++) {
+    xpGained += IDLE_CONFIG.IDLE_XP_PER_KILL;
+    const drop = rollIdleDrop(state.tier);
+    if (drop.type === 'coin') coinsGained += drop.qty;
+    else if (drop.type === 'diamond') diamondsGained += drop.qty;
+    else if (drop.type === 'fragment') fragmentsGained[drop.slotType] = (fragmentsGained[drop.slotType] ?? 0) + drop.qty;
+  }
+
+  const newTier = idleTierForXp(state.idle_xp + xpGained);
+  const newStatus = ranOutOfPotions ? 'stopped' : 'running';
+  const hpLeft = ranOutOfPotions ? 0 : state.hp;
+
+  if (isOnline) {
+    // Online: credit directly, no pending pool.
+    await sql`UPDATE idle_wallet SET coins = coins + ${coinsGained}, diamonds = diamonds + ${diamondsGained} WHERE player = ${player}`;
+    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
+      await sql`
+        INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slotType}, ${qty})
+        ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${qty}
+      `;
+    }
+    await sql`
+      UPDATE idle_state
+      SET idle_xp = idle_xp + ${xpGained}, tier = ${newTier}, status = ${newStatus},
+          hp = ${hpLeft}, potions = potions - ${potionsConsumed},
+          last_tick_at = now(), updated_at = now()
+      WHERE player = ${player}
+    `;
+  } else {
+    // Offline: accrue into the pending pool, awaiting player collection choice.
+    const mergedFragments = { ...(state.pending_fragments ?? {}) };
+    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
+      mergedFragments[slotType] = (mergedFragments[slotType] ?? 0) + qty;
+    }
+    await sql`
+      UPDATE idle_state
+      SET pending_coins = pending_coins + ${coinsGained},
+          pending_diamonds = pending_diamonds + ${diamondsGained},
+          pending_xp = pending_xp + ${xpGained},
+          pending_fragments = ${JSON.stringify(mergedFragments)}::jsonb,
+          status = ${newStatus}, hp = ${hpLeft}, potions = potions - ${potionsConsumed},
+          last_tick_at = now(), updated_at = now()
+      WHERE player = ${player}
+    `;
+  }
+
+  const [refreshed] = await sql`SELECT * FROM idle_state WHERE player = ${player}`;
+  return refreshed;
+}
+
+/**
+ * GET /api/idle/state?player=X
+ * Resolves any elapsed idle time (online-credit or offline-pending), then returns full state.
+ */
+app.get('/api/idle/state', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Resolve elapsed time FIRST, using the heartbeat as it stood before this
+    // request — only then do we stamp a fresh heartbeat. Updating the heartbeat
+    // before resolving would make every call look "just went online" and the
+    // offline-pending path would never trigger.
+    const state = await resolveIdleTicks(player);
+    await sql`UPDATE idle_state SET last_heartbeat_at = now() WHERE player = ${player} AND status = 'running'`;
+    if (!state) {
+      return res.json({ ok: true, status: 'stopped', hp: 0, max_hp: 0, potions: 0, tier: 1, idle_xp: 0,
+        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {} });
+    }
+    const [wallet] = await sql`SELECT coins, diamonds FROM idle_wallet WHERE player = ${player}`;
+    const fragRows = await sql`SELECT slot_type, qty FROM idle_fragments WHERE player = ${player}`;
+    const fragments = Object.fromEntries(fragRows.map(r => [r.slot_type, r.qty]));
+    res.json({
+      ok: true,
+      status: state.status, hp: Number(state.hp), max_hp: Number(state.max_hp), potions: state.potions,
+      tier: state.tier, idle_xp: state.idle_xp,
+      coins: wallet?.coins ?? 0, diamonds: wallet?.diamonds ?? 0, fragments,
+      pending_coins: state.pending_coins, pending_diamonds: state.pending_diamonds,
+      pending_xp: state.pending_xp, pending_fragments: state.pending_fragments ?? {},
+    });
+  } catch (err) {
+    console.error('[GET /api/idle/state]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 /**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
