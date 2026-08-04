@@ -884,6 +884,51 @@ function calcStats(base, multiplier) {
   };
 }
 
+// ── Idle Dungeon — tunable constants (pending balancing session, see
+//    docs/superpowers/specs/2026-08-03-idle-dungeon-design.md §9) ──────────
+const IDLE_CONFIG = {
+  ONLINE_GRACE_MS:        90_000,        // heartbeat gap under this = still "online"
+  KILL_INTERVAL_BASE_MS:  4_000,         // ms per kill at powerScore = 0
+  KILL_INTERVAL_MIN_MS:   800,           // fastest possible kill interval
+  POWER_SCORE_MS_PER_PT:  2,             // ms shaved off per point of power score
+  POTION_COVERAGE_MS:     10 * 60_000,   // one potion sustains 10 minutes of combat
+  POTION_COIN_COST:       20,            // coins per potion (shop/buy-potions)
+  OFFLINE_REWARD_RATIO:   0.5,           // default free collection of offline-earned pending rewards
+  OFFLINE_FULL_DIAMOND_COST: 50,         // diamonds to collect 100% instead of 50%
+  IDLE_XP_PER_KILL:       1,
+  IDLE_XP_PER_TIER:       100,           // tier N requires (N-1) * 100 xp
+  DROP_CHANCE_NONE:       0.60,
+  DROP_CHANCE_COIN:       0.30,          // coin qty 1-3
+  DROP_CHANCE_FRAGMENT:   0.099,
+  DROP_CHANCE_DIAMOND:    0.001,
+  // Each idle tier is associated with one equipment slot's fragments.
+  TIER_SLOTS: ['weapon', 'head', 'legs', 'boots', 'gloves', 'ring1'],
+};
+
+function idleTierForXp(xp) {
+  return Math.max(1, Math.floor(Number(xp) / IDLE_CONFIG.IDLE_XP_PER_TIER) + 1);
+}
+
+function killIntervalMs(powerScore) {
+  const raw = IDLE_CONFIG.KILL_INTERVAL_BASE_MS - (Number(powerScore) * IDLE_CONFIG.POWER_SCORE_MS_PER_PT);
+  return Math.max(IDLE_CONFIG.KILL_INTERVAL_MIN_MS, raw);
+}
+
+function rollIdleDrop(tier) {
+  const r = Math.random();
+  const slotType = IDLE_CONFIG.TIER_SLOTS[(Number(tier) - 1) % IDLE_CONFIG.TIER_SLOTS.length];
+  if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND) {
+    return { type: 'diamond', qty: 1 };
+  }
+  if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND + IDLE_CONFIG.DROP_CHANCE_FRAGMENT) {
+    return { type: 'fragment', qty: 1, slotType };
+  }
+  if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND + IDLE_CONFIG.DROP_CHANCE_FRAGMENT + IDLE_CONFIG.DROP_CHANCE_COIN) {
+    return { type: 'coin', qty: 1 + Math.floor(Math.random() * 3) };
+  }
+  return { type: 'none', qty: 0 };
+}
+
 app.get('/api/characters', async (_req, res) => {
   try {
     const rows = await sql`
