@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a working idle-dungeon core loop (power score → kill rate → drops, potions, online/offline reward split, crafting) with the "Hide Dungeon" (static sprite) UI mode, so a player can start a run, watch loot accrue, leave or run out of potions, and craft one idle-exclusive item per slot.
+**Goal:** Ship a working idle-dungeon core loop (power score → kill rate → drops, potions, online/offline reward split, crafting) with the "Hide Dungeon" (static sprite) UI mode, so a player can start a run, watch loot accrue, leave or run out of potions, craft one idle-exclusive item per slot, and sell surplus idle-crafted items back for coins in a new Market tab.
 
 **Architecture:** Server-authoritative, tick-on-read design — no background worker. All idle state lives in three new Postgres tables (`idle_state`, `idle_wallet`, `idle_fragments`) plus static idle item/recipe rows in the existing `items` table (`source = 'idle_dungeon'`). Every read of `/api/idle/state` first resolves elapsed time since `last_tick_at` into either auto-credited (online) rewards or a `pending_*` pool (offline), matching `hf_session` bearer-token auth used everywhere else in `api/server.js`. Frontend follows the existing `LobbyPage.jsx` `view` state-switch pattern (no new router route), rendering a new `client/src/pages/IdleView.jsx` in "Hide Dungeon" mode only (static hero/enemy sprites + HP bars).
 
@@ -269,13 +269,17 @@ git commit -m "feat(idle): add power score, kill rate and drop roll formulas"
 
 ```js
 const IDLE_RECIPES = {
-  weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, atk: 18, hp: 0,   spd: 0   },
-  head:   { slug: 'idle_head_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 90,  spd: 0   },
-  legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 120, spd: 0.4 },
-  boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 40,  spd: 0.8 },
-  gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, atk: 14, hp: 20,  spd: 0   },
-  ring1:  { slug: 'idle_ring1_forged',  name: 'Band of the Unyielding Delver',fragmentsRequired: 100, coinCost: 100, atk: 8,  hp: 60,  spd: 0   },
+  weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 18, hp: 0,   spd: 0   },
+  head:   { slug: 'idle_head_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 90,  spd: 0   },
+  legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 120, spd: 0.4 },
+  boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 40,  spd: 0.8 },
+  gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 14, hp: 20,  spd: 0   },
+  ring1:  { slug: 'idle_ring1_forged',  name: 'Band of the Unyielding Delver',fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 8,  hp: 60,  spd: 0   },
 };
+
+// Reverse lookup used by the Market sell endpoint (Task 11) to price an
+// idle item by its items.slug without a second recipe table in Postgres.
+const IDLE_RECIPE_BY_SLUG = Object.fromEntries(Object.values(IDLE_RECIPES).map(r => [r.slug, r]));
 
 async function seedIdleRecipes() {
   const desc = 'Idle Dungeon craft — fixed stats, forged from fragments.';
@@ -1099,10 +1103,660 @@ git commit -m "feat(idle): add Idle Dungeon tab (Hide Dungeon UI mode)"
 
 ---
 
+### Task 10: Extend `GET /api/player-items` with `slug` + `sell_price`
+
+The Market tab needs to know which owned items are idle-crafted and what they're worth. Rather than a second price table in Postgres, this task exposes the existing in-memory `IDLE_RECIPE_BY_SLUG` (Task 3) through the item's `slug`.
+
+**Files:**
+- Modify: `api/server.js:1483-1512` (existing `GET /api/player-items` handler)
+
+**Interfaces:**
+- Consumes: `IDLE_RECIPE_BY_SLUG` (Task 3).
+- Produces: each item in the `items` array response gains `slug` and `sell_price` (number or `null`) fields. Task 12's `MarketView.jsx` filters on `source === 'idle_dungeon' && sell_price != null && !equipped_on`.
+
+- [ ] **Step 1: Add `i.slug` to the SELECT and compute `sell_price` on the mapped response**
+
+Replace the existing handler body (`api/server.js:1483-1512`) with:
+
+```js
+  try {
+    const rows = await sql`
+      SELECT
+        i.id, i.name, i.description, i.rarity, i.slot_type, i.slug,
+        COALESCE(i.atk_bonus, 0) AS atk_bonus,
+        COALESCE(i.hp_bonus, 0)  AS hp_bonus,
+        COALESCE(i.spd_bonus, 0) AS spd_bonus,
+        COALESCE(i.source, 'normal') AS source,
+        he.character_cid AS equipped_on
+      FROM player_items pi
+      JOIN items i ON i.id = pi.item_id
+      LEFT JOIN LATERAL (
+        SELECT character_cid FROM hero_equipment
+        WHERE item_id = i.id AND player = ${player}
+        LIMIT 1
+      ) he ON true
+      WHERE pi.player = ${player}
+      ORDER BY pi.acquired_at DESC
+    `;
+    res.json({ ok: true, items: rows.map(r => ({
+      id:          Number(r.id),
+      name:        r.name,
+      description: r.description,
+      rarity:      r.rarity,
+      slot_type:   r.slot_type,
+      slug:        r.slug,
+      atk_bonus:   Number(r.atk_bonus),
+      hp_bonus:    Number(r.hp_bonus),
+      spd_bonus:   Number(r.spd_bonus),
+      source:      r.source,
+      equipped_on: r.equipped_on || null,
+      sell_price:  r.source === 'idle_dungeon' ? (IDLE_RECIPE_BY_SLUG[r.slug]?.sellPrice ?? null) : null,
+    })) });
+  } catch (err) {
+    console.error('[GET /api/player-items]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+```
+
+- [ ] **Step 2: Verify locally**
+
+With a player owning at least one crafted idle item (from Task 8's verification) and one non-idle item (e.g. a campaign reward), call:
+```bash
+curl "http://localhost:3000/api/player-items?player=<you>" -H "Authorization: Bearer $TOKEN"
+```
+Expected: the idle item shows `"sell_price": 40` (or whichever recipe it was), the non-idle item shows `"sell_price": null`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add api/server.js
+git commit -m "feat(market): expose slug and sell_price on player-items for idle-crafted gear"
+```
+
+---
+
+### Task 11: `POST /api/market/sell`
+
+**Files:**
+- Modify: `api/server.js` (add route near the idle routes from Tasks 4-8)
+
+**Interfaces:**
+- Consumes: `player_items`, `hero_equipment`, `idle_wallet`, `IDLE_RECIPE_BY_SLUG` (Task 3).
+- Produces: response shape `{ ok, sold: [{item_id, coins}], total_coins, new_balance }` — consumed by Task 12's `MarketView.jsx`.
+
+- [ ] **Step 1: Add the route**
+
+```js
+/**
+ * POST /api/market/sell
+ * Body: { player, item_ids: number[] }
+ * Sells owned idle-dungeon items for coins. Only source='idle_dungeon' items are
+ * sellable, and only if not currently equipped on a hero.
+ */
+app.post('/api/market/sell', async (req, res) => {
+  const { player, item_ids } = req.body;
+  if (!player || !Array.isArray(item_ids) || item_ids.length === 0) {
+    return res.status(400).json({ ok: false, error: 'player and non-empty item_ids required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    const rows = await sql`
+      SELECT i.id, i.slug, i.source,
+        (SELECT 1 FROM hero_equipment he WHERE he.item_id = i.id AND he.player = ${player}) AS is_equipped
+      FROM player_items pi
+      JOIN items i ON i.id = pi.item_id
+      WHERE pi.player = ${player} AND i.id = ANY(${item_ids})
+    `;
+    const sold = [];
+    let totalCoins = 0;
+    for (const row of rows) {
+      if (row.source !== 'idle_dungeon') continue;
+      if (row.is_equipped) continue;
+      const price = IDLE_RECIPE_BY_SLUG[row.slug]?.sellPrice;
+      if (!price) continue;
+      sold.push({ item_id: Number(row.id), coins: price });
+      totalCoins += price;
+    }
+    if (sold.length === 0) {
+      return res.status(400).json({ ok: false, error: 'No sellable idle items in the given ids (must be idle_dungeon-sourced, unequipped, and priced)' });
+    }
+    const soldIds = sold.map(s => s.item_id);
+    await sql`DELETE FROM player_items WHERE player = ${player} AND item_id = ANY(${soldIds})`;
+    await sql`
+      INSERT INTO idle_wallet (player, coins) VALUES (${player}, ${totalCoins})
+      ON CONFLICT (player) DO UPDATE SET coins = idle_wallet.coins + ${totalCoins}
+    `;
+    const [wallet] = await sql`SELECT coins FROM idle_wallet WHERE player = ${player}`;
+    res.json({ ok: true, sold, total_coins: totalCoins, new_balance: wallet.coins });
+  } catch (err) {
+    console.error('[POST /api/market/sell]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+```
+
+- [ ] **Step 2: Verify locally**
+
+Using the idle item crafted in Task 8's verification (unequipped):
+```bash
+curl -X POST http://localhost:3000/api/market/sell -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" -d '{"player":"<you>","item_ids":[<the crafted item id>]}'
+```
+Expected: `{"ok":true,"sold":[{"item_id":...,"coins":40}],"total_coins":40,"new_balance":...}`. A follow-up `GET /api/player-items?player=<you>` no longer lists that item. Then equip a different idle item on a hero and try to sell its `item_id` — expect `{"ok":false,"error":"No sellable idle items..."}`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add api/server.js
+git commit -m "feat(market): add POST /api/market/sell for idle-crafted items"
+```
+
+---
+
+### Task 12: `MarketView.jsx` — Market tab (sell idle items for coins)
+
+Adapted from an externally-authored draft: keeps the merchant-banner layout and drag-to-sell-tray interaction, but replaces the data model (no stacked quantities — `player_items` rows are unique instances), removes the non-functional `onSell` stub, and wires it to Task 11's real endpoint. Only items with `source === 'idle_dungeon'` (and a non-null `sell_price`, and not equipped) are ever shown — nothing else appears in this tab, matching the "only idle-tagged items are sellable" rule directly rather than showing everything and graying out what isn't sellable.
+
+**Files:**
+- Create: `client/src/pages/MarketView.jsx`
+- Create: `public/css/market.css` (confirmed correct location — `client/vite.config.js:14` aliases `@styles` to `public/css`, not `client/src/styles`)
+- Modify: `client/src/pages/LobbyPage.jsx` (add `view === 'market'` branch, nav buttons, `playerItems`/`setPlayerItems`/`session`/`showToast` already in scope — same pattern as Task 9's `IdleView` wiring)
+
+**Interfaces:**
+- Consumes: `playerItems` (existing `LobbyPage.jsx` state, `api/server.js:1501` shape + Task 10's `slug`/`sell_price` fields); `POST /api/market/sell` (Task 11).
+- Produces: `MarketView({ session, items, onSold, toast })` component.
+
+- [ ] **Step 1: Create `public/css/market.css`**
+
+Reuse the externally-authored stylesheet as-is (it only targets class names owned by this component, no conflicts with existing `public/css/*.css` files):
+
+```css
+/* ============================================================
+   Market — merchant NPC panel (drag idle-crafted items in to sell)
+   Imported by MarketView.jsx via @styles/market.css
+   ============================================================ */
+
+#view-market {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mkt-layout {
+  background: #0f0e1f;
+}
+
+.mkt-banner {
+  position: relative;
+  height: 160px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #241f3d 0%, #16142b 100%);
+  border-bottom: 1px solid #2a2850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mkt-banner-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mkt-banner-fallback {
+  font-size: 48px;
+  opacity: 0.6;
+}
+
+.mkt-banner-title {
+  position: absolute;
+  left: 16px;
+  bottom: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.mkt-body {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+}
+
+.mkt-panel-title {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 14px 16px 8px;
+}
+
+.mkt-inventory {
+  flex: 1.2;
+  overflow-y: auto;
+  border-right: 1px solid #2a2850;
+}
+
+.mkt-empty {
+  padding: 24px 16px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13px;
+}
+
+.mkt-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.mkt-item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  cursor: grab;
+  user-select: none;
+  transition: border-color 0.15s, transform 0.1s;
+}
+
+.mkt-item-card:active { cursor: grabbing; }
+.mkt-item-card:hover { border-color: #4a4a8a; }
+.mkt-item-card.staged { opacity: 0.35; cursor: not-allowed; }
+
+.mkt-item-ico { font-size: 22px; line-height: 1; }
+
+.mkt-item-name {
+  font-size: 11px;
+  color: #ddd;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.mkt-item-price {
+  font-size: 11px;
+  color: #ffd166;
+  font-weight: 700;
+}
+
+.mkt-tray {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 0.15s;
+}
+
+.mkt-tray.drag-over { background: rgba(76, 175, 80, 0.08); }
+
+.mkt-tray-empty {
+  margin: 0 16px;
+  padding: 20px 12px;
+  border: 1.5px dashed #2a2a4a;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.mkt-tray-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mkt-tray-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #1a1a2e;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  cursor: grab;
+}
+
+.mkt-tray-name {
+  flex: 1;
+  font-size: 12px;
+  color: #ddd;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mkt-tray-subtotal {
+  font-size: 11px;
+  color: #ffd166;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: right;
+}
+
+.mkt-tray-remove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.mkt-tray-remove:hover { color: #ff6b6b; }
+
+.mkt-tray-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 16px;
+  border-top: 1px solid #2a2850;
+  margin-top: 8px;
+}
+
+.mkt-tray-total {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffd166;
+}
+
+.mkt-btn-sell {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #4caf50;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mkt-btn-sell:disabled {
+  background: #2a2a4a;
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+@media (max-width: 860px) {
+  .mkt-body { flex-direction: column; overflow-y: auto; }
+  .mkt-inventory { border-right: none; border-bottom: 1px solid #2a2850; overflow: visible; }
+  .mkt-tray { width: 100%; }
+}
+```
+
+- [ ] **Step 2: Create `client/src/pages/MarketView.jsx`**
+
+```jsx
+import { useMemo, useState } from 'react'
+import '@styles/market.css'
+import { useT } from '../context/LanguageContext'
+
+const SLOT_ICONS = {
+  weapon: '⚔️', head: '⛑️', legs: '🥾', boots: '👢', gloves: '🧤',
+  ring1: '💍', ring2: '💍', belt: '🎗️', special: '✨',
+}
+
+async function marketFetch(path, session, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (session?.token) headers.Authorization = `Bearer ${session.token}`
+  const res = await fetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } })
+  return res.json()
+}
+
+export default function MarketView({ session, items, onSold, toast }) {
+  const { t } = useT()
+  const [trayIds, setTrayIds] = useState([])
+  const [dragOver, setDragOver] = useState(false)
+  const [selling, setSelling] = useState(false)
+
+  // Only idle-crafted, unequipped, priced items are ever sellable here.
+  const sellable = useMemo(
+    () => (items || []).filter(i => i.source === 'idle_dungeon' && i.sell_price != null && !i.equipped_on),
+    [items]
+  )
+  const byId = useMemo(() => Object.fromEntries(sellable.map(i => [i.id, i])), [sellable])
+  const trayEntries = trayIds.filter(id => byId[id])
+  const total = trayEntries.reduce((sum, id) => sum + (byId[id]?.sell_price ?? 0), 0)
+
+  function addToTray(id) {
+    if (!byId[id] || trayIds.includes(id)) return
+    setTrayIds(prev => [...prev, id])
+  }
+
+  function removeFromTray(id) {
+    setTrayIds(prev => prev.filter(x => x !== id))
+  }
+
+  function handleTrayDrop(e) {
+    e.preventDefault()
+    setDragOver(false)
+    const id = Number(e.dataTransfer.getData('text/plain'))
+    if (id) addToTray(id)
+  }
+
+  function handleInventoryDrop(e) {
+    e.preventDefault()
+    const raw = e.dataTransfer.getData('text/plain')
+    if (raw?.startsWith('tray:')) removeFromTray(Number(raw.slice(5)))
+  }
+
+  async function handleSell() {
+    if (trayEntries.length === 0 || selling) return
+    setSelling(true)
+    const data = await marketFetch('/api/market/sell', session, {
+      method: 'POST',
+      body: JSON.stringify({ player: session.username, item_ids: trayEntries }),
+    })
+    setSelling(false)
+    if (!data.ok) return toast?.(data.error)
+    toast?.(t('market.sold', { coins: data.total_coins }))
+    onSold?.(trayEntries)
+    setTrayIds([])
+  }
+
+  return (
+    <div id="view-market" className="lv active mkt-layout">
+      <div className="mkt-banner">
+        <img
+          className="mkt-banner-img"
+          src="/images/market/merchant-banner.jpg"
+          alt=""
+          onError={e => { e.currentTarget.style.display = 'none' }}
+        />
+        <div className="mkt-banner-fallback">🧙</div>
+        <div className="mkt-banner-title">{t('market.title')}</div>
+      </div>
+
+      <div className="mkt-body">
+        <div className="mkt-inventory" onDragOver={e => e.preventDefault()} onDrop={handleInventoryDrop}>
+          <div className="mkt-panel-title">{t('market.yourItems')}</div>
+          {sellable.length === 0
+            ? <div className="mkt-empty">{t('market.noItems')}</div>
+            : (
+              <div className="mkt-item-grid">
+                {sellable.map(item => {
+                  const staged = trayIds.includes(item.id)
+                  return (
+                    <div
+                      key={item.id}
+                      className={`mkt-item-card${staged ? ' staged' : ''}`}
+                      draggable={!staged}
+                      onDragStart={e => e.dataTransfer.setData('text/plain', String(item.id))}
+                      onClick={() => addToTray(item.id)}
+                      title={item.name}
+                    >
+                      <span className="mkt-item-ico">{SLOT_ICONS[item.slot_type] ?? '📦'}</span>
+                      <span className="mkt-item-name">{item.name}</span>
+                      <span className="mkt-item-price">🪙 {item.sell_price}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+        </div>
+
+        <div
+          className={`mkt-tray${dragOver ? ' drag-over' : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleTrayDrop}
+        >
+          <div className="mkt-panel-title">{t('market.sellTray')}</div>
+          {trayEntries.length === 0
+            ? <div className="mkt-tray-empty">{t('market.dragHint')}</div>
+            : (
+              <div className="mkt-tray-list">
+                {trayEntries.map(id => {
+                  const item = byId[id]
+                  return (
+                    <div
+                      key={id}
+                      className="mkt-tray-row"
+                      draggable
+                      onDragStart={e => e.dataTransfer.setData('text/plain', `tray:${id}`)}
+                    >
+                      <span className="mkt-item-ico">{SLOT_ICONS[item.slot_type] ?? '📦'}</span>
+                      <span className="mkt-tray-name">{item.name}</span>
+                      <span className="mkt-tray-subtotal">🪙 {item.sell_price}</span>
+                      <button type="button" className="mkt-tray-remove" onClick={() => removeFromTray(id)}>✕</button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          <div className="mkt-tray-footer">
+            <span className="mkt-tray-total">{t('market.total')}: 🪙 {total}</span>
+            <button type="button" className="mkt-btn-sell" disabled={trayEntries.length === 0 || selling} onClick={handleSell}>
+              {t('market.sell')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 3: Add locale keys**
+
+In `client/src/locale/en.js`, add near the other `nav.*`/screen keys:
+```js
+  'nav.market':          'Market',
+  'market.title':        'Market',
+  'market.yourItems':    'Your Items',
+  'market.sellTray':     'Sell to Merchant',
+  'market.dragHint':     'Drag idle-crafted items here, or tap them, to sell.',
+  'market.noItems':      'No idle-crafted items to sell yet.',
+  'market.total':        'Total',
+  'market.sell':         'Sell',
+  'market.sold':         'Sold for {coins} coins.',
+```
+
+In `client/src/locale/pt-BR.js`, add:
+```js
+  'nav.market':          'Mercado',
+  'market.title':        'Mercado',
+  'market.yourItems':    'Seus Itens',
+  'market.sellTray':     'Vender ao Mercador',
+  'market.dragHint':     'Arraste itens forjados no idle aqui, ou toque neles, para vender.',
+  'market.noItems':      'Nenhum item forjado no idle pra vender ainda.',
+  'market.total':        'Total',
+  'market.sell':         'Vender',
+  'market.sold':         'Vendido por {coins} coins.',
+```
+
+- [ ] **Step 4: Wire into `LobbyPage.jsx`**
+
+Add the import near the top (next to the `ShopView`/`IdleView` imports from Task 9):
+```jsx
+import MarketView from './MarketView'
+```
+
+Add `'market'` to the `allowed` array in the `view` `useState` initializer (`client/src/pages/LobbyPage.jsx:1219`):
+```jsx
+const allowed = ['home', 'inventory', 'shop', 'market', 'formation', 'grimoire', 'settings', 'campaign', 'idle']
+```
+
+Add a desktop nav button next to the existing `shop` tab button (around `client/src/pages/LobbyPage.jsx:2050`):
+```jsx
+<button type="button" className={`top-nav-tab${view === 'market' ? ' active' : ''}`} onClick={() => setView('market')}>
+  <span className="tnt-ico">🧙</span><span className="tnt-lbl">{t('nav.market')}</span>
+</button>
+```
+
+Add the view branch next to the `shop`/`idle` branches (around `client/src/pages/LobbyPage.jsx:2334`):
+```jsx
+{view === 'market' && (
+  <MarketView
+    session={session}
+    items={playerItems}
+    onSold={soldIds => setPlayerItems(prev => prev.filter(i => !soldIds.includes(i.id)))}
+    toast={showToast}
+  />
+)}
+```
+
+Add a mobile nav button next to the existing mobile `shop` tab button (around `client/src/pages/LobbyPage.jsx:2363`):
+```jsx
+<button type="button" className={navTabClass('market')} onClick={() => setView('market')}>
+  <span className="mbt-ico">🧙</span><span className="mbt-lbl">{t('nav.market')}</span>
+</button>
+```
+
+- [ ] **Step 5: Verify in the browser**
+
+Run `npm run dev`, log in with a player that has at least one unequipped idle-crafted item (from Task 8) and one non-idle item (e.g. a starter/campaign item). Open the Market tab and confirm:
+- Only the idle-crafted item appears in "Your Items" — the campaign/starter item is not listed at all.
+- Dragging (or tapping) the idle item moves it into the sell tray with its price shown.
+- Clicking "Sell" empties the tray, shows a toast with the coins earned, and the item disappears from "Your Items" (and from the Inventory tab too, since `playerItems` is shared app-level state).
+- `GET /api/idle/state?player=<you>` (from Task 5) now shows the increased `coins` balance.
+
+- [ ] **Step 6: Production build check**
+
+```bash
+npm run build
+npm start
+```
+Navigate to the Market tab via the normal lobby flow at `http://localhost:3000` and repeat the sell flow.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add client/src/pages/MarketView.jsx public/css/market.css client/src/pages/LobbyPage.jsx client/src/locale/en.js client/src/locale/pt-BR.js
+git commit -m "feat(market): add Market tab to sell idle-crafted items for coins"
+```
+
+---
+
 ## Self-Review Notes (for whoever executes this plan)
 
 - **`formations` prop shape**: `IdleView` assumes `formations` is already an array of `{ slot, name, hero_ids }` fetched by `LobbyPage.jsx` (same shape `CampaignView` consumes) — if `LobbyPage.jsx` doesn't already have a `formations` state variable in scope near the `inventory`/`campaign` view branches, add a `GET /api/formations?player=X` fetch there first (mirroring the existing formations-loading code elsewhere in the file) before wiring Task 9.
 - **Fragments as JSON keys**: `pending_fragments` is stored as JSONB with slot-type string keys (e.g. `{"weapon": 3}`) — Postgres/Neon returns this already parsed as a JS object via the `sql` client, no `JSON.parse()` needed on read.
+
+## Market tab — origin note
+
+Tasks 10-12 (Market tab) started from a UI draft an external session produced (banner + drag-to-sell-tray layout, patch delivered as `market-source.patch`/`MarketView.jsx`/`market.css`). That draft had no backend at all (`onSell` was never wired) and assumed a stackable-quantity, priced, always-sellable item shape that doesn't match this repo's `player_items` model (unique instances, no `icon`/`price`/`sellable` fields — see `api/server.js:1483-1512`). Tasks 10-12 keep the visual layout and CSS classnames but replace the data/selling logic entirely: only `source = 'idle_dungeon'`, unequipped, priced items are ever shown, and selling is now backed by a real `POST /api/market/sell` endpoint.
 
 ## Out of scope for this plan (see design spec §"Fora de escopo")
 
