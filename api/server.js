@@ -2241,6 +2241,73 @@ app.post('/api/idle/buy-potions', async (req, res) => {
 });
 
 /**
+ * GET /api/idle/recipes
+ * Static list — no auth required (informational only).
+ */
+app.get('/api/idle/recipes', (req, res) => {
+  res.json({ ok: true, recipes: IDLE_RECIPES });
+});
+
+/**
+ * POST /api/idle/craft
+ * Body: { player, slot_type }
+ * Consumes fragments + coins for that slot's recipe, grants the fixed-stat idle item.
+ */
+app.post('/api/idle/craft', async (req, res) => {
+  const { player, slot_type } = req.body;
+  const recipe = IDLE_RECIPES[slot_type];
+  if (!player || !recipe) {
+    return res.status(400).json({ ok: false, error: 'player and valid slot_type required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Both deductions embed their balance check in the WHERE clause (same
+    // pattern as buy-potions) — a SELECT-then-UPDATE would let concurrent
+    // craft calls both pass the check before either deducts. Coins are
+    // charged first and refunded if the fragment deduction then fails, so
+    // a player is never left having paid for a craft that didn't happen.
+    const [coinsCharged] = await sql`
+      UPDATE idle_wallet SET coins = coins - ${recipe.coinCost}
+      WHERE player = ${player} AND coins >= ${recipe.coinCost}
+      RETURNING coins
+    `;
+    if (!coinsCharged) {
+      return res.status(400).json({ ok: false, error: 'Not enough coins' });
+    }
+    const [fragCharged] = await sql`
+      UPDATE idle_fragments SET qty = qty - ${recipe.fragmentsRequired}
+      WHERE player = ${player} AND slot_type = ${slot_type} AND qty >= ${recipe.fragmentsRequired}
+      RETURNING qty
+    `;
+    if (!fragCharged) {
+      await sql`UPDATE idle_wallet SET coins = coins + ${recipe.coinCost} WHERE player = ${player}`;
+      return res.status(400).json({ ok: false, error: `Not enough ${slot_type} fragments` });
+    }
+    const [item] = await sql`SELECT id FROM items WHERE slug = ${recipe.slug}`;
+    if (!item) {
+      // Recipe item wasn't seeded — refund both charges before failing.
+      await sql`UPDATE idle_wallet SET coins = coins + ${recipe.coinCost} WHERE player = ${player}`;
+      await sql`
+        INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slot_type}, ${recipe.fragmentsRequired})
+        ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${recipe.fragmentsRequired}
+      `;
+      return res.status(500).json({ ok: false, error: 'Recipe item not seeded' });
+    }
+    await sql`
+      INSERT INTO player_items (player, item_id, source) VALUES (${player}, ${item.id}, 'idle_dungeon')
+      ON CONFLICT (player, item_id) DO NOTHING
+    `;
+    res.json({ ok: true, crafted: { slug: recipe.slug, name: recipe.name, item_id: item.id } });
+  } catch (err) {
+    console.error('[POST /api/idle/craft]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
  * Includes gameAccount for the frontend to use in requestTransfer.
