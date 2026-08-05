@@ -206,22 +206,22 @@ function GearSlotsPanel({ hero, playerGear, onUnequipItem, unequipPending, setUn
       <div className="inv-mini-stats">
         <div className="inv-mini-stat-row">
           <span>❤️ HP</span>
-          <span className={`inv-mini-stat-val ${hp_bonus !== 0 ? 'pos' : 'zero'}`}>{hp_bonus > 0 ? '+' : ''}{hp_bonus}</span>
+          <span className={`inv-mini-stat-val ${hp_bonus > 0 ? 'pos' : hp_bonus < 0 ? 'neg' : 'zero'}`}>{hp_bonus > 0 ? '+' : ''}{hp_bonus}</span>
         </div>
         <div className="inv-mini-stat-row">
           <span>⚔️ ATK</span>
-          <span className={`inv-mini-stat-val ${atk_bonus !== 0 ? 'pos' : 'zero'}`}>{atk_bonus > 0 ? '+' : ''}{atk_bonus}</span>
+          <span className={`inv-mini-stat-val ${atk_bonus > 0 ? 'pos' : atk_bonus < 0 ? 'neg' : 'zero'}`}>{atk_bonus > 0 ? '+' : ''}{atk_bonus}</span>
         </div>
         <div className="inv-mini-stat-row">
           <span>⚡ SPD</span>
-          <span className={`inv-mini-stat-val ${Number(spd_bonus) !== 0 ? 'pos' : 'zero'}`}>{Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)}</span>
+          <span className={`inv-mini-stat-val ${Number(spd_bonus) > 0 ? 'pos' : Number(spd_bonus) < 0 ? 'neg' : 'zero'}`}>{Number(spd_bonus) > 0 ? '+' : ''}{Number(spd_bonus).toFixed(2)}</span>
         </div>
       </div>
     </div>
   )
 }
 
-function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, setEquipPending, onEquipItem, t }) {
+function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, setEquipPending, onEquipItem, t, onRefresh, refreshing }) {
   const SORT_OPTS = [
     { value: 'rarity',      label: t('inv.sortRarity') },
     { value: 'name',        label: t('inv.sortName') },
@@ -234,13 +234,27 @@ function InventoryItemsPanel({ hero, items, sortBy, setSortBy, equipPending, set
         <div className="inv-panel-title">
           {t('hero.inventory')} ({items.length})
         </div>
-        <select
-          className="inv-sort-select"
-          value={sortBy}
-          onChange={e => setSortBy(e.target.value)}
-        >
-          {SORT_OPTS.map(o => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
-        </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {onRefresh && (
+            <button
+              type="button"
+              className="inv-sort-select"
+              style={{ cursor: 'pointer', padding: '2px 8px', fontSize: '0.8em' }}
+              onClick={onRefresh}
+              disabled={refreshing}
+              title={t('inv.refresh') || 'Refresh inventory'}
+            >
+              {refreshing ? '⌛' : '↺'}
+            </button>
+          )}
+          <select
+            className="inv-sort-select"
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+          >
+            {SORT_OPTS.map(o => <option key={o.value} value={o.value}>↕ {o.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {items.length === 0
@@ -471,6 +485,7 @@ export default function InventoryView({
   onEquipItem, onUnequipItem,
   onEquipSkin, onUnequipSkin,
   onEquipBg, onUnequipBg,
+  onRefreshItems,
   toast,
 }) {
   const { t } = useT()
@@ -486,6 +501,7 @@ export default function InventoryView({
   const [catalog, setCatalog] = useState([])
   const [ownedIds, setOwnedIds] = useState(new Set())
   const [cosmeticsLoading, setCosmeticsLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (!session?.token) { setCosmeticsLoading(false); return }
@@ -657,6 +673,8 @@ export default function InventoryView({
                   setEquipPending={setEquipPending}
                   onEquipItem={onEquipItem}
                   t={t}
+                  onRefresh={onRefreshItems ? async () => { setRefreshing(true); await onRefreshItems(); setRefreshing(false) } : undefined}
+                  refreshing={refreshing}
                 />
               </div>
             </>

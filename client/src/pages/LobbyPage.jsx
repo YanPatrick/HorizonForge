@@ -1287,6 +1287,18 @@ export default function LobbyPage() {
       if (data.ok) {
         setChestResult({ chestName: data.chestName, item: data.item })
         setPendingChests(data.pending)
+        setPlayerItems(prev => [...prev, {
+          id:          data.item.id,
+          name:        data.item.name,
+          description: '',
+          rarity:      data.item.rarity,
+          slot_type:   data.item.slot_type,
+          atk_bonus:   data.item.atk_bonus,
+          hp_bonus:    data.item.hp_bonus,
+          spd_bonus:   data.item.spd_bonus,
+          source:      'chest',
+          equipped_on: null,
+        }])
       }
     } catch (e) {
       showToast('Failed to open chest. Try again.')
@@ -2315,11 +2327,18 @@ export default function LobbyPage() {
             onUnequipSkin={handleUnequipSkin}
             onEquipBg={handleEquipBg}
             onUnequipBg={handleUnequipBg}
+            onRefreshItems={async () => {
+              if (!session?.token || !session?.username) return
+              const d = await fetch(`/api/player-items?player=${encodeURIComponent(session.username)}`, {
+                headers: { Authorization: `Bearer ${session.token}` },
+              }).then(r => r.json()).catch(() => null)
+              if (d?.ok) setPlayerItems(d.items)
+            }}
             toast={showToast}
           />
         )}
 
-        {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
+        {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} onItemAcquired={item => setPlayerItems(prev => [...prev, item])} />}
 
         {view === 'idle' && (
           <IdleView session={session} formations={formations} toast={showToast} onItemCrafted={refreshPlayerItems} />
