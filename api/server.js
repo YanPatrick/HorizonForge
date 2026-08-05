@@ -2310,6 +2310,63 @@ app.post('/api/idle/craft', async (req, res) => {
 });
 
 /**
+ * POST /api/market/sell
+ * Body: { player, item_ids: number[] }
+ * Sells owned idle-dungeon items for coins. Only source='idle_dungeon' items are
+ * sellable, and only if not currently equipped on a hero.
+ */
+app.post('/api/market/sell', async (req, res) => {
+  const { player, item_ids } = req.body;
+  if (!player || !Array.isArray(item_ids) || item_ids.length === 0) {
+    return res.status(400).json({ ok: false, error: 'player and non-empty item_ids required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Eligibility (source, not-equipped) is checked inside the DELETE itself
+    // and only the rows it actually removes come back via RETURNING — pricing
+    // is computed strictly from that result, not from a prior SELECT, so a
+    // concurrent sell of the same item_id can't be credited twice: whichever
+    // request's DELETE loses the race finds the row already gone.
+    const deleted = await sql`
+      DELETE FROM player_items pi
+      USING items i
+      WHERE pi.item_id = i.id
+        AND pi.player = ${player}
+        AND pi.item_id = ANY(${item_ids})
+        AND i.source = 'idle_dungeon'
+        AND NOT EXISTS (
+          SELECT 1 FROM hero_equipment he WHERE he.item_id = i.id AND he.player = ${player}
+        )
+      RETURNING pi.item_id, i.slug
+    `;
+
+    const sold = [];
+    let totalCoins = 0;
+    for (const row of deleted) {
+      const price = IDLE_RECIPE_BY_SLUG[row.slug]?.sellPrice;
+      if (!price) continue;
+      sold.push({ item_id: Number(row.item_id), coins: price });
+      totalCoins += price;
+    }
+    if (sold.length === 0) {
+      return res.status(400).json({ ok: false, error: 'No sellable idle items in the given ids (must be idle_dungeon-sourced, unequipped, and priced)' });
+    }
+    await sql`
+      INSERT INTO idle_wallet (player, coins) VALUES (${player}, ${totalCoins})
+      ON CONFLICT (player) DO UPDATE SET coins = idle_wallet.coins + ${totalCoins}
+    `;
+    const [wallet] = await sql`SELECT coins FROM idle_wallet WHERE player = ${player}`;
+    res.json({ ok: true, sold, total_coins: totalCoins, new_balance: wallet.coins });
+  } catch (err) {
+    console.error('[POST /api/market/sell]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
  * Includes gameAccount for the frontend to use in requestTransfer.
