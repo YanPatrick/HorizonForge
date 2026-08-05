@@ -14,6 +14,7 @@ import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
 import InventoryView from './InventoryView'
 import IdleView from './IdleView'
+import MarketView from './MarketView'
 import { useT } from '../context/LanguageContext'
 import ChestResultModal from '../components/ChestResultModal'
 import '@styles/shop.css'
@@ -1217,7 +1218,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign', 'idle']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign', 'idle', 'market']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
@@ -2041,6 +2042,9 @@ export default function LobbyPage() {
           <button type="button" className={`top-nav-tab${view === 'idle' ? ' active' : ''}`} onClick={() => setView('idle')}>
             <span className="tnt-ico">⛏️</span><span className="tnt-lbl">{t('nav.idle')}</span>
           </button>
+          <button type="button" className={`top-nav-tab${view === 'market' ? ' active' : ''}`} onClick={() => setView('market')}>
+            <span className="tnt-ico">🧙</span><span className="tnt-lbl">{t('nav.market')}</span>
+          </button>
         </div>
         <div className="nav-right">
           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
@@ -2319,6 +2323,15 @@ export default function LobbyPage() {
           <IdleView session={session} formations={formations} toast={showToast} />
         )}
 
+        {view === 'market' && (
+          <MarketView
+            session={session}
+            items={playerItems}
+            onSold={soldIds => setPlayerItems(prev => prev.filter(i => !soldIds.includes(i.id)))}
+            toast={showToast}
+          />
+        )}
+
         {view === 'formation' && (
           <FormationView
             session={session} formations={formations} setFormations={setFormations}
@@ -2348,6 +2361,9 @@ export default function LobbyPage() {
           </button>
           <button type="button" className={navTabClass('idle')} onClick={() => setView('idle')}>
             <span className="mbt-ico">⛏️</span><span className="mbt-lbl">{t('nav.idle')}</span>
+          </button>
+          <button type="button" className={navTabClass('market')} onClick={() => setView('market')}>
+            <span className="mbt-ico">🧙</span><span className="mbt-lbl">{t('nav.market')}</span>
           </button>
         </nav>
       </div>

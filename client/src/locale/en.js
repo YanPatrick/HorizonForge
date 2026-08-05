@@ -44,6 +44,7 @@ export default {
   'nav.inventory': 'Inventory',
   'nav.shop':      'Shop',
   'nav.idle':      'Idle Dungeon',
+  'nav.market':    'Market',
   'nav.campaign':  'Campaign',
 
   // ── Inventory screen ──────────────────────────────────────
@@ -367,4 +368,13 @@ export default {
   'grimoire.ch7.vr':  '2 stat bonuses. 1 attribute requirement.',
   'grimoire.ch7.ve':  '2 stat bonuses. 2 attribute requirements.',
   'grimoire.ch7.vl':  '3 stat bonuses. 2 attribute requirements.',
+
+  'market.title':        'Market',
+  'market.yourItems':    'Your Items',
+  'market.sellTray':     'Sell to Merchant',
+  'market.dragHint':     'Drag idle-crafted items here, or tap them, to sell.',
+  'market.noItems':      'No idle-crafted items to sell yet.',
+  'market.total':        'Total',
+  'market.sell':         'Sell',
+  'market.sold':         'Sold for {coins} coins.',
 }

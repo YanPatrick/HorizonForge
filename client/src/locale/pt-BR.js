@@ -44,6 +44,7 @@ export default {
   'nav.inventory': 'Inventário',
   'nav.shop':      'Loja',
   'nav.idle':      'Idle Dungeon',
+  'nav.market':    'Mercado',
   'nav.campaign':  'Campanha',
 
   // ── Inventory screen ──────────────────────────────────────
@@ -421,4 +422,13 @@ export default {
   'grimoire.ch7.d20': 'Quando o Motor do Caos forja seu item, ele rola um D20. Resultados mais altos empurram os stats para seu teto. Um 20 natural — um Acerto Crítico — significa o melhor rolar para essa raridade. Um 1 natural — uma Falha Crítica — e o artefato emerge amaldiçoado: stats distorcidos, possivelmente negativos, e marcado com uma inscrição que apenas os menos afortunados lerão.',
   'grimoire.ch7.ap1': 'Qualquer herói pode equipar qualquer item do Caos, mas sua Aptidão (TA) determina quanto do poder ele realmente usa.',
   'grimoire.ch7.at1': 'TA = Atributo do Herói ÷ Requisito do Item. Se seu Cavaleiro tem 15 FOR e o Machado requer 20, ele usa apenas 75% dos bônus. Atinja ou supere o requisito e você recebe 100% — sem limite.',
+
+  'market.title':        'Mercado',
+  'market.yourItems':    'Seus Itens',
+  'market.sellTray':     'Vender ao Mercador',
+  'market.dragHint':     'Arraste itens forjados no idle aqui, ou toque neles, para vender.',
+  'market.noItems':      'Nenhum item forjado no idle pra vender ainda.',
+  'market.total':        'Total',
+  'market.sell':         'Vender',
+  'market.sold':         'Vendido por {coins} coins.',
 }
