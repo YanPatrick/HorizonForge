@@ -2067,11 +2067,16 @@ app.get('/api/idle/state', async (req, res) => {
     await sql`UPDATE idle_state SET last_heartbeat_at = now() WHERE player = ${player} AND status = 'running'`;
     if (!state) {
       return res.json({ ok: true, status: 'stopped', hp: 0, max_hp: 0, potions: 0, tier: 1, idle_xp: 0,
-        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {} });
+        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {},
+        power_score: 0, kill_interval_ms: killIntervalMs(0) });
     }
     const [wallet] = await sql`SELECT coins, diamonds FROM idle_wallet WHERE player = ${player}`;
     const fragRows = await sql`SELECT slot_type, qty FROM idle_fragments WHERE player = ${player}`;
     const fragments = Object.fromEntries(fragRows.map(r => [r.slot_type, r.qty]));
+    // power_score/kill_interval_ms are cosmetic pacing info for the client's
+    // local kill/loot animation — the client fakes the visual rhythm at this
+    // pace between polls, but the real ledger only ever moves server-side.
+    const powerScore = state.status === 'running' ? await computeIdlePowerScore(player, state.formation_slot) : 0;
     res.json({
       ok: true,
       status: state.status, hp: Number(state.hp), max_hp: Number(state.max_hp), potions: state.potions,
@@ -2079,6 +2084,7 @@ app.get('/api/idle/state', async (req, res) => {
       coins: wallet?.coins ?? 0, diamonds: wallet?.diamonds ?? 0, fragments,
       pending_coins: state.pending_coins, pending_diamonds: state.pending_diamonds,
       pending_xp: state.pending_xp, pending_fragments: state.pending_fragments ?? {},
+      power_score: powerScore, kill_interval_ms: killIntervalMs(powerScore),
     });
   } catch (err) {
     console.error('[GET /api/idle/state]', err.message);

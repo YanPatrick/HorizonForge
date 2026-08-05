@@ -12,15 +12,31 @@
   color: rgba(255, 255, 255, 0.75);
 }
 
-.idle-view__hero-card {
+.idle-view__arena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4rem;
+  padding: 1rem 0;
+}
+
+.idle-view__hero-card,
+.idle-view__enemy-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
 }
 
 .idle-view__sprite {
   font-size: 4rem;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.idle-view__sprite--enemy.is-dead {
+  opacity: 0;
+  transform: scale(0.4) translateY(10px);
 }
 
 .idle-view__hpbar {
@@ -35,6 +51,42 @@
   height: 100%;
   background: #4caf50;
   transition: width 0.3s ease;
+}
+
+.idle-view__hpbar-fill--enemy {
+  background: #e53935;
+  transition: width 0.08s linear;
+}
+
+.idle-view__loot-layer {
+  position: absolute;
+  top: -0.5rem;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.idle-view__float {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #ffd166;
+  animation: idle-float 1.4s ease-out forwards;
+}
+
+.idle-view__float--fragment { color: #7ecbff; }
+.idle-view__float--diamond { color: #b39dff; }
+
+@keyframes idle-float {
+  0%   { opacity: 0; transform: translate(-50%, 10px); }
+  15%  { opacity: 1; transform: translate(-50%, -10px); }
+  75%  { opacity: 1; transform: translate(-50%, -40px); }
+  100% { opacity: 0; transform: translate(-50%, -60px); }
 }
 
 .idle-view__stats,
