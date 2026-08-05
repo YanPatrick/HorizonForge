@@ -1527,7 +1527,7 @@ app.get('/api/player-items', async (req, res) => {
   try {
     const rows = await sql`
       SELECT
-        i.id, i.name, i.description, i.rarity, i.slot_type,
+        i.id, i.name, i.description, i.rarity, i.slot_type, i.slug,
         COALESCE(i.atk_bonus, 0) AS atk_bonus,
         COALESCE(i.hp_bonus, 0)  AS hp_bonus,
         COALESCE(i.spd_bonus, 0) AS spd_bonus,
@@ -1549,11 +1549,13 @@ app.get('/api/player-items', async (req, res) => {
       description: r.description,
       rarity:      r.rarity,
       slot_type:   r.slot_type,
+      slug:        r.slug,
       atk_bonus:   Number(r.atk_bonus),
       hp_bonus:    Number(r.hp_bonus),
       spd_bonus:   Number(r.spd_bonus),
       source:      r.source,
       equipped_on: r.equipped_on || null,
+      sell_price:  r.source === 'idle_dungeon' ? (IDLE_RECIPE_BY_SLUG[r.slug]?.sellPrice ?? null) : null,
     })) });
   } catch (err) {
     console.error('[GET /api/player-items]', err.message);
