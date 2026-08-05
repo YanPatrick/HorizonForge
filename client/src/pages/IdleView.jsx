@@ -15,7 +15,7 @@ async function idleFetch(path, session, opts = {}) {
   return res.json()
 }
 
-export default function IdleView({ session, formations, toast }) {
+export default function IdleView({ session, formations, toast, onItemCrafted }) {
   const username = session?.username
   const isGuest = session?.mode === 'guest'
   const [state, setState] = useState(null)
@@ -85,6 +85,7 @@ export default function IdleView({ session, formations, toast }) {
     if (!data.ok) return toast?.(data.error)
     toast?.(`Crafted ${data.crafted.name}`)
     refresh()
+    onItemCrafted?.()
   }
 
   const handleDevReset = async () => {

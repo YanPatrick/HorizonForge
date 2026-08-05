@@ -1631,7 +1631,7 @@ export default function LobbyPage() {
   }, []) // eslint-disable-line
 
   /* ── load communal inventory ─────────────────────────── */
-  useEffect(() => {
+  const refreshPlayerItems = useCallback(() => {
     if (!session?.token || !session?.username) return
     fetch(`/api/player-items?player=${encodeURIComponent(session.username)}`, {
       headers: { Authorization: `Bearer ${session.token}` },
@@ -1639,7 +1639,9 @@ export default function LobbyPage() {
       .then(r => r.json())
       .then(d => { if (d.ok) setPlayerItems(d.items) })
       .catch(() => {})
-  }, []) // eslint-disable-line
+  }, [session?.token, session?.username])
+
+  useEffect(() => { refreshPlayerItems() }, []) // eslint-disable-line
 
   /* ── unequip inventory item (revert hero to starter) ─── */
   async function handleUnequipItem(characterCid, slotType) {
@@ -2320,7 +2322,7 @@ export default function LobbyPage() {
         {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
 
         {view === 'idle' && (
-          <IdleView session={session} formations={formations} toast={showToast} />
+          <IdleView session={session} formations={formations} toast={showToast} onItemCrafted={refreshPlayerItems} />
         )}
 
         {view === 'market' && (
