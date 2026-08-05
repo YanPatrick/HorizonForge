@@ -43,6 +43,7 @@ export default {
   'nav.play':      'Play',
   'nav.inventory': 'Inventory',
   'nav.shop':      'Shop',
+  'nav.idle':      'Idle Dungeon',
   'nav.campaign':  'Campaign',
 
   // ── Inventory screen ──────────────────────────────────────

@@ -13,6 +13,7 @@ import GuestConversionModal from '../components/GuestConversionModal'
 import TutorialOverlay from '../components/TutorialOverlay'
 import CampaignView from './CampaignView'
 import InventoryView from './InventoryView'
+import IdleView from './IdleView'
 import { useT } from '../context/LanguageContext'
 import ChestResultModal from '../components/ChestResultModal'
 import '@styles/shop.css'
@@ -1216,7 +1217,7 @@ export default function LobbyPage() {
   const [view, setView] = useState(() => {
     const params = new URLSearchParams(location.search)
     const tab = params.get('tab')
-    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign']
+    const allowed = ['home', 'inventory', 'shop', 'formation', 'grimoire', 'settings', 'campaign', 'idle']
     return allowed.includes(tab) ? tab : 'home'
   })
   const [balance, setBalance] = useState(null)
@@ -2037,6 +2038,9 @@ export default function LobbyPage() {
           <button type="button" className={`top-nav-tab${view === 'shop' ? ' active' : ''}`} onClick={() => setView('shop')}>
             <span className="tnt-ico">🛒</span><span className="tnt-lbl">{t('nav.shop')}</span>
           </button>
+          <button type="button" className={`top-nav-tab${view === 'idle' ? ' active' : ''}`} onClick={() => setView('idle')}>
+            <span className="tnt-ico">⛏️</span><span className="tnt-lbl">{t('nav.idle')}</span>
+          </button>
         </div>
         <div className="nav-right">
           {/* TEASER DO BAÚ — NOVA IMPLEMENTAÇÃO */}
@@ -2311,6 +2315,10 @@ export default function LobbyPage() {
 
         {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} />}
 
+        {view === 'idle' && (
+          <IdleView session={session} formations={formations} toast={showToast} />
+        )}
+
         {view === 'formation' && (
           <FormationView
             session={session} formations={formations} setFormations={setFormations}
@@ -2337,6 +2345,9 @@ export default function LobbyPage() {
           </button>
           <button type="button" className={navTabClass('shop')} onClick={() => setView('shop')}>
             <span className="mbt-ico">🛒</span><span className="mbt-lbl">{t('nav.shop')}</span>
+          </button>
+          <button type="button" className={navTabClass('idle')} onClick={() => setView('idle')}>
+            <span className="mbt-ico">⛏️</span><span className="mbt-lbl">{t('nav.idle')}</span>
           </button>
         </nav>
       </div>
