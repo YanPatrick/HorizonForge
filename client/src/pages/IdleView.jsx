@@ -3,6 +3,11 @@ import '../styles/idle.css'
 
 const POLL_MS = 15000
 
+// Dev-only reset button — visible only for this account. Not a security
+// boundary (the endpoint only ever resets the caller's own progress), just
+// keeps a "zero everything" button off real players' screens.
+const DEV_RESET_USERS = ['vempromundo']
+
 async function idleFetch(path, session, opts = {}) {
   const headers = { 'Content-Type': 'application/json' }
   if (session?.token) headers.Authorization = `Bearer ${session.token}`
@@ -82,6 +87,16 @@ export default function IdleView({ session, formations, toast }) {
     refresh()
   }
 
+  const handleDevReset = async () => {
+    const data = await idleFetch('/api/idle/dev-reset', session, {
+      method: 'POST',
+      body: JSON.stringify({ player: username }),
+    })
+    if (!data.ok) return toast?.(data.error)
+    toast?.('Idle progress reset')
+    refresh()
+  }
+
   if (!username || isGuest) {
     return (
       <div className="idle-view idle-view--gate">
@@ -155,6 +170,12 @@ export default function IdleView({ session, formations, toast }) {
           </div>
         ))}
       </div>
+
+      {DEV_RESET_USERS.includes(username) && (
+        <button type="button" className="idle-view__dev-reset" onClick={handleDevReset}>
+          🧪 Dev: Reset potions/coins/fragments
+        </button>
+      )}
     </div>
   )
 }

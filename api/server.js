@@ -2367,6 +2367,41 @@ app.post('/api/market/sell', async (req, res) => {
 });
 
 /**
+ * POST /api/idle/dev-reset
+ * Body: { player }
+ * Dev/testing utility — zeroes the caller's own idle progress (potions,
+ * coins, diamonds, fragments, tier/xp, pending rewards). Only ever affects
+ * the authenticated caller's own account (same auth cross-check as every
+ * other /api/idle/* route), so there's no cross-player risk in leaving this
+ * reachable — it's gated in the UI to a specific dev account, not by a
+ * server-side secret.
+ */
+app.post('/api/idle/dev-reset', async (req, res) => {
+  const { player } = req.body;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await sql`
+      UPDATE idle_state
+      SET status = 'stopped', tier = 1, idle_xp = 0, hp = 0, max_hp = 0,
+          potions = 0, potion_ms_used = 0, kill_ms_remainder = 0,
+          pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
+          updated_at = now()
+      WHERE player = ${player}
+    `;
+    await sql`UPDATE idle_wallet SET coins = 0, diamonds = 0 WHERE player = ${player}`;
+    await sql`DELETE FROM idle_fragments WHERE player = ${player}`;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[POST /api/idle/dev-reset]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
  * GET /api/shop
  * Returns cosmetics catalog. Public (no auth required).
  * Includes gameAccount for the frontend to use in requestTransfer.
