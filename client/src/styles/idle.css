@@ -58,18 +58,82 @@
   transition: width 0.08s linear;
 }
 
+.idle-view__xpbar {
+  width: 200px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.idle-view__xpbar-fill {
+  height: 100%;
+  background: #ffd166;
+  transition: width 0.3s ease;
+}
+
+.idle-view__xp-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.idle-view__enemies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  align-items: flex-start;
+  justify-content: center;
+  min-width: 200px;
+}
+
+.idle-view__enemies-empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.9rem;
+  padding: 1rem;
+}
+
+.idle-view__enemy-card .idle-view__hpbar {
+  width: 80px;
+}
+
+.idle-view__enemy-card .idle-view__sprite {
+  font-size: 2.5rem;
+}
+
+.idle-view__auto-potion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.idle-view__auto-potion button {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.idle-view__auto-potion button.is-active {
+  background: #4caf50;
+  border-color: #4caf50;
+  color: #fff;
+}
+
 .idle-view__loot-layer {
-  position: absolute;
-  top: -0.5rem;
-  left: 50%;
-  width: 0;
+  position: relative;
+  width: 100%;
   height: 0;
   pointer-events: none;
 }
 
 .idle-view__float {
   position: absolute;
-  left: 0;
+  left: 50%;
   bottom: 0;
   transform: translateX(-50%);
   white-space: nowrap;
@@ -81,6 +145,7 @@
 
 .idle-view__float--fragment { color: #7ecbff; }
 .idle-view__float--diamond { color: #b39dff; }
+.idle-view__float--levelup { color: #66e08a; font-size: 1.1rem; }
 
 @keyframes idle-float {
   0%   { opacity: 0; transform: translate(-50%, 10px); }

@@ -886,37 +886,60 @@ function calcStats(base, multiplier) {
 
 // ── Idle Dungeon — tunable constants (pending balancing session, see
 //    docs/superpowers/specs/2026-08-03-idle-dungeon-design.md §9) ──────────
+// Design pivot (2026-08-06): idle combat no longer derives a power score from
+// the player's own formation/gear. It now runs a real event-driven combat
+// simulation (simulateIdleSegment) against a single fixed generic hero,
+// completely decoupled from the player's roster. Confirmed deliberately by
+// the user over the original formation-based power-score spec.
 const IDLE_CONFIG = {
   ONLINE_GRACE_MS:        90_000,        // heartbeat gap under this = still "online"
-  KILL_INTERVAL_BASE_MS:  4_000,         // ms per kill at powerScore = 0
-  KILL_INTERVAL_MIN_MS:   800,           // fastest possible kill interval
-  POWER_SCORE_MS_PER_PT:  2,             // ms shaved off per point of power score
-  POTION_COVERAGE_MS:     10 * 60_000,   // one potion sustains 10 minutes of combat
-  POTION_COIN_COST:       20,            // coins per potion (shop/buy-potions)
+  POTION_COIN_COST:       10,            // coins per potion (shop/buy-potions)
+  POTION_HEAL_HP:         20,            // HP restored by one auto-potion trigger
   OFFLINE_REWARD_RATIO:   0.5,           // default free collection of offline-earned pending rewards
   OFFLINE_FULL_DIAMOND_COST: 50,         // diamonds to collect 100% instead of 50%
-  IDLE_XP_PER_KILL:       1,
-  IDLE_XP_PER_TIER:       100,           // tier N requires (N-1) * 100 xp
-  DROP_CHANCE_NONE:       0.60,
-  DROP_CHANCE_COIN:       0.30,          // coin qty 1-3
+  DROP_CHANCE_NONE:       0.30,
+  DROP_CHANCE_COIN:       0.60,          // coin qty 1-5
   DROP_CHANCE_FRAGMENT:   0.099,
   DROP_CHANCE_DIAMOND:    0.001,
-  // Each idle tier is associated with one equipment slot's fragments.
+  // Fragment drops pick a random equipment slot rather than being tied to a tier.
   TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
+  AUTO_POTION_OPTIONS: [90, 75, 50],     // HP% threshold options for the auto-potion trigger
+  MAX_OFFLINE_CATCHUP_MS: 30 * 24 * 60 * 60 * 1000, // cap offline simulation to 30 days
 };
 
-function idleTierForXp(xp) {
-  return Math.max(1, Math.floor(Number(xp) / IDLE_CONFIG.IDLE_XP_PER_TIER) + 1);
+// Placeholder pending balancing — see docs/superpowers/specs/2026-08-03-idle-dungeon-design.md §9.
+const IDLE_HERO_BASE = { maxHp: 100, atk: 10, def: 5 };
+const IDLE_HERO_GROWTH_PER_LEVEL = { hp: 10, atk: 2, def: 1 };
+const IDLE_HERO_ATTACK_MS = 1600;
+const IDLE_HERO_MISS_CHANCE = 0.03;
+const IDLE_XP_BASE = 100;
+const IDLE_XP_GROWTH = 1.5;
+
+const IDLE_MONSTERS = {
+  guerreiro: { hp: 20, atk: 10, def: 5, attackMs: 2000, spawnMs: 5000, xp: 1 },
+  arqueiro:  { hp: 10, atk: 15, def: 3, attackMs: 2000, spawnMs: 8000, xp: 2 },
+};
+
+function idleHeroStatsForLevel(level) {
+  const extra = Math.max(1, Number(level) || 1) - 1;
+  return {
+    maxHp: IDLE_HERO_BASE.maxHp + extra * IDLE_HERO_GROWTH_PER_LEVEL.hp,
+    atk:   IDLE_HERO_BASE.atk + extra * IDLE_HERO_GROWTH_PER_LEVEL.atk,
+    def:   IDLE_HERO_BASE.def + extra * IDLE_HERO_GROWTH_PER_LEVEL.def,
+  };
 }
 
-function killIntervalMs(powerScore) {
-  const raw = IDLE_CONFIG.KILL_INTERVAL_BASE_MS - (Number(powerScore) * IDLE_CONFIG.POWER_SCORE_MS_PER_PT);
-  return Math.max(IDLE_CONFIG.KILL_INTERVAL_MIN_MS, raw);
+function idleXpToNextLevel(level) {
+  return Math.ceil(IDLE_XP_BASE * Math.pow(IDLE_XP_GROWTH, Math.max(1, Number(level) || 1) - 1));
 }
 
-function rollIdleDrop(tier) {
+function idleDamage(atk, def) {
+  return Math.max(1, Math.round(atk - def));
+}
+
+function rollIdleDrop() {
   const r = Math.random();
-  const slotType = IDLE_CONFIG.TIER_SLOTS[(Number(tier) - 1) % IDLE_CONFIG.TIER_SLOTS.length];
+  const slotType = IDLE_CONFIG.TIER_SLOTS[Math.floor(Math.random() * IDLE_CONFIG.TIER_SLOTS.length)];
   if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND) {
     return { type: 'diamond', qty: 1 };
   }
@@ -924,9 +947,118 @@ function rollIdleDrop(tier) {
     return { type: 'fragment', qty: 1, slotType };
   }
   if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND + IDLE_CONFIG.DROP_CHANCE_FRAGMENT + IDLE_CONFIG.DROP_CHANCE_COIN) {
-    return { type: 'coin', qty: 1 + Math.floor(Math.random() * 3) };
+    return { type: 'coin', qty: 1 + Math.floor(Math.random() * 5) };
   }
   return { type: 'none', qty: 0 };
+}
+
+/**
+ * Event-driven idle combat simulation, shared by the online and offline
+ * resolution paths. Advances hero/enemy timers event-by-event (next spawn,
+ * next hero attack, next enemy attack — whichever is soonest) until either
+ * `elapsedMs` is exhausted or the hero dies with no potions left to save them.
+ *
+ * `sequential: true` (offline catch-up) caps concurrent enemies at 1, so a
+ * long offline gap resolves as one-enemy-at-a-time instead of spawning an
+ * unbounded backlog. Online play allows unlimited concurrent enemies, since
+ * spawns/attacks are paced against real wall-clock time between polls.
+ */
+function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
+  let heroLevel = input.heroLevel;
+  let heroXp = input.heroXp;
+  let heroHp = input.heroHp;
+  let heroStats = idleHeroStatsForLevel(heroLevel);
+  let potions = input.potions;
+  const autoPotionPct = input.autoPotionPct;
+  let enemies = (input.enemies || []).map(e => ({ ...e }));
+  let nextGuerreiroMs = input.nextGuerreiroMs;
+  let nextArqueiroMs = input.nextArqueiroMs;
+  let nextHeroAttackMs = input.nextHeroAttackMs;
+  let nextEnemyId = input.nextEnemyId ?? 1;
+  const maxConcurrentEnemies = sequential ? 1 : Infinity;
+
+  let coinsGained = 0, diamondsGained = 0, potionsUsed = 0, xpGained = 0, kills = 0;
+  const fragmentsGained = {};
+  let died = false;
+  let timeUsed = 0;
+
+  while (timeUsed < elapsedMs && heroHp > 0) {
+    const candidates = [
+      { type: 'spawn_guerreiro', t: nextGuerreiroMs },
+      { type: 'spawn_arqueiro', t: nextArqueiroMs },
+    ];
+    if (enemies.length > 0) candidates.push({ type: 'hero_attack', t: nextHeroAttackMs });
+    for (const e of enemies) candidates.push({ type: 'enemy_attack', id: e.id, t: e.nextAttackMs });
+    candidates.sort((a, b) => a.t - b.t);
+    const next = candidates[0];
+    if (timeUsed + next.t > elapsedMs) break;
+
+    timeUsed += next.t;
+    nextGuerreiroMs -= next.t;
+    nextArqueiroMs -= next.t;
+    if (enemies.length > 0) nextHeroAttackMs -= next.t;
+    for (const e of enemies) e.nextAttackMs -= next.t;
+
+    if (next.type === 'spawn_guerreiro' || next.type === 'spawn_arqueiro') {
+      const kind = next.type === 'spawn_guerreiro' ? 'guerreiro' : 'arqueiro';
+      const def = IDLE_MONSTERS[kind];
+      if (enemies.length < maxConcurrentEnemies) {
+        if (enemies.length === 0) nextHeroAttackMs = IDLE_HERO_ATTACK_MS;
+        enemies.push({ id: nextEnemyId++, kind, hp: def.hp, nextAttackMs: def.attackMs });
+      }
+      if (kind === 'guerreiro') nextGuerreiroMs = def.spawnMs;
+      else nextArqueiroMs = def.spawnMs;
+    } else if (next.type === 'hero_attack') {
+      const target = enemies[0];
+      if (target) {
+        const monsterDef = IDLE_MONSTERS[target.kind];
+        if (Math.random() >= IDLE_HERO_MISS_CHANCE) {
+          target.hp -= idleDamage(heroStats.atk, monsterDef.def);
+        }
+        if (target.hp <= 0) {
+          enemies.shift();
+          kills += 1;
+          heroXp += monsterDef.xp;
+          xpGained += monsterDef.xp;
+          while (heroXp >= idleXpToNextLevel(heroLevel)) {
+            heroXp -= idleXpToNextLevel(heroLevel);
+            heroLevel += 1;
+            heroStats = idleHeroStatsForLevel(heroLevel);
+          }
+          const drop = rollIdleDrop();
+          if (drop.type === 'coin') coinsGained += drop.qty;
+          else if (drop.type === 'diamond') diamondsGained += drop.qty;
+          else if (drop.type === 'fragment') fragmentsGained[drop.slotType] = (fragmentsGained[drop.slotType] ?? 0) + drop.qty;
+        }
+      }
+      nextHeroAttackMs = IDLE_HERO_ATTACK_MS;
+    } else if (next.type === 'enemy_attack') {
+      const attacker = enemies.find(e => e.id === next.id);
+      if (attacker) {
+        const monsterDef = IDLE_MONSTERS[attacker.kind];
+        heroHp -= idleDamage(monsterDef.atk, heroStats.def);
+        attacker.nextAttackMs = monsterDef.attackMs;
+        if (heroHp > 0 && heroHp <= heroStats.maxHp * (autoPotionPct / 100) && potions > 0) {
+          potions -= 1;
+          potionsUsed += 1;
+          heroHp = Math.min(heroStats.maxHp, heroHp + IDLE_CONFIG.POTION_HEAL_HP);
+        }
+        if (heroHp <= 0) { died = true; }
+      }
+    }
+  }
+
+  const remainder = elapsedMs - timeUsed;
+  nextGuerreiroMs -= remainder;
+  nextArqueiroMs -= remainder;
+  if (enemies.length > 0) nextHeroAttackMs -= remainder;
+  for (const e of enemies) e.nextAttackMs -= remainder;
+
+  return {
+    heroLevel, heroXp, heroHp: Math.max(0, heroHp), heroMaxHp: heroStats.maxHp,
+    potions, enemies, nextGuerreiroMs, nextArqueiroMs, nextHeroAttackMs, nextEnemyId,
+    coinsGained, diamondsGained, fragmentsGained, xpGained, kills, potionsUsed, died,
+  };
 }
 
 app.get('/api/characters', async (_req, res) => {
@@ -1871,51 +2003,18 @@ app.put('/api/formations', async (req, res) => {
   }
 });
 
-async function computeIdlePowerScore(player, formationSlot) {
-  const [formation] = await sql`
-    SELECT hero_ids FROM formations WHERE player = ${player} AND slot = ${formationSlot}
-  `;
-  const heroIds = formation?.hero_ids ?? [];
-  if (heroIds.length === 0) return 0;
-
-  const bases = await sql`
-    SELECT c.cid, cb.str, cb.dex, cb.con, cb.int, cb.wis, cb.primary_attr, cb.skill_power, cb.spd_offset
-    FROM characters_base cb
-    JOIN characters c ON c.id = cb.character_id
-    WHERE c.cid = ANY(${heroIds})
-  `;
-  const gearRows = await sql`
-    SELECT he.character_cid, i.atk_bonus, i.hp_bonus
-    FROM hero_equipment he
-    JOIN items i ON i.id = he.item_id
-    WHERE he.player = ${player} AND he.character_cid = ANY(${heroIds})
-  `;
-  const gearByHero = {};
-  for (const g of gearRows) {
-    const acc = gearByHero[g.character_cid] ?? { atk: 0, hp: 0 };
-    acc.atk += Number(g.atk_bonus) || 0;
-    acc.hp  += Number(g.hp_bonus) || 0;
-    gearByHero[g.character_cid] = acc;
-  }
-
-  let score = 0;
-  for (const base of bases) {
-    const stats = calcStats(base, 1.0);
-    const gear = gearByHero[base.cid] ?? { atk: 0, hp: 0 };
-    score += (stats.atk + gear.atk) + ((stats.max_hp + gear.hp) / 10);
-  }
-  return Math.round(score);
-}
-
 /**
  * POST /api/idle/start
- * Body: { player, formation_slot }
- * Starts (or resumes) an idle run: requires potions > 0, resets hp to max, sets status='running'.
+ * Body: { player }
+ * Starts (or resumes) an idle run: requires potions > 0, resets hp to the
+ * fixed hero's current max, sets status='running'. No longer tied to any
+ * formation — the idle hero is a fixed generic hero, decoupled from the
+ * player's own roster (confirmed design pivot, see IDLE_CONFIG comment above).
  */
 app.post('/api/idle/start', async (req, res) => {
-  const { player, formation_slot } = req.body;
-  if (!player || !formation_slot) {
-    return res.status(400).json({ ok: false, error: 'player, formation_slot required' });
+  const { player } = req.body;
+  if (!player) {
+    return res.status(400).json({ ok: false, error: 'player required' });
   }
   const authedUser = authFromRequest(req);
   if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
@@ -1924,23 +2023,25 @@ app.post('/api/idle/start', async (req, res) => {
   try {
     await sql`INSERT INTO idle_wallet (player) VALUES (${player}) ON CONFLICT (player) DO NOTHING`;
     const [state] = await sql`
-      INSERT INTO idle_state (player, formation_slot)
-      VALUES (${player}, ${formation_slot})
-      ON CONFLICT (player) DO UPDATE SET formation_slot = ${formation_slot}
-      RETURNING potions, tier
+      INSERT INTO idle_state (player) VALUES (${player})
+      ON CONFLICT (player) DO NOTHING
+      RETURNING potions, hero_level
     `;
-    if (state.potions <= 0) {
+    const row = state ?? (await sql`SELECT potions, hero_level FROM idle_state WHERE player = ${player}`)[0];
+    if (row.potions <= 0) {
       return res.status(400).json({ ok: false, error: 'No potions available' });
     }
-    const powerScore = await computeIdlePowerScore(player, formation_slot);
-    const maxHp = 100 + powerScore; // baseline idle-run HP pool, scales with formation power
+    const heroStats = idleHeroStatsForLevel(row.hero_level);
     await sql`
       UPDATE idle_state
-      SET status = 'running', hp = ${maxHp}, max_hp = ${maxHp}, potion_ms_used = 0, kill_ms_remainder = 0,
+      SET status = 'running', hp = ${heroStats.maxHp}, max_hp = ${heroStats.maxHp},
+          enemies = '[]'::jsonb, next_enemy_id = 1,
+          next_guerreiro_ms = ${IDLE_MONSTERS.guerreiro.spawnMs}, next_arqueiro_ms = ${IDLE_MONSTERS.arqueiro.spawnMs},
+          next_hero_attack_ms = ${IDLE_HERO_ATTACK_MS},
           last_tick_at = now(), last_heartbeat_at = now(), updated_at = now()
       WHERE player = ${player}
     `;
-    res.json({ ok: true, status: 'running', power_score: powerScore, max_hp: maxHp, tier: state.tier });
+    res.json({ ok: true, status: 'running', max_hp: heroStats.maxHp, hero_level: row.hero_level });
   } catch (err) {
     console.error('[POST /api/idle/start]', err.message);
     res.status(500).json({ ok: false, error: err.message });
@@ -1958,39 +2059,27 @@ async function resolveIdleTicks(player) {
   if (elapsedMs <= 0) return state;
 
   const isOnline = (now - lastHeartbeat) <= IDLE_CONFIG.ONLINE_GRACE_MS;
-  const powerScore = await computeIdlePowerScore(player, state.formation_slot);
-  const interval = killIntervalMs(powerScore);
+  // Offline gaps run sequentially (one enemy at a time) and are capped so a
+  // player who was away for months doesn't trigger an unbounded simulation.
+  if (!isOnline) elapsedMs = Math.min(elapsedMs, IDLE_CONFIG.MAX_OFFLINE_CATCHUP_MS);
 
-  // Potions cap how long this segment can run. Remaining runway = whole
-  // potions in inventory plus whatever's left of the potion "in progress"
-  // (potion_ms_used tracks partial consumption so frequent short resolves
-  // don't each round up to spending a whole potion).
-  const potionMsUsed = state.potion_ms_used ?? 0;
-  const maxSustainableMs = (state.potions * IDLE_CONFIG.POTION_COVERAGE_MS) - potionMsUsed;
-  const cappedMs = Math.min(elapsedMs, maxSustainableMs);
-  const ranOutOfPotions = cappedMs < elapsedMs;
+  const result = simulateIdleSegment({
+    heroLevel: state.hero_level,
+    heroXp: state.hero_xp,
+    heroHp: Number(state.hp),
+    potions: state.potions,
+    autoPotionPct: state.auto_potion_pct,
+    enemies: state.enemies ?? [],
+    nextGuerreiroMs: state.next_guerreiro_ms,
+    nextArqueiroMs: state.next_arqueiro_ms,
+    nextHeroAttackMs: state.next_hero_attack_ms,
+    nextEnemyId: state.next_enemy_id,
+  }, elapsedMs, { sequential: !isOnline });
 
-  const killMsRemainder = state.kill_ms_remainder ?? 0;
-  const totalKillMs = killMsRemainder + Math.max(0, cappedMs);
-  const kills = Math.floor(totalKillMs / interval);
-  const newKillMsRemainder = totalKillMs % interval;
-  const totalMsUsed = potionMsUsed + Math.max(0, cappedMs);
-  const potionsConsumed = Math.min(state.potions, Math.floor(totalMsUsed / IDLE_CONFIG.POTION_COVERAGE_MS));
-  const newPotionMsUsed = ranOutOfPotions ? 0 : totalMsUsed % IDLE_CONFIG.POTION_COVERAGE_MS;
-
-  let coinsGained = 0, diamondsGained = 0, xpGained = 0;
-  const fragmentsGained = {};
-  for (let i = 0; i < kills; i++) {
-    xpGained += IDLE_CONFIG.IDLE_XP_PER_KILL;
-    const drop = rollIdleDrop(state.tier);
-    if (drop.type === 'coin') coinsGained += drop.qty;
-    else if (drop.type === 'diamond') diamondsGained += drop.qty;
-    else if (drop.type === 'fragment') fragmentsGained[drop.slotType] = (fragmentsGained[drop.slotType] ?? 0) + drop.qty;
-  }
-
-  const newTier = idleTierForXp(state.idle_xp + xpGained);
-  const newStatus = ranOutOfPotions ? 'stopped' : 'running';
-  const hpLeft = ranOutOfPotions ? 0 : state.hp;
+  const newStatus = result.died ? 'stopped' : 'running';
+  // Clear leftover enemies on death so a 'stopped' state never shows stale
+  // enemy cards until the next /api/idle/start resets the arena.
+  const enemiesJson = JSON.stringify(result.died ? [] : result.enemies);
 
   // Atomically claim this tick window before crediting anything: the WHERE
   // clause only matches if resolve_version hasn't moved since we read it
@@ -2004,24 +2093,31 @@ async function resolveIdleTicks(player) {
   if (isOnline) {
     [claimed] = await sql`
       UPDATE idle_state
-      SET idle_xp = idle_xp + ${xpGained}, tier = ${newTier}, status = ${newStatus},
-          hp = ${hpLeft}, potions = potions - ${potionsConsumed}, potion_ms_used = ${newPotionMsUsed}, kill_ms_remainder = ${newKillMsRemainder},
+      SET hero_level = ${result.heroLevel}, hero_xp = ${result.heroXp}, status = ${newStatus},
+          hp = ${result.heroHp}, max_hp = ${result.heroMaxHp}, potions = ${result.potions},
+          enemies = ${enemiesJson}::jsonb, next_enemy_id = ${result.nextEnemyId},
+          next_guerreiro_ms = ${result.nextGuerreiroMs}, next_arqueiro_ms = ${result.nextArqueiroMs},
+          next_hero_attack_ms = ${result.nextHeroAttackMs},
           last_tick_at = now(), resolve_version = resolve_version + 1, updated_at = now()
       WHERE player = ${player} AND resolve_version = ${state.resolve_version}
       RETURNING *
     `;
   } else {
     const mergedFragments = { ...(state.pending_fragments ?? {}) };
-    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
+    for (const [slotType, qty] of Object.entries(result.fragmentsGained)) {
       mergedFragments[slotType] = (mergedFragments[slotType] ?? 0) + qty;
     }
     [claimed] = await sql`
       UPDATE idle_state
-      SET pending_coins = pending_coins + ${coinsGained},
-          pending_diamonds = pending_diamonds + ${diamondsGained},
-          pending_xp = pending_xp + ${xpGained},
+      SET pending_coins = pending_coins + ${result.coinsGained},
+          pending_diamonds = pending_diamonds + ${result.diamondsGained},
+          pending_xp = pending_xp + ${result.xpGained},
           pending_fragments = ${JSON.stringify(mergedFragments)}::jsonb,
-          status = ${newStatus}, hp = ${hpLeft}, potions = potions - ${potionsConsumed}, potion_ms_used = ${newPotionMsUsed}, kill_ms_remainder = ${newKillMsRemainder},
+          hero_level = ${result.heroLevel}, hero_xp = ${result.heroXp}, status = ${newStatus},
+          hp = ${result.heroHp}, max_hp = ${result.heroMaxHp}, potions = ${result.potions},
+          enemies = ${enemiesJson}::jsonb, next_enemy_id = ${result.nextEnemyId},
+          next_guerreiro_ms = ${result.nextGuerreiroMs}, next_arqueiro_ms = ${result.nextArqueiroMs},
+          next_hero_attack_ms = ${result.nextHeroAttackMs},
           last_tick_at = now(), resolve_version = resolve_version + 1, updated_at = now()
       WHERE player = ${player} AND resolve_version = ${state.resolve_version}
       RETURNING *
@@ -2035,8 +2131,8 @@ async function resolveIdleTicks(player) {
   }
 
   if (isOnline) {
-    await sql`UPDATE idle_wallet SET coins = coins + ${coinsGained}, diamonds = diamonds + ${diamondsGained} WHERE player = ${player}`;
-    for (const [slotType, qty] of Object.entries(fragmentsGained)) {
+    await sql`UPDATE idle_wallet SET coins = coins + ${result.coinsGained}, diamonds = diamonds + ${result.diamondsGained} WHERE player = ${player}`;
+    for (const [slotType, qty] of Object.entries(result.fragmentsGained)) {
       await sql`
         INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slotType}, ${qty})
         ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${qty}
@@ -2066,25 +2162,21 @@ app.get('/api/idle/state', async (req, res) => {
     const state = await resolveIdleTicks(player);
     await sql`UPDATE idle_state SET last_heartbeat_at = now() WHERE player = ${player} AND status = 'running'`;
     if (!state) {
-      return res.json({ ok: true, status: 'stopped', hp: 0, max_hp: 0, potions: 0, tier: 1, idle_xp: 0,
-        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {},
-        power_score: 0, kill_interval_ms: killIntervalMs(0) });
+      return res.json({ ok: true, status: 'stopped', hp: 0, max_hp: 0, potions: 0, hero_level: 1, hero_xp: 0,
+        xp_to_next_level: idleXpToNextLevel(1), auto_potion_pct: IDLE_CONFIG.AUTO_POTION_OPTIONS[2], enemies: [],
+        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {} });
     }
     const [wallet] = await sql`SELECT coins, diamonds FROM idle_wallet WHERE player = ${player}`;
     const fragRows = await sql`SELECT slot_type, qty FROM idle_fragments WHERE player = ${player}`;
     const fragments = Object.fromEntries(fragRows.map(r => [r.slot_type, r.qty]));
-    // power_score/kill_interval_ms are cosmetic pacing info for the client's
-    // local kill/loot animation — the client fakes the visual rhythm at this
-    // pace between polls, but the real ledger only ever moves server-side.
-    const powerScore = state.status === 'running' ? await computeIdlePowerScore(player, state.formation_slot) : 0;
     res.json({
       ok: true,
       status: state.status, hp: Number(state.hp), max_hp: Number(state.max_hp), potions: state.potions,
-      tier: state.tier, idle_xp: state.idle_xp,
+      hero_level: state.hero_level, hero_xp: state.hero_xp, xp_to_next_level: idleXpToNextLevel(state.hero_level),
+      auto_potion_pct: state.auto_potion_pct, enemies: state.enemies ?? [],
       coins: wallet?.coins ?? 0, diamonds: wallet?.diamonds ?? 0, fragments,
       pending_coins: state.pending_coins, pending_diamonds: state.pending_diamonds,
       pending_xp: state.pending_xp, pending_fragments: state.pending_fragments ?? {},
-      power_score: powerScore, kill_interval_ms: killIntervalMs(powerScore),
     });
   } catch (err) {
     console.error('[GET /api/idle/state]', err.message);
@@ -2135,7 +2227,7 @@ app.post('/api/idle/collect', async (req, res) => {
     // pool from being paid out twice.
     const [claimed] = await sql`
       WITH old AS (
-        SELECT pending_coins, pending_diamonds, pending_xp, pending_fragments, idle_xp
+        SELECT pending_coins, pending_diamonds, pending_xp, pending_fragments, hero_level, hero_xp
         FROM idle_state
         WHERE player = ${player}
           AND (pending_coins > 0 OR pending_diamonds > 0 OR pending_xp > 0 OR pending_fragments <> '{}'::jsonb)
@@ -2146,7 +2238,7 @@ app.post('/api/idle/collect', async (req, res) => {
           updated_at = now()
       FROM old
       WHERE idle_state.player = ${player}
-      RETURNING old.pending_coins, old.pending_diamonds, old.pending_xp, old.pending_fragments, old.idle_xp
+      RETURNING old.pending_coins, old.pending_diamonds, old.pending_xp, old.pending_fragments, old.hero_level, old.hero_xp
     `;
 
     if (!claimed) {
@@ -2173,9 +2265,14 @@ app.post('/api/idle/collect', async (req, res) => {
         ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${grantQty}
       `;
     }
-    const newTier = idleTierForXp(claimed.idle_xp + xpToGrant);
+    let newLevel = claimed.hero_level;
+    let newXp = claimed.hero_xp + xpToGrant;
+    while (newXp >= idleXpToNextLevel(newLevel)) {
+      newXp -= idleXpToNextLevel(newLevel);
+      newLevel += 1;
+    }
     await sql`
-      UPDATE idle_state SET idle_xp = idle_xp + ${xpToGrant}, tier = ${newTier}, updated_at = now()
+      UPDATE idle_state SET hero_level = ${newLevel}, hero_xp = ${newXp}, updated_at = now()
       WHERE player = ${player}
     `;
     res.json({ ok: true, collected: { coins: coinsToGrant, diamonds: diamondsToGrant, xp: xpToGrant, fragments: grantedFragments, ratio } });
@@ -2244,6 +2341,33 @@ app.post('/api/idle/buy-potions', async (req, res) => {
     res.json({ ok: true, bought: n, cost });
   } catch (err) {
     console.error('[POST /api/idle/buy-potions]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/idle/set-auto-potion
+ * Body: { player, pct }
+ * Sets the HP% threshold below which combat auto-consumes a potion.
+ */
+app.post('/api/idle/set-auto-potion', async (req, res) => {
+  const { player, pct } = req.body;
+  const n = Number(pct);
+  if (!player || !IDLE_CONFIG.AUTO_POTION_OPTIONS.includes(n)) {
+    return res.status(400).json({ ok: false, error: `player, pct required (one of ${IDLE_CONFIG.AUTO_POTION_OPTIONS.join(', ')})` });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    await sql`
+      INSERT INTO idle_state (player, auto_potion_pct) VALUES (${player}, ${n})
+      ON CONFLICT (player) DO UPDATE SET auto_potion_pct = ${n}, updated_at = now()
+    `;
+    res.json({ ok: true, auto_potion_pct: n });
+  } catch (err) {
+    console.error('[POST /api/idle/set-auto-potion]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -2392,8 +2516,10 @@ app.post('/api/idle/dev-reset', async (req, res) => {
   try {
     await sql`
       UPDATE idle_state
-      SET status = 'stopped', tier = 1, idle_xp = 0, hp = 0, max_hp = 0,
-          potions = 0, potion_ms_used = 0, kill_ms_remainder = 0,
+      SET status = 'stopped', hero_level = 1, hero_xp = 0, hp = 0, max_hp = 0,
+          potions = 0, enemies = '[]'::jsonb, next_enemy_id = 1,
+          next_guerreiro_ms = ${IDLE_MONSTERS.guerreiro.spawnMs}, next_arqueiro_ms = ${IDLE_MONSTERS.arqueiro.spawnMs},
+          next_hero_attack_ms = ${IDLE_HERO_ATTACK_MS},
           pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
           updated_at = now()
       WHERE player = ${player}
@@ -2709,6 +2835,19 @@ async function migrateIdleDungeon() {
     // against a 4s kill interval would otherwise lose ~3s of progress per
     // poll instead of carrying it into the next resolve).
     try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS kill_ms_remainder INT NOT NULL DEFAULT 0`; } catch {}
+    // Fixed-generic-hero combat rewrite (2026-08-06): hero_level/hero_xp
+    // replace the old idle_xp/tier pair; enemies + the next_*_ms timers hold
+    // the live combat-simulation state between resolves (see simulateIdleSegment).
+    // formation_slot/tier/idle_xp/potion_ms_used/kill_ms_remainder become
+    // unused legacy columns, left in place rather than dropped.
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS hero_level SMALLINT NOT NULL DEFAULT 1`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS hero_xp INT NOT NULL DEFAULT 0`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS auto_potion_pct SMALLINT NOT NULL DEFAULT 50`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS enemies JSONB NOT NULL DEFAULT '[]'`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_enemy_id INT NOT NULL DEFAULT 1`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_guerreiro_ms INT NOT NULL DEFAULT 5000`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_arqueiro_ms INT NOT NULL DEFAULT 8000`; } catch {}
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_hero_attack_ms INT NOT NULL DEFAULT 1600`; } catch {}
     await sql`
       CREATE TABLE IF NOT EXISTS idle_wallet (
         player   TEXT PRIMARY KEY,

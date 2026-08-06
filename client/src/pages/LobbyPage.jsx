@@ -2341,7 +2341,7 @@ export default function LobbyPage() {
         {view === 'shop' && <ShopView session={session} toast={showToast} heroData={heroData} onItemAcquired={item => setPlayerItems(prev => [...prev, item])} />}
 
         {view === 'idle' && (
-          <IdleView session={session} formations={formations} toast={showToast} onItemCrafted={refreshPlayerItems} />
+          <IdleView session={session} toast={showToast} onItemCrafted={refreshPlayerItems} />
         )}
 
         {view === 'market' && (

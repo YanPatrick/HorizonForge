@@ -2,6 +2,12 @@
 **Date:** 2026-08-03
 **Status:** Draft — pending balancing session
 
+> **Update 2026-08-06:** Section 1 below ("power score a partir da formação")
+> was superseded by a deliberate design pivot. The idle dungeon now runs a
+> real event-driven combat simulation (`simulateIdleSegment` in `api/server.js`)
+> against a **single fixed generic hero**, completely decoupled from the
+> player's own formation/roster. See the updated §1 for the current model.
+
 ---
 
 ## Overview
@@ -12,22 +18,49 @@ O objetivo é dar um motivo pra abrir o jogo em sessões curtas e um sumidouro d
 
 ---
 
-## 1. Mecânica principal — matemática, não simulação
+## 1. Mecânica principal — simulação de combate real (herói fixo)
 
-O idle **não roda o motor de batalha** (`shared/simulate.js`) round a round. Em vez disso:
+**Superseded 2026-08-06.** O idle roda uma simulação de combate real e
+orientada a eventos (`simulateIdleSegment` em `api/server.js`), não mais uma
+extrapolação matemática de power score. Decisão deliberada do usuário: o
+idle usa um **herói genérico fixo**, totalmente desacoplado da formação/
+roster do jogador (não reaproveita nível/gear reais das outras telas).
 
-- Um **power score** é calculado a partir do nível + gear da formação usada no idle (reaproveita o sistema de nível/gear existente).
-- Esse power score vs. a dificuldade do andar atual determina uma **taxa de kills/min**.
-- Cada kill sorteia, independentemente: nada / coin / fragmento (do slot correspondente ao andar/zona) / diamante (~0,1%, sem exibir a chance ao jogador).
-- **Online:** o cliente recebe a taxa do servidor e roda uma animação local no ritmo certo (kill → loot flutuante), sincronizando o saldo real com o servidor periodicamente. O servidor nunca precisa manter um tick contínuo por jogador.
-- **Offline:** ao retornar, o servidor usa a taxa de kill dos últimos ~5 minutos online do jogador, extrapola pelo tempo que ficou fora, e resolve tudo de uma vez (sem replay round a round).
+- Herói fixo com stats base + crescimento por nível (`IDLE_HERO_BASE`,
+  `IDLE_HERO_GROWTH_PER_LEVEL` — placeholders pendentes de balanceamento).
+- Monstros fixos (`IDLE_MONSTERS`: `guerreiro`, `arqueiro`) com HP/ATK/DEF/
+  intervalos de ataque e spawn próprios.
+- A simulação avança evento a evento (spawn, ataque do herói, ataque de
+  inimigo — o que ocorrer primeiro), creditando XP/loot a cada kill.
+- **Auto-poção:** o jogador escolhe um limiar de HP% (`AUTO_POTION_OPTIONS`);
+  abaixo dele, uma poção é consumida automaticamente durante o combate,
+  restaurando HP fixo. Poções não sustentam mais "tempo de sessão" — são
+  reativas ao dano real recebido.
+- Cada kill sorteia, independentemente: nada / coin / fragmento (slot
+  aleatório) / diamante (~0,1%, sem exibir a chance ao jogador).
+- **Online:** múltiplos inimigos podem estar vivos simultaneamente
+  (concorrência ilimitada) — o herói ataca sempre o inimigo na frente da
+  fila. O servidor resolve a simulação real a cada poll, creditando direto
+  na carteira.
+- **Offline:** a simulação roda sequencial (1 inimigo por vez), limitada a
+  `MAX_OFFLINE_CATCHUP_MS` (30 dias), e credita em `pending_*` até o jogador
+  coletar.
+- Se o herói morre (HP ≤ 0 e sem poções), a run para (`status = 'stopped'`)
+  e o farm acumulado fica pendente de coleta, como antes.
 
-## 2. Nível de idle e andares (tiers)
+## 2. Nível do herói idle (substituiu "andares/tiers")
 
-- Existe um **nível de idle** próprio, separado do nível de herói (campanha/PvP/bot já têm seu próprio contexto de nível). O jogador confere esse nível ao entrar na aba.
-- XP de idle é ganho pelos kills (online e offline, ambos sujeitos ao mesmo corte de recompensa).
-- O andar/tier atual da dungeon é gatilhado por esse nível de idle — jogadores mais ativos avançam mais rápido; quem fica offline por muito tempo permanece no mesmo andar até voltar a jogar.
-- Andares mais altos = monstros mais fortes, melhor taxa/qualidade de drop.
+**Superseded 2026-08-06** — não existem mais andares/tiers nem "nível de
+idle" separado por XP acumulado em faixas fixas de 100. O que existe agora:
+
+- O **herói fixo** tem seu próprio nível (`hero_level`/`hero_xp`), com curva
+  geométrica de custo (`idleXpToNextLevel`: 100, 150, 225, 338... — cada
+  nível custa 1.5x o anterior).
+- Nível sobe automaticamente durante a simulação de combate (online e
+  offline, sujeito ao mesmo corte de recompensa no caso offline).
+- Nível mais alto = mais HP/ATK/DEF do herói fixo (`IDLE_HERO_GROWTH_PER_LEVEL`),
+  não muda os monstros enfrentados — os monstros (`IDLE_MONSTERS`) têm
+  stats fixos, não escalam com o andar (não há mais o conceito de andar).
 
 ## 3. Sessão, poções e saída
 

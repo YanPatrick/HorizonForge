@@ -1,33 +1,42 @@
 // tests/idleFormulas.verify.js
-// Verifica as fórmulas puras do Idle Dungeon (killIntervalMs, idleTierForXp).
+// Verifica as fórmulas puras do Idle Dungeon (hero level curve, damage, drop table).
 // rollIdleDrop é probabilístico — verificado por distribuição aproximada, não valor exato.
 // Rode com: node tests/idleFormulas.verify.js
 import assert from 'assert/strict';
 
 const IDLE_CONFIG = {
-  KILL_INTERVAL_BASE_MS: 4_000,
-  KILL_INTERVAL_MIN_MS: 800,
-  POWER_SCORE_MS_PER_PT: 2,
-  IDLE_XP_PER_TIER: 100,
-  DROP_CHANCE_NONE: 0.60,
-  DROP_CHANCE_COIN: 0.30,
+  DROP_CHANCE_NONE: 0.30,
+  DROP_CHANCE_COIN: 0.60,
   DROP_CHANCE_FRAGMENT: 0.099,
   DROP_CHANCE_DIAMOND: 0.001,
   TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
 };
 
-function idleTierForXp(xp) {
-  return Math.max(1, Math.floor(Number(xp) / IDLE_CONFIG.IDLE_XP_PER_TIER) + 1);
+const IDLE_HERO_BASE = { maxHp: 100, atk: 10, def: 5 };
+const IDLE_HERO_GROWTH_PER_LEVEL = { hp: 10, atk: 2, def: 1 };
+const IDLE_XP_BASE = 100;
+const IDLE_XP_GROWTH = 1.5;
+
+function idleHeroStatsForLevel(level) {
+  const extra = Math.max(1, Number(level) || 1) - 1;
+  return {
+    maxHp: IDLE_HERO_BASE.maxHp + extra * IDLE_HERO_GROWTH_PER_LEVEL.hp,
+    atk:   IDLE_HERO_BASE.atk + extra * IDLE_HERO_GROWTH_PER_LEVEL.atk,
+    def:   IDLE_HERO_BASE.def + extra * IDLE_HERO_GROWTH_PER_LEVEL.def,
+  };
 }
 
-function killIntervalMs(powerScore) {
-  const raw = IDLE_CONFIG.KILL_INTERVAL_BASE_MS - (Number(powerScore) * IDLE_CONFIG.POWER_SCORE_MS_PER_PT);
-  return Math.max(IDLE_CONFIG.KILL_INTERVAL_MIN_MS, raw);
+function idleXpToNextLevel(level) {
+  return Math.ceil(IDLE_XP_BASE * Math.pow(IDLE_XP_GROWTH, Math.max(1, Number(level) || 1) - 1));
 }
 
-function rollIdleDrop(tier, rng) {
+function idleDamage(atk, def) {
+  return Math.max(1, Math.round(atk - def));
+}
+
+function rollIdleDrop(rng) {
   const r = rng();
-  const slotType = IDLE_CONFIG.TIER_SLOTS[(Number(tier) - 1) % IDLE_CONFIG.TIER_SLOTS.length];
+  const slotType = IDLE_CONFIG.TIER_SLOTS[Math.floor(rng() * IDLE_CONFIG.TIER_SLOTS.length)];
   if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND) return { type: 'diamond', qty: 1 };
   if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND + IDLE_CONFIG.DROP_CHANCE_FRAGMENT) return { type: 'fragment', qty: 1, slotType };
   if (r < IDLE_CONFIG.DROP_CHANCE_DIAMOND + IDLE_CONFIG.DROP_CHANCE_FRAGMENT + IDLE_CONFIG.DROP_CHANCE_COIN) return { type: 'coin', qty: 1 };
@@ -40,17 +49,18 @@ function check(label, cond) {
   else { failed++; console.error(`FAIL ${label}`); }
 }
 
-// idleTierForXp
-check('idleTierForXp(0) === 1', idleTierForXp(0) === 1);
-check('idleTierForXp(99) === 1', idleTierForXp(99) === 1);
-check('idleTierForXp(100) === 2', idleTierForXp(100) === 2);
-check('idleTierForXp(250) === 3', idleTierForXp(250) === 3);
+// idleHeroStatsForLevel
+check('idleHeroStatsForLevel(1) === base', idleHeroStatsForLevel(1).maxHp === 100 && idleHeroStatsForLevel(1).atk === 10 && idleHeroStatsForLevel(1).def === 5);
+check('idleHeroStatsForLevel(3) grows linearly', idleHeroStatsForLevel(3).maxHp === 120 && idleHeroStatsForLevel(3).atk === 14 && idleHeroStatsForLevel(3).def === 7);
 
-// killIntervalMs
-check('killIntervalMs(0) === 4000', killIntervalMs(0) === 4000);
-check('killIntervalMs(1600) === 800 (floor)', killIntervalMs(1600) === 800);
-check('killIntervalMs(2000) === 800 (clamped, not negative)', killIntervalMs(2000) === 800);
-check('killIntervalMs(100) === 3800', killIntervalMs(100) === 3800);
+// idleXpToNextLevel — geometric curve, each level costs 1.5x the previous
+check('idleXpToNextLevel(1) === 100', idleXpToNextLevel(1) === 100);
+check('idleXpToNextLevel(2) === 150', idleXpToNextLevel(2) === 150);
+check('idleXpToNextLevel(3) === 225', idleXpToNextLevel(3) === 225);
+
+// idleDamage — never drops below 1 even when def >= atk
+check('idleDamage(10, 5) === 5', idleDamage(10, 5) === 5);
+check('idleDamage(10, 15) === 1 (floored at 1, never 0 or negative)', idleDamage(10, 15) === 1);
 
 // rollIdleDrop — distribution sanity over a large deterministic sample
 {
@@ -58,16 +68,13 @@ check('killIntervalMs(100) === 3800', killIntervalMs(100) === 3800);
   const rng = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
   const counts = { none: 0, coin: 0, fragment: 0, diamond: 0 };
   const N = 20000;
-  for (let i = 0; i < N; i++) counts[rollIdleDrop(1, rng).type]++;
+  for (let i = 0; i < N; i++) counts[rollIdleDrop(rng).type]++;
   const noneRatio = counts.none / N;
-  check(`drop distribution: none ratio ≈0.60 (got ${noneRatio.toFixed(3)})`, Math.abs(noneRatio - 0.60) < 0.03);
+  check(`drop distribution: none ratio ≈0.30 (got ${noneRatio.toFixed(3)})`, Math.abs(noneRatio - 0.30) < 0.03);
   check('drop distribution: diamond rarest', counts.diamond < counts.fragment && counts.fragment < counts.coin);
 }
 
-const single = rollIdleDrop(2, Math.random);
-check('rollIdleDrop tier=2 fragment slotType is helm when it rolls fragment', true); // slotType assignment is deterministic per tier, spot-checked below
 check('TIER_SLOTS[1] === "helm"', IDLE_CONFIG.TIER_SLOTS[1] === 'helm');
-void single;
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
