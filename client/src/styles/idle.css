@@ -185,6 +185,21 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.idle-view__equip-row,
+.idle-view__inventory-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.9rem;
+}
+
+.idle-view__inventory-empty {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+}
+
 .idle-view__dev-reset {
   align-self: flex-start;
   margin-top: 1rem;

@@ -17,6 +17,7 @@ const MONSTER_INFO = {
 }
 
 const AUTO_POTION_OPTIONS = [90, 75, 50]
+const SLOT_ICONS = { weapon: '⚔️', helm: '⛑️', legs: '🥾', boots: '👢', gloves: '🧤', ring1: '💍' }
 
 async function idleFetch(path, session, opts = {}) {
   const headers = { 'Content-Type': 'application/json' }
@@ -30,6 +31,7 @@ export default function IdleView({ session, toast, onItemCrafted }) {
   const isGuest = session?.mode === 'guest'
   const [state, setState] = useState(null)
   const [recipes, setRecipes] = useState({})
+  const [inventory, setInventory] = useState([])
   const [floats, setFloats] = useState([])
   const pollRef = useRef(null)
   const prevRef = useRef(null)
@@ -64,9 +66,16 @@ export default function IdleView({ session, toast, onItemCrafted }) {
     setState(data)
   }
 
+  const refreshItems = async () => {
+    if (!username) return
+    const data = await idleFetch(`/api/idle/items?player=${encodeURIComponent(username)}`, session)
+    if (data.ok) setInventory(data.inventory)
+  }
+
   useEffect(() => {
     if (!username) return
     refresh()
+    refreshItems()
     idleFetch('/api/idle/recipes', session).then(d => { if (d.ok) setRecipes(d.recipes) })
     pollRef.current = setInterval(refresh, POLL_MS)
     return () => clearInterval(pollRef.current)
@@ -120,7 +129,38 @@ export default function IdleView({ session, toast, onItemCrafted }) {
     if (!data.ok) return toast?.(data.error)
     toast?.(`Crafted ${data.crafted.name}`)
     refresh()
+    refreshItems()
     onItemCrafted?.()
+  }
+
+  const handleMerge = async (slotType, plusLevel) => {
+    const data = await idleFetch('/api/idle/merge', session, {
+      method: 'POST',
+      body: JSON.stringify({ player: username, slot_type: slotType, plus_level: plusLevel }),
+    })
+    if (!data.ok) return toast?.(data.error)
+    toast?.(`Merged into ${slotType} +${data.merged.new_plus_level}`)
+    refreshItems()
+  }
+
+  const handleEquip = async (slotType, plusLevel) => {
+    const data = await idleFetch('/api/idle/equip', session, {
+      method: 'POST',
+      body: JSON.stringify({ player: username, slot_type: slotType, plus_level: plusLevel }),
+    })
+    if (!data.ok) return toast?.(data.error)
+    refresh()
+    refreshItems()
+  }
+
+  const handleUnequip = async (slotType) => {
+    const data = await idleFetch('/api/idle/equip', session, {
+      method: 'POST',
+      body: JSON.stringify({ player: username, slot_type: slotType, plus_level: null }),
+    })
+    if (!data.ok) return toast?.(data.error)
+    refresh()
+    refreshItems()
   }
 
   const handleSetAutoPotion = async (pct) => {
@@ -244,6 +284,22 @@ export default function IdleView({ session, toast, onItemCrafted }) {
         <button type="button" onClick={() => handleBuyPotions(1)}>Buy 1 potion (10 coins)</button>
       </div>
 
+      <div className="idle-view__equipment">
+        <h3>Equipment</h3>
+        {Object.keys(SLOT_ICONS).map(slotType => {
+          const equippedPlus = state.equipment?.[slotType]
+          return (
+            <div key={slotType} className="idle-view__equip-row">
+              <span>{SLOT_ICONS[slotType]} {slotType}</span>
+              <span>{equippedPlus != null ? `+${equippedPlus}` : 'empty'}</span>
+              {equippedPlus != null && (
+                <button type="button" onClick={() => handleUnequip(slotType)}>Unequip</button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
       <div className="idle-view__crafting">
         <h3>Blacksmith</h3>
         {Object.entries(recipes).map(([slotType, r]) => (
@@ -252,6 +308,23 @@ export default function IdleView({ session, toast, onItemCrafted }) {
             <button type="button" onClick={() => handleCraft(slotType)}>Craft</button>
           </div>
         ))}
+      </div>
+
+      <div className="idle-view__inventory">
+        <h3>Inventory</h3>
+        {inventory.length === 0
+          ? <p className="idle-view__inventory-empty">No crafted items yet.</p>
+          : inventory.map(entry => (
+            <div key={`${entry.slot_type}:${entry.plus_level}`} className="idle-view__inventory-row">
+              <span>{SLOT_ICONS[entry.slot_type] ?? '📦'} {entry.slot_type} +{entry.plus_level} x{entry.qty}</span>
+              <button type="button" onClick={() => handleEquip(entry.slot_type, entry.plus_level)}>Equip</button>
+              {entry.qty >= 2 && entry.plus_level < 10 && (
+                <button type="button" onClick={() => handleMerge(entry.slot_type, entry.plus_level)}>
+                  Merge → +{entry.plus_level + 1}
+                </button>
+              )}
+            </div>
+          ))}
       </div>
 
       {DEV_RESET_USERS.includes(username) && (

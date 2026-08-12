@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import '@styles/market.css'
 import { useT } from '../context/LanguageContext'
 
@@ -14,55 +14,31 @@ async function marketFetch(path, session, opts = {}) {
   return res.json()
 }
 
-export default function MarketView({ session, items, onSold, toast }) {
+export default function MarketView({ session, toast }) {
   const { t } = useT()
-  const [trayIds, setTrayIds] = useState([])
-  const [dragOver, setDragOver] = useState(false)
-  const [selling, setSelling] = useState(false)
+  const username = session?.username
+  const [inventory, setInventory] = useState([])
+  const [selling, setSelling] = useState(null)
 
-  // Only idle-crafted, unequipped, priced items are ever sellable here.
-  const sellable = useMemo(
-    () => (items || []).filter(i => i.source === 'idle_dungeon' && i.sell_price != null && !i.equipped_on),
-    [items]
-  )
-  const byId = useMemo(() => Object.fromEntries(sellable.map(i => [i.id, i])), [sellable])
-  const trayEntries = trayIds.filter(id => byId[id])
-  const total = trayEntries.reduce((sum, id) => sum + (byId[id]?.sell_price ?? 0), 0)
-
-  function addToTray(id) {
-    if (!byId[id] || trayIds.includes(id)) return
-    setTrayIds(prev => [...prev, id])
+  const refresh = async () => {
+    if (!username) return
+    const data = await marketFetch(`/api/idle/items?player=${encodeURIComponent(username)}`, session)
+    if (data.ok) setInventory(data.inventory)
   }
 
-  function removeFromTray(id) {
-    setTrayIds(prev => prev.filter(x => x !== id))
-  }
+  useEffect(() => { refresh() }, [username])
 
-  function handleTrayDrop(e) {
-    e.preventDefault()
-    setDragOver(false)
-    const id = Number(e.dataTransfer.getData('text/plain'))
-    if (id) addToTray(id)
-  }
-
-  function handleInventoryDrop(e) {
-    e.preventDefault()
-    const raw = e.dataTransfer.getData('text/plain')
-    if (raw?.startsWith('tray:')) removeFromTray(Number(raw.slice(5)))
-  }
-
-  async function handleSell() {
-    if (trayEntries.length === 0 || selling) return
-    setSelling(true)
+  const handleSell = async (slotType, plusLevel, qty) => {
+    const key = `${slotType}:${plusLevel}`
+    setSelling(key)
     const data = await marketFetch('/api/market/sell', session, {
       method: 'POST',
-      body: JSON.stringify({ player: session.username, item_ids: trayEntries }),
+      body: JSON.stringify({ player: username, slot_type: slotType, plus_level: plusLevel, qty }),
     })
-    setSelling(false)
+    setSelling(null)
     if (!data.ok) return toast?.(data.error)
-    toast?.(t('market.sold', { coins: data.total_coins }))
-    onSold?.(trayEntries)
-    setTrayIds([])
+    toast?.(`Sold ${data.sold.qty}x — +${data.total_coins} coins`)
+    refresh()
   }
 
   return (
@@ -79,68 +55,32 @@ export default function MarketView({ session, items, onSold, toast }) {
       </div>
 
       <div className="mkt-body">
-        <div className="mkt-inventory" onDragOver={e => e.preventDefault()} onDrop={handleInventoryDrop}>
+        <div className="mkt-inventory">
           <div className="mkt-panel-title">{t('market.yourItems')}</div>
-          {sellable.length === 0
+          {inventory.length === 0
             ? <div className="mkt-empty">{t('market.noItems')}</div>
             : (
               <div className="mkt-item-grid">
-                {sellable.map(item => {
-                  const staged = trayIds.includes(item.id)
+                {inventory.map(entry => {
+                  const key = `${entry.slot_type}:${entry.plus_level}`
                   return (
-                    <div
-                      key={item.id}
-                      className={`mkt-item-card${staged ? ' staged' : ''}`}
-                      draggable={!staged}
-                      onDragStart={e => e.dataTransfer.setData('text/plain', String(item.id))}
-                      onClick={() => addToTray(item.id)}
-                      title={item.name}
-                    >
-                      <span className="mkt-item-ico">{SLOT_ICONS[item.slot_type] ?? '📦'}</span>
-                      <span className="mkt-item-name">{item.name}</span>
-                      <span className="mkt-item-price">🪙 {item.sell_price}</span>
+                    <div key={key} className="mkt-item-card" title={`${entry.slot_type} +${entry.plus_level}`}>
+                      <span className="mkt-item-ico">{SLOT_ICONS[entry.slot_type] ?? '📦'}</span>
+                      <span className="mkt-item-name">{entry.slot_type} +{entry.plus_level}</span>
+                      <span className="mkt-item-price">x{entry.qty}</span>
+                      <button
+                        type="button"
+                        className="mkt-btn-sell"
+                        disabled={selling === key}
+                        onClick={() => handleSell(entry.slot_type, entry.plus_level, 1)}
+                      >
+                        {t('market.sell')}
+                      </button>
                     </div>
                   )
                 })}
               </div>
             )}
-        </div>
-
-        <div
-          className={`mkt-tray${dragOver ? ' drag-over' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleTrayDrop}
-        >
-          <div className="mkt-panel-title">{t('market.sellTray')}</div>
-          {trayEntries.length === 0
-            ? <div className="mkt-tray-empty">{t('market.dragHint')}</div>
-            : (
-              <div className="mkt-tray-list">
-                {trayEntries.map(id => {
-                  const item = byId[id]
-                  return (
-                    <div
-                      key={id}
-                      className="mkt-tray-row"
-                      draggable
-                      onDragStart={e => e.dataTransfer.setData('text/plain', `tray:${id}`)}
-                    >
-                      <span className="mkt-item-ico">{SLOT_ICONS[item.slot_type] ?? '📦'}</span>
-                      <span className="mkt-tray-name">{item.name}</span>
-                      <span className="mkt-tray-subtotal">🪙 {item.sell_price}</span>
-                      <button type="button" className="mkt-tray-remove" onClick={() => removeFromTray(id)}>✕</button>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          <div className="mkt-tray-footer">
-            <span className="mkt-tray-total">{t('market.total')}: 🪙 {total}</span>
-            <button type="button" className="mkt-btn-sell" disabled={trayEntries.length === 0 || selling} onClick={handleSell}>
-              {t('market.sell')}
-            </button>
-          </div>
         </div>
       </div>
     </div>

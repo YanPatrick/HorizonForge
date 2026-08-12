@@ -905,10 +905,17 @@ const IDLE_CONFIG = {
   TIER_SLOTS: ['weapon', 'helm', 'legs', 'boots', 'gloves', 'ring1'],
   AUTO_POTION_OPTIONS: [90, 75, 50],     // HP% threshold options for the auto-potion trigger
   MAX_OFFLINE_CATCHUP_MS: 30 * 24 * 60 * 60 * 1000, // cap offline simulation to 30 days
+  // Balancing pass 2026-08-07: 3 concurrent enemies + hero at +40% base
+  // stats gives a ~105s run that burns through 10 potions and dies just
+  // after — deliberately short, so early-game players have to come back
+  // often to buy more potions instead of sitting offline for hours.
+  MAX_CONCURRENT_ENEMIES_ONLINE: 3,
+  MONSTER_MISS_CHANCE: 0.05,
 };
 
 // Placeholder pending balancing — see docs/superpowers/specs/2026-08-03-idle-dungeon-design.md §9.
-const IDLE_HERO_BASE = { maxHp: 100, atk: 10, def: 5 };
+// Level-1 hero stats at +40% over the original placeholder (2026-08-06 balancing pass).
+const IDLE_HERO_BASE = { maxHp: 140, atk: 14, def: 7 };
 const IDLE_HERO_GROWTH_PER_LEVEL = { hp: 10, atk: 2, def: 1 };
 const IDLE_HERO_ATTACK_MS = 1600;
 const IDLE_HERO_MISS_CHANCE = 0.03;
@@ -920,12 +927,16 @@ const IDLE_MONSTERS = {
   arqueiro:  { hp: 10, atk: 15, def: 3, attackMs: 2000, spawnMs: 8000, xp: 2 },
 };
 
-function idleHeroStatsForLevel(level) {
+// gearBonus comes from the player's equipped idle items (see idleGearBonusForEquipment).
+// dps shortens the hero's attack interval instead of adding flat damage —
+// placeholder formula (20ms per dps point, floored at 400ms) pending balancing.
+function idleHeroStatsForLevel(level, gearBonus = { atk: 0, hp: 0, dps: 0 }) {
   const extra = Math.max(1, Number(level) || 1) - 1;
   return {
-    maxHp: IDLE_HERO_BASE.maxHp + extra * IDLE_HERO_GROWTH_PER_LEVEL.hp,
-    atk:   IDLE_HERO_BASE.atk + extra * IDLE_HERO_GROWTH_PER_LEVEL.atk,
+    maxHp: IDLE_HERO_BASE.maxHp + extra * IDLE_HERO_GROWTH_PER_LEVEL.hp + gearBonus.hp,
+    atk:   IDLE_HERO_BASE.atk + extra * IDLE_HERO_GROWTH_PER_LEVEL.atk + gearBonus.atk,
     def:   IDLE_HERO_BASE.def + extra * IDLE_HERO_GROWTH_PER_LEVEL.def,
+    attackMs: Math.max(400, IDLE_HERO_ATTACK_MS - gearBonus.dps * 20),
   };
 }
 
@@ -967,7 +978,8 @@ function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
   let heroLevel = input.heroLevel;
   let heroXp = input.heroXp;
   let heroHp = input.heroHp;
-  let heroStats = idleHeroStatsForLevel(heroLevel);
+  const gearBonus = input.gearBonus || { atk: 0, hp: 0, dps: 0 };
+  let heroStats = idleHeroStatsForLevel(heroLevel, gearBonus);
   let potions = input.potions;
   const autoPotionPct = input.autoPotionPct;
   let enemies = (input.enemies || []).map(e => ({ ...e }));
@@ -975,7 +987,7 @@ function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
   let nextArqueiroMs = input.nextArqueiroMs;
   let nextHeroAttackMs = input.nextHeroAttackMs;
   let nextEnemyId = input.nextEnemyId ?? 1;
-  const maxConcurrentEnemies = sequential ? 1 : Infinity;
+  const maxConcurrentEnemies = sequential ? 1 : IDLE_CONFIG.MAX_CONCURRENT_ENEMIES_ONLINE;
 
   let coinsGained = 0, diamondsGained = 0, potionsUsed = 0, xpGained = 0, kills = 0;
   const fragmentsGained = {};
@@ -1003,7 +1015,7 @@ function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
       const kind = next.type === 'spawn_guerreiro' ? 'guerreiro' : 'arqueiro';
       const def = IDLE_MONSTERS[kind];
       if (enemies.length < maxConcurrentEnemies) {
-        if (enemies.length === 0) nextHeroAttackMs = IDLE_HERO_ATTACK_MS;
+        if (enemies.length === 0) nextHeroAttackMs = heroStats.attackMs;
         enemies.push({ id: nextEnemyId++, kind, hp: def.hp, nextAttackMs: def.attackMs });
       }
       if (kind === 'guerreiro') nextGuerreiroMs = def.spawnMs;
@@ -1023,7 +1035,7 @@ function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
           while (heroXp >= idleXpToNextLevel(heroLevel)) {
             heroXp -= idleXpToNextLevel(heroLevel);
             heroLevel += 1;
-            heroStats = idleHeroStatsForLevel(heroLevel);
+            heroStats = idleHeroStatsForLevel(heroLevel, gearBonus);
           }
           const drop = rollIdleDrop();
           if (drop.type === 'coin') coinsGained += drop.qty;
@@ -1031,12 +1043,14 @@ function simulateIdleSegment(input, elapsedMs, { sequential = false } = {}) {
           else if (drop.type === 'fragment') fragmentsGained[drop.slotType] = (fragmentsGained[drop.slotType] ?? 0) + drop.qty;
         }
       }
-      nextHeroAttackMs = IDLE_HERO_ATTACK_MS;
+      nextHeroAttackMs = heroStats.attackMs;
     } else if (next.type === 'enemy_attack') {
       const attacker = enemies.find(e => e.id === next.id);
       if (attacker) {
         const monsterDef = IDLE_MONSTERS[attacker.kind];
-        heroHp -= idleDamage(monsterDef.atk, heroStats.def);
+        if (Math.random() >= IDLE_CONFIG.MONSTER_MISS_CHANCE) {
+          heroHp -= idleDamage(monsterDef.atk, heroStats.def);
+        }
         attacker.nextAttackMs = monsterDef.attackMs;
         if (heroHp > 0 && heroHp <= heroStats.maxHp * (autoPotionPct / 100) && potions > 0) {
           potions -= 1;
@@ -1687,7 +1701,6 @@ app.get('/api/player-items', async (req, res) => {
       spd_bonus:   Number(r.spd_bonus),
       source:      r.source,
       equipped_on: r.equipped_on || null,
-      sell_price:  r.source === 'idle_dungeon' ? (IDLE_RECIPE_BY_SLUG[r.slug]?.sellPrice ?? null) : null,
     })) });
   } catch (err) {
     console.error('[GET /api/player-items]', err.message);
@@ -2025,19 +2038,20 @@ app.post('/api/idle/start', async (req, res) => {
     const [state] = await sql`
       INSERT INTO idle_state (player) VALUES (${player})
       ON CONFLICT (player) DO NOTHING
-      RETURNING potions, hero_level
+      RETURNING potions, hero_level, equipment
     `;
-    const row = state ?? (await sql`SELECT potions, hero_level FROM idle_state WHERE player = ${player}`)[0];
+    const row = state ?? (await sql`SELECT potions, hero_level, equipment FROM idle_state WHERE player = ${player}`)[0];
     if (row.potions <= 0) {
       return res.status(400).json({ ok: false, error: 'No potions available' });
     }
-    const heroStats = idleHeroStatsForLevel(row.hero_level);
+    const gearBonus = idleGearBonusFromEquipment(row.equipment);
+    const heroStats = idleHeroStatsForLevel(row.hero_level, gearBonus);
     await sql`
       UPDATE idle_state
       SET status = 'running', hp = ${heroStats.maxHp}, max_hp = ${heroStats.maxHp},
           enemies = '[]'::jsonb, next_enemy_id = 1,
           next_guerreiro_ms = ${IDLE_MONSTERS.guerreiro.spawnMs}, next_arqueiro_ms = ${IDLE_MONSTERS.arqueiro.spawnMs},
-          next_hero_attack_ms = ${IDLE_HERO_ATTACK_MS},
+          next_hero_attack_ms = ${heroStats.attackMs},
           last_tick_at = now(), last_heartbeat_at = now(), updated_at = now()
       WHERE player = ${player}
     `;
@@ -2074,6 +2088,7 @@ async function resolveIdleTicks(player) {
     nextArqueiroMs: state.next_arqueiro_ms,
     nextHeroAttackMs: state.next_hero_attack_ms,
     nextEnemyId: state.next_enemy_id,
+    gearBonus: idleGearBonusFromEquipment(state.equipment),
   }, elapsedMs, { sequential: !isOnline });
 
   const newStatus = result.died ? 'stopped' : 'running';
@@ -2164,7 +2179,7 @@ app.get('/api/idle/state', async (req, res) => {
     if (!state) {
       return res.json({ ok: true, status: 'stopped', hp: 0, max_hp: 0, potions: 0, hero_level: 1, hero_xp: 0,
         xp_to_next_level: idleXpToNextLevel(1), auto_potion_pct: IDLE_CONFIG.AUTO_POTION_OPTIONS[2], enemies: [],
-        coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {} });
+        equipment: {}, coins: 0, diamonds: 0, fragments: {}, pending_coins: 0, pending_diamonds: 0, pending_xp: 0, pending_fragments: {} });
     }
     const [wallet] = await sql`SELECT coins, diamonds FROM idle_wallet WHERE player = ${player}`;
     const fragRows = await sql`SELECT slot_type, qty FROM idle_fragments WHERE player = ${player}`;
@@ -2173,7 +2188,7 @@ app.get('/api/idle/state', async (req, res) => {
       ok: true,
       status: state.status, hp: Number(state.hp), max_hp: Number(state.max_hp), potions: state.potions,
       hero_level: state.hero_level, hero_xp: state.hero_xp, xp_to_next_level: idleXpToNextLevel(state.hero_level),
-      auto_potion_pct: state.auto_potion_pct, enemies: state.enemies ?? [],
+      auto_potion_pct: state.auto_potion_pct, enemies: state.enemies ?? [], equipment: state.equipment ?? {},
       coins: wallet?.coins ?? 0, diamonds: wallet?.diamonds ?? 0, fragments,
       pending_coins: state.pending_coins, pending_diamonds: state.pending_diamonds,
       pending_xp: state.pending_xp, pending_fragments: state.pending_fragments ?? {},
@@ -2418,23 +2433,128 @@ app.post('/api/idle/craft', async (req, res) => {
       await sql`UPDATE idle_wallet SET coins = coins + ${recipe.coinCost} WHERE player = ${player}`;
       return res.status(400).json({ ok: false, error: `Not enough ${slot_type} fragments` });
     }
-    const [item] = await sql`SELECT id FROM items WHERE slug = ${recipe.slug}`;
-    if (!item) {
-      // Recipe item wasn't seeded — refund both charges before failing.
-      await sql`UPDATE idle_wallet SET coins = coins + ${recipe.coinCost} WHERE player = ${player}`;
-      await sql`
-        INSERT INTO idle_fragments (player, slot_type, qty) VALUES (${player}, ${slot_type}, ${recipe.fragmentsRequired})
-        ON CONFLICT (player, slot_type) DO UPDATE SET qty = idle_fragments.qty + ${recipe.fragmentsRequired}
-      `;
-      return res.status(500).json({ ok: false, error: 'Recipe item not seeded' });
-    }
+    // Craft always grants a plus_level=0 item — stacked by (slot_type,
+    // plus_level) so the player can hold multiple copies to merge, unlike
+    // the old unique-player_items model.
     await sql`
-      INSERT INTO player_items (player, item_id, source) VALUES (${player}, ${item.id}, 'idle_dungeon')
-      ON CONFLICT (player, item_id) DO NOTHING
+      INSERT INTO idle_items (player, slot_type, plus_level, qty) VALUES (${player}, ${slot_type}, 0, 1)
+      ON CONFLICT (player, slot_type, plus_level) DO UPDATE SET qty = idle_items.qty + 1
     `;
-    res.json({ ok: true, crafted: { slug: recipe.slug, name: recipe.name, item_id: item.id } });
+    res.json({ ok: true, crafted: { slug: recipe.slug, name: recipe.name, slot_type, plus_level: 0 } });
   } catch (err) {
     console.error('[POST /api/idle/craft]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/idle/merge
+ * Body: { player, slot_type, plus_level }
+ * Consumes 2 items at plus_level and grants 1 at plus_level+1, up to IDLE_ITEM_MAX_PLUS.
+ */
+app.post('/api/idle/merge', async (req, res) => {
+  const { player, slot_type, plus_level } = req.body;
+  const plusLevel = Number(plus_level);
+  if (!player || !IDLE_RECIPES[slot_type] || !Number.isInteger(plusLevel) || plusLevel < 0 || plusLevel >= IDLE_ITEM_MAX_PLUS) {
+    return res.status(400).json({ ok: false, error: 'player, valid slot_type, and plus_level (0..9) required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    // Balance check embedded in the WHERE clause (same guarded-UPDATE pattern
+    // as everywhere else) — a SELECT-then-UPDATE would let two concurrent
+    // merges both pass a qty>=2 check before either deducts.
+    const [consumed] = await sql`
+      UPDATE idle_items SET qty = qty - 2
+      WHERE player = ${player} AND slot_type = ${slot_type} AND plus_level = ${plusLevel} AND qty >= 2
+      RETURNING qty
+    `;
+    if (!consumed) {
+      return res.status(400).json({ ok: false, error: 'Not enough items to merge (need 2 at this plus level)' });
+    }
+    await sql`
+      INSERT INTO idle_items (player, slot_type, plus_level, qty) VALUES (${player}, ${slot_type}, ${plusLevel + 1}, 1)
+      ON CONFLICT (player, slot_type, plus_level) DO UPDATE SET qty = idle_items.qty + 1
+    `;
+    res.json({ ok: true, merged: { slot_type, new_plus_level: plusLevel + 1 } });
+  } catch (err) {
+    console.error('[POST /api/idle/merge]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/idle/items?player=X
+ * Returns the player's idle-item inventory (stacked by slot_type+plus_level)
+ * and what's currently equipped on the fixed idle hero.
+ */
+app.get('/api/idle/items', async (req, res) => {
+  const { player } = req.query;
+  if (!player) return res.status(400).json({ ok: false, error: 'player required' });
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    const rows = await sql`SELECT slot_type, plus_level, qty FROM idle_items WHERE player = ${player} AND qty > 0 ORDER BY slot_type, plus_level`;
+    const [state] = await sql`SELECT equipment FROM idle_state WHERE player = ${player}`;
+    res.json({ ok: true, inventory: rows, equipment: state?.equipment ?? {} });
+  } catch (err) {
+    console.error('[GET /api/idle/items]', err.message);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/idle/equip
+ * Body: { player, slot_type, plus_level }  (plus_level: null/omitted unequips the slot)
+ * Swaps whichever item is equipped in that slot with one from inventory —
+ * the previous item (if any) returns to the stack, the new one is removed from it.
+ */
+app.post('/api/idle/equip', async (req, res) => {
+  const { player, slot_type } = req.body;
+  const hasPlus = req.body.plus_level !== undefined && req.body.plus_level !== null;
+  const plusLevel = hasPlus ? Number(req.body.plus_level) : null;
+  if (!player || !IDLE_RECIPES[slot_type] || (hasPlus && (!Number.isInteger(plusLevel) || plusLevel < 0 || plusLevel > IDLE_ITEM_MAX_PLUS))) {
+    return res.status(400).json({ ok: false, error: 'player, valid slot_type, and plus_level (or null to unequip) required' });
+  }
+  const authedUser = authFromRequest(req);
+  if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
+  try {
+    if (hasPlus) {
+      // Take 1 off the stack before touching equipment — a concurrent equip
+      // call that loses this race finds qty already short and fails cleanly.
+      const [taken] = await sql`
+        UPDATE idle_items SET qty = qty - 1
+        WHERE player = ${player} AND slot_type = ${slot_type} AND plus_level = ${plusLevel} AND qty >= 1
+        RETURNING qty
+      `;
+      if (!taken) {
+        return res.status(400).json({ ok: false, error: 'Item not in inventory' });
+      }
+    }
+    const [state] = await sql`SELECT equipment FROM idle_state WHERE player = ${player}`;
+    const equipment = { ...(state?.equipment ?? {}) };
+    const previousPlus = equipment[slot_type];
+    if (hasPlus) equipment[slot_type] = plusLevel;
+    else delete equipment[slot_type];
+    await sql`
+      INSERT INTO idle_state (player, equipment) VALUES (${player}, ${JSON.stringify(equipment)}::jsonb)
+      ON CONFLICT (player) DO UPDATE SET equipment = ${JSON.stringify(equipment)}::jsonb, updated_at = now()
+    `;
+    if (previousPlus != null) {
+      await sql`
+        INSERT INTO idle_items (player, slot_type, plus_level, qty) VALUES (${player}, ${slot_type}, ${previousPlus}, 1)
+        ON CONFLICT (player, slot_type, plus_level) DO UPDATE SET qty = idle_items.qty + 1
+      `;
+    }
+    res.json({ ok: true, equipment });
+  } catch (err) {
+    console.error('[POST /api/idle/equip]', err.message);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -2446,50 +2566,36 @@ app.post('/api/idle/craft', async (req, res) => {
  * sellable, and only if not currently equipped on a hero.
  */
 app.post('/api/market/sell', async (req, res) => {
-  const { player, item_ids } = req.body;
-  if (!player || !Array.isArray(item_ids) || item_ids.length === 0) {
-    return res.status(400).json({ ok: false, error: 'player and non-empty item_ids required' });
+  const { player, slot_type, plus_level, qty } = req.body;
+  const plusLevel = Number(plus_level);
+  const n = Number(qty);
+  if (!player || !IDLE_RECIPES[slot_type] || !Number.isInteger(plusLevel) || plusLevel < 0 || !Number.isInteger(n) || n <= 0) {
+    return res.status(400).json({ ok: false, error: 'player, valid slot_type, plus_level, and positive integer qty required' });
   }
   const authedUser = authFromRequest(req);
   if (!authedUser || authedUser.toLowerCase() !== player.toLowerCase()) {
     return res.status(401).json({ ok: false, error: 'Unauthorized' });
   }
   try {
-    // Eligibility (source, not-equipped) is checked inside the DELETE itself
-    // and only the rows it actually removes come back via RETURNING — pricing
-    // is computed strictly from that result, not from a prior SELECT, so a
-    // concurrent sell of the same item_id can't be credited twice: whichever
-    // request's DELETE loses the race finds the row already gone.
-    const deleted = await sql`
-      DELETE FROM player_items pi
-      USING items i
-      WHERE pi.item_id = i.id
-        AND pi.player = ${player}
-        AND pi.item_id = ANY(${item_ids})
-        AND i.source = 'idle_dungeon'
-        AND NOT EXISTS (
-          SELECT 1 FROM hero_equipment he WHERE he.item_id = i.id AND he.player = ${player}
-        )
-      RETURNING pi.item_id, i.slug
+    // Balance check embedded in the WHERE clause — a concurrent sell of the
+    // same stack can't oversell it, whichever request loses the race finds
+    // qty already short.
+    const [sold] = await sql`
+      UPDATE idle_items SET qty = qty - ${n}
+      WHERE player = ${player} AND slot_type = ${slot_type} AND plus_level = ${plusLevel} AND qty >= ${n}
+      RETURNING qty
     `;
-
-    const sold = [];
-    let totalCoins = 0;
-    for (const row of deleted) {
-      const price = IDLE_RECIPE_BY_SLUG[row.slug]?.sellPrice;
-      if (!price) continue;
-      sold.push({ item_id: Number(row.item_id), coins: price });
-      totalCoins += price;
+    if (!sold) {
+      return res.status(400).json({ ok: false, error: 'Not enough of that item to sell' });
     }
-    if (sold.length === 0) {
-      return res.status(400).json({ ok: false, error: 'No sellable idle items in the given ids (must be idle_dungeon-sourced, unequipped, and priced)' });
-    }
+    const unitPrice = idleItemSellPrice(slot_type, plusLevel);
+    const totalCoins = unitPrice * n;
     await sql`
       INSERT INTO idle_wallet (player, coins) VALUES (${player}, ${totalCoins})
       ON CONFLICT (player) DO UPDATE SET coins = idle_wallet.coins + ${totalCoins}
     `;
     const [wallet] = await sql`SELECT coins FROM idle_wallet WHERE player = ${player}`;
-    res.json({ ok: true, sold, total_coins: totalCoins, new_balance: wallet.coins });
+    res.json({ ok: true, sold: { slot_type, plus_level: plusLevel, qty: n, unit_price: unitPrice }, total_coins: totalCoins, new_balance: wallet.coins });
   } catch (err) {
     console.error('[POST /api/market/sell]', err.message);
     res.status(500).json({ ok: false, error: err.message });
@@ -2519,13 +2625,14 @@ app.post('/api/idle/dev-reset', async (req, res) => {
       SET status = 'stopped', hero_level = 1, hero_xp = 0, hp = 0, max_hp = 0,
           potions = 0, enemies = '[]'::jsonb, next_enemy_id = 1,
           next_guerreiro_ms = ${IDLE_MONSTERS.guerreiro.spawnMs}, next_arqueiro_ms = ${IDLE_MONSTERS.arqueiro.spawnMs},
-          next_hero_attack_ms = ${IDLE_HERO_ATTACK_MS},
+          next_hero_attack_ms = ${IDLE_HERO_ATTACK_MS}, equipment = '{}'::jsonb,
           pending_coins = 0, pending_diamonds = 0, pending_xp = 0, pending_fragments = '{}'::jsonb,
           updated_at = now()
       WHERE player = ${player}
     `;
     await sql`UPDATE idle_wallet SET coins = 0, diamonds = 0 WHERE player = ${player}`;
     await sql`DELETE FROM idle_fragments WHERE player = ${player}`;
+    await sql`DELETE FROM idle_items WHERE player = ${player}`;
     res.json({ ok: true });
   } catch (err) {
     console.error('[POST /api/idle/dev-reset]', err.message);
@@ -2764,37 +2871,55 @@ async function migrateRpgAttrs() {
   console.log('   RPG attrs: ✅ migrated');
 }
 
+// Item evolution system (2026-08-07): craft always produces a plus_level=0
+// item; merging 2 items of the same plus_level grants 1 at plus_level+1, up
+// to IDLE_ITEM_MAX_PLUS. `dps` shortens the fixed idle hero's attack
+// interval instead of adding flat damage (see idleHeroStatsForLevel).
+// coinCost/fragmentsRequired only apply to the base (plus_level=0) craft —
+// merging costs no additional coins/fragments, only the 2 consumed items.
+// All numbers here are placeholders pending balancing.
 const IDLE_RECIPES = {
-  weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 18, hp: 0,   spd: 0   },
-  helm:   { slug: 'idle_helm_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 90,  spd: 0   },
-  legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 120, spd: 0.4 },
-  boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 0,  hp: 40,  spd: 0.8 },
-  gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 14, hp: 20,  spd: 0   },
-  ring1:  { slug: 'idle_ring1_forged',  name: 'Band of the Unyielding Delver',fragmentsRequired: 100, coinCost: 100, sellPrice: 40, atk: 8,  hp: 60,  spd: 0   },
+  weapon: { slug: 'idle_weapon_forged', name: 'Forged Blade of the Depths',   fragmentsRequired: 100, coinCost: 100, atk: 18, hp: 0,   dps: 0 },
+  helm:   { slug: 'idle_helm_forged',   name: 'Cavern Warden Helm',           fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 90,  dps: 0 },
+  legs:   { slug: 'idle_legs_forged',   name: 'Greaves of the Eternal Delve', fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 120, dps: 4 },
+  boots:  { slug: 'idle_boots_forged',  name: 'Tunneler Boots',               fragmentsRequired: 100, coinCost: 100, atk: 0,  hp: 40,  dps: 8 },
+  gloves: { slug: 'idle_gloves_forged', name: 'Fists of the Deep',            fragmentsRequired: 100, coinCost: 100, atk: 14, hp: 20,  dps: 0 },
+  ring1:  { slug: 'idle_ring1_forged',  name: 'Band of the Unyielding Delver',fragmentsRequired: 100, coinCost: 100, atk: 8,  hp: 60,  dps: 0 },
 };
 
-// Reverse lookup used by the Market sell endpoint to price an idle item by
-// its items.slug without a second recipe table in Postgres.
-const IDLE_RECIPE_BY_SLUG = Object.fromEntries(Object.values(IDLE_RECIPES).map(r => [r.slug, r]));
+const IDLE_ITEM_MAX_PLUS = 10;
+const IDLE_ITEM_GROWTH_PER_PLUS = 0.15; // +15% stats per plus level, placeholder pending balancing
 
-async function seedIdleRecipes() {
-  const desc = 'Idle Dungeon craft — fixed stats, forged from fragments.';
-  // 'rarity' is constrained to starter/common/uncommon/rare/epic/legendary (items_rarity_check) —
-  // 'rare' is a placeholder tier for idle-crafted gear, tunable later.
-  try {
-    for (const [slotType, r] of Object.entries(IDLE_RECIPES)) {
-      await sql`
-        INSERT INTO items (name, description, rarity, slot_type, atk_bonus, hp_bonus, spd_bonus, slug, source)
-        VALUES (${r.name}, ${desc}, 'rare', ${slotType}, ${r.atk}, ${r.hp}, ${r.spd}, ${r.slug}, 'idle_dungeon')
-        ON CONFLICT (slug) DO UPDATE
-          SET name = EXCLUDED.name, atk_bonus = EXCLUDED.atk_bonus,
-              hp_bonus = EXCLUDED.hp_bonus, spd_bonus = EXCLUDED.spd_bonus
-      `;
-    }
-    console.log('   Idle Dungeon: ✅ recipes seeded');
-  } catch (e) {
-    console.error('   Idle Dungeon: ❌ seedIdleRecipes', e.message);
+function idleItemStatsAtPlus(slotType, plusLevel) {
+  const base = IDLE_RECIPES[slotType];
+  const mult = 1 + Number(plusLevel) * IDLE_ITEM_GROWTH_PER_PLUS;
+  return {
+    atk: Math.round(base.atk * mult),
+    hp: Math.round(base.hp * mult),
+    dps: Math.round(base.dps * mult),
+  };
+}
+
+// Selling always costs more than crafting — plus_level=0 sells for 1.5x the
+// craft coin cost, scaling further per plus level, so gear is worth both
+// using and reselling.
+function idleItemSellPrice(slotType, plusLevel) {
+  const base = IDLE_RECIPES[slotType];
+  return Math.round(base.coinCost * (1.5 + Number(plusLevel) * 0.5));
+}
+
+// Sums the stat bonus of whichever single item per slot is currently
+// equipped on the fixed idle hero (idle_state.equipment: { slot_type: plusLevel }).
+function idleGearBonusFromEquipment(equipment) {
+  const totals = { atk: 0, hp: 0, dps: 0 };
+  for (const [slotType, plusLevel] of Object.entries(equipment || {})) {
+    if (!IDLE_RECIPES[slotType] || plusLevel == null) continue;
+    const stats = idleItemStatsAtPlus(slotType, plusLevel);
+    totals.atk += stats.atk;
+    totals.hp += stats.hp;
+    totals.dps += stats.dps;
   }
+  return totals;
 }
 
 async function migrateIdleDungeon() {
@@ -2848,6 +2973,24 @@ async function migrateIdleDungeon() {
     try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_guerreiro_ms INT NOT NULL DEFAULT 5000`; } catch {}
     try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_arqueiro_ms INT NOT NULL DEFAULT 8000`; } catch {}
     try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS next_hero_attack_ms INT NOT NULL DEFAULT 1600`; } catch {}
+    // Item evolution system (2026-08-07): idle-crafted gear is stacked by
+    // (slot_type, plus_level) instead of being unique player_items rows —
+    // merging 2 items of the same plus level consumes both and grants 1 at
+    // plus_level+1 (up to IDLE_ITEM_MAX_PLUS), which the old unique
+    // (player, item_id) constraint on player_items couldn't support (a
+    // player could never hold 2 copies of the same idle item to merge).
+    // `equipment` on idle_state holds { slot_type: plus_level } for whichever
+    // single item per slot is currently equipped on the fixed idle hero.
+    await sql`
+      CREATE TABLE IF NOT EXISTS idle_items (
+        player     TEXT     NOT NULL,
+        slot_type  TEXT     NOT NULL,
+        plus_level SMALLINT NOT NULL DEFAULT 0,
+        qty        INT      NOT NULL DEFAULT 0,
+        PRIMARY KEY (player, slot_type, plus_level)
+      )
+    `;
+    try { await sql`ALTER TABLE idle_state ADD COLUMN IF NOT EXISTS equipment JSONB NOT NULL DEFAULT '{}'`; } catch {}
     await sql`
       CREATE TABLE IF NOT EXISTS idle_wallet (
         player   TEXT PRIMARY KEY,
@@ -2864,7 +3007,6 @@ async function migrateIdleDungeon() {
       )
     `;
     console.log('   Idle Dungeon: ✅ tables ready');
-    await seedIdleRecipes();
   } catch (e) {
     console.error('   Idle Dungeon: ❌', e.message);
   }

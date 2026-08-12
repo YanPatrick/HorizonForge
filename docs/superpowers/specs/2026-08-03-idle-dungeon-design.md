@@ -86,11 +86,20 @@ idle" separado por XP acumulado em faixas fixas de 100. O que existe agora:
 
 **Nota de nomenclatura:** o `gold` existente hoje (`horizon_forge_details`: `initial_gold`, `value_gold_combo2/3`) é interno à mecânica de recrutamento/combo ("Horizon Forge") e não é uma carteira do jogador — deve ser explicitamente tratado/documentado no código como **battle gold**, sem relação com `coins`.
 
-## 6. Crafting
+## 6. Crafting e evolução de itens
 
-- Fragmentos são tipados por slot de equipamento, reaproveitando o `slot_type` já existente em `items`/`hero_equipment` (`weapon`, `belt`, `gloves`, `legs`, `ring1`, `ring2`, `head`, `boots`, `special`, etc.).
-- Craft = quantidade de fragmentos do slot (ex: 100 fragmentos de espada) + **recipe** comprada com coins, entregues ao "ferreiro" → gera o item idle-exclusivo daquele slot.
-- Itens idle têm **stats fixos e pré-definidos** (contraste deliberado com o loot randômico de baú) — cada recipe sempre produz o mesmo item.
+**Superseded 2026-08-07** — itens idle não são mais instâncias únicas em
+`player_items`/`items`; vivem em uma tabela própria (`idle_items`), empilhados
+por `(slot_type, plus_level)`, porque o modelo de evolução abaixo precisa que
+o jogador segure múltiplas cópias do mesmo item pra fundir — o antigo
+`UNIQUE(player, item_id)` nunca permitia isso.
+
+- Fragmentos continuam tipados por slot (`weapon`, `helm`, `legs`, `boots`, `gloves`, `ring1`).
+- Craft = 100 fragmentos do slot + coins (custo por `IDLE_RECIPES[slot].coinCost`) → gera 1 item **+0** daquele slot.
+- **Evolução:** juntar 2 itens do mesmo slot e mesmo `plus_level` consome os 2 e gera 1 no `plus_level+1`, até **+10** (`IDLE_ITEM_MAX_PLUS`). Cada plus level dá +15% nos stats do item (`IDLE_ITEM_GROWTH_PER_PLUS`, placeholder pendente de balanceamento).
+- Itens dão `atk`, `hp` e `dps` (não mais `spd`) — `dps` reduz o intervalo de ataque do herói fixo do idle (20ms por ponto, piso de 400ms — fórmula placeholder).
+- **Os itens equipam no herói fixo do idle** (`idle_state.equipment`, um item por slot), não nos heróis de PvP/campanha — sistema de equip separado do `hero_equipment` existente.
+- **Preço de venda no Market sempre é maior que o custo de craft** (`idleItemSellPrice`: 1.5x o custo em +0, escalando com o plus level) — corrige o problema anterior onde vender custava menos do que craftar.
 
 ## 7. Prevenção de quebra de economia
 

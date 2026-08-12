@@ -2345,12 +2345,7 @@ export default function LobbyPage() {
         )}
 
         {view === 'market' && (
-          <MarketView
-            session={session}
-            items={playerItems}
-            onSold={soldIds => setPlayerItems(prev => prev.filter(i => !soldIds.includes(i.id)))}
-            toast={showToast}
-          />
+          <MarketView session={session} toast={showToast} />
         )}
 
         {view === 'formation' && (
